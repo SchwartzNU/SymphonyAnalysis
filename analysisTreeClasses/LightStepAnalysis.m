@@ -54,12 +54,11 @@ classdef LightStepAnalysis < AnalysisTree
                 
                 obj = obj.set(leafIDs(i), curNode);
             end
-            %subtract baseline
-            baselineMean = mean(allBaselineSpikes);
+            
             if strcmp(rootData.(rootData.ampModeParam), 'Cell attached')
                 for i=1:L
                     curNode = obj.get(leafIDs(i));
-                    curNode.resp = curNode.spikes - (baselineMean * intervalLen/baselineLen);
+                    curNode.resp = curNode.spikes;
                     curNode.respMean = mean(curNode.resp);
                     curNode.respSEM = std(curNode.resp)./sqrt(curNode.N);
                     obj = obj.set(leafIDs(i), curNode);
