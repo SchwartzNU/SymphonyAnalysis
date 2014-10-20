@@ -22,6 +22,8 @@ classdef LabDataGUI < handle
         curDataSets = {};
         curPrefsMap = [];
         mergedCells = [];
+        allEpochKeys = [];
+        allCellTags = [];
         cellTags = containers.Map;
         cellData_folder = '';
         labData_fname = '';
@@ -90,14 +92,15 @@ classdef LabDataGUI < handle
             obj.buildUIComponents();
             obj.loadCellNames(firstLoad);
             obj.loadTree();
-            obj.initializeFilterTable();
+            obj.initializeEpochFilterTable();
+            obj.initializeCellFilterTable();
             obj.initializeCellTypeAndAnalysisMenus();
         end
         
         function buildUIComponents(obj)
             bounds = screenBounds;
             obj.fig = figure( ...
-                'Name',         'LabDataGUI', ...
+                'Name',         ['LabDataGUI: ' obj.cellData_folder], ...
                 'NumberTitle',  'off', ...
                 'ToolBar',      'none',...
                 'Menubar',      'none', ...
@@ -348,25 +351,56 @@ classdef LabDataGUI < handle
             
             set(L_popupGrid, 'ColumnSizes', [100, -1]);
             
-            obj.handles.filterTable = uitable('Parent', L_filterBox, ...
+            cellTableText = uicontrol('Parent', L_filterBox, ...
+                'Style', 'text', ...
+                'String', 'Cell tags', ...
+                'FontSize', 12);
+            
+            obj.handles.cellFilterTable = uitable('Parent', L_filterBox, ...
                 'Units',    'pixels', ...
                 'FontSize', 12, ...
                 'ColumnName', {'Param', 'Operator', 'Value'}, ...
                 'ColumnEditable', logical([1 1 1]), ...
-                'CellEditCallback', @(uiobj, evt)obj.filterTableEdit(evt), ...
-                'Data', cell(7,3));
-            %'CellEditCallback', @(uiobj, evt)obj.filterTableEdit(evt), ...
+                'CellEditCallback', @(uiobj, evt)obj.cellFilterTableEdit(evt), ...
+                'Data', cell(4,3));
             
-            L_filterPattern = uiextras.HBox('Parent',L_filterBox);
-            filterPatternText = uicontrol('Parent', L_filterPattern, ...
+            L_cellFilterPattern = uiextras.HBox('Parent',L_filterBox);
+            cellFilterPatternText = uicontrol('Parent', L_cellFilterPattern, ...
                 'Style', 'text', ...
                 'String', 'Filter pattern string', ...
                 'FontSize', 12);
-            obj.handles.filterPatternEdit = uicontrol('Parent', L_filterPattern, ...
+            obj.handles.cellFilterPatternEdit = uicontrol('Parent', L_cellFilterPattern, ...
                 'Style', 'Edit', ...
                 'FontSize', 12, ...
                 'CallBack', @(uiobj, evt)obj.updateFilter);
-            set(L_filterPattern, 'Sizes', [150, -1], 'Spacing', 20);
+            set(L_cellFilterPattern, 'Sizes', [150, -1], 'Spacing', 20);   
+            
+            epochPropertiesText = uicontrol('Parent', L_filterBox, ...
+                'Style', 'text', ...
+                'String', 'Epoch properties', ...
+                'FontSize', 12);
+            
+            obj.handles.epochFilterTable = uitable('Parent', L_filterBox, ...
+                'Units',    'pixels', ...
+                'FontSize', 12, ...
+                'ColumnName', {'Param', 'Operator', 'Value'}, ...
+                'ColumnEditable', logical([1 1 1]), ...
+                'CellEditCallback', @(uiobj, evt)obj.epochFilterTableEdit(evt), ...
+                'Data', cell(4,3));
+                        
+            %'CellEditCallback', @(uiobj, evt)obj.filterTableEdit(evt), ...
+            
+            L_epochFilterPattern = uiextras.HBox('Parent',L_filterBox);
+            epochFilterPatternText = uicontrol('Parent', L_epochFilterPattern, ...
+                'Style', 'text', ...
+                'String', 'Filter pattern string', ...
+                'FontSize', 12);
+            obj.handles.epochFilterPatternEdit = uicontrol('Parent', L_epochFilterPattern, ...
+                'Style', 'Edit', ...
+                'FontSize', 12, ...
+                'CallBack', @(uiobj, evt)obj.updateFilter);
+            set(L_epochFilterPattern, 'Sizes', [150, -1], 'Spacing', 20);            
+            
             L_filterControls = uiextras.HButtonBox('Parent', L_filterBox, ...
                 'ButtonSize', [100 30], ...
                 'Spacing', 20);
@@ -388,7 +422,7 @@ classdef LabDataGUI < handle
             %filter results buttons
             
             
-            set(L_filterBox, 'Sizes', [-1, -2, 25, 40]);
+            set(L_filterBox, 'Sizes', [-1, 25, -2, 25, 25, -2, 25, 40]);
             
             %filter resutls panel
             L_filterResultsBox = uiextras.Empty('Parent',L_filterResultsPanel);
@@ -449,12 +483,49 @@ classdef LabDataGUI < handle
             fclose(fid);
         end
         
-        function initializeFilterTable(obj)
-            columnFormat = {'char', obj.operators, 'char'};
-            set(obj.handles.filterTable,'ColumnFormat',columnFormat);
-            
+        function updateEpochFilterTable(obj)
+            %update popupmenu for filter table
+            props = [' ', obj.allEpochKeys];
+            columnFormat = {props, obj.operators, 'char'};
+            set(obj.handles.epochFilterTable,'ColumnFormat',columnFormat)
         end
         
+        function updateCellFilterTable(obj)
+            %update popupmenu for filter table
+            props = [' ', obj.allCellTags];
+            columnFormat = {props, obj.operators, 'char'};
+            set(obj.handles.cellFilterTable,'ColumnFormat',columnFormat)
+        end
+        
+        function initializeEpochFilterTable(obj)
+            props = [' ', obj.allEpochKeys];
+            columnFormat = {props, obj.operators, 'char'};
+            set(obj.handles.epochFilterTable,'ColumnFormat',columnFormat);
+
+            if isfield(obj.handles, 'epochFilterTable')
+                tablePos = get(obj.handles.epochFilterTable,'Position');
+                tableWidth = tablePos(3);
+                col1W = round(tableWidth*.35);
+                col2W = round(tableWidth*.20);
+                col3W = round(tableWidth*.35);
+                set(obj.handles.epochFilterTable,'ColumnWidth',{col1W, col2W, col3W});
+            end
+        end
+        
+        function initializeCellFilterTable(obj)
+            props = [' ', obj.allCellTags];
+            columnFormat = {props, obj.operators, 'char'};
+            set(obj.handles.cellFilterTable,'ColumnFormat',columnFormat);
+
+            if isfield(obj.handles, 'cellFilterTable')
+                tablePos = get(obj.handles.cellFilterTable,'Position');
+                tableWidth = tablePos(3);
+                col1W = round(tableWidth*.35);
+                col2W = round(tableWidth*.20);
+                col3W = round(tableWidth*.35);
+                set(obj.handles.cellFilterTable,'ColumnWidth',{col1W, col2W, col3W});
+            end
+        end
         
         function cellSelectedFcn(obj)            
             cellDataFolder = obj.cellData_folder;
@@ -567,7 +638,7 @@ classdef LabDataGUI < handle
                 tempTree = obj.labData.collectCells(obj.curCellName);
                 TreeBrowserGUI(tempTree);
             end
-            set(obj.fig, 'Name', 'LabDataGUI');
+            set(obj.fig, 'Name', ['LabDataGUI: ' obj.cellData_folder]);
         end
         
         function analyzeAndBrowseCellType(obj)
@@ -582,7 +653,7 @@ classdef LabDataGUI < handle
                     tempTree = obj.labData.collectCells(obj.labData.getCellsOfType(obj.curCellType));
                     TreeBrowserGUI(tempTree);
                 end
-                set(obj.fig, 'Name', 'LabDataGUI');
+                set(obj.fig, 'Name', ['LabDataGUI: ' obj.cellData_folder]);
             elseif get(node, 'Depth') == 0 %individual cell
                 obj.analyzeAndBrowseCell();
             end
@@ -642,7 +713,7 @@ classdef LabDataGUI < handle
                 'Position', [10 100 boxW - 15 boxH - 130], ...
                 'SelectionChangeFcn', @(uiobj, evt)obj.treeSelectionFcn);
             
-            set(obj.fig, 'Name', 'LabDataGUI');
+            set(obj.fig, 'Name', ['LabDataGUI: ' obj.cellData_folder]);
             
         end
         
@@ -714,7 +785,7 @@ classdef LabDataGUI < handle
                 curName_fixed = [cellDataFolder filesep curName '.mat'];
                 load(curName_fixed);
                 obj.curCellData = cellData;
-                set(obj.fig, 'Name', 'LabDataGUI');
+                set(obj.fig, 'Name', ['LabDataGUI: ' obj.cellData_folder]);
             end
         end
         
@@ -722,8 +793,8 @@ classdef LabDataGUI < handle
             global ANALYSIS_FOLDER;
             [fname,fpath] = uiputfile([ANALYSIS_FOLDER filesep 'acrossCellFilters' filesep '*.mat'],'Save filter file');
             if ~isempty(fname) %if selected something
-                filterData = get(obj.handles.filterTable,'Data');
-                filterPatternString = get(obj.handles.filterPatternEdit, 'String');
+                filterData = get(obj.handles.epochFilterTable,'Data');
+                filterPatternString = get(obj.handles.epochFilterPatternEdit, 'String');
                 s = get(obj.handles.analysisTypePopup, 'String');
                 v = get(obj.handles.analysisTypePopup, 'Value');
                 analysisType = s{v};
@@ -739,8 +810,8 @@ classdef LabDataGUI < handle
             [fname,fpath] = uigetfile([ANALYSIS_FOLDER filesep 'acrossCellFilters' filesep '*.mat'],'Load filter file');
             if ~isempty(fname) %if selected something
                 load(fullfile(fpath, fname), 'filterData', 'filterPatternString','analysisType', 'cellType');
-                set(obj.handles.filterTable,'Data',filterData);
-                set(obj.handles.filterPatternEdit, 'String', filterPatternString);
+                set(obj.handles.epochFilterTable,'Data',filterData);
+                set(obj.handles.epochFilterPatternEdit, 'String', filterPatternString);
                 s = get(obj.handles.analysisTypePopup, 'String');
                 ind = find(strcmp(analysisType, s));
                 if isempty(ind)
@@ -818,6 +889,11 @@ classdef LabDataGUI < handle
                     
                     basename = strtok(d(i).name,'.mat');
                     if cellData.get('Nepochs') > 0
+                        %add epoch keys
+                        obj.allEpochKeys = [obj.allEpochKeys cellData.getEpochKeysetUnion()];
+                        %add cell keys
+                        obj.allCellTags = [obj.allCellTags cellData.tags.keys];
+                        
                         if ~isnan(cellData.epochs(1).get('amp2')) %if 2 amps
                             n1 = [basename '-Ch1'];
                             n2 = [basename '-Ch2'];
@@ -878,12 +954,19 @@ classdef LabDataGUI < handle
                 end
             end
             
+            obj.allEpochKeys = unique(obj.allEpochKeys);
+            obj.allCellTags = unique(obj.allCellTags);
+            
             %obj.fullCellDataList
             set(obj.handles.allCellsListbox, 'String', obj.fullCellList);
+
+            obj.updateEpochFilterTable();
+            
+            %save labData
             D = obj.labData;
             save(obj.labData_fname, 'D'); %save labData
             
-            set(obj.fig, 'Name', 'LabDataGUI');
+            set(obj.fig, 'Name', ['LabDataGUI: ' obj.cellData_folder]);
         end
         
         function cellName = cellDataNameToCellName(obj, cellDataName)
@@ -1291,16 +1374,11 @@ classdef LabDataGUI < handle
             delete(obj.handles.cellTagFig)
         end
         
-        function applyFilter(obj)
-            
-            
-        end
-        
-        function filterTableEdit(obj, eventData)
+        function cellFilterTableEdit(obj, eventData)
             newData = eventData.EditData;
             rowInd = eventData.Indices(1);
             colInd = eventData.Indices(2);
-            D = get(obj.handles.filterTable,'Data');
+            D = get(obj.handles.cellFilterTable,'Data');
             
             if strcmp(newData,' ') %blank the row
                 D{rowInd,1} = '';
@@ -1317,7 +1395,35 @@ classdef LabDataGUI < handle
                 D{rowInd,3} = ''; %blank the value
             end
             
-            set(obj.handles.filterTable,'Data',D);
+            set(obj.handles.cellFilterTable,'Data',D);
+            
+            if colInd > 1
+                obj.updateFilter();
+            end
+        end
+        
+        function epochFilterTableEdit(obj, eventData)
+            newData = eventData.EditData;
+            rowInd = eventData.Indices(1);
+            colInd = eventData.Indices(2);
+            D = get(obj.handles.epochFilterTable,'Data');
+            
+            if strcmp(newData,' ') %blank the row
+                D{rowInd,1} = '';
+                D{rowInd,2} = '';
+                D{rowInd,3} = '';
+            else
+                D{rowInd,colInd} = newData;
+            end
+            if colInd == 1 %edited parameter name
+                %show unique values
+                %vals = obj.cellData.getEpochVals(newData);
+                %vals = vals(~isnan_cell(vals));
+                %vals = unique(vals);
+                D{rowInd,3} = ''; %blank the value
+            end
+            
+            set(obj.handles.epochFilterTable,'Data',D);
             
             if colInd > 1
                 obj.updateFilter();
@@ -1325,7 +1431,7 @@ classdef LabDataGUI < handle
         end
         
         function updateFilter(obj)
-            D = get(obj.handles.filterTable,'Data');
+            D = get(obj.handles.epochFilterTable,'Data');
             N = size(D,1);
             if isempty(obj.filter) || isempty(obj.filter.fieldnames)
                 previousL = 0;
@@ -1357,13 +1463,13 @@ classdef LabDataGUI < handle
                         obj.filter.values{i} = value_str;
                     end
                     if i>previousL
-                        pattern_str = get(obj.handles.filterPatternEdit,'String');
+                        pattern_str = get(obj.handles.epochFilterPatternEdit,'String');
                         if previousL == 0 %first condition
                             pattern_str = '@1';
                         else
                             pattern_str = [pattern_str ' && @' num2str(i)];
                         end
-                        set(obj.handles.filterPatternEdit,'String',pattern_str);
+                        set(obj.handles.epochFilterPatternEdit,'String',pattern_str);
                     end
                     if isempty(obj.filter.fieldnames{i}) ...
                             || isempty(obj.filter.operators{i}) ...
@@ -1375,13 +1481,13 @@ classdef LabDataGUI < handle
                     obj.filter.operators = obj.filter.operators(1:i-1);
                     obj.filter.values = obj.filter.values(1:i-1);
                     
-                    pattern_str = get(obj.handles.filterPatternEdit,'String');
+                    pattern_str = get(obj.handles.epochFilterPatternEdit,'String');
                     pattern_str = regexprep(pattern_str, ['@' num2str(i)], '?');
-                    set(obj.handles.filterPatternEdit,'String',pattern_str);
+                    set(obj.handles.epochFilterPatternEdit,'String',pattern_str);
                 end
             end
             
-            obj.filter.pattern = get(obj.handles.filterPatternEdit,'String');
+            obj.filter.pattern = get(obj.handles.epochFilterPatternEdit,'String');
             if rowsComplete
                 %obj.applyFilter();
             end
@@ -1401,14 +1507,24 @@ classdef LabDataGUI < handle
                 set(obj.guiTree, 'Position', [10 100 boxW - 15 boxH - 130]);
             end
             
-            %filtTable
-            if isfield(obj.handles, 'filterTable')
-                tablePos = get(obj.handles.filterTable,'Position');
+            %epoch filtTable
+            if isfield(obj.handles, 'epochFilterTable')
+                tablePos = get(obj.handles.epochFilterTable,'Position');
                 tableWidth = tablePos(3);
                 col1W = round(tableWidth*.35);
                 col2W = round(tableWidth*.20);
                 col3W = round(tableWidth*.35);
-                set(obj.handles.filterTable,'ColumnWidth',{col1W, col2W, col3W});
+                set(obj.handles.epochFilterTable,'ColumnWidth',{col1W, col2W, col3W});
+            end
+            
+             %cell filtTable
+            if isfield(obj.handles, 'cellFilterTable')
+                tablePos = get(obj.handles.cellFilterTable,'Position');
+                tableWidth = tablePos(3);
+                col1W = round(tableWidth*.35);
+                col2W = round(tableWidth*.20);
+                col3W = round(tableWidth*.35);
+                set(obj.handles.cellFilterTable,'ColumnWidth',{col1W, col2W, col3W});
             end
         end
         
