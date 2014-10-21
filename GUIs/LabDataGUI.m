@@ -17,7 +17,8 @@ classdef LabDataGUI < handle
         handles
         guiTree
         rootNode
-        filter = SearchQuery();
+        epochFilter = SearchQuery();
+        cellFilter = SearchQuery();
         selectedCellName = '';
         curDataSets = {};
         curPrefsMap = [];
@@ -56,8 +57,8 @@ classdef LabDataGUI < handle
             end
             suff_part = suff_part(2:end); %remove leading '_';
             obj.curLabDataSet = suff_part;
-            obj.cellData_folder = [ANALYSIS_FOLDER filesep 'cellData_' obj.curLabDataSet filesep];
-            obj.labData_fname = [ANALYSIS_FOLDER filesep 'labData_' obj.curLabDataSet '.mat'];
+            obj.cellData_folder = [ANALYSIS_FOLDER 'cellData_' obj.curLabDataSet filesep];
+            obj.labData_fname = [ANALYSIS_FOLDER 'labData_' obj.curLabDataSet '.mat'];
 
             if exist(obj.labData_fname, 'file')
                 load(obj.labData_fname); %loads D
@@ -372,7 +373,7 @@ classdef LabDataGUI < handle
             obj.handles.cellFilterPatternEdit = uicontrol('Parent', L_cellFilterPattern, ...
                 'Style', 'Edit', ...
                 'FontSize', 12, ...
-                'CallBack', @(uiobj, evt)obj.updateFilter);
+                'CallBack', @(uiobj, evt)obj.updateCellFilter);
             set(L_cellFilterPattern, 'Sizes', [150, -1], 'Spacing', 20);   
             
             epochPropertiesText = uicontrol('Parent', L_filterBox, ...
@@ -398,7 +399,7 @@ classdef LabDataGUI < handle
             obj.handles.epochFilterPatternEdit = uicontrol('Parent', L_epochFilterPattern, ...
                 'Style', 'Edit', ...
                 'FontSize', 12, ...
-                'CallBack', @(uiobj, evt)obj.updateFilter);
+                'CallBack', @(uiobj, evt)obj.updateEpochFilter);
             set(L_epochFilterPattern, 'Sizes', [150, -1], 'Spacing', 20);            
             
             L_filterControls = uiextras.HButtonBox('Parent', L_filterBox, ...
@@ -492,7 +493,7 @@ classdef LabDataGUI < handle
         
         function updateCellFilterTable(obj)
             %update popupmenu for filter table
-            props = [' ', obj.allCellTags];
+            props = [' ', obj.allCellTags];            
             columnFormat = {props, obj.operators, 'char'};
             set(obj.handles.cellFilterTable,'ColumnFormat',columnFormat)
         end
@@ -672,11 +673,17 @@ classdef LabDataGUI < handle
                 cellType = obj.labData.allCellTypes;
             end
             
-            if isempty(obj.filter.pattern)
-                tempTree = obj.labData.collectAnalysis(analysisType, cellType);
+            if isempty(obj.epochFilter.pattern)
+                epochFilt = [];
             else
-                tempTree = obj.labData.collectAnalysis(analysisType, cellType, obj.filter);
+                epochFilt = obj.epochFilter;
             end
+            if isempty(obj.cellFilter.pattern)
+                cellFilt = [];
+            else
+                cellFilt = obj.cellFilter;
+            end
+            tempTree = obj.labData.collectAnalysis(analysisType, cellType, cellFilt, epochFilt);
             
             TreeBrowserGUI(tempTree);
         end
@@ -828,7 +835,8 @@ classdef LabDataGUI < handle
                     set(obj.handles.cellTypePopup, 'Value', ind);
                 end
                 
-                obj.updateFilter();
+                obj.updateEpochFilter();
+                obj.updateCellFilter();
             end
         end
         
@@ -1340,6 +1348,9 @@ classdef LabDataGUI < handle
             
             obj.onTagSelection();
             
+            waitfor(obj.handles.cellTagFig)
+            %waiting for figure to be deleted
+
             if obj.tempAnswer
                 for i=1:length(cellDataNames)
                     load([obj.cellData_folder filesep cellDataNames{i} '.mat']); %loads cellData
@@ -1398,7 +1409,7 @@ classdef LabDataGUI < handle
             set(obj.handles.cellFilterTable,'Data',D);
             
             if colInd > 1
-                obj.updateFilter();
+                obj.updateCellFilter();
             end
         end
         
@@ -1426,23 +1437,23 @@ classdef LabDataGUI < handle
             set(obj.handles.epochFilterTable,'Data',D);
             
             if colInd > 1
-                obj.updateFilter();
+                obj.updateEpochFilter();
             end
         end
         
-        function updateFilter(obj)
-            D = get(obj.handles.epochFilterTable,'Data');
+        function updateCellFilter(obj)
+            D = get(obj.handles.cellFilterTable,'Data');
             N = size(D,1);
-            if isempty(obj.filter) || isempty(obj.filter.fieldnames)
+            if isempty(obj.cellFilter) || isempty(obj.cellFilter.fieldnames)
                 previousL = 0;
             else
-                previousL = length(obj.filter.fieldnames);
+                previousL = length(obj.cellFilter.fieldnames);
             end
             rowsComplete = true;
             for i=1:N
                 if ~isempty(D{i,1}) %change stuff and add stuff
-                    obj.filter.fieldnames{i} = D{i,1};
-                    obj.filter.operators{i} = D{i,2};
+                    obj.cellFilter.fieldnames{i} = D{i,1};
+                    obj.cellFilter.operators{i} = D{i,2};
                     value_str = D{i,3};
                     if isempty(value_str)
                         value = [];
@@ -1458,9 +1469,77 @@ classdef LabDataGUI < handle
                         value = str2num(value_str); %#ok<ST2NM>
                     end
                     if ~isempty(value)
-                        obj.filter.values{i} = value;
+                        obj.cellFilter.values{i} = value;
                     else
-                        obj.filter.values{i} = value_str;
+                        obj.cellFilter.values{i} = value_str;
+                    end
+                    if i>previousL
+                        pattern_str = get(obj.handles.cellFilterPatternEdit,'String');
+                        if previousL == 0 %first condition
+                            pattern_str = '@1';
+                        else
+                            pattern_str = [pattern_str ' && @' num2str(i)];
+                        end
+                        set(obj.handles.cellFilterPatternEdit,'String',pattern_str);
+                    end
+                    if isempty(obj.cellFilter.fieldnames{i}) ...
+                            || isempty(obj.cellFilter.operators{i}) ...
+                            || isempty(obj.cellFilter.values{i})
+                        rowsComplete = false;
+                    end
+                elseif i == previousL %remove last condition
+                    obj.cellFilter.fieldnames = obj.cellFilter.fieldnames(1:i-1);
+                    obj.cellFilter.operators = obj.cellFilter.operators(1:i-1);
+                    obj.cellFilter.values = obj.cellFilter.values(1:i-1);
+                    
+                    pattern_str = get(obj.handles.cellFilterPatternEdit,'String');
+                    pattern_str = regexprep(pattern_str, ['@' num2str(i)], '?');
+                    set(obj.handles.cellFilterPatternEdit,'String',pattern_str);
+                end
+            end
+            
+            obj.cellFilter.pattern = get(obj.handles.cellFilterPatternEdit,'String');
+            if rowsComplete
+                %obj.applyFilter();
+            end
+            if isempty(obj.cellFilter.fieldnames)
+                %reset to null filter
+                obj.cellFilter = SearchQuery();
+                %obj.applyFilter(true);
+            end
+        end
+        
+        function updateEpochFilter(obj)
+            D = get(obj.handles.epochFilterTable,'Data');
+            N = size(D,1);
+            if isempty(obj.epochFilter) || isempty(obj.epochFilter.fieldnames)
+                previousL = 0;
+            else
+                previousL = length(obj.epochFilter.fieldnames);
+            end
+            rowsComplete = true;
+            for i=1:N
+                if ~isempty(D{i,1}) %change stuff and add stuff
+                    obj.epochFilter.fieldnames{i} = D{i,1};
+                    obj.epochFilter.operators{i} = D{i,2};
+                    value_str = D{i,3};
+                    if isempty(value_str)
+                        value = [];
+                    elseif strfind(value_str, ',')
+                        z = 1;
+                        r = value_str;
+                        while ~isempty(r)
+                            [token, r] = strtok(r, ',');
+                            value{z} = strtrim(token);
+                            z=z+1;
+                        end
+                    else
+                        value = str2num(value_str); %#ok<ST2NM>
+                    end
+                    if ~isempty(value)
+                        obj.epochFilter.values{i} = value;
+                    else
+                        obj.epochFilter.values{i} = value_str;
                     end
                     if i>previousL
                         pattern_str = get(obj.handles.epochFilterPatternEdit,'String');
@@ -1471,15 +1550,15 @@ classdef LabDataGUI < handle
                         end
                         set(obj.handles.epochFilterPatternEdit,'String',pattern_str);
                     end
-                    if isempty(obj.filter.fieldnames{i}) ...
-                            || isempty(obj.filter.operators{i}) ...
-                            || isempty(obj.filter.values{i})
+                    if isempty(obj.epochFilter.fieldnames{i}) ...
+                            || isempty(obj.epochFilter.operators{i}) ...
+                            || isempty(obj.epochFilter.values{i})
                         rowsComplete = false;
                     end
                 elseif i == previousL %remove last condition
-                    obj.filter.fieldnames = obj.filter.fieldnames(1:i-1);
-                    obj.filter.operators = obj.filter.operators(1:i-1);
-                    obj.filter.values = obj.filter.values(1:i-1);
+                    obj.epochFilter.fieldnames = obj.epochFilter.fieldnames(1:i-1);
+                    obj.epochFilter.operators = obj.epochFilter.operators(1:i-1);
+                    obj.epochFilter.values = obj.epochFilter.values(1:i-1);
                     
                     pattern_str = get(obj.handles.epochFilterPatternEdit,'String');
                     pattern_str = regexprep(pattern_str, ['@' num2str(i)], '?');
@@ -1487,13 +1566,13 @@ classdef LabDataGUI < handle
                 end
             end
             
-            obj.filter.pattern = get(obj.handles.epochFilterPatternEdit,'String');
+            obj.epochFilter.pattern = get(obj.handles.epochFilterPatternEdit,'String');
             if rowsComplete
                 %obj.applyFilter();
             end
-            if isempty(obj.filter.fieldnames)
+            if isempty(obj.epochFilter.fieldnames)
                 %reset to null filter
-                obj.filter = SearchQuery();
+                obj.epochFilter = SearchQuery();
                 %obj.applyFilter(true);
             end
         end

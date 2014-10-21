@@ -333,14 +333,17 @@ classdef LabData < handle
             end
         end
         
-        function resultTree = collectAnalysis(obj, analysisName, cellTypes, filter)
+        function resultTree = collectAnalysis(obj, analysisName, cellTypes, cellFilter, epochFilter)
             %if overwriteFlag is true, this will recompute the analysis for
-            %each cell and save it in the cell's own analysisTree file
+            %each cell 
             %it should always compute the analysis if the cell has the
             %matching dataset (not the current behavior of collectAnalysis)
-            if nargin < 4
-                filter = [];
+            if nargin < 5
+                epochFilter = [];
             end            
+            if nargin < 4
+                cellFilter = [];
+            end
             if nargin < 3
                 cellTypes = obj.allCellTypes;
             end
@@ -378,29 +381,18 @@ classdef LabData < handle
                         z=z+1;
                     end
                     if isempty(curCellNameParts)
-                        curResultTree = doSingleAnalysis(cellNames{j}, analysisName, filter);
+                        curResultTree = doSingleAnalysis(cellNames{j}, analysisName, cellFilter, epochFilter);
                         if ~isempty(curResultTree)
                             curTypeTree = curTypeTree.graft(1, curResultTree);
                         end
                     else
                         for k=1:length(curCellNameParts)
-                            curResultTree = doSingleAnalysis(curCellNameParts{k}, analysisName, filter);
+                            curResultTree = doSingleAnalysis(curCellNameParts{k}, analysisName, cellFilter, epochFilter);
                             if ~isempty(curResultTree)
                                 curTypeTree = curTypeTree.graft(1, curResultTree);
                             end
-%                             if ~isempty(tempResultTree)
-%                                 %graft on children
-%                                 chInd = tempResultTree.getchildren(1);
-%                                 for c=1:length(chInd)
-%                                     curResultTree = curResultTree.graft(1,subtree(tempResultTree, chInd(c)));
-%                                 end
-%                             end
-%                             
-                        end
-%                         if ~isempty(curResultTree)
-%                             resultTree = resultTree.graft(1, curResultTree);
-%                         end
-                        
+
+                        end             
                     end 
 
                 end
