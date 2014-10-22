@@ -91,7 +91,7 @@ classdef BarsMultiAngleAnalysis < AnalysisTree
             OSang = angle(ROrtn/R)*90/pi;
             
             if OSang < 0
-                OSang = 360 + OSang;
+                OSang = 180 + OSang;
             end
             
             rootData.OSI = OSI;
@@ -115,6 +115,9 @@ classdef BarsMultiAngleAnalysis < AnalysisTree
             end
             
             hold on;
+            x = [rootData.OSang,rootData.OSang];
+            y = [min(rootData.respMean),max(rootData.respMean)];
+            plot(x,y);
             title(['OSI = ' num2str(rootData.OSI) ', OSang = ' num2str(rootData.OSang)]);
             hold off;
             
