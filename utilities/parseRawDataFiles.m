@@ -1,6 +1,6 @@
 function parseRawDataFiles(expDate)
-rawDataDir = '~/rawData/';
-cellDataDir = '~/analysis/cellData/';
+rawDataDir = '~/Documents/data/rawData/';
+cellDataDir = '~/Documents/analysis/cellData/';
 D_raw = dir(rawDataDir);
 D_cell = dir(cellDataDir);
 
