@@ -45,7 +45,7 @@ classdef LabDataGUI < handle
             %todo: figure out how to organize directory structure for
             %different projects / labData structures
             global ANALYSIS_FOLDER
-            global PREFERENCE_FILES_FOLDER
+            global PREFERENCE_FILES_FOLDER            
             folder_name = '';
             pre_part = '';
             while isempty(folder_name) || isempty(pre_part)
@@ -363,7 +363,7 @@ classdef LabDataGUI < handle
                 'ColumnName', {'Param', 'Operator', 'Value'}, ...
                 'ColumnEditable', logical([1 1 1]), ...
                 'CellEditCallback', @(uiobj, evt)obj.cellFilterTableEdit(evt), ...
-                'Data', cell(4,3));
+                'Data', cell(7,3));
             
             L_cellFilterPattern = uiextras.HBox('Parent',L_filterBox);
             cellFilterPatternText = uicontrol('Parent', L_cellFilterPattern, ...
@@ -387,7 +387,7 @@ classdef LabDataGUI < handle
                 'ColumnName', {'Param', 'Operator', 'Value'}, ...
                 'ColumnEditable', logical([1 1 1]), ...
                 'CellEditCallback', @(uiobj, evt)obj.epochFilterTableEdit(evt), ...
-                'Data', cell(4,3));
+                'Data', cell(7,3));
                         
             %'CellEditCallback', @(uiobj, evt)obj.filterTableEdit(evt), ...
             
@@ -786,6 +786,7 @@ classdef LabDataGUI < handle
             cellDataNames = get(obj.handles.cellDataList, 'String');
             v = get(obj.handles.cellDataList, 'Value');
             curName = cellDataNames{v};
+            %keyboard;
             if ~isempty(curName)
                 set(obj.fig, 'Name', ['LabDataGUI' ' (loading cellData struct)']);
                 drawnow;
@@ -794,6 +795,7 @@ classdef LabDataGUI < handle
                 obj.curCellData = cellData;
                 set(obj.fig, 'Name', ['LabDataGUI: ' obj.cellData_folder]);
             end
+            %keyboard;
         end
         
         function saveFilter(obj)
@@ -892,7 +894,7 @@ classdef LabDataGUI < handle
                         %                     if isempty(cellData.savedFileName)
                         %                         cellData.savedFileName = ['/Users/Greg/analysis/cellData/' cellData.rawfilename '.mat'];
                         %                     end
-                        save(cellData.savedFileName, 'cellData');
+                        save(cellData.savedFileName, 'cellData'); %TODO: saving to matlab.mat issue must be here!
                     end
                     
                     basename = strtok(d(i).name,'.mat');
@@ -900,7 +902,9 @@ classdef LabDataGUI < handle
                         %add epoch keys
                         obj.allEpochKeys = [obj.allEpochKeys cellData.getEpochKeysetUnion()];
                         %add cell keys
-                        obj.allCellTags = [obj.allCellTags cellData.tags.keys];
+                        tempKeys = cellData.tags.keys;
+                        tempKeys = tempKeys(setdiff(1:length(tempKeys), strcmp(tempKeys, '')));
+                        obj.allCellTags = [obj.allCellTags tempKeys];
                         
                         if ~isnan(cellData.epochs(1).get('amp2')) %if 2 amps
                             n1 = [basename '-Ch1'];
@@ -977,7 +981,7 @@ classdef LabDataGUI < handle
             set(obj.fig, 'Name', ['LabDataGUI: ' obj.cellData_folder]);
         end
         
-        function cellName = cellDataNameToCellName(obj, cellDataName)
+        function cellName = cellDataNameToCellName(obj, cellDataName) %TODO: this may not work for second and subsequent cells 
             cellName = cellDataName;
             L = length(obj.mergedCells);
             for i=1:L
@@ -1077,14 +1081,6 @@ classdef LabDataGUI < handle
                 if ~obj.tempAnswer, return; end
                 
                 if ~isempty(obj.tempAnswer)
-                    obj.labData.renameType(obj.curCellType, obj.cellNameChoice);
-                    %update labData structure
-                    D = obj.labData;
-                    save(obj.labData_fname, 'D');
-                    obj.loadTree();
-                    %obj.initializeCellTypeAndAnalysisMenus();
-                    
-                    
                     %reset name for each cell in cellData
                     curCells = get(node, 'Value');
                     cellTypeName = obj.cellNameChoice;
@@ -1115,7 +1111,16 @@ classdef LabDataGUI < handle
                             save(cellData.savedFileName, 'cellData');
                         end
                     end
-                   obj.loadTree(); 
+                    %update labData structure
+                    if isempty(obj.labData.getCellsOfType(obj.cellNameChoice)) %new type, so just change name                          
+                        obj.labData.renameType(obj.curCellType, obj.cellNameChoice);
+                    else %merge types
+                         obj.labData.mergeCellTypes(obj.curCellType, obj.cellNameChoice)
+                    end
+                    %save labData structure    
+                    D = obj.labData;
+                    save(obj.labData_fname, 'D');
+                    obj.loadTree();
                 end                
             elseif get(node, 'Depth') == 0 %individual cell
                 obj.assignCellType();
@@ -1188,8 +1193,10 @@ classdef LabDataGUI < handle
                 else
                     cellData.cellType = cellTypeName;
                 end
+                %keyboard;
                 save(cellData.savedFileName, 'cellData');
                 loadCurrentCellData(obj)
+                %keyboard;
                 
                 %update labData structure
                 if isempty(obj.labData.getCellType(obj.curCellName))
@@ -1607,6 +1614,9 @@ classdef LabDataGUI < handle
             end
         end
         
+        function delete(obj)
+           clear('classes'); 
+        end
     end
     
 end

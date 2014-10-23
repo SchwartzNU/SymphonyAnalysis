@@ -800,21 +800,26 @@ classdef CellDataCurator < handle
         
         function resizeWindow(obj)
             %filtTable
+            if isfield(obj.handles, 'filterTable')
             tablePos = get(obj.handles.filterTable,'Position');
             tableWidth = tablePos(3);
             col1W = round(tableWidth*.4);
             col2W = round(tableWidth*.10);
             col3W = round(tableWidth*.4);
             set(obj.handles.filterTable,'ColumnWidth',{col1W, col2W, col3W});
+            end
             
             %filter results table
+            if isfield(obj.handles, 'filterResultsTable')
             tablePos = get(obj.handles.filterResultsTable,'Position');
             tableWidth = tablePos(3);
             col1W = round(tableWidth*.25);
             col2W = round(tableWidth*.75);
             set(obj.handles.filterResultsTable,'ColumnWidth',{col1W, col2W});
+            end
             
             %curEpochTable
+            if isfield(obj.handles, 'curEpochTable')
             tablePos = get(obj.handles.curEpochTable,'Position');
             tableWidth = tablePos(3);
             col1W = round(tableWidth*.25);
@@ -822,6 +827,7 @@ classdef CellDataCurator < handle
             col3W = round(tableWidth*.25);
             col4W = round(tableWidth*.25);
             set(obj.handles.curEpochTable,'ColumnWidth',{col1W, col2W, col3W, col4W});
+            end
         end
         
     end

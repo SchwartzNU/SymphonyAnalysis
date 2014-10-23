@@ -45,7 +45,7 @@ classdef LabData < handle
                 cellNames = obj.cellTypes(typeName);
             else
                 cellNames = [];
-                warndlg(['Warning: Cell type ' typeName ' not found.']);
+                %warndlg(['Warning: Cell type ' typeName ' not found.']);
             end
         end
         
@@ -119,6 +119,11 @@ classdef LabData < handle
             curList = curList(~strcmp(cellName, curList));
             obj.cellTypes(oldTypeName) = curList;
             
+            %remove if empty
+            if isempty(curList)
+               obj.cellTypes.remove(oldTypeName);
+            end
+            
             %add to new list
             if obj.cellTypes.isKey(typeName)
                 obj.cellTypes(typeName) = [obj.cellTypes(typeName); cellName];
@@ -157,8 +162,13 @@ classdef LabData < handle
             end
         end
         
-        function mergeCellTypes(obj, type1, type2, newType)
-            
+        function mergeCellTypes(obj, type1, type2)
+            %merge type 1 into type 2
+            c1 = obj.getCellsOfType(type1);
+            for i=1:length(c1)
+               obj.addCell(c1{i}, type2); 
+            end
+            obj.cellTypes.remove(type1);
         end
         
         function cellNames = cellsWithDataSet(obj, dataSetName)

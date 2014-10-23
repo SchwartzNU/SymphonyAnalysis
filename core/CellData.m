@@ -37,9 +37,8 @@ classdef CellData < handle
             for i=1:L
                 EpochDataGroups = [EpochDataGroups info.Groups(i).Groups(2).Groups];
             end
-            
             Nepochs = length(EpochDataGroups);
-            
+            %keyboard;
             obj.epochs = EpochData.empty(Nepochs, 0);
             %keyboard;
             %deal with epoch order here, not recorded in order
