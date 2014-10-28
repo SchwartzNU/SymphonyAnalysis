@@ -879,8 +879,10 @@ classdef LabDataGUI < handle
                 else
                     cellType = cellData.cellType;
                 end
-                if isempty('cellType')
+                changedType = false;
+                if isempty(cellType)
                     cellType = 'unclassified';
+                    changedType = true;
                 end
                 obj.labData.addCell(cellNames{i}, cellType);
                 
@@ -895,7 +897,12 @@ classdef LabDataGUI < handle
                     if ~strcmp(cellData.savedFileName, curName)
                         disp(['Warning: updating save location for ' basename ' to ' curName]);
                         cellData.savedFileName = curName;
-                        save(cellData.savedFileName, 'cellData'); %TODO: saving to matlab.mat issue must be here!
+                        save(cellData.savedFileName, 'cellData'); 
+                    end
+                    if changedType
+                        disp('changed type');                        
+                        cellData.cellType = cellType;
+                        save(cellData.savedFileName, 'cellData');
                     end
                     
                     %add epoch keys

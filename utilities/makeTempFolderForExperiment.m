@@ -5,10 +5,17 @@ eval(['!mkdir ' ANALYSIS_FOLDER 'Projects' filesep 'tempProject']);
 cellNames = ls([ANALYSIS_FOLDER 'cellData' filesep expName 'c*.mat']);
 cellNames = strsplit(cellNames); %this will be different on windows - see doc ls
 fid = fopen([ANALYSIS_FOLDER 'Projects' filesep 'tempProject' filesep 'cellNames.txt'], 'w');
-for i=1:length(cellNames)   %does not consider merged cells: this needs to be done by hand for now
+
+cellBaseNames = cell(length(cellNames), 1);
+for i=1:length(cellNames)      
     [~, basename, ~] = fileparts(cellNames{i});
-    if ~isempty(basename)
-        fprintf(fid, '%s\n', basename);
+    cellBaseNames{i} = basename;    
+end
+
+cellBaseNames = mergeCellNames(cellBaseNames);
+for i=1:length(cellBaseNames)
+    if ~isempty(cellBaseNames{i})
+        fprintf(fid, '%s\n', cellBaseNames{i});
     end
 end
 fclose(fid);
