@@ -124,7 +124,7 @@ classdef BarsMultiSpeedAnalysis < AnalysisTree
                     rootData.Speed = bit8node.Speed / 1000; %mm/s
                     
                     Xvals = min(rootData.Speed):.01:max(rootData.Speed);
-                    combinedResp_fit = interp1(rootData.Speed,  rootData.combinedResp_norm, Xvals, 'cubic');
+                    combinedResp_fit = interp1(rootData.Speed,  rootData.combinedResp_norm, Xvals, 'pchip');
                     slope = diff(combinedResp_fit)./10; %units of fractional change per mm/s                    
                     
                     rootData.selectivityRange_up = Xvals(slope>.2E-3);

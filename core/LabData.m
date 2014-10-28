@@ -1,7 +1,6 @@
 classdef LabData < handle
     properties
         cellTypes = containers.Map; %keys are cell type names (e.g. On Alpha), values are cell names (e.g. 042214Ac1)
-        dataSetAnalyses = containers.Map %read from text file, keys are data set names, values are analysis names
         allDataSets = containers.Map %keys are cell names, values are cell arrays of data set names
         analysisFolder;
     end
@@ -12,9 +11,13 @@ classdef LabData < handle
             obj.analysisFolder = ANALYSIS_FOLDER;
             
             %clear everything
-            cellTypes = containers.Map; %keys are cell type names (e.g. On Alpha), values are cell names (e.g. 042214Ac1)
-            dataSetAnalyses = containers.Map; %read from text file, keys are data set names, values are analysis names
-            allDataSets = containers.Map;
+            obj.cellTypes = containers.Map; %keys are cell type names (e.g. On Alpha), values are cell names (e.g. 042214Ac1)
+            obj.allDataSets = containers.Map;
+        end
+        
+        function clearContents(obj)
+            obj.cellTypes = containers.Map; %keys are cell type names (e.g. On Alpha), values are cell names (e.g. 042214Ac1)
+            obj.allDataSets = containers.Map;
         end
         
         function val = hasCell(obj, cellName)
