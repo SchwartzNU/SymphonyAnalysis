@@ -1137,9 +1137,9 @@ classdef LabDataGUI < handle
             cellData_proj_folder = uigetdir(ANALYSIS_FOLDER, 'Choose project folder');
             %add to cellNames text file, creating it if necessary
             if ~exist([cellData_proj_folder 'cellNames.txt'], 'file');
-                fid = fopen([cellData_proj_folder 'cellNames.txt'], 'w');
+                fid = fopen([cellData_proj_folder filesep 'cellNames.txt'], 'w');
             else
-                fid = fopen([cellData_proj_folder 'cellNames.txt'], 'a');
+                fid = fopen([cellData_proj_folder filesep 'cellNames.txt'], 'a');
             end
             for i=1:length(cellNames)
                 fprintf(fid, '%s\n', cellNames{i});
