@@ -37,9 +37,8 @@ classdef CellData < handle
             for i=1:L
                 EpochDataGroups = [EpochDataGroups info.Groups(i).Groups(2).Groups];
             end
-            
             Nepochs = length(EpochDataGroups);
-            
+            %keyboard;
             obj.epochs = EpochData.empty(Nepochs, 0);
             %keyboard;
             %deal with epoch order here, not recorded in order
@@ -343,6 +342,15 @@ classdef CellData < handle
             end
         end
         
+        function val = filterCell(obj, queryString)
+            %returns true or false for this cell
+            if strcmp(queryString, '?') || isempty(queryString)
+                val = true;
+            else
+                M = obj; %variable name of map in query string is M
+                val = eval(queryString);
+            end
+        end
         
         function resetRawDataFolder(obj, autoDir)            
             global RAW_DATA_FOLDER
@@ -374,10 +382,12 @@ classdef CellData < handle
             save(obj.savedFileName, 'cellData');
         end
         
-        function val = get(obj, paramName)
-            if ~obj.attributes.isKey(paramName)
+        function val = get(obj, paramName) %checks attributes and tags
+            if ~obj.attributes.isKey(paramName) && ~obj.tags.isKey(paramName)
                 %disp(['Error: ' paramName ' not found']);
                 val = nan;
+            elseif obj.tags.isKey(paramName) %tags take precedence over attributes
+                val = obj.tags(paramName);
             else
                 val = obj.attributes(paramName);
             end

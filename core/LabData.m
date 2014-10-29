@@ -1,7 +1,6 @@
 classdef LabData < handle
     properties
         cellTypes = containers.Map; %keys are cell type names (e.g. On Alpha), values are cell names (e.g. 042214Ac1)
-        dataSetAnalyses = containers.Map %read from text file, keys are data set names, values are analysis names
         allDataSets = containers.Map %keys are cell names, values are cell arrays of data set names
         analysisFolder;
     end
@@ -12,18 +11,22 @@ classdef LabData < handle
             obj.analysisFolder = ANALYSIS_FOLDER;
             
             %clear everything
-            cellTypes = containers.Map; %keys are cell type names (e.g. On Alpha), values are cell names (e.g. 042214Ac1)
-            dataSetAnalyses = containers.Map; %read from text file, keys are data set names, values are analysis names
-            allDataSets = containers.Map;
+            obj.cellTypes = containers.Map; %keys are cell type names (e.g. On Alpha), values are cell names (e.g. 042214Ac1)
+            obj.allDataSets = containers.Map;
+        end
+        
+        function clearContents(obj)
+            obj.cellTypes = containers.Map; %keys are cell type names (e.g. On Alpha), values are cell names (e.g. 042214Ac1)
+            obj.allDataSets = containers.Map;
         end
         
         function val = hasCell(obj, cellName)
-           allCells = obj.allCellNames();
-           if strcmp(allCells, cellName)
-               val = true;
-           else
-               val = false;
-           end
+            allCells = obj.allCellNames();
+            if strcmp(allCells, cellName)
+                val = true;
+            else
+                val = false;
+            end
         end
         
         function typeName = getCellType(obj, cellName)
@@ -45,7 +48,7 @@ classdef LabData < handle
                 cellNames = obj.cellTypes(typeName);
             else
                 cellNames = [];
-                warndlg(['Warning: Cell type ' typeName ' not found.']);
+                %warndlg(['Warning: Cell type ' typeName ' not found.']);
             end
         end
         
@@ -72,7 +75,7 @@ classdef LabData < handle
             else
                 %answer = questdlg(['Add new cell type ' typeName '?'] , 'New cell type warning:', 'No','Yes','Yes');
                 %if strcmp(answer, 'Yes')
-                    obj.cellTypes(typeName) = {cellName};
+                obj.cellTypes(typeName) = {cellName};
                 %end
             end
             obj.updateDataSets(cellName);
@@ -119,14 +122,19 @@ classdef LabData < handle
             curList = curList(~strcmp(cellName, curList));
             obj.cellTypes(oldTypeName) = curList;
             
+            %remove if empty
+            if isempty(curList)
+                obj.cellTypes.remove(oldTypeName);
+            end
+            
             %add to new list
             if obj.cellTypes.isKey(typeName)
                 obj.cellTypes(typeName) = [obj.cellTypes(typeName); cellName];
             else
-                answer = questdlg(['Add new cell type ' typeName '?'] , 'New cell type warning:', 'No','Yes','Yes');
-                if strcmp(answer, 'Yes')
-                    obj.cellTypes(typeName) = {cellName};
-                end
+                %answer = questdlg(['Add new cell type ' typeName '?'] , 'New cell type warning:', 'No','Yes','Yes');
+                %if strcmp(answer, 'Yes')
+                obj.cellTypes(typeName) = {cellName};
+                %end
             end
             
         end
@@ -134,9 +142,9 @@ classdef LabData < handle
         function clearEmptyTypes(obj)
             allTypes = obj.allCellTypes();
             for i=1:length(allTypes)
-               if isempty(obj.cellTypes(allTypes{i}))
-                   obj.cellTypes.remove(allTypes{i});
-               end
+                if isempty(obj.cellTypes(allTypes{i}))
+                    obj.cellTypes.remove(allTypes{i});
+                end
             end
         end
         
@@ -145,7 +153,7 @@ classdef LabData < handle
             if ~any(strcmp(cellName, allCells))
                 errordlg(['Cell ' cellName ' not found']);
                 return
-            end            
+            end
             typeName = obj.getCellType(cellName);
             curList = obj.cellTypes(typeName);
             curList = curList(~strcmp(cellName, curList));
@@ -157,8 +165,13 @@ classdef LabData < handle
             end
         end
         
-        function mergeCellTypes(obj, type1, type2, newType)
-            
+        function mergeCellTypes(obj, type1, type2)
+            %merge type 1 into type 2
+            c1 = obj.getCellsOfType(type1);
+            for i=1:length(c1)
+                obj.addCell(c1{i}, type2);
+            end
+            obj.cellTypes.remove(type1);
         end
         
         function cellNames = cellsWithDataSet(obj, dataSetName)
@@ -168,7 +181,7 @@ classdef LabData < handle
                 curCell = allCells{i};
                 if strmatch(dataSetName, obj.allDataSets(curCell))
                     cellNames = [cellNames; curCell];
-                end                    
+                end
             end
         end
         
@@ -207,20 +220,20 @@ classdef LabData < handle
                 curCellName = strrep(curCellName, '-Ch2', '');
                 
                 %deal with cells split across two files
-                [curCellNameParts{1}, remStr] = strtok(curCellName, ',');                
+                [curCellNameParts{1}, remStr] = strtok(curCellName, ',');
                 if isempty(remStr), curCellNameParts = {}; end
                 z=2;
                 while ~isempty(remStr)
                     [cellNamePart, remStr] = strtok(remStr, ',');
                     if ~isempty(cellNamePart)
-                        curCellNameParts{z} = strtrim(cellNamePart);                   
+                        curCellNameParts{z} = strtrim(cellNamePart);
                     end
                     z=z+1;
-                end                
+                end
                 if isempty(curCellNameParts)
                     load([obj.analysisFolder 'cellData' filesep curCellName]); %loads cellData
                     obj.allDataSets(curCellName_orig) = cellData.savedDataSets.keys;
-                else                    
+                else
                     for j=1:length(curCellNameParts)
                         load([obj.analysisFolder 'cellData' filesep curCellNameParts{j}]); %loads cellData
                         if j==1
@@ -238,12 +251,12 @@ classdef LabData < handle
             dataSets = obj.allDataSets(cellName);
             for i=1:length(dataSets)
                 disp(dataSets{i});
-            end            
+            end
         end
         
         function displayCellTypes(obj)
             cellTypeKeys = obj.cellTypes.keys;
-            for i=1:length(cellTypeKeys)                
+            for i=1:length(cellTypeKeys)
                 disp([cellTypeKeys{i} ': ' num2str(length(obj.cellTypes(cellTypeKeys{i})))]);
             end
         end
@@ -256,33 +269,33 @@ classdef LabData < handle
             if ischar(cellNames)
                 cellNames = {cellNames};
             end
-            for i=1:length(cellNames)                
+            for i=1:length(cellNames)
                 curCellName = cellNames{i};
                 disp(['Analyzing cell ' curCellName ': ' num2str(i) ' of ' num2str(length(cellNames))]);
                 %deal with cells split across two files
-                [curCellNameParts{1}, remStr] = strtok(curCellName, ',');                
+                [curCellNameParts{1}, remStr] = strtok(curCellName, ',');
                 if isempty(remStr), curCellNameParts = {}; end
                 z=2;
                 while ~isempty(remStr)
                     [cellNamePart, remStr] = strtok(remStr, ',');
                     if ~isempty(cellNamePart)
-                        curCellNameParts{z} = strtrim(cellNamePart);                   
+                        curCellNameParts{z} = strtrim(cellNamePart);
                     end
                     z=z+1;
-                end                
+                end
                 if isempty(curCellNameParts)
                     cellAnalysisTree = analyzeCell(curCellName);
                     save([obj.analysisFolder 'analysisTrees' filesep curCellName], 'cellAnalysisTree');
-                else                   
+                else
                     for j=1:length(curCellNameParts)
                         %j
                         %curCellNameParts{j}
-                        cellAnalysisTree = analyzeCell(curCellNameParts{j});                        
-                        save([obj.analysisFolder 'analysisTrees' filesep curCellNameParts{j}], 'cellAnalysisTree');    
+                        cellAnalysisTree = analyzeCell(curCellNameParts{j});
+                        save([obj.analysisFolder 'analysisTrees' filesep curCellNameParts{j}], 'cellAnalysisTree');
                     end
                 end
             end
-        end        
+        end
         
         function resultTree = collectCells(obj, cellNames)
             %cellNames can be a single str or a cell array of cell names
@@ -295,32 +308,32 @@ classdef LabData < handle
             nodeData.name = 'Collected cells tree: multiple cells';
             resultTree = resultTree.set(1, nodeData);
             
-            for i=1:length(cellNames)                
+            for i=1:length(cellNames)
                 curCellName = cellNames{i};
                 disp(['Collecting cell ' curCellName ': ' num2str(i) ' of ' num2str(length(cellNames))]);
                 %deal with cells split across two files
-                [curCellNameParts{1}, remStr] = strtok(curCellName, ',');                
+                [curCellNameParts{1}, remStr] = strtok(curCellName, ',');
                 if isempty(remStr), curCellNameParts = {}; end
                 z=2;
                 while ~isempty(remStr)
                     [cellNamePart, remStr] = strtok(remStr, ',');
                     if ~isempty(cellNamePart)
-                        curCellNameParts{z} = strtrim(cellNamePart);                   
+                        curCellNameParts{z} = strtrim(cellNamePart);
                     end
                     z=z+1;
-                end                
+                end
                 if isempty(curCellNameParts)
                     load([obj.analysisFolder 'analysisTrees' filesep curCellName]);
                     if length(cellAnalysisTree.Node)>1
                         resultTree = resultTree.graft(1, cellAnalysisTree);
                     end
-                else                   
+                else
                     splitCellTree = AnalysisTree;
                     nodeData = struct;
                     nodeData.name = ['Split cell: ' curCellName];
-                    splitCellTree = splitCellTree.set(1, nodeData);                    
+                    splitCellTree = splitCellTree.set(1, nodeData);
                     for j=1:length(curCellNameParts)
-                        load([obj.analysisFolder 'analysisTrees' filesep curCellNameParts{j}]); 
+                        load([obj.analysisFolder 'analysisTrees' filesep curCellNameParts{j}]);
                         if length(cellAnalysisTree.Node)>1
                             splitCellTree = splitCellTree.graft(1, cellAnalysisTree);
                         end
@@ -333,14 +346,17 @@ classdef LabData < handle
             end
         end
         
-        function resultTree = collectAnalysis(obj, analysisName, cellTypes, filter)
+        function resultTree = collectAnalysis(obj, analysisName, cellTypes, cellFilter, epochFilter)
             %if overwriteFlag is true, this will recompute the analysis for
-            %each cell and save it in the cell's own analysisTree file
+            %each cell
             %it should always compute the analysis if the cell has the
             %matching dataset (not the current behavior of collectAnalysis)
+            if nargin < 5
+                epochFilter = [];
+            end
             if nargin < 4
-                filter = [];
-            end            
+                cellFilter = [];
+            end
             if nargin < 3
                 cellTypes = obj.allCellTypes;
             end
@@ -360,7 +376,7 @@ classdef LabData < handle
                 curTypeTree = AnalysisTree;
                 nodeData.name = [curType];
                 curTypeTree = curTypeTree.set(1, nodeData);
-                                
+                
                 cellNames = obj.getCellsOfType(curType);
                 for j=1:length(cellNames);
                     curCellName = cellNames{j};
@@ -378,31 +394,20 @@ classdef LabData < handle
                         z=z+1;
                     end
                     if isempty(curCellNameParts)
-                        curResultTree = doSingleAnalysis(cellNames{j}, analysisName, filter);
+                        curResultTree = doSingleAnalysis(cellNames{j}, analysisName, cellFilter, epochFilter);
                         if ~isempty(curResultTree)
                             curTypeTree = curTypeTree.graft(1, curResultTree);
                         end
                     else
                         for k=1:length(curCellNameParts)
-                            curResultTree = doSingleAnalysis(curCellNameParts{k}, analysisName, filter);
+                            curResultTree = doSingleAnalysis(curCellNameParts{k}, analysisName, cellFilter, epochFilter);
                             if ~isempty(curResultTree)
                                 curTypeTree = curTypeTree.graft(1, curResultTree);
                             end
-%                             if ~isempty(tempResultTree)
-%                                 %graft on children
-%                                 chInd = tempResultTree.getchildren(1);
-%                                 for c=1:length(chInd)
-%                                     curResultTree = curResultTree.graft(1,subtree(tempResultTree, chInd(c)));
-%                                 end
-%                             end
-%                             
+                            
                         end
-%                         if ~isempty(curResultTree)
-%                             resultTree = resultTree.graft(1, curResultTree);
-%                         end
-                        
-                    end 
-
+                    end
+                    
                 end
                 if length(curTypeTree.Node)>1
                     resultTree = resultTree.graft(1, curTypeTree);

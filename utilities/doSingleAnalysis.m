@@ -1,10 +1,10 @@
-function resultTree = doSingleAnalysis(cellName, analysisClassName, filter)
-if nargin < 3
-    filter = [];
+function resultTree = doSingleAnalysis(cellName, analysisClassName, cellFilter, epochFilter)
+if nargin < 4
+    epochFilter = [];
 end
-
-%maybe remove this
-%overwrite = true;
+if nargin < 3
+    cellFilter = [];
+end
 
 global ANALYSIS_FOLDER
 global PREFERENCE_FILES_FOLDER
@@ -53,14 +53,23 @@ resultTree = resultTree.set(1, nodeData);
 load([ANALYSIS_FOLDER 'cellData' filesep cellName]);
 dataSetKeys = cellData.savedDataSets.keys;
 
+%run cell filter 
+if ~isempty(cellFilter);
+    analyzeThisCell = cellData.filterCell(cellFilter.makeQueryString());
+    if ~analyzeThisCell
+        resultTree = [];
+        return;
+    end
+end
+
 for i=1:length(dataSetKeys);
     T = [];
     analyzeDataSet = false;
     curDataSet = dataSetKeys{i};
     if strfind(curDataSet, analysisTable{1}{analysisInd}) %if correct data set type
-        %evaluate filter
-        if ~isempty(filter)
-            filterOut = cellData.filterEpochs(filter.makeQueryString(), cellData.savedDataSets(curDataSet));
+        %evaluate epochFilter
+        if ~isempty(epochFilter)
+            filterOut = cellData.filterEpochs(epochFilter.makeQueryString(), cellData.savedDataSets(curDataSet));
             if length(filterOut) == length(cellData.savedDataSets(curDataSet)) %all epochs match filter
                 analyzeDataSet = true;
             end
@@ -93,6 +102,7 @@ for i=1:length(dataSetKeys);
                 end
             end
         end
+        
         if ~usePrefs
             params = params_deviceOnly;
             params.class = analysisClassName;
@@ -105,37 +115,6 @@ for i=1:length(dataSetKeys);
             end
         end
         
-        
-        %         if overwrite %this block replaces (or adds) this analysis tree to the cell analysis file
-%             %try to load existing analysis trees
-%             if exist([ANALYSIS_FOLDER 'analysisTrees' filesep cellName_orig '.mat'], 'file')
-%                 load([ANALYSIS_FOLDER 'analysisTrees' filesep cellName_orig]);
-%                 chInd = cellAnalysisTree.getchildren(1);
-%                 treeGrafted = false;
-%                 for j=1:length(chInd)
-%                     curChildData = cellAnalysisTree.get(chInd(j));
-%                     if strcmp(curChildData.name, T.get(1).name) %same analysis and data set
-%                         %chop and graft new analysis tree
-%                         cellAnalysisTree = cellAnalysisTree.chop(chInd(j));
-%                         cellAnalysisTree = cellAnalysisTree.graft(1, T);  
-%                         treeGrafted = true;
-%                     end
-%                 end
-%                 if ~treeGrafted
-%                     cellAnalysisTree = cellAnalysisTree.graft(1, T); 
-%                 end                
-%             else %make new file
-%                 cellAnalysisTree = AnalysisTree;
-%                 nodeData.name = ['Full cell analysis tree: ' cellName];
-%                 nodeData.device = params.deviceName;
-%                 cellAnalysisTree = cellAnalysisTree.set(1, nodeData);
-%                 cellAnalysisTree = cellAnalysisTree.graft(1, T);                 
-%             end
-%             save([ANALYSIS_FOLDER 'analysisTrees' filesep cellName_orig]);
-%         end        
-
-        %T
-        %disp(['resultTree length = ' num2str(length(resultTree.getchildren(1)))]);
     end
 end
 

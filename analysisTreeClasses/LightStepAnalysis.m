@@ -3,7 +3,7 @@ classdef LightStepAnalysis < AnalysisTree
         
         StartTime = 0;
         EndTime = 1000;
-        respType = 'Peak';
+        respType = 'Charge';
         
     end
     
