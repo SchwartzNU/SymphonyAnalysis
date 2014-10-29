@@ -214,7 +214,7 @@ classdef SpikeDetectorGUI < handle
                 case 'escape'
                     delete(obj.fig);
                 otherwise
-                    disp(evt.Key);
+                    %disp(evt.Key);
             end
         end
         
