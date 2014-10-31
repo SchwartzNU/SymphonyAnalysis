@@ -868,38 +868,77 @@ classdef LabDataGUI < handle
             cellNames = temp{1};
             fclose(fid);
                         
+            allLoadedParts = [];
             for i=1:length(cellNames)
                 disp(['Loading ' cellNames{i} ': cell ' num2str(i) ' of ' num2str(length(cellNames))]);
                 cellDataNames = cellNameToCellDataNames(cellNames{i});
-                %add cell to list
-                obj.fullCellList = [obj.fullCellList cellNames{i}];
-                %figure out cellType and add cell to labData
-                curName = [cellDataFolder cellDataNames{1}];
-                load(curName); %loads cellData
-                %check if channel 2                
-                if ~isnan(cellData.epochs(1).get('amp2')) %if 2 amps
+                                  
+                changedType = false;
+                twoCellsAdded = false;
+                cellNameParts = textscan(cellNames{i}, '%s', 'delimiter', ',');
+                cellNameParts = cellNameParts{1}; %quirk of textscan
+                allLoadedParts = [allLoadedParts; cellNameParts];
+                %check if 2 channel for any part
+                has2amps = false;
+                twoAmpInd = 0;
+                for j=1:length(cellDataNames)
+                    %figure out cellType and add cell to labData
+                    curName = [cellDataFolder cellDataNames{j}];
+                    load(curName); %loads cellData
+                    if ~isnan(cellData.epochs(1).get('amp2')) %if 2 amps
+                        has2amps = true;
+                        twoAmpInd = j;
+                    end
+                end
+                
+                if has2amps 
+                        curName = [cellDataFolder cellDataNames{twoAmpInd}];
+                        load(curName); %loads cellData
                         [ch1Type, ch2Type] = strtok(cellData.cellType, ';');
                         if length(ch2Type)>1
                             ch2Type = ch2Type(2:end);
                         end
-                    part1Name = strtok(cellNames{i}, ',');
-                    if strfind(part1Name, '-Ch2')
-                        disp('Found Ch2');
+                    if ~isempty(cell2mat(strfind(cellNameParts, '-Ch1')))
+                        %disp('Found Ch1');
+                        cellType = ch1Type;
+                    elseif ~isempty(cell2mat(strfind(cellNameParts, '-Ch2')))
+                        %disp('Found Ch2');
                         cellType = ch2Type;
-                    else
-                        disp('Getting Ch1 type');
-                        cellType = ch1Type;                        
+                    else %need to add both cells 
+                        %disp('adding both cells');
+                        twoCellsAdded = true;
+                        cellType = ch1Type; 
+                        if isempty(cellType)
+                            cellType = 'unclassified';
+                            changedType = true;
+                        end
+                        if sum(strcmp(allLoadedParts, [cellNames{i} '-Ch1'])) == 0
+                            obj.labData.addCell([cellNames{i} '-Ch1'], cellType);
+                            obj.fullCellList = [obj.fullCellList [cellNames{i} '-Ch1']];
+                        end
+                        cellType = ch2Type;
+                        if isempty(cellType)
+                            cellType = 'unclassified';
+                            changedType = true;
+                        end
+                        if sum(strcmp(allLoadedParts, [cellNames{i} '-Ch2'])) == 0
+                            obj.labData.addCell([cellNames{i} '-Ch2'], cellType);
+                            obj.fullCellList = [obj.fullCellList [cellNames{i} '-Ch2']];
+                        end                        
                     end
                 else
                     cellType = cellData.cellType;
                 end
-                changedType = false;
+                
                 if isempty(cellType)
                     cellType = 'unclassified';
                     changedType = true;
                 end
-                obj.labData.addCell(cellNames{i}, cellType);
-                
+                if ~twoCellsAdded
+                     %add cell to list
+                    obj.fullCellList = [obj.fullCellList cellNames{i}];
+                    obj.labData.addCell(cellNames{i}, cellType);
+                end
                 
                 for j=1:length(cellDataNames)
                     obj.fullCellDataList = [obj.fullCellDataList cellDataNames{j}];
