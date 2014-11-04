@@ -117,6 +117,7 @@ classdef EpochData < handle
         end
         
         function [data, xvals, units] = getData(obj, streamName)
+            global RAW_DATA_FOLDER;
             if nargin < 2
                 streamName = 'Amplifier_Ch1';
             end
@@ -126,7 +127,7 @@ classdef EpochData < handle
                 xvals = [];
                 units = '';
             else
-                temp = h5read(fullfile(obj.parentCell.rawfilepath, [obj.parentCell.rawfilename '.h5']),obj.dataLinks(streamName));
+                temp = h5read(fullfile(RAW_DATA_FOLDER, [obj.parentCell.savedFileName '.h5']),obj.dataLinks(streamName));
                 data = temp.quantity;
                 units = deblank(temp.unit(:,1)');
                 sampleRate = obj.get('sampleRate');

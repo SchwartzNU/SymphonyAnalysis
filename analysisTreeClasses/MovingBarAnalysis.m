@@ -18,7 +18,7 @@ classdef MovingBarAnalysis < AnalysisTree
                 params.holdSignalParam = 'amp2HoldSignal';
             end            
             
-            nameStr = [cellData.rawfilename ': ' dataSetName ': MovingBarAnalysis'];            
+            nameStr = [cellData.savedFileName ': ' dataSetName ': MovingBarAnalysis'];            
             obj = obj.setName(nameStr);
             dataSet = cellData.savedDataSets(dataSetName);
             obj = obj.copyAnalysisParams(params);

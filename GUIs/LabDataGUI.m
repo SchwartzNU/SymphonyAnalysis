@@ -532,8 +532,9 @@ classdef LabDataGUI < handle
             obj.curDataSets = cellNameToCellDataNames(obj.curCellName);
             dataSetsList = {};
             for i=1:length(obj.curDataSets)
-                curName =[cellDataFolder obj.curDataSets{i} '.mat'];
-                load(curName);
+                %curName =[cellDataFolder obj.curDataSets{i} '.mat'];
+                %load(curName);
+                cellData = loadAndSyncCellData(obj.curDataSets{i});
                 dataSetsList = [dataSetsList, cellData.savedDataSets.keys];
             end
             
@@ -580,8 +581,7 @@ classdef LabDataGUI < handle
         
         function deletePrefsMap(obj)
                 obj.curCellData.prefsMapName = '';
-                cellData = obj.curCellData;
-                save(cellData.savedFileName, 'cellData'); %save cellData file
+                saveAndSyncCellData(obj.curCellData); %save cellData file
                 obj.curPrefsMap = [];
                 set(obj.handles.prefsMapList, 'String', obj.curCellData.prefsMapName);
                 obj.updatePrefsMapElements();
@@ -593,8 +593,7 @@ classdef LabDataGUI < handle
             fname = uigetfile(prefsMapSpec, 'Select prefsMap text file');
             if ~isempty(fname)
                 obj.curCellData.prefsMapName = fname;
-                cellData = obj.curCellData;
-                save(cellData.savedFileName, 'cellData'); %save cellData file
+                saveAndSyncCellData(obj.curCellData); %save cellData file
                 obj.curPrefsMap = loadPrefsMap(fname);
                 set(obj.handles.prefsMapList, 'String', obj.curCellData.prefsMapName);
                 obj.updatePrefsMapElements();
@@ -780,9 +779,7 @@ classdef LabDataGUI < handle
                 for i=1:length(obj.curDataSets)
                     load([cellDataFolder filesep obj.curDataSets{i}]);
                     cellData.imageFile = fullfile(pathname, fname);
-                    %save([cellDataFolder filesep obj.curDataSets{i}],
-                    %'cellData'); TODO: fix this to save the alias
-                    %correctly
+                    saveAndSyncCellData(obj.curCellData); %save cellData file
                 end
             end
             
@@ -799,8 +796,9 @@ classdef LabDataGUI < handle
             if ~isempty(curName)
                 set(obj.fig, 'Name', ['LabDataGUI' ' (loading cellData struct)']);
                 drawnow;
-                curName_fixed = [cellDataFolder curName '.mat'];
-                load(curName_fixed);
+                %curName_fixed = [cellDataFolder curName '.mat'];
+                %load(curName_fixed);
+                cellData = loadAndSyncCellData(curName);
                 obj.curCellData = cellData;
                 set(obj.fig, 'Name', ['LabDataGUI: ' obj.projName]);
             end
@@ -883,8 +881,9 @@ classdef LabDataGUI < handle
                 twoAmpInd = 0;
                 for j=1:length(cellDataNames)
                     %figure out cellType and add cell to labData
-                    curName = [cellDataFolder cellDataNames{j}];
-                    load(curName); %loads cellData
+                    %curName = [cellDataFolder cellDataNames{j}];
+                    %load(curName); %loads cellData
+                    cellData = loadAndSyncCellData(cellDataNames{j});
                     if ~isnan(cellData.epochs(1).get('amp2')) %if 2 amps
                         has2amps = true;
                         twoAmpInd = j;
@@ -892,8 +891,9 @@ classdef LabDataGUI < handle
                 end
                 
                 if has2amps 
-                        curName = [cellDataFolder cellDataNames{twoAmpInd}];
-                        load(curName); %loads cellData
+                        %curName = [cellDataFolder cellDataNames{twoAmpInd}];
+                        %load(curName); %loads cellData
+                        cellData = loadAndSyncCellData(cellDataNames{twoAmpInd});
                         [ch1Type, ch2Type] = strtok(cellData.cellType, ';');
                         if length(ch2Type)>1
                             ch2Type = ch2Type(2:end);
@@ -942,20 +942,21 @@ classdef LabDataGUI < handle
                 
                 for j=1:length(cellDataNames)
                     obj.fullCellDataList = [obj.fullCellDataList cellDataNames{j}];
-                    curName = [cellDataFolder cellDataNames{j}];
-                    load(curName); %loads cellData
+                    %curName = [cellDataFolder cellDataNames{j}];
+                    %load(curName); %loads cellData
+                    cellData = loadAndSyncCellData(cellDataNames{j});
                     
-                    %automatically fix cellData save locations here
-                    [~, basename, ~] = fileparts(curName);
-                    if ~strcmp(cellData.savedFileName, curName)
-                        disp(['Warning: updating save location for ' basename ' to ' curName]);
-                        cellData.savedFileName = curName;
-                        save(cellData.savedFileName, 'cellData'); 
-                    end
+%                     %automatically fix cellData save locations here
+%                     [~, basename, ~] = fileparts(curName);
+%                     if ~strcmp(cellData.savedFileName, curName)
+%                         disp(['Warning: updating save location for ' basename ' to ' curName]);
+%                         cellData.savedFileName = curName;
+%                         save(cellData.savedFileName, 'cellData'); 
+%                     end
                     if changedType
                         disp('changed type');                        
                         cellData.cellType = cellType;
-                        save(cellData.savedFileName, 'cellData');
+                        saveAndSyncCellData(cellData); %save cellData file
                     end
                     
                     %add epoch keys
@@ -1052,8 +1053,9 @@ classdef LabDataGUI < handle
                     for c=1:length(curCells)
                         cellDataNames = cellNameToCellDataNames(curCells(c).toCharArray');
                         for i=1:length(cellDataNames)
-                            curName = [cellDataFolder cellDataNames{i} '.mat'];
-                            load(curName);                            
+                            %curName = [cellDataFolder cellDataNames{i} '.mat'];
+                            %load(curName);  
+                            cellData = loadAndSyncCellData(cellDataNames{i});
                             if ~isnan(cellData.epochs(1).get('amp2')) %if 2 amps
                                 if strfind(cellData.cellType, ';')
                                     [cell1Name, cell2Name] = strtok(cellData.cellType, ';');
@@ -1073,7 +1075,7 @@ classdef LabDataGUI < handle
                             else
                                 cellData.cellType = cellTypeName;
                             end
-                            save(cellData.savedFileName, 'cellData');
+                            saveAndSyncCellData(cellData) %save cellData file
                         end
                     end
                     %update labData structure
@@ -1156,7 +1158,7 @@ classdef LabDataGUI < handle
                     cellData.cellType = cellTypeName;
                 end
                 %keyboard;
-                save(cellData.savedFileName, 'cellData');
+                saveAndSyncCellData(cellData) %save cellData file
                 loadCurrentCellData(obj)
                 %keyboard;
                 
@@ -1299,7 +1301,7 @@ classdef LabDataGUI < handle
                 for i=1:length(cellDataNames)
                     load([obj.cellData_folder filesep cellDataNames{i} '.mat']); %loads cellData
                     cellData.tags(obj.curTag) = obj.curTagVal;
-                    save(cellData.savedFileName, 'cellData');
+                    saveAndSyncCellData(cellData) %save cellData file
                 end
             end
         end

@@ -162,7 +162,7 @@ classdef TreeBrowserGUI < handle
             L_plotButtons = uiextras.HButtonBox('Parent', L_plot, ...
                 'HorizontalAlignment', 'left', ...
                 'VerticalAlignment', 'bottom', ...
-                'ButtonSize', [80, 30]);
+                'ButtonSize', [140, 30]);
             
             obj.handles.popFigButton = uicontrol('Parent', L_plotButtons, ...
                 'Style', 'pushbutton', ...
@@ -173,6 +173,12 @@ classdef TreeBrowserGUI < handle
                 'Style', 'pushbutton', ...
                 'String', 'Figure to Igor', ...
                 'Callback', @(uiobj, evt)obj.figToIgor);
+            
+            obj.handles.rawDataToCommandLine = uicontrol('Parent', L_plotButtons, ...
+                'Style', 'pushbutton', ...
+                'String', 'Raw data to command line', ...
+                'Callback', @(uiobj, evt)obj.rawDataToCommandLine);
+            
             
             set(L_plot, 'Sizes', [-1, 50])
             
@@ -452,7 +458,7 @@ classdef TreeBrowserGUI < handle
                    exportStructToHDF5(nodeData, fullfile(pathname, fname), datasetName);
                end               
            end
-        end
+        end 
         
         function popFig(obj)
             h = figure;
@@ -462,11 +468,25 @@ classdef TreeBrowserGUI < handle
         function figToIgor(obj)
             makeAxisStruct(obj.handles.plotAxes, obj.igorh5Folder);
         end
-        
-        
-        function nodeToMatlab(obj)
+                
+        function rawDataToCommandLine(obj)
             selectedNodes = get(obj.guiTree, 'selectedNodes');
             curNodeIndex = get(selectedNodes(1), 'Value');
+            nodeData = obj.analysisTree.get(curNodeIndex);
+            [meanData, timeAxis] = obj.curCellData.getMeanData(nodeData.epochID);
+            L = length(nodeData.epochID);
+            dataMatrix = zeros(L, length(meanData));
+            for i=1
+                dataMatrix(i,:) = obj.curCellData.epochs(nodeData.epochID(i)).getData()';
+            end
+            assignin('base', 'meanData', meanData);
+            assignin('base', 'timeAxis', timeAxis);
+            assignin('base', 'dataMatrix', dataMatrix);
+        end
+        
+        function nodeToMatlab(obj)
+           selectedNodes = get(obj.guiTree, 'selectedNodes');
+           curNodeIndex = get(selectedNodes(1), 'Value');
            nodeData = obj.analysisTree.get(curNodeIndex);
            assignin('base', 'nodeData', nodeData);
         end

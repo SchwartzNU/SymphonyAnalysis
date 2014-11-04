@@ -9,7 +9,7 @@ classdef IVAnalysis < AnalysisTree
                 params.deviceName = 'Amplifier_Ch1';
             end
             
-            nameStr = [cellData.rawfilename ': ' dataSetName ': IVAnalysis'];
+            nameStr = [cellData.savedFileName ': ' dataSetName ': IVAnalysis'];
             obj = obj.setName(nameStr);
             obj = obj.copyAnalysisParams(params);
             dataSet = cellData.savedDataSets(dataSetName);

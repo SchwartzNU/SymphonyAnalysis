@@ -4,8 +4,6 @@ classdef CellData < handle
         attributes %map for attributes from data file
         epochs
         epochGroups
-        rawfilename %to raw data
-        rawfilepath %to raw data
         savedDataSets = containers.Map;
         savedFileName = '';
         savedFilters = containers.Map;
@@ -19,7 +17,7 @@ classdef CellData < handle
     methods
         function obj = CellData(fname)
             %creates CellData object from raw data file
-            [obj.rawfilepath, obj.rawfilename, ~] = fileparts(fname);
+            [~, obj.savedFileName, ~] = fileparts(fname);
             info = hdf5info(fname,'ReadAttributes',false);
             info = info.GroupHierarchy(1);
             
@@ -350,36 +348,6 @@ classdef CellData < handle
                 M = obj; %variable name of map in query string is M
                 val = eval(queryString);
             end
-        end
-        
-        function resetRawDataFolder(obj, autoDir)            
-            global RAW_DATA_FOLDER
-            if nargin < 2
-                autoDir = false;
-            end
-            if autoDir
-                obj.rawfilepath = autoDir;
-            else
-                obj.rawfilepath = RAW_DATA_FOLDER;
-            end
-            %now save it
-            cellData = obj;
-            save(obj.savedFileName, 'cellData');
-        end
-        
-         function resetSavedFileName(obj, autoDir)
-            global ANALYSIS_FOLDER
-            if nargin < 2
-                autoDir = false;
-            end
-            if autoDir
-                obj.savedFileName = [autoDir filesep obj.rawfilename];
-            else
-                obj.savedFileName = [ANALYSIS_FOLDER filesep 'cellData' filesep obj.rawfilename];
-            end
-            %now save it
-            cellData = obj;
-            save(obj.savedFileName, 'cellData');
         end
         
         function val = get(obj, paramName) %checks attributes and tags

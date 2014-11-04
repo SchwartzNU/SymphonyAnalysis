@@ -9,7 +9,7 @@ classdef CurrentOrVoltagePulseAnalysis < AnalysisTree
                 params.deviceName = 'Amplifier_Ch1';
             end
             
-            nameStr = [cellData.rawfilename ': ' dataSetName ': CurrentOrVoltagePulseAnalysis'];
+            nameStr = [cellData.savedFileName ': ' dataSetName ': CurrentOrVoltagePulseAnalysis'];
             obj = obj.setName(nameStr);
             dataSet = cellData.savedDataSets(dataSetName);
             obj = obj.copyAnalysisParams(params);

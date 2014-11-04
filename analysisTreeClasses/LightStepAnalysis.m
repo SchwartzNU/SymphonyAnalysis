@@ -18,7 +18,7 @@ classdef LightStepAnalysis < AnalysisTree
                 params.ampModeParam = 'amp2Mode';
             end
             
-            nameStr = [cellData.rawfilename ': ' dataSetName ': LightStepAnalysis'];
+            nameStr = [cellData.savedFileName ': ' dataSetName ': LightStepAnalysis'];
             obj = obj.setName(nameStr);
             dataSet = cellData.savedDataSets(dataSetName);
             obj = obj.copyAnalysisParams(params);

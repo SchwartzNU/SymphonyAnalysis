@@ -10,7 +10,7 @@ classdef PairedSpotsAnalysis < AnalysisTree
                 params.deviceName = 'Amplifier_Ch1';
             end
                         
-            nameStr = [cellData.rawfilename ': ' dataSetName ': PairedSpotsAnalysis'];
+            nameStr = [cellData.savedFileName ': ' dataSetName ': PairedSpotsAnalysis'];
             obj = obj.setName(nameStr);
             obj = obj.copyAnalysisParams(params);
             dataSet = cellData.savedDataSets(dataSetName);

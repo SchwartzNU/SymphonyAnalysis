@@ -17,7 +17,7 @@ classdef BarsMultiSpeedAnalysis < AnalysisTree
                 params.ampModeParam = 'amp2Mode';
             end
             
-            nameStr = [cellData.rawfilename ': ' dataSetName ': BarsMultiSpeedAnalysis'];
+            nameStr = [cellData.savedFileName ': ' dataSetName ': BarsMultiSpeedAnalysis'];
             obj = obj.setName(nameStr);
             dataSet = cellData.savedDataSets(dataSetName);
             obj = obj.copyAnalysisParams(params);    
