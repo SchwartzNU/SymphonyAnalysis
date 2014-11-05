@@ -2,7 +2,7 @@ classdef EpochData < handle
     
     properties
         attributes %map for attributes from data file
-        parentCell %parent cell        
+        parentCell %parent cell
     end
     
     properties (Hidden)
@@ -68,7 +68,7 @@ classdef EpochData < handle
         function detectSpikes(obj, params, streamName)
             if nargin < 3
                 streamName = 'Amplifier_Ch1';
-            end            
+            end
             data = obj.getData(streamName);
             
             cellAttached = false;
@@ -103,17 +103,25 @@ classdef EpochData < handle
                 end
             end
         end
-                
-        function spikeTimes = getSpikes(obj, streamName)
-           if nargin < 2
-               streamName = 'Amplifier_Ch1';
-           end
-           spikeTimes = nan;
-           if strcmp(streamName, 'Amplifier_Ch1')
-              spikeTimes = obj.get('spikes_ch1'); 
-           elseif strcmp(streamName, 'Amplifier_Ch2')
-              spikeTimes = obj.get('spikes_ch2');                
-           end           
+        
+        function [spikeTimes, timeAxis] = getSpikes(obj, streamName)
+            if nargin < 2
+                streamName = 'Amplifier_Ch1';
+            end
+            spikeTimes = nan;
+            if strcmp(streamName, 'Amplifier_Ch1')
+                spikeTimes = obj.get('spikes_ch1');
+            elseif strcmp(streamName, 'Amplifier_Ch2')
+                spikeTimes = obj.get('spikes_ch2');
+            end
+            
+            sampleRate = obj.get('sampleRate');
+            dataPoints = length(obj.getData(streamName));
+            stimStart = obj.get('preTime')*1E-3; %s
+            if isnan(stimStart)
+                stimStart = 0;
+            end
+            timeAxis = (0:1/sampleRate:dataPoints/sampleRate) - stimStart;
         end
         
         function [data, xvals, units] = getData(obj, streamName)
@@ -134,7 +142,7 @@ classdef EpochData < handle
                 %temp hack
                 if ischar(obj.get('preTime'))
                     obj.attributes('preTime') = str2double(obj.get('preTime'));
-                end                
+                end
                 stimStart = obj.get('preTime')*1E-3; %s
                 if isnan(stimStart)
                     stimStart = 0;

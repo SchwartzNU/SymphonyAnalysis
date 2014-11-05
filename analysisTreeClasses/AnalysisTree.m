@@ -152,14 +152,14 @@ classdef AnalysisTree < tree
         function mode = getMode(obj, nodeInd)
             mode = '';
             nodeData = obj.get(nodeInd);
-            while ~isfield(nodeData, 'ampMode');
+            while ~isfield(nodeData, 'ampModeParam');
                  if nodeInd==1
                     return;
                 end
                 nodeInd = obj.getparent(nodeInd);
                 nodeData = obj.get(nodeInd);
             end
-            mode = nodeData.ampMode;
+            mode = nodeData.(nodeData.ampModeParam);
         end
         
         function device = getDevice(obj, nodeInd)

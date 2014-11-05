@@ -23,7 +23,7 @@ classdef TreeBrowserGUI < handle
     end
     
     properties(Constant)        
-       leafPlotMethods = {'plotMeanData'; 'plotEpochData'; 'plotLeaf'}; %plotLeaf can be overwritten in analysis class 
+       leafPlotMethods = {'plotMeanData'; 'plotEpochData'; 'plotSpikeRaster'; 'plotLeaf'}; %plotLeaf can be overwritten in analysis class 
     end
     
     methods
@@ -351,11 +351,20 @@ classdef TreeBrowserGUI < handle
                 elseif strcmp(plotFunc, 'plotMeanData')
                     epochID = obj.analysisTree.get(curNodeIndex).epochID;
                     if strcmp(obj.analysisTree.getMode(curNodeIndex), 'Cell attached')
-                        cellData.plotPSTH(epochID, 10, obj.analysisTree.getDevice(curNodeIndex));
+                        cellData.plotPSTH(epochID, [], obj.analysisTree.getDevice(curNodeIndex));
                         %get correct channel here
                     else
                         cellData.plotMeanData(epochID, true, [], obj.analysisTree.getDevice(curNodeIndex));
                     end
+                elseif strcmp(plotFunc, 'plotSpikeRaster')
+                    epochID = obj.analysisTree.get(curNodeIndex).epochID;
+                    if strcmp(obj.analysisTree.getMode(curNodeIndex), 'Cell attached')
+                        cellData.plotSpikeRaster(epochID, obj.analysisTree.getDevice(curNodeIndex));
+                        %get correct channel here
+                    else
+                        %do nothing
+                    end
+                    
                 elseif strcmp(plotFunc, 'plotLeaf')
                     [~,plotClass] = strtok(plotClass, ':');
                     plotClass = plotClass(2:end);
@@ -475,15 +484,30 @@ classdef TreeBrowserGUI < handle
             selectedNodes = get(obj.guiTree, 'selectedNodes');
             curNodeIndex = get(selectedNodes(1), 'Value');
             nodeData = obj.analysisTree.get(curNodeIndex);
-            [meanData, timeAxis] = obj.curCellData.getMeanData(nodeData.epochID);
-            L = length(nodeData.epochID);
-            dataMatrix = zeros(L, length(meanData));
-            for i=1
-                dataMatrix(i,:) = obj.curCellData.epochs(nodeData.epochID(i)).getData()';
+            mode = getMode(obj.analysisTree, curNodeIndex);
+            device = getDevice(obj.analysisTree, curNodeIndex);
+            if strcmp(mode, 'Cell attached')
+                [PSTH, timeAxis_PSTH] = obj.curCellData.getPSTH(nodeData.epochID, [], device);
+                L = length(nodeData.epochID);
+                spikeTimes = cell(L,1);
+                for i=1:L
+                    [spikeTimes{i}, timeAxis_spikes] = obj.curCellData.epochs(nodeData.epochID(i)).getSpikes(device);
+                end
+                assignin('base', 'PSTH', PSTH);
+                assignin('base', 'timeAxis_spikes', timeAxis_spikes);
+                assignin('base', 'timeAxis_PSTH', timeAxis_PSTH);
+                assignin('base', 'spikeTimes', spikeTimes);
+            else
+                [meanData, timeAxis] = obj.curCellData.getMeanData(nodeData.epochID, device);
+                L = length(nodeData.epochID);
+                dataMatrix = zeros(L, length(meanData));
+                for i=1:L
+                    dataMatrix(i,:) = obj.curCellData.epochs(nodeData.epochID(i)).getData(device)';
+                end
+                assignin('base', 'meanData', meanData);
+                assignin('base', 'timeAxis', timeAxis);
+                assignin('base', 'dataMatrix', dataMatrix);
             end
-            assignin('base', 'meanData', meanData);
-            assignin('base', 'timeAxis', timeAxis);
-            assignin('base', 'dataMatrix', dataMatrix);
         end
         
         function nodeToMatlab(obj)
