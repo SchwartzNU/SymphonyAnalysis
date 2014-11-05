@@ -104,7 +104,7 @@ if do_local_to_server_copy || do_server_to_local_copy || do_server_to_local_upda
                 disp('adding new entry');
                 new_entry = true;
             else %check status
-                disp('found existing new entry');
+                disp('found existing entry');
                 curStatus = status(ind);
             end
             time_elapsed = toc;

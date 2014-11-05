@@ -223,8 +223,7 @@ classdef TreeBrowserGUI < handle
                    obj.curCellData.epochs(epochIDs(i)).attributes(tagName) = tagVal;
                end
            end
-           cellData = obj.curCellData;
-           save(obj.curCellData.savedFileName, 'cellData');
+           saveAndSyncCellData(obj.curCellData)
            set(obj.handles.fig, 'Name', figName);
            drawnow;
         end
@@ -332,8 +331,9 @@ classdef TreeBrowserGUI < handle
             plotFuncList = obj.plotSelectionTable{curNodeIndex, 2};
             plotFunc = plotFuncList{plotFuncIndex};
             curNode = obj.analysisTree.subtree(curNodeIndex);
-            cellName = obj.analysisTree.getCellName(curNodeIndex);
-            load([obj.cellDataFolder cellName]);
+            cellName = obj.analysisTree.getCellName(curNodeIndex);            
+            %load([obj.cellDataFolder cellName]);
+            cellData = loadAndSyncCellData(cellName);
             obj.curCellData = cellData;
             
             %do the plot
@@ -470,6 +470,8 @@ classdef TreeBrowserGUI < handle
         end
                 
         function rawDataToCommandLine(obj)
+            %TODO: deal with cell-attached data differently here, return
+            %PSTH and cell array of spike times
             selectedNodes = get(obj.guiTree, 'selectedNodes');
             curNodeIndex = get(selectedNodes(1), 'Value');
             nodeData = obj.analysisTree.get(curNodeIndex);

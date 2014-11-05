@@ -60,7 +60,7 @@ if do_sync
         ind = length(fnames)+1; %add new entry
         disp('adding new entry');
     else %check status
-        disp('found existing new entry');
+        disp('found existing entry');
         curStatus = status(ind);
     end
     
