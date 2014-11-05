@@ -776,8 +776,7 @@ classdef CellDataCurator < handle
         end
         
         function saveCellData(obj)
-            cellData = obj.cellData;
-            save(obj.cellData.savedFileName, 'cellData');
+            saveAndSyncCellData(obj.cellData);
         end
         
         function saveFilter(obj)

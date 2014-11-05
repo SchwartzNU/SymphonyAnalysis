@@ -23,7 +23,7 @@ classdef TreeBrowserGUI < handle
     end
     
     properties(Constant)        
-       leafPlotMethods = {'plotMeanData'; 'plotEpochData'; 'plotLeaf'}; %plotLeaf can be overwritten in analysis class 
+       leafPlotMethods = {'plotMeanData'; 'plotEpochData'; 'plotSpikeRaster'; 'plotLeaf'}; %plotLeaf can be overwritten in analysis class 
     end
     
     methods
@@ -162,7 +162,7 @@ classdef TreeBrowserGUI < handle
             L_plotButtons = uiextras.HButtonBox('Parent', L_plot, ...
                 'HorizontalAlignment', 'left', ...
                 'VerticalAlignment', 'bottom', ...
-                'ButtonSize', [80, 30]);
+                'ButtonSize', [140, 30]);
             
             obj.handles.popFigButton = uicontrol('Parent', L_plotButtons, ...
                 'Style', 'pushbutton', ...
@@ -173,6 +173,12 @@ classdef TreeBrowserGUI < handle
                 'Style', 'pushbutton', ...
                 'String', 'Figure to Igor', ...
                 'Callback', @(uiobj, evt)obj.figToIgor);
+            
+            obj.handles.rawDataToCommandLine = uicontrol('Parent', L_plotButtons, ...
+                'Style', 'pushbutton', ...
+                'String', 'Raw data to command line', ...
+                'Callback', @(uiobj, evt)obj.rawDataToCommandLine);
+            
             
             set(L_plot, 'Sizes', [-1, 50])
             
@@ -217,8 +223,7 @@ classdef TreeBrowserGUI < handle
                    obj.curCellData.epochs(epochIDs(i)).attributes(tagName) = tagVal;
                end
            end
-           cellData = obj.curCellData;
-           save(obj.curCellData.savedFileName, 'cellData');
+           saveAndSyncCellData(obj.curCellData)
            set(obj.handles.fig, 'Name', figName);
            drawnow;
         end
@@ -326,8 +331,9 @@ classdef TreeBrowserGUI < handle
             plotFuncList = obj.plotSelectionTable{curNodeIndex, 2};
             plotFunc = plotFuncList{plotFuncIndex};
             curNode = obj.analysisTree.subtree(curNodeIndex);
-            cellName = obj.analysisTree.getCellName(curNodeIndex);
-            load([obj.cellDataFolder cellName]);
+            cellName = obj.analysisTree.getCellName(curNodeIndex);            
+            %load([obj.cellDataFolder cellName]);
+            cellData = loadAndSyncCellData(cellName);
             obj.curCellData = cellData;
             
             %do the plot
@@ -345,11 +351,20 @@ classdef TreeBrowserGUI < handle
                 elseif strcmp(plotFunc, 'plotMeanData')
                     epochID = obj.analysisTree.get(curNodeIndex).epochID;
                     if strcmp(obj.analysisTree.getMode(curNodeIndex), 'Cell attached')
-                        cellData.plotPSTH(epochID, 10, obj.analysisTree.getDevice(curNodeIndex));
+                        cellData.plotPSTH(epochID, [], obj.analysisTree.getDevice(curNodeIndex));
                         %get correct channel here
                     else
                         cellData.plotMeanData(epochID, true, [], obj.analysisTree.getDevice(curNodeIndex));
                     end
+                elseif strcmp(plotFunc, 'plotSpikeRaster')
+                    epochID = obj.analysisTree.get(curNodeIndex).epochID;
+                    if strcmp(obj.analysisTree.getMode(curNodeIndex), 'Cell attached')
+                        cellData.plotSpikeRaster(epochID, obj.analysisTree.getDevice(curNodeIndex));
+                        %get correct channel here
+                    else
+                        %do nothing
+                    end
+                    
                 elseif strcmp(plotFunc, 'plotLeaf')
                     [~,plotClass] = strtok(plotClass, ':');
                     plotClass = plotClass(2:end);
@@ -452,7 +467,7 @@ classdef TreeBrowserGUI < handle
                    exportStructToHDF5(nodeData, fullfile(pathname, fname), datasetName);
                end               
            end
-        end
+        end 
         
         function popFig(obj)
             h = figure;
@@ -462,11 +477,42 @@ classdef TreeBrowserGUI < handle
         function figToIgor(obj)
             makeAxisStruct(obj.handles.plotAxes, obj.igorh5Folder);
         end
-        
-        
-        function nodeToMatlab(obj)
+                
+        function rawDataToCommandLine(obj)
+            %TODO: deal with cell-attached data differently here, return
+            %PSTH and cell array of spike times
             selectedNodes = get(obj.guiTree, 'selectedNodes');
             curNodeIndex = get(selectedNodes(1), 'Value');
+            nodeData = obj.analysisTree.get(curNodeIndex);
+            mode = getMode(obj.analysisTree, curNodeIndex);
+            device = getDevice(obj.analysisTree, curNodeIndex);
+            if strcmp(mode, 'Cell attached')
+                [PSTH, timeAxis_PSTH] = obj.curCellData.getPSTH(nodeData.epochID, [], device);
+                L = length(nodeData.epochID);
+                spikeTimes = cell(L,1);
+                for i=1:L
+                    [spikeTimes{i}, timeAxis_spikes] = obj.curCellData.epochs(nodeData.epochID(i)).getSpikes(device);
+                end
+                assignin('base', 'PSTH', PSTH);
+                assignin('base', 'timeAxis_spikes', timeAxis_spikes);
+                assignin('base', 'timeAxis_PSTH', timeAxis_PSTH);
+                assignin('base', 'spikeTimes', spikeTimes);
+            else
+                [meanData, timeAxis] = obj.curCellData.getMeanData(nodeData.epochID, device);
+                L = length(nodeData.epochID);
+                dataMatrix = zeros(L, length(meanData));
+                for i=1:L
+                    dataMatrix(i,:) = obj.curCellData.epochs(nodeData.epochID(i)).getData(device)';
+                end
+                assignin('base', 'meanData', meanData);
+                assignin('base', 'timeAxis', timeAxis);
+                assignin('base', 'dataMatrix', dataMatrix);
+            end
+        end
+        
+        function nodeToMatlab(obj)
+           selectedNodes = get(obj.guiTree, 'selectedNodes');
+           curNodeIndex = get(selectedNodes(1), 'Value');
            nodeData = obj.analysisTree.get(curNodeIndex);
            assignin('base', 'nodeData', nodeData);
         end

@@ -14,7 +14,7 @@ classdef ContrastRespAnalysis < AnalysisTree
                 params.ampModeParam = 'amp2Mode';
             end
             
-            nameStr = [cellData.rawfilename ': ' dataSetName ': ContrastRespAnalysis'];
+            nameStr = [cellData.savedFileName ': ' dataSetName ': ContrastRespAnalysis'];
             obj = obj.setName(nameStr);
             dataSet = cellData.savedDataSets(dataSetName);
             obj = obj.copyAnalysisParams(params);

@@ -4,8 +4,6 @@ classdef CellData < handle
         attributes %map for attributes from data file
         epochs
         epochGroups
-        rawfilename %to raw data
-        rawfilepath %to raw data
         savedDataSets = containers.Map;
         savedFileName = '';
         savedFilters = containers.Map;
@@ -19,7 +17,7 @@ classdef CellData < handle
     methods
         function obj = CellData(fname)
             %creates CellData object from raw data file
-            [obj.rawfilepath, obj.rawfilename, ~] = fileparts(fname);
+            [~, obj.savedFileName, ~] = fileparts(fname);
             info = hdf5info(fname,'ReadAttributes',false);
             info = info.GroupHierarchy(1);
             
@@ -226,10 +224,9 @@ classdef CellData < handle
             if nargin < 4
                 streamName = 'Amplifier_Ch1';
             end
-            if nargin < 3
+            if nargin < 3 || isempty(binWidth)
                 binWidth = 10; %ms
             end
-            
             sampleEpoch = obj.epochs(epochInd(1));
             dataPoints = length(sampleEpoch.getData(streamName));
             sampleRate = sampleEpoch.get('sampleRate');
@@ -259,9 +256,39 @@ classdef CellData < handle
             
         end
         
-        function plotSpikeRaster(obj, epochInd, binWidth, streamName, ax)
+        function plotSpikeRaster(obj, epochInd, streamName)
+            if nargin < 3
+                streamName = 'Amplifier_Ch1';
+            end
             
-            
+            %get spikes
+            L = length(epochInd);
+            spikeTimes = cell(L,1);
+            for i=1:L
+                [spikeTimes{i}, timeAxis_spikes] = obj.epochs(epochInd(i)).getSpikes(streamName);
+            end
+            ax = gca;
+            hold(ax, 'on');
+            for i=1:L
+                h(i) = scatter(ax, timeAxis_spikes(spikeTimes{i}), i .* ones(1,length(spikeTimes{i})));
+                set(h(i), 'Marker', '*', 'MarkerEdgeColor', 'k');
+            end
+            set(ax, 'Ytick', 1:1:L);
+            set(ax, 'Xlim', [timeAxis_spikes(1), timeAxis_spikes(end)]);
+            set(ax, 'Ylim', [0, L+1]);
+            %start and end lines
+            sampleEpoch = obj.epochs(epochInd(1));
+            stimLen = sampleEpoch.get('stimTime')*1E-3; %s
+            if ~isempty(stimLen)
+                startLine = line('Xdata', [0 0], 'Ydata', get(ax, 'ylim'), ...
+                    'Color', 'k', 'LineStyle', '--');
+                endLine = line('Xdata', [stimLen stimLen], 'Ydata', get(ax, 'ylim'), ...
+                    'Color', 'k', 'LineStyle', '--');
+                set(startLine, 'Parent', ax);
+                set(endLine, 'Parent', ax);
+            end
+            xlabel(ax, 'Time (s)');
+            ylabel(ax, 'Trials');
         end
         
         function plotPSTH(obj, epochInd, binWidth, streamName)
@@ -352,36 +379,6 @@ classdef CellData < handle
             end
         end
         
-        function resetRawDataFolder(obj, autoDir)            
-            global RAW_DATA_FOLDER
-            if nargin < 2
-                autoDir = false;
-            end
-            if autoDir
-                obj.rawfilepath = autoDir;
-            else
-                obj.rawfilepath = RAW_DATA_FOLDER;
-            end
-            %now save it
-            cellData = obj;
-            save(obj.savedFileName, 'cellData');
-        end
-        
-         function resetSavedFileName(obj, autoDir)
-            global ANALYSIS_FOLDER
-            if nargin < 2
-                autoDir = false;
-            end
-            if autoDir
-                obj.savedFileName = [autoDir filesep obj.rawfilename];
-            else
-                obj.savedFileName = [ANALYSIS_FOLDER filesep 'cellData' filesep obj.rawfilename];
-            end
-            %now save it
-            cellData = obj;
-            save(obj.savedFileName, 'cellData');
-        end
-        
         function val = get(obj, paramName) %checks attributes and tags
             if ~obj.attributes.isKey(paramName) && ~obj.tags.isKey(paramName)
                 %disp(['Error: ' paramName ' not found']);
@@ -392,7 +389,6 @@ classdef CellData < handle
                 val = obj.attributes(paramName);
             end
         end
-        
         
         function display(obj)
             displayAttributeMap(obj.attributes)

@@ -17,7 +17,7 @@ classdef RadonRFAnalysis < AnalysisTree
                 params.ampModeParam = 'amp2Mode';
             end
                         
-            nameStr = [cellData.rawfilename ': ' dataSetName ': RadonRFAnalysis'];
+            nameStr = [cellData.savedFileName ': ' dataSetName ': RadonRFAnalysis'];
             obj = obj.setName(nameStr);
             obj = obj.copyAnalysisParams(params);
             dataSet = cellData.savedDataSets(dataSetName);

@@ -22,7 +22,7 @@ classdef LabData < handle
         
         function val = hasCell(obj, cellName)
             allCells = obj.allCellNames();
-            if strcmp(allCells, cellName)
+            if sum(strcmp(allCells, cellName)) > 0
                 val = true;
             else
                 val = false;
