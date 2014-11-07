@@ -118,7 +118,7 @@ classdef BarsMultiAngleAnalysis < AnalysisTree
             x = [rootData.OSang,rootData.OSang];
             y = [min(rootData.respMean),max(rootData.respMean)];
             plot(x,y);
-            title(['OSI = ' num2str(rootData.OSI) ', OSang = ' num2str(rootData.OSang)]);
+            title(['OSI = 'num2str(rootData.OSI) ', OSang = 'num2str(rootData.OSang)]);
             hold off;
             
         end
