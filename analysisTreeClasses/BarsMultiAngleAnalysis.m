@@ -76,7 +76,7 @@ classdef BarsMultiAngleAnalysis < AnalysisTree
                 'N', 'N', ...
                 'splitValue', 'BarAngle');
             
-            %OSI
+            %OSI and OSang
             rootData = obj.get(1);
             Nangles = length(rootData.BarAngle);
             R=0;
