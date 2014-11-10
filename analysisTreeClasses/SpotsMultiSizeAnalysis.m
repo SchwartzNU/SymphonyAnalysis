@@ -1,7 +1,7 @@
 classdef SpotsMultiSizeAnalysis < AnalysisTree
     properties
         StartTime = 0;
-        EndTime = 500;
+        EndTime = 0;
         respType = 'Charge';
     end
     

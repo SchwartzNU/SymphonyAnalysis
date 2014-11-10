@@ -1358,9 +1358,9 @@ classdef LabDataGUI < handle
             
             set(obj.handles.cellFilterTable,'Data',D);
             
-            if colInd > 1
+            %if colInd > 1
                 obj.updateCellFilter();
-            end
+            %end
         end
         
         function epochFilterTableEdit(obj, eventData)
@@ -1386,9 +1386,9 @@ classdef LabDataGUI < handle
             
             set(obj.handles.epochFilterTable,'Data',D);
             
-            if colInd > 1
+            %if colInd > 1
                 obj.updateEpochFilter();
-            end
+            %end
         end
         
         function updateCellFilter(obj)
