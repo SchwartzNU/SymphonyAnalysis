@@ -2,7 +2,7 @@ classdef BarsMultiAngleAnalysis < AnalysisTree
     properties
         StartTime = 0;
         EndTime = 0;
-        respType = 'Abs Peak';
+        respType = 'Charge';
     end
     
     methods
@@ -76,7 +76,7 @@ classdef BarsMultiAngleAnalysis < AnalysisTree
                 'N', 'N', ...
                 'splitValue', 'BarAngle');
             
-            %OSI and OSang
+            %OSI, OSang
             rootData = obj.get(1);
             Nangles = length(rootData.BarAngle);
             R=0;
