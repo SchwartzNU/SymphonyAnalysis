@@ -14,6 +14,7 @@ if exist([filesep 'Volumes' filesep 'SchwartzLab'  filesep 'CellDataMaster']) ==
 else
     disp([cellData.savedFileName ': CellDataMaster not found. Local copy being saved without sync.']);
     do_sync = false;
+    serverModDate = 0;
 end
 
 if serverModDate > localModDate

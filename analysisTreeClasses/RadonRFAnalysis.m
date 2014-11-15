@@ -3,7 +3,7 @@ classdef RadonRFAnalysis < AnalysisTree
         StartTime = 0
         EndTime = 0;
         respType = 'Charge';
-        RF_microns = 800;
+        RF_microns = 500;
     end
     
     methods
