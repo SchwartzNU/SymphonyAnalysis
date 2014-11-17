@@ -1,6 +1,7 @@
 function [] = splitProjectsBy(varargin)
 %valid inputs are:
 %expDate - splits by experiment
+%cellType - splits by cell type
 %any cell tag (not epoch properties)
 %hasDataSet followed by a second argument specifying the dataSet prefix
 global ANALYSIS_FOLDER;
@@ -69,6 +70,43 @@ elseif strcmp(splitKey, 'hasDataSet');
                 end
             end
         end
+    end
+elseif strcmp(splitKey, 'cellType'); %cell type
+    for i=1:L
+        disp(['Cell ' num2str(i) ' of ' num2str(L)]);
+        if ~isempty(cellDataBaseNames{i})
+            load([cellDataMasterFolder filesep cellDataBaseNames{i}]); %loads cellData
+            %check type
+            cellType = cellData.cellType;
+            has2cells = false;
+            if strfind(cellType, ';') %two parts
+               [cellType1, cellType2] = strtok(cellType, ';');
+               cellType2 = cellType2(2:end);
+               has2cells = true;
+            end
+            if has2cells
+                if projMap.isKey(cellType1)
+                    tempCells = projMap(cellType1);
+                    projMap(cellType1) = [tempCells, cellDataBaseNames{i}];
+                else
+                    projMap(cellType1) = {cellDataBaseNames{i}};
+                end
+                if projMap.isKey(cellType2)
+                    tempCells = projMap(cellType2);
+                    projMap(cellType2) = [tempCells, cellDataBaseNames{i}];
+                else
+                    projMap(cellType2) = {cellDataBaseNames{i}};
+                end
+            else
+                if projMap.isKey(cellType)
+                    tempCells = projMap(cellType);
+                    projMap(cellType) = [tempCells, cellDataBaseNames{i}];
+                else
+                    projMap(cellType) = {cellDataBaseNames{i}};
+                end
+            end
+        end
+        
     end
 else %cell tag
     for i=1:L
