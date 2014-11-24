@@ -5,9 +5,9 @@ classdef TreeBrowserGUI < handle
         guiTree
         rootNode
         handles
-        plotSelectionTable %index is tree node index, 
-        %column 1 is analysis class (or 'leaf'), 
-        %column 2 is cell array of plot functions, 
+        plotSelectionTable %index is tree node index,
+        %column 1 is analysis class (or 'leaf'),
+        %column 2 is cell array of plot functions,
         %colums 3 stores your current preference for plot type
         
         cellDataFolder
@@ -16,14 +16,13 @@ classdef TreeBrowserGUI < handle
     end
     
     properties(Hidden)
-       epochTags = containers.Map;
-       curEpochIDs = [];
-       curEpochIndex = [];
-       curCellData = [];
+        epochTags = containers.Map;
+        curEpochIndex = [];
+        curCellData = [];
     end
     
-    properties(Constant)        
-       leafPlotMethods = {'plotMeanData'; 'plotEpochData'; 'plotSpikeRaster'; 'plotLeaf'}; %plotLeaf can be overwritten in analysis class 
+    properties(Constant)
+        leafPlotMethods = {'plotMeanData'; 'plotEpochData'; 'plotSpikeRaster'; 'plotLeaf'}; %plotLeaf can be overwritten in analysis class
     end
     
     methods
@@ -33,10 +32,10 @@ classdef TreeBrowserGUI < handle
             obj.cellDataFolder = [ANALYSIS_FOLDER 'cellData' filesep];
             obj.igorh5Folder = [ANALYSIS_FOLDER 'Igorh5' filesep];
             if nargin==0
-                [fname, pathname] = uigetfile([ANALYSIS_FOLDER filesep 'analysisTrees' filesep '*.mat'], 'Load analysisTree'); 
+                [fname, pathname] = uigetfile([ANALYSIS_FOLDER filesep 'analysisTrees' filesep '*.mat'], 'Load analysisTree');
                 load(fullfile(pathname, fname)); %loads analysisTree
             end
-                
+            
             %read in EpochTags.txt file
             fid = fopen([PREFERENCE_FILES_FOLDER filesep 'EpochTags.txt']);
             fline = 'temp';
@@ -44,13 +43,13 @@ classdef TreeBrowserGUI < handle
                 fline = fgetl(fid);
                 if isempty(fline) || (isscalar(fline) && fline < 0)
                     break;
-                end 
+                end
                 curVals = {};
                 [curTagName, rem] = strtok(fline);
                 z=1;
                 while ~isempty(rem)
                     [cval, rem] = strtok(rem);
-                    cval = strtrim(cval);                   
+                    cval = strtrim(cval);
                     curVals{z} = cval;
                     z=z+1;
                 end
@@ -91,21 +90,21 @@ classdef TreeBrowserGUI < handle
             obj.handles.saveMenuItem = uimenu(obj.handles.fileMenu, 'Label', 'Save Tree', ...
                 'Callback', @(uiobj,evt)obj.saveTree);
             obj.handles.runAnalysisItem = uimenu(obj.handles.fileMenu, 'Label', 'Run analysis', ...
-                'Callback', @(uiobj,evt)obj.runAnalysis);            
+                'Callback', @(uiobj,evt)obj.runAnalysis);
             
             %epoch tags menu
             obj.handles.tagsMenu = uimenu(obj.handles.fig, 'Label', 'Epoch tags');
             k = obj.epochTags.keys;
             for i=1:length(k)
                 obj.handles.tagMenuItems(i,1) = uimenu(obj.handles.tagsMenu, 'Label', k{i});
-                vals = obj.epochTags(k{i});                  
-                    for j=1:length(vals)
-                          obj.handles.tagMenuItems(i,j+1) = uimenu(obj.handles.tagMenuItems(i,1), 'Label', vals{j}, ...
-                              'Callback', @(uiobj,evt)obj.setEpochTags(k{i}, vals{j}));
-                    end                    
-                    obj.handles.tagMenuItems(i,length(vals)+2) = uimenu(obj.handles.tagMenuItems(i,1), 'Label', 'Remove', ...
-                              'Callback', @(uiobj,evt)obj.setEpochTags(k{i}, 'remove'));
-            end       
+                vals = obj.epochTags(k{i});
+                for j=1:length(vals)
+                    obj.handles.tagMenuItems(i,j+1) = uimenu(obj.handles.tagMenuItems(i,1), 'Label', vals{j}, ...
+                        'Callback', @(uiobj,evt)obj.setEpochTags(k{i}, vals{j}));
+                end
+                obj.handles.tagMenuItems(i,length(vals)+2) = uimenu(obj.handles.tagMenuItems(i,1), 'Label', 'Remove', ...
+                    'Callback', @(uiobj,evt)obj.setEpochTags(k{i}, 'remove'));
+            end
             
             obj.rootNode = uitreenode('v0', 1, rootName, obj.iconpath, false);
             obj.addChildren(1, obj.rootNode);
@@ -120,7 +119,7 @@ classdef TreeBrowserGUI < handle
                 'Position', [.42 .02 .56 .96]);
             
             L_tables = uiextras.HBoxFlex('Parent', L_right, 'Spacing', 10);
-                    
+            
             L_plotControls = uiextras.VBox('Parent', L_tables);
             
             obj.handles.plotSelectionMenu = uicontrol('Parent', L_plotControls, ...
@@ -156,7 +155,7 @@ classdef TreeBrowserGUI < handle
                 'TooltipString', 'table of properties for currently selected node');
             
             L_plot = uiextras.VBox('Parent', L_right);
-                                    
+            
             obj.handles.plotAxes = axes('Parent', L_plot);
             
             L_plotButtons = uiextras.HButtonBox('Parent', L_plot, ...
@@ -169,7 +168,7 @@ classdef TreeBrowserGUI < handle
                 'String', 'Pop out fig', ...
                 'Callback', @(uiobj, evt)obj.popFig);
             
-             obj.handles.figToIgor = uicontrol('Parent', L_plotButtons, ...
+            obj.handles.figToIgor = uicontrol('Parent', L_plotButtons, ...
                 'Style', 'pushbutton', ...
                 'String', 'Figure to Igor', ...
                 'Callback', @(uiobj, evt)obj.figToIgor);
@@ -196,36 +195,36 @@ classdef TreeBrowserGUI < handle
         end
         
         function setEpochTags(obj, tagName, tagVal)
-           if isscalar(str2num(tagVal))
-               tagVal = str2num(tagVal);
-           end
-           selectedNodes = get(obj.guiTree, 'selectedNodes');
-           curNodeIndex = get(selectedNodes(1), 'Value');
-           
-           treePart =  obj.analysisTree.subtree(curNodeIndex);
-           leafIDs = treePart.findleaves;
-           epochIDs = [];
-           for i=1:length(leafIDs)
-               curNode = treePart.get(leafIDs(i));
-               epochIDs = [epochIDs curNode.epochID];
-           end
-           
-           %set tags for each epochs
-           figName = get(obj.handles.fig, 'Name');
-           for i=1:length(epochIDs)
-               if strcmp(tagVal, 'remove')
-                   set(obj.handles.fig, 'Name', 'Busy: removing tags');
-                   drawnow;
-                   obj.curCellData.epochs(epochIDs(i)).attributes.remove(tagName);
-               else
-                   set(obj.handles.fig, 'Name', 'Busy: adding tags');
-                   drawnow;
-                   obj.curCellData.epochs(epochIDs(i)).attributes(tagName) = tagVal;
-               end
-           end
-           saveAndSyncCellData(obj.curCellData)
-           set(obj.handles.fig, 'Name', figName);
-           drawnow;
+            if isscalar(str2num(tagVal))
+                tagVal = str2num(tagVal);
+            end
+            selectedNodes = get(obj.guiTree, 'selectedNodes');
+            curNodeIndex = get(selectedNodes(1), 'Value');
+            
+            treePart =  obj.analysisTree.subtree(curNodeIndex);
+            leafIDs = treePart.findleaves;
+            epochIDs = [];
+            for i=1:length(leafIDs)
+                curNode = treePart.get(leafIDs(i));
+                epochIDs = [epochIDs curNode.epochID];
+            end
+            
+            %set tags for each epochs
+            figName = get(obj.handles.fig, 'Name');
+            for i=1:length(epochIDs)
+                if strcmp(tagVal, 'remove')
+                    set(obj.handles.fig, 'Name', 'Busy: removing tags');
+                    drawnow;
+                    obj.curCellData.epochs(epochIDs(i)).attributes.remove(tagName);
+                else
+                    set(obj.handles.fig, 'Name', 'Busy: adding tags');
+                    drawnow;
+                    obj.curCellData.epochs(epochIDs(i)).attributes(tagName) = tagVal;
+                end
+            end
+            saveAndSyncCellData(obj.curCellData)
+            set(obj.handles.fig, 'Name', figName);
+            drawnow;
         end
         
         function runAnalysis(obj)
@@ -245,8 +244,6 @@ classdef TreeBrowserGUI < handle
             global ANALYSIS_FOLDER
             obj.cellDataFolder = [ANALYSIS_FOLDER 'cellData' filesep];
             obj.igorh5Folder = [ANALYSIS_FOLDER 'Igorh5' filesep];
-            obj.curEpochIDs = [];
-            obj.curEpochIndex = [];
             obj.curCellData = [];
             
             [fname, pathname] = uigetfile([ANALYSIS_FOLDER filesep 'analysisTrees' filesep '*.mat'], 'Load analysisTree');
@@ -262,7 +259,7 @@ classdef TreeBrowserGUI < handle
             global ANALYSIS_FOLDER
             [fname, pathname] = uiputfile([ANALYSIS_FOLDER filesep 'analysisTrees' filesep '*.mat'], 'Save analysisTree');
             analysisTree = obj.analysisTree;
-            save(fullfile(pathname, fname), 'analysisTree'); 
+            save(fullfile(pathname, fname), 'analysisTree');
         end
         
         function addChildren(obj, nodeInd, uiTreeNode)
@@ -278,9 +275,9 @@ classdef TreeBrowserGUI < handle
                 if length(loc) == 2
                     nodeName = nodeName(loc(1)+1:loc(2)-1); %dataset or cell name
                 elseif length(loc) == 1
-                     nodeName = nodeName(loc(1)+1:end);                    
+                    nodeName = nodeName(loc(1)+1:end);
                 end
-                    
+                
                 newTreeNode = uitreenode('v0', chInd(i), nodeName, obj.iconpath, obj.analysisTree.isleaf(chInd(i)));
                 uiTreeNode.add(newTreeNode);
                 %recursive call
@@ -319,35 +316,43 @@ classdef TreeBrowserGUI < handle
             selectedNodes = get(obj.guiTree, 'selectedNodes');
             curNodeIndex = get(selectedNodes(1), 'Value');
             plotClass = obj.plotSelectionTable{curNodeIndex, 1};
-            if isempty(plotClass), 
-                return; 
+            if isempty(plotClass),
+                return;
             end
             
             plotFuncIndex = obj.plotSelectionTable{curNodeIndex, 3} - 1; %-1 to account for 'none' option
-            if plotFuncIndex == 0, 
+            if plotFuncIndex == 0,
                 cla(obj.handles.plotAxes);
-                return; 
+                return;
             end
             plotFuncList = obj.plotSelectionTable{curNodeIndex, 2};
             plotFunc = plotFuncList{plotFuncIndex};
             curNode = obj.analysisTree.subtree(curNodeIndex);
-            cellName = obj.analysisTree.getCellName(curNodeIndex);            
+            cellName = obj.analysisTree.getCellName(curNodeIndex);
             %load([obj.cellDataFolder cellName]);
             cellData = loadAndSyncCellData(cellName);
             obj.curCellData = cellData;
             
             %do the plot
-            set(obj.handles.fig,'KeyPressFcn',[]); %get rid of callback for non SingleEpoch plots            
+            set(obj.handles.fig,'KeyPressFcn',[]); %get rid of callback for non SingleEpoch plots
             axes(obj.handles.plotAxes);
             %clear previous plot
             reset(obj.handles.plotAxes);
-            cla(obj.handles.plotAxes);            
-            if strcmp(strtok(plotClass, ':'), 'leaf') %special cases for leaf nodes                
+            cla(obj.handles.plotAxes);
+            if strcmp(strtok(plotClass, ':'), 'leaf') %special cases for leaf nodes
                 if strcmp(plotFunc, 'plotEpochData')
-                    obj.curEpochIDs = obj.analysisTree.get(curNodeIndex).epochID;
-                    obj.curEpochIndex = 1;  
-                    obj.plotEpoch();
-                    set(obj.handles.fig,'KeyPressFcn',@(uiobj,evt)obj.keyHandler(evt)); %for scrolling through epochs                    
+                    obj.curEpochIndex = 1;
+                    device = obj.analysisTree.getDevice(curNodeIndex);
+                    disp(plotClass)
+                    [~,plotClassTemp] = strtok(plotClass, ':');
+                    plotClassTemp = plotClassTemp(2:end);
+                    if ismethod(plotClassTemp, 'plotEpochData')
+                        eval([plotClassTemp '.plotEpochData(curNode, cellData, device, 1);']);
+                        set(obj.handles.fig,'KeyPressFcn',@(uiobj,evt)obj.keyHandler_classSpecific(evt, plotClassTemp, curNode, cellData, device, obj.curEpochIndex)); %for scrolling through epochs
+                    else
+                        obj.plotEpoch(curNode, cellData, device, 1);
+                        set(obj.handles.fig,'KeyPressFcn',@(uiobj,evt)obj.keyHandler(evt, curNode, cellData, device, obj.curEpochIndex)); %for scrolling through epochs
+                    end
                 elseif strcmp(plotFunc, 'plotMeanData')
                     epochID = obj.analysisTree.get(curNodeIndex).epochID;
                     if strcmp(obj.analysisTree.getMode(curNodeIndex), 'Cell attached')
@@ -378,8 +383,8 @@ classdef TreeBrowserGUI < handle
         function onPlotSelectionMenu(obj)
             selectedNodes = get(obj.guiTree, 'selectedNodes');
             curNodeIndex = get(selectedNodes(1), 'Value');
-            obj.plotSelectionTable{curNodeIndex, 3} = get(obj.handles.plotSelectionMenu, 'Value');      
-            obj.updatePlot();            
+            obj.plotSelectionTable{curNodeIndex, 3} = get(obj.handles.plotSelectionMenu, 'Value');
+            obj.updatePlot();
         end
         
         function onNodeSelected(obj)
@@ -401,7 +406,7 @@ classdef TreeBrowserGUI < handle
         
         function populateNodePropertiesTable(obj)
             selectedNodes = get(obj.guiTree, 'selectedNodes');
-            curNodeIndex = get(selectedNodes(1), 'Value');            
+            curNodeIndex = get(selectedNodes(1), 'Value');
             curNodeData = obj.analysisTree.get(curNodeIndex);
             allFields = fieldnames(curNodeData);
             
@@ -436,38 +441,51 @@ classdef TreeBrowserGUI < handle
             end
         end
         
-        function plotEpoch(obj)
+        function plotEpoch(obj, curNode, cellData, device, epochIndex)
             axes(obj.handles.plotAxes);
-            obj.curCellData.epochs(obj.curEpochIDs(obj.curEpochIndex)).plotData;
-            title(['Epoch # ' num2str(obj.curEpochIDs(obj.curEpochIndex)) ': ' num2str(obj.curEpochIndex) ' of ' num2str(length(obj.curEpochIDs))]);
+            nodeData = curNode.get(1);
+            cellData.epochs(nodeData.epochID(epochIndex)).plotData(device);
+            title(['Epoch # ' num2str(nodeData.epochID(epochIndex)) ': ' num2str(epochIndex) ' of ' num2str(length(nodeData.epochID))]);
+            if strcmp(device, 'Amplifier_Ch1')
+                spikesField = 'spikes_ch1';
+            else
+                spikesField = 'spikes_ch2';
+            end
+            spikeTimes = cellData.epochs(nodeData.epochID(epochIndex)).get(spikesField);
+            if ~isnan(spikeTimes)
+                [data, xvals] = cellData.epochs(nodeData.epochID(epochIndex)).getData(device);
+                hold('on');
+                plot(xvals(spikeTimes), data(spikeTimes), 'rx');
+                hold('off');
+            end
         end
         
         function applyPlotSelection(obj)
-           selectedNodes = get(obj.guiTree, 'selectedNodes');
-           curNodeIndex = get(selectedNodes(1), 'Value');    
-           v = get(obj.handles.plotSelectionMenu, 'Value');
-           L = size(obj.plotSelectionTable, 1);
-           for i=1:L
-              if strcmp(obj.plotSelectionTable{i,1}, obj.plotSelectionTable{curNodeIndex,1}) %%same class
-                  obj.plotSelectionTable{i,3} = v;
-              end
-           end           
+            selectedNodes = get(obj.guiTree, 'selectedNodes');
+            curNodeIndex = get(selectedNodes(1), 'Value');
+            v = get(obj.handles.plotSelectionMenu, 'Value');
+            L = size(obj.plotSelectionTable, 1);
+            for i=1:L
+                if strcmp(obj.plotSelectionTable{i,1}, obj.plotSelectionTable{curNodeIndex,1}) %%same class
+                    obj.plotSelectionTable{i,3} = v;
+                end
+            end
         end
         
         function nodeToIgor(obj)
-           selectedNodes = get(obj.guiTree, 'selectedNodes');
-           curNodeIndex = get(selectedNodes(1), 'Value');
-           nodeData = obj.analysisTree.get(curNodeIndex);
-           
-           [fname,pathname] = uiputfile('*.h5', 'Specify hdf5 export file for Igor', obj.igorh5Folder);     
-           if ~isempty(fname)
-               datasetName = inputdlg('Enter dataset name', 'Dataset name');
-               if ~isempty(datasetName)
-                   datasetName = datasetName{1}; %inputdlg returns a cell array instead of a string
-                   exportStructToHDF5(nodeData, fullfile(pathname, fname), datasetName);
-               end               
-           end
-        end 
+            selectedNodes = get(obj.guiTree, 'selectedNodes');
+            curNodeIndex = get(selectedNodes(1), 'Value');
+            nodeData = obj.analysisTree.get(curNodeIndex);
+            
+            [fname,pathname] = uiputfile('*.h5', 'Specify hdf5 export file for Igor', obj.igorh5Folder);
+            if ~isempty(fname)
+                datasetName = inputdlg('Enter dataset name', 'Dataset name');
+                if ~isempty(datasetName)
+                    datasetName = datasetName{1}; %inputdlg returns a cell array instead of a string
+                    exportStructToHDF5(nodeData, fullfile(pathname, fname), datasetName);
+                end
+            end
+        end
         
         function popFig(obj)
             h = figure;
@@ -477,7 +495,7 @@ classdef TreeBrowserGUI < handle
         function figToIgor(obj)
             makeAxisStruct(obj.handles.plotAxes, obj.igorh5Folder);
         end
-                
+        
         function rawDataToCommandLine(obj)
             %TODO: deal with cell-attached data differently here, return
             %PSTH and cell array of spike times
@@ -511,23 +529,37 @@ classdef TreeBrowserGUI < handle
         end
         
         function nodeToMatlab(obj)
-           selectedNodes = get(obj.guiTree, 'selectedNodes');
-           curNodeIndex = get(selectedNodes(1), 'Value');
-           nodeData = obj.analysisTree.get(curNodeIndex);
-           assignin('base', 'nodeData', nodeData);
+            selectedNodes = get(obj.guiTree, 'selectedNodes');
+            curNodeIndex = get(selectedNodes(1), 'Value');
+            nodeData = obj.analysisTree.get(curNodeIndex);
+            assignin('base', 'nodeData', nodeData);
         end
         
-        function keyHandler(obj, evt)
+        function keyHandler(obj, evt, curNode, cellData, device, epochIndex) %takes control of the epochIndex
+            nodeData = curNode.get(1);
+            epochIndex = obj.curEpochIndex;
             switch evt.Key
                 case 'leftarrow'
-                    obj.curEpochIndex = max(obj.curEpochIndex-1, 1);
-                    obj.plotEpoch();
+                    obj.curEpochIndex = max(epochIndex-1, 1);
+                    obj.plotEpoch(curNode, cellData, device, obj.curEpochIndex);
                 case 'rightarrow'
-                    obj.curEpochIndex = min(obj.curEpochIndex+1, length(obj.curEpochIDs));
-                    obj.plotEpoch();
+                    obj.curEpochIndex = min(epochIndex+1, length(nodeData.epochID));
+                    obj.plotEpoch(curNode, cellData, device, obj.curEpochIndex);
             end
         end
         
+        function keyHandler_classSpecific(obj, evt, plotClass, curNode, cellData, device, epochIndex) %takes control of the epochIndex
+            nodeData = curNode.get(1);
+            epochIndex = obj.curEpochIndex;
+            switch evt.Key
+                case 'leftarrow'
+                    obj.curEpochIndex = max(epochIndex-1, 1);
+                    eval([plotClass '.plotEpochData(curNode, cellData, device,' num2str(obj.curEpochIndex) ');']);
+                case 'rightarrow'
+                    obj.curEpochIndex = min(epochIndex+1, length(nodeData.epochID));
+                    eval([plotClass '.plotEpochData(curNode, cellData, device,' num2str(obj.curEpochIndex) ');']);
+            end
+        end
         
     end
     

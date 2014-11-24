@@ -81,6 +81,28 @@ classdef LightStepAnalysis < AnalysisTree
             end            
         end
         
+        function plotEpochData(node, cellData, device, epochIndex)
+            disp('Class specific plotEpochData');
+            nodeData = node.get(1);
+            cellData.epochs(nodeData.epochID(epochIndex)).plotData(device);
+            title(['Epoch # ' num2str(nodeData.epochID(epochIndex)) ': ' num2str(epochIndex) ' of ' num2str(length(nodeData.epochID))]);
+            if strcmp(device, 'Amplifier_Ch1')
+                spikesField = 'spikes_ch1';
+            else
+                spikesField = 'spikes_ch2';
+            end
+            spikeTimes = cellData.epochs(nodeData.epochID(epochIndex)).get(spikesField);
+            if ~isnan(spikeTimes)
+                [data, xvals] = cellData.epochs(nodeData.epochID(epochIndex)).getData(device);
+                hold('on');
+                plot(xvals(spikeTimes), data(spikeTimes), 'rx');
+                hold('off');
+            end
+            if isfield(nodeData, 'ONlatency')
+               %draw lines here
+            end
+        end
+        
     end
     
 end
