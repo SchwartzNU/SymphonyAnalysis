@@ -414,11 +414,15 @@ classdef TreeBrowserGUI < handle
             D = cell(L,2);
             for i=1:L
                 D{i,1} = allFields{i};
-                sizeVal = size(curNodeData.(allFields{i}));
-                if sizeVal(1) > 1 && sizeVal(2) > 1
-                    D{i,2} = '<array>';
+                if isstruct(curNodeData.(allFields{i}))
+                    D{i,2} = '<struct>';
                 else
-                    D{i,2} = num2str(curNodeData.(allFields{i}));
+                    sizeVal = size(curNodeData.(allFields{i}));
+                    if sizeVal(1) > 1 && sizeVal(2) > 1
+                        D{i,2} = '<array>';
+                    else
+                        D{i,2} = num2str(curNodeData.(allFields{i}));
+                    end
                 end
             end
             set(obj.handles.nodePropertiesTable, 'data', D)
