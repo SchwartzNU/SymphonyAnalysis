@@ -8,6 +8,7 @@ for i=1:length(d)
        disp(['Processing ' curName]);
        load([cellData_folder filesep d(i).name]); %load cellData       
        cellData.savedFileName = curName;
+       %save([cellData_folder filesep curName], 'cellData');
        save([ANALYSIS_FOLDER 'cellData' filesep curName], 'cellData');
    end       
 end
