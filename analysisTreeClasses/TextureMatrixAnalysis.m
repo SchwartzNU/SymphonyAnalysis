@@ -15,7 +15,7 @@ classdef TextureMatrixAnalysis < AnalysisTree
                 params.ampModeParam = 'amp2Mode';
             end
             
-            nameStr = [cellData.rawfilename ': ' dataSetName ': TextureMatrixAnalysis'];
+            nameStr = [cellData.savedFileName ': ' dataSetName ': TextureMatrixAnalysis'];
             obj = obj.setName(nameStr);
             obj = obj.copyAnalysisParams(params);
             dataSet = cellData.savedDataSets(dataSetName);

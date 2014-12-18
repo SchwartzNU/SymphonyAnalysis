@@ -2,7 +2,7 @@ classdef BarsMultiAngleAnalysis < AnalysisTree
     properties
         StartTime = 0;
         EndTime = 0;
-        respType = 'Abs Peak';
+        respType = 'Charge';
     end
     
     methods
@@ -16,7 +16,7 @@ classdef BarsMultiAngleAnalysis < AnalysisTree
                 params.ampModeParam = 'amp2Mode';
             end
             
-            nameStr = [cellData.rawfilename ': ' dataSetName ': BarsMultiAngleAnalysis'];
+            nameStr = [cellData.savedFileName ': ' dataSetName ': BarsMultiAngleAnalysis'];
             obj = obj.setName(nameStr);
             dataSet = cellData.savedDataSets(dataSetName);
             obj = obj.copyAnalysisParams(params);    
@@ -75,6 +75,29 @@ classdef BarsMultiAngleAnalysis < AnalysisTree
                 'respSEM', 'respSEM', ...
                 'N', 'N', ...
                 'splitValue', 'BarAngle');
+            
+            %OSI, OSang
+            rootData = obj.get(1);
+            Nangles = length(rootData.BarAngle);
+            R=0;
+            ROrtn=0;
+            
+            for j=1:Nangles
+                R=R+rootData.respMean(j);
+                ROrtn = ROrtn + (rootData.respMean(j)*exp(2*sqrt(-1)*rootData.BarAngle(j)*pi/180));
+            end
+           
+            OSI = abs(ROrtn/R);
+            OSang = angle(ROrtn/R)*90/pi;
+            
+            if OSang < 0
+                OSang = 180 + OSang;
+            end
+            
+            rootData.OSI = OSI;
+            rootData.OSang = OSang;
+            obj = obj.set(1, rootData);
+            
         end
         
     end
@@ -90,6 +113,14 @@ classdef BarsMultiAngleAnalysis < AnalysisTree
             else
                 ylabel('Peak (pA or mV)');
             end
+            
+            hold on;
+            x = [rootData.OSang,rootData.OSang];
+            y = [min(rootData.respMean),max(rootData.respMean)];
+            plot(x,y);
+            title(['OSI = ' num2str(rootData.OSI) ', OSang = ' num2str(rootData.OSang)]);
+            hold off;
+            
         end
         
     end

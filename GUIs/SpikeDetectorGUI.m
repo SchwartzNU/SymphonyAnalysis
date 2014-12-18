@@ -114,8 +114,7 @@ classdef SpikeDetectorGUI < handle
             else
                 obj.spikeTimes = [];
             end
-            cellData = obj.cellData;
-            save(obj.cellData.savedFileName, 'cellData');
+            saveAndSyncCellData(obj.cellData) %save cellData file
             obj.updateUI();
         end
         
@@ -164,8 +163,7 @@ classdef SpikeDetectorGUI < handle
                     end
                 end
             end
-            cellData = obj.cellData;
-            save(obj.cellData.savedFileName, 'cellData');
+            saveAndSyncCellData(obj.cellData) %save cellData file);
             obj.updateUI();
         end
         

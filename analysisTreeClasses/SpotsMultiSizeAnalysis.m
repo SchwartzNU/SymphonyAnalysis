@@ -1,7 +1,7 @@
 classdef SpotsMultiSizeAnalysis < AnalysisTree
     properties
         StartTime = 0;
-        EndTime = 1000;
+        EndTime = 0;
         respType = 'Charge';
     end
     
@@ -16,7 +16,7 @@ classdef SpotsMultiSizeAnalysis < AnalysisTree
                 params.ampModeParam = 'amp2Mode';
             end
             
-            nameStr = [cellData.rawfilename ': ' dataSetName ': SpotsMultiSizeAnalysis'];
+            nameStr = [cellData.savedFileName ': ' dataSetName ': SpotsMultiSizeAnalysis'];
             obj = obj.setName(nameStr);
             dataSet = cellData.savedDataSets(dataSetName);
             obj = obj.copyAnalysisParams(params);    

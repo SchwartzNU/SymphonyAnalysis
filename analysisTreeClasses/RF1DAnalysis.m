@@ -14,7 +14,7 @@ classdef RF1DAnalysis < AnalysisTree
                 params.ampModeParam = 'amp2Mode';
             end
             
-            nameStr = [cellData.rawfilename ': ' dataSetName ': RF1DAnalysis'];
+            nameStr = [cellData.savedFileName ': ' dataSetName ': RF1DAnalysis'];
             obj = obj.setName(nameStr);
             obj = obj.copyAnalysisParams(params);
             dataSet = cellData.savedDataSets(dataSetName);

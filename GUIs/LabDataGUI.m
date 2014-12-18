@@ -46,7 +46,7 @@ classdef LabDataGUI < handle
             %todo: figure out how to organize directory structure for
             %different projects / labData structures
             global ANALYSIS_FOLDER
-            global PREFERENCE_FILES_FOLDER            
+            global PREFERENCE_FILES_FOLDER
             folder_name = '';
             while isempty(folder_name)
                 folder_name = uigetdir([ANALYSIS_FOLDER 'Projects/'],'Choose project folder');
@@ -55,7 +55,7 @@ classdef LabDataGUI < handle
             folderParts = strsplit(folder_name, filesep);
             obj.projName = folderParts{end};
             obj.cellData_folder = [ANALYSIS_FOLDER 'cellData' filesep];
-
+            
             
             obj.labData.clearContents();
             disp('Initializing cells');
@@ -67,7 +67,7 @@ classdef LabDataGUI < handle
                 fline = fgetl(fid);
                 if isempty(fline) || (isscalar(fline) && fline < 0)
                     break;
-                end 
+                end
                 curVals = [];
                 [curTagName, rem] = strtok(fline);
                 while ~isempty(rem)
@@ -236,6 +236,11 @@ classdef LabDataGUI < handle
                 'FontSize', 12, ...
                 'String', 'Add/Change Pref. Map', ...
                 'Callback', @(uiobj,evt)obj.setPrefsMap);
+            obj.handles.addChangePrefsMap_button = uicontrol('Style', 'pushbutton', ...
+                'Parent', L_prefsButtons, ...
+                'FontSize', 12, ...
+                'String', 'Delete Pref. Map', ...
+                'Callback', @(uiobj,evt)obj.deletePrefsMap);
             obj.handles.addPrefElement_button = uicontrol('Style', 'pushbutton', ...
                 'Parent', L_prefsButtons, ...
                 'FontSize', 12, ...
@@ -363,7 +368,7 @@ classdef LabDataGUI < handle
                 'Style', 'Edit', ...
                 'FontSize', 12, ...
                 'CallBack', @(uiobj, evt)obj.updateCellFilter);
-            set(L_cellFilterPattern, 'Sizes', [150, -1], 'Spacing', 20);   
+            set(L_cellFilterPattern, 'Sizes', [150, -1], 'Spacing', 20);
             
             epochPropertiesText = uicontrol('Parent', L_filterBox, ...
                 'Style', 'text', ...
@@ -376,8 +381,8 @@ classdef LabDataGUI < handle
                 'ColumnName', {'Param', 'Operator', 'Value'}, ...
                 'ColumnEditable', logical([1 1 1]), ...
                 'CellEditCallback', @(uiobj, evt)obj.epochFilterTableEdit(evt), ...
-                'Data', cell(7,3));
-                        
+                'Data', cell(12,3));
+            
             %'CellEditCallback', @(uiobj, evt)obj.filterTableEdit(evt), ...
             
             L_epochFilterPattern = uiextras.HBox('Parent',L_filterBox);
@@ -389,7 +394,7 @@ classdef LabDataGUI < handle
                 'Style', 'Edit', ...
                 'FontSize', 12, ...
                 'CallBack', @(uiobj, evt)obj.updateEpochFilter);
-            set(L_epochFilterPattern, 'Sizes', [150, -1], 'Spacing', 20);            
+            set(L_epochFilterPattern, 'Sizes', [150, -1], 'Spacing', 20);
             
             L_filterControls = uiextras.HButtonBox('Parent', L_filterBox, ...
                 'ButtonSize', [100 30], ...
@@ -454,7 +459,7 @@ classdef LabDataGUI < handle
             end
             
             set(obj.handles.analysisTypePopup, 'String', analysisClasses);
-%            set(obj.handles.cellTypePopup, 'String', ['All', obj.labData.allCellTypes]);
+            %            set(obj.handles.cellTypePopup, 'String', ['All', obj.labData.allCellTypes]);
             %read in CellTypeNames.txt file
             fid = fopen([PREFERENCE_FILES_FOLDER filesep 'CellTypeNames.txt']);
             fline = 'temp';
@@ -465,7 +470,7 @@ classdef LabDataGUI < handle
                 if isempty(fline) || (isscalar(fline) && fline < 0)
                     break;
                 end
-                obj.cellTypeNames{z} = fline;                
+                obj.cellTypeNames{z} = fline;
                 z=z+1;
             end
             set(obj.handles.cellTypePopup, 'String', ['All', obj.cellTypeNames]);
@@ -482,7 +487,7 @@ classdef LabDataGUI < handle
         
         function updateCellFilterTable(obj)
             %update popupmenu for filter table
-            props = [' ', obj.allCellTags];            
+            props = [' ', obj.allCellTags];
             columnFormat = {props, obj.operators, 'char'};
             set(obj.handles.cellFilterTable,'ColumnFormat',columnFormat)
         end
@@ -491,7 +496,7 @@ classdef LabDataGUI < handle
             props = [' ', obj.allEpochKeys];
             columnFormat = {props, obj.operators, 'char'};
             set(obj.handles.epochFilterTable,'ColumnFormat',columnFormat);
-
+            
             if isfield(obj.handles, 'epochFilterTable')
                 tablePos = get(obj.handles.epochFilterTable,'Position');
                 tableWidth = tablePos(3);
@@ -506,7 +511,7 @@ classdef LabDataGUI < handle
             props = [' ', obj.allCellTags];
             columnFormat = {props, obj.operators, 'char'};
             set(obj.handles.cellFilterTable,'ColumnFormat',columnFormat);
-
+            
             if isfield(obj.handles, 'cellFilterTable')
                 tablePos = get(obj.handles.cellFilterTable,'Position');
                 tableWidth = tablePos(3);
@@ -517,7 +522,7 @@ classdef LabDataGUI < handle
             end
         end
         
-        function cellSelectedFcn(obj)            
+        function cellSelectedFcn(obj)
             cellDataFolder = obj.cellData_folder;
             obj.curCellData = []; %blank so you cannot select the wrong one before the right one is loaded
             
@@ -527,8 +532,9 @@ classdef LabDataGUI < handle
             obj.curDataSets = cellNameToCellDataNames(obj.curCellName);
             dataSetsList = {};
             for i=1:length(obj.curDataSets)
-                curName =[cellDataFolder obj.curDataSets{i} '.mat'];
-                load(curName);
+                %curName =[cellDataFolder obj.curDataSets{i} '.mat'];
+                %load(curName);
+                cellData = loadAndSyncCellData(obj.curDataSets{i});
                 dataSetsList = [dataSetsList, cellData.savedDataSets.keys];
             end
             
@@ -573,14 +579,21 @@ classdef LabDataGUI < handle
             end
         end
         
+        function deletePrefsMap(obj)
+            obj.curCellData.prefsMapName = '';
+            saveAndSyncCellData(obj.curCellData); %save cellData file
+            obj.curPrefsMap = [];
+            set(obj.handles.prefsMapList, 'String', obj.curCellData.prefsMapName);
+            obj.updatePrefsMapElements();
+        end
+        
         function setPrefsMap(obj)
             global ANALYSIS_FOLDER;
             prefsMapSpec = [ANALYSIS_FOLDER filesep 'analysisParams' filesep 'ParameterPrefs' filesep '*.txt'];
             fname = uigetfile(prefsMapSpec, 'Select prefsMap text file');
             if ~isempty(fname)
                 obj.curCellData.prefsMapName = fname;
-                cellData = obj.curCellData;
-                save(cellData.savedFileName, 'cellData'); %save cellData file
+                saveAndSyncCellData(obj.curCellData); %save cellData file
                 obj.curPrefsMap = loadPrefsMap(fname);
                 set(obj.handles.prefsMapList, 'String', obj.curCellData.prefsMapName);
                 obj.updatePrefsMapElements();
@@ -701,7 +714,7 @@ classdef LabDataGUI < handle
                 end
             end
             
-            set(obj.rootNode, 'name', ['All cells n = ' num2str(cellCount)]);            
+            set(obj.rootNode, 'name', ['All cells n = ' num2str(cellCount)]);
             
             %make uitree for cell types
             pos = get(obj.handles.L_cellTypesPanel, 'Position');
@@ -766,9 +779,7 @@ classdef LabDataGUI < handle
                 for i=1:length(obj.curDataSets)
                     load([cellDataFolder filesep obj.curDataSets{i}]);
                     cellData.imageFile = fullfile(pathname, fname);
-                    %save([cellDataFolder filesep obj.curDataSets{i}],
-                    %'cellData'); TODO: fix this to save the alias
-                    %correctly
+                    saveAndSyncCellData(obj.curCellData); %save cellData file
                 end
             end
             
@@ -785,8 +796,9 @@ classdef LabDataGUI < handle
             if ~isempty(curName)
                 set(obj.fig, 'Name', ['LabDataGUI' ' (loading cellData struct)']);
                 drawnow;
-                curName_fixed = [cellDataFolder curName '.mat'];
-                load(curName_fixed);
+                %curName_fixed = [cellDataFolder curName '.mat'];
+                %load(curName_fixed);
+                cellData = loadAndSyncCellData(curName);
                 obj.curCellData = cellData;
                 set(obj.fig, 'Name', ['LabDataGUI: ' obj.projName]);
             end
@@ -849,78 +861,124 @@ classdef LabDataGUI < handle
                 errordlg(['Error: cellNames.txt not found in ' obj.projFolder]);
                 close(obj.fig);
                 return;
-            end            
+            end
             temp = textscan(fid, '%s', 'delimiter', '\n');
             cellNames = temp{1};
             fclose(fid);
-                        
+            
+            allLoadedParts = [];
             for i=1:length(cellNames)
                 disp(['Loading ' cellNames{i} ': cell ' num2str(i) ' of ' num2str(length(cellNames))]);
                 cellDataNames = cellNameToCellDataNames(cellNames{i});
-                %add cell to list
-                obj.fullCellList = [obj.fullCellList cellNames{i}];
-                %figure out cellType and add cell to labData
-                curName = [cellDataFolder cellDataNames{1}];
-                load(curName); %loads cellData
-                %check if channel 2                
-                if ~isnan(cellData.epochs(1).get('amp2')) %if 2 amps
+                
+                changedType = false;
+                twoCellsAdded = false;
+                cellNameParts = textscan(cellNames{i}, '%s', 'delimiter', ',');
+                cellNameParts = cellNameParts{1}; %quirk of textscan
+                allLoadedParts = [allLoadedParts; cellNameParts];
+                %check if 2 channel for any part
+                has2amps = false;
+                twoAmpInd = 0;
+                for j=1:length(cellDataNames)
+                    %figure out cellType and add cell to labData
+                    %curName = [cellDataFolder cellDataNames{j}];
+                    %load(curName); %loads cellData
+                    cellData = loadAndSyncCellData(cellDataNames{j});
+                    if cellData.get('Nepochs') > 0
+                        if  ~isnan(cellData.epochs(1).get('amp2')) %if 2 amps
+                            has2amps = true;
+                            twoAmpInd = j;
+                        end
+                    end
+                end
+                
+                if cellData.get('Nepochs') > 0
+                    if has2amps
+                        %curName = [cellDataFolder cellDataNames{twoAmpInd}];
+                        %load(curName); %loads cellData
+                        cellData = loadAndSyncCellData(cellDataNames{twoAmpInd});
                         [ch1Type, ch2Type] = strtok(cellData.cellType, ';');
                         if length(ch2Type)>1
                             ch2Type = ch2Type(2:end);
                         end
-                    part1Name = strtok(cellNames{i}, ',');
-                    if strfind(part1Name, '-Ch2')
-                        disp('Found Ch2');
-                        cellType = ch2Type;
+                        if ~isempty(cell2mat(strfind(cellNameParts, '-Ch1')))
+                            %disp('Found Ch1');
+                            cellType = ch1Type;
+                        elseif ~isempty(cell2mat(strfind(cellNameParts, '-Ch2')))
+                            %disp('Found Ch2');
+                            cellType = ch2Type;
+                        else %need to add both cells
+                            %disp('adding both cells');
+                            twoCellsAdded = true;
+                            cellType = ch1Type;
+                            if isempty(cellType)
+                                cellType = 'unclassified';
+                                changedType = true;
+                            end
+                            if sum(strcmp(allLoadedParts, [cellNames{i} '-Ch1'])) == 0
+                                obj.labData.addCell([cellNames{i} '-Ch1'], cellType);
+                                obj.fullCellList = [obj.fullCellList [cellNames{i} '-Ch1']];
+                            end
+                            cellType = ch2Type;
+                            if isempty(cellType)
+                                cellType = 'unclassified';
+                                changedType = true;
+                            end
+                            if sum(strcmp(allLoadedParts, [cellNames{i} '-Ch2'])) == 0
+                                obj.labData.addCell([cellNames{i} '-Ch2'], cellType);
+                                obj.fullCellList = [obj.fullCellList [cellNames{i} '-Ch2']];
+                            end
+                        end
                     else
-                        disp('Getting Ch1 type');
-                        cellType = ch1Type;                        
-                    end
-                else
-                    cellType = cellData.cellType;
-                end
-                changedType = false;
-                if isempty(cellType)
-                    cellType = 'unclassified';
-                    changedType = true;
-                end
-                obj.labData.addCell(cellNames{i}, cellType);
-                
-                
-                for j=1:length(cellDataNames)
-                    obj.fullCellDataList = [obj.fullCellDataList cellDataNames{j}];
-                    curName = [cellDataFolder cellDataNames{j}];
-                    load(curName); %loads cellData
-                    
-                    %automatically fix cellData save locations here
-                    [~, basename, ~] = fileparts(curName);
-                    if ~strcmp(cellData.savedFileName, curName)
-                        disp(['Warning: updating save location for ' basename ' to ' curName]);
-                        cellData.savedFileName = curName;
-                        save(cellData.savedFileName, 'cellData'); 
-                    end
-                    if changedType
-                        disp('changed type');                        
-                        cellData.cellType = cellType;
-                        save(cellData.savedFileName, 'cellData');
+                        cellType = cellData.cellType;
                     end
                     
-                    %add epoch keys
-                    obj.allEpochKeys = [obj.allEpochKeys cellData.getEpochKeysetUnion()];
-                    %add cell keys
-                    tempKeys = cellData.tags.keys;
-                    tempKeys = tempKeys(setdiff(1:length(tempKeys), strcmp(tempKeys, '')));
-                    obj.allCellTags = [obj.allCellTags tempKeys];
+                    if isempty(cellType)
+                        cellType = 'unclassified';
+                        changedType = true;
+                    end
+                    if ~twoCellsAdded
+                        %add cell to list
+                        obj.fullCellList = [obj.fullCellList cellNames{i}];
+                        obj.labData.addCell(cellNames{i}, cellType);
+                    end
                     
+                    for j=1:length(cellDataNames)
+                        obj.fullCellDataList = [obj.fullCellDataList cellDataNames{j}];
+                        %curName = [cellDataFolder cellDataNames{j}];
+                        %load(curName); %loads cellData
+                        cellData = loadAndSyncCellData(cellDataNames{j});
+                        
+                        %                     %automatically fix cellData save locations here
+                        %                     [~, basename, ~] = fileparts(curName);
+                        %                     if ~strcmp(cellData.savedFileName, curName)
+                        %                         disp(['Warning: updating save location for ' basename ' to ' curName]);
+                        %                         cellData.savedFileName = curName;
+                        %                         save(cellData.savedFileName, 'cellData');
+                        %                     end
+                        if changedType
+                            disp('changed type');
+                            cellData.cellType = cellType;
+                            saveAndSyncCellData(cellData); %save cellData file
+                        end
+                        
+                        %add epoch keys
+                        obj.allEpochKeys = [obj.allEpochKeys cellData.getEpochKeysetUnion()];
+                        %add cell keys
+                        tempKeys = cellData.tags.keys;
+                        tempKeys = tempKeys(setdiff(1:length(tempKeys), strcmp(tempKeys, '')));
+                        obj.allCellTags = [obj.allCellTags tempKeys];
+                        
+                    end
                 end
             end
-       
+            
             obj.allEpochKeys = unique(obj.allEpochKeys);
             obj.allCellTags = unique(obj.allCellTags);
             
             %obj.fullCellDataList
             set(obj.handles.allCellsListbox, 'String', obj.fullCellList);
-
+            
             obj.updateEpochFilterTable();
             
             set(obj.fig, 'Name', ['LabDataGUI: ' obj.projName]);
@@ -999,8 +1057,9 @@ classdef LabDataGUI < handle
                     for c=1:length(curCells)
                         cellDataNames = cellNameToCellDataNames(curCells(c).toCharArray');
                         for i=1:length(cellDataNames)
-                            curName = [cellDataFolder cellDataNames{i} '.mat'];
-                            load(curName);                            
+                            %curName = [cellDataFolder cellDataNames{i} '.mat'];
+                            %load(curName);
+                            cellData = loadAndSyncCellData(cellDataNames{i});
                             if ~isnan(cellData.epochs(1).get('amp2')) %if 2 amps
                                 if strfind(cellData.cellType, ';')
                                     [cell1Name, cell2Name] = strtok(cellData.cellType, ';');
@@ -1020,17 +1079,17 @@ classdef LabDataGUI < handle
                             else
                                 cellData.cellType = cellTypeName;
                             end
-                            save(cellData.savedFileName, 'cellData');
+                            saveAndSyncCellData(cellData) %save cellData file
                         end
                     end
                     %update labData structure
-                    if isempty(obj.labData.getCellsOfType(obj.cellNameChoice)) %new type, so just change name                          
+                    if isempty(obj.labData.getCellsOfType(obj.cellNameChoice)) %new type, so just change name
                         obj.labData.renameType(obj.curCellType, obj.cellNameChoice);
                     else %merge types
-                         obj.labData.mergeCellTypes(obj.curCellType, obj.cellNameChoice)
+                        obj.labData.mergeCellTypes(obj.curCellType, obj.cellNameChoice)
                     end
                     obj.loadTree();
-                end                
+                end
             elseif get(node, 'Depth') == 0 %individual cell
                 obj.assignCellType();
             end
@@ -1103,7 +1162,7 @@ classdef LabDataGUI < handle
                     cellData.cellType = cellTypeName;
                 end
                 %keyboard;
-                save(cellData.savedFileName, 'cellData');
+                saveAndSyncCellData(cellData) %save cellData file
                 loadCurrentCellData(obj)
                 %keyboard;
                 
@@ -1112,7 +1171,7 @@ classdef LabDataGUI < handle
                     obj.labData.addCell(obj.curCellName, cellTypeName);
                 else
                     obj.labData.moveCell(obj.curCellName, cellTypeName);
-                end               
+                end
                 obj.loadTree();
                 %obj.initializeCellTypeAndAnalysisMenus();
             end
@@ -1125,7 +1184,7 @@ classdef LabDataGUI < handle
             
             if get(node, 'Depth') == 2 %All cells
                 cellNames = obj.labData.allCellNames();
-            elseif get(node, 'Depth') == 1 %cell type                
+            elseif get(node, 'Depth') == 1 %cell type
                 if ~isempty(obj.curCellType)
                     cellNames = obj.labData.getCellsOfType(obj.curCellType);
                 end
@@ -1143,7 +1202,7 @@ classdef LabDataGUI < handle
             end
             for i=1:length(cellNames)
                 fprintf(fid, '%s\n', cellNames{i});
-            end            
+            end
             fclose(fid);
         end
         
@@ -1153,7 +1212,7 @@ classdef LabDataGUI < handle
             
             if get(node, 'Depth') == 2 %All cells
                 cellNames = obj.labData.allCellNames();
-            elseif get(node, 'Depth') == 1 %cell type                
+            elseif get(node, 'Depth') == 1 %cell type
                 if ~isempty(obj.curCellType)
                     cellNames = obj.labData.getCellsOfType(obj.curCellType);
                 end
@@ -1178,7 +1237,7 @@ classdef LabDataGUI < handle
             obj.fullCellList = {};
             obj.fullCellDataList = {};
             obj.labData.clearContents();
-            obj.loadCellNames();                    
+            obj.loadCellNames();
             obj.loadTree;
         end
         
@@ -1190,15 +1249,15 @@ classdef LabDataGUI < handle
                 cellNames = obj.labData.allCellNames();
                 cellDataNames = [];
                 for i=1:length(cellNames)
-                    cellDataNames = [cellDataNames; cellNameToCellDataNames(cellNames{i})];                    
+                    cellDataNames = [cellDataNames; cellNameToCellDataNames(cellNames{i})];
                 end
-            elseif get(node, 'Depth') == 1 %cell type                
+            elseif get(node, 'Depth') == 1 %cell type
                 if ~isempty(obj.curCellType)
                     cellNames = obj.labData.getCellsOfType(obj.curCellType);
                 end
                 cellDataNames = [];
                 for i=1:length(cellNames)
-                    cellDataNames = [cellDataNames; cellNameToCellDataNames(cellNames{i})];                    
+                    cellDataNames = [cellDataNames; cellNameToCellDataNames(cellNames{i})];
                 end
             elseif get(node, 'Depth') == 0 %individual cell
                 cellName = get(node,'name');
@@ -1209,7 +1268,7 @@ classdef LabDataGUI < handle
             bounds = screenBounds;
             obj.handles.cellTagFig = dialog('Name', 'Choose cell tag', ...
                 'Position', [bounds(3)/2-150, bounds(4)/2, 300, 200]);
-
+            
             obj.handles.dlg_cellTagsPopup = uicontrol('Parent', obj.handles.cellTagFig, ...
                 'Style', 'popupmenu', ...
                 'units', 'normalized', ...
@@ -1241,12 +1300,12 @@ classdef LabDataGUI < handle
             
             waitfor(obj.handles.cellTagFig)
             %waiting for figure to be deleted
-
+            
             if obj.tempAnswer
                 for i=1:length(cellDataNames)
                     load([obj.cellData_folder filesep cellDataNames{i} '.mat']); %loads cellData
                     cellData.tags(obj.curTag) = obj.curTagVal;
-                    save(cellData.savedFileName, 'cellData');
+                    saveAndSyncCellData(cellData) %save cellData file
                 end
             end
         end
@@ -1267,12 +1326,12 @@ classdef LabDataGUI < handle
             s = get(obj.handles.dlg_tagValuesPopup, 'String');
             v = get(obj.handles.dlg_tagValuesPopup, 'Value');
             obj.curTagVal = strtrim(s(v,:));
-                        
+            
             delete(obj.handles.cellTagFig)
         end
-                
+        
         function tagChoiceCancel(obj)
-            obj.tempAnswer = false;              
+            obj.tempAnswer = false;
             delete(obj.handles.cellTagFig)
         end
         
@@ -1299,9 +1358,9 @@ classdef LabDataGUI < handle
             
             set(obj.handles.cellFilterTable,'Data',D);
             
-            if colInd > 1
+            %if colInd > 1
                 obj.updateCellFilter();
-            end
+            %end
         end
         
         function epochFilterTableEdit(obj, eventData)
@@ -1327,9 +1386,9 @@ classdef LabDataGUI < handle
             
             set(obj.handles.epochFilterTable,'Data',D);
             
-            if colInd > 1
+            %if colInd > 1
                 obj.updateEpochFilter();
-            end
+            %end
         end
         
         function updateCellFilter(obj)
@@ -1487,7 +1546,7 @@ classdef LabDataGUI < handle
                 set(obj.handles.epochFilterTable,'ColumnWidth',{col1W, col2W, col3W});
             end
             
-             %cell filtTable
+            %cell filtTable
             if isfield(obj.handles, 'cellFilterTable')
                 tablePos = get(obj.handles.cellFilterTable,'Position');
                 tableWidth = tablePos(3);
@@ -1499,7 +1558,7 @@ classdef LabDataGUI < handle
         end
         
         %function delete(obj)
-           %clear('classes'); 
+        %clear('classes');
         %end
     end
     

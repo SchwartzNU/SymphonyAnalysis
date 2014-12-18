@@ -18,7 +18,7 @@ classdef MovingBarAnalysis < AnalysisTree
                 params.holdSignalParam = 'amp2HoldSignal';
             end            
             
-            nameStr = [cellData.rawfilename ': ' dataSetName ': MovingBarAnalysis'];            
+            nameStr = [cellData.savedFileName ': ' dataSetName ': MovingBarAnalysis'];            
             obj = obj.setName(nameStr);
             dataSet = cellData.savedDataSets(dataSetName);
             obj = obj.copyAnalysisParams(params);
@@ -167,7 +167,16 @@ classdef MovingBarAnalysis < AnalysisTree
             DSI = abs(RDirn/R);
             OSI = abs(ROrtn/R);
             DSang = angle(RDirn/R)*180/pi;
-            OSang = angle(ROrtn/R)*90/pi;  
+            OSang = angle(ROrtn/R)*90/pi;
+            
+            if DSang < 0
+                DSang = 360 + DSang;
+            end
+            
+            if OSang < 0
+                OSang = 360 + OSang;
+            end
+            
             rootData.DSI = DSI;
             rootData.OSI = OSI;
             rootData.DSang = DSang;
@@ -181,13 +190,13 @@ classdef MovingBarAnalysis < AnalysisTree
                 
         function plotData(node, cellData)
             rootData = node.get(1);
-            h = polarerror(rootData.barAngle.*pi/180, rootData.respMean, rootData.respSEM);
-            set(h, 'color', 'b');
+            polarerror(rootData.barAngle.*pi/180, rootData.respMean, rootData.respSEM);
             hold on;
             polar([0 rootData.DSang*pi/180], [0 (100*rootData.DSI)], 'r-');
             polar([0 rootData.OSang*pi/180], [0 (100*rootData.OSI)], 'g-');
             polar([0 ((180 + rootData.OSang)*pi/180)], [0 (100*rootData.OSI)], 'g-');
-            title(['DSI = ' num2str(rootData.DSI) ' and OSI = ' num2str(rootData.OSI)]);
+            title(['DSI = ' num2str(rootData.DSI) ', DSang = ' num2str(rootData.DSang) ...
+                ' and OSI = ' num2str(rootData.OSI) ', OSang = ' num2str(rootData.OSang)]);
             hold off;
             %           if strcmp(rootData.ampMode, 'Cell attached')
             %             ylabel('Spike count (norm)');

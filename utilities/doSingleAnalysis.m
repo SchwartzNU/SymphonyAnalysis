@@ -50,7 +50,8 @@ nodeData.device = params_deviceOnly.deviceName;
 resultTree = resultTree.set(1, nodeData);
 
 %load cellData
-load([ANALYSIS_FOLDER 'cellData' filesep cellName]);
+cellData = loadAndSyncCellData(cellName);
+%load([ANALYSIS_FOLDER 'cellData' filesep cellName]);
 dataSetKeys = cellData.savedDataSets.keys;
 
 %run cell filter 

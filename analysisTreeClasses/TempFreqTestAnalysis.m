@@ -18,7 +18,7 @@ classdef TempFreqTestAnalysis < AnalysisTree
                 params.ampModeParam = 'amp2Mode';
             end
             
-            nameStr = [cellData.rawfilename ': ' dataSetName ': TempFreqTestAnalysis'];
+            nameStr = [cellData.savedFileName ': ' dataSetName ': TempFreqTestAnalysis'];
             obj = obj.setName(nameStr);
             dataSet = cellData.savedDataSets(dataSetName);
             obj = obj.copyAnalysisParams(params);    

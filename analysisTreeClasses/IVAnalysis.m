@@ -1,6 +1,7 @@
 classdef IVAnalysis < AnalysisTree
     properties
-        
+        StartTime = 100;
+        EndTime = 150;
     end
     
     methods
@@ -9,7 +10,7 @@ classdef IVAnalysis < AnalysisTree
                 params.deviceName = 'Amplifier_Ch1';
             end
             
-            nameStr = [cellData.rawfilename ': ' dataSetName ': IVAnalysis'];
+            nameStr = [cellData.savedFileName ': ' dataSetName ': IVAnalysis'];
             obj = obj.setName(nameStr);
             obj = obj.copyAnalysisParams(params);
             dataSet = cellData.savedDataSets(dataSetName);
@@ -26,7 +27,8 @@ classdef IVAnalysis < AnalysisTree
             for i=1:L
                 curNode = obj.get(leafIDs(i));
                 [resp, respUnits] = getEpochResponses(cellData, curNode.epochID, 'Peak', ...
-                    'LowPassFreq', 100, 'DeviceName', rootData.deviceName);
+                    'LowPassFreq', 100, 'DeviceName', rootData.deviceName, ...
+                    'StartTime', obj.StartTime, 'EndTime', obj.EndTime);
                 N = length(resp);
                 curNode.resp = resp;
                 curNode.respMean = mean(resp);

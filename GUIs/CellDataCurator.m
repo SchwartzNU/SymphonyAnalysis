@@ -385,7 +385,7 @@ classdef CellDataCurator < handle
                 
             set(obj.handles.filterTable,'Data',D);
             
-            if colInd > 1
+            if colInd > 1 %why?
                 obj.updateFilter();
             end
         end
@@ -458,7 +458,7 @@ classdef CellDataCurator < handle
             end
         end
         
-        function applyFilter(obj, selectAll)
+        function applyFilter(obj)
             if nargin < 2
                 queryString = obj.filter.makeQueryString();
             else
@@ -776,8 +776,7 @@ classdef CellDataCurator < handle
         end
         
         function saveCellData(obj)
-            cellData = obj.cellData;
-            save(obj.cellData.savedFileName, 'cellData');
+            saveAndSyncCellData(obj.cellData);
         end
         
         function saveFilter(obj)
