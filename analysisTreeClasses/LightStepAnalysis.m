@@ -31,7 +31,7 @@ classdef LightStepAnalysis < AnalysisTree
             rootData = obj.get(1);
             leafIDs = obj.findleaves();
             L = length(leafIDs);
-            allBaselineSpikes = []; 
+            allBaselineSpikes = [];
             for i=1:L
                 curNode = obj.get(leafIDs(i));
                 if strcmp(rootData.(rootData.ampModeParam), 'Cell attached')
@@ -43,8 +43,8 @@ classdef LightStepAnalysis < AnalysisTree
                     %'EndTime', 250);
                 else
                     N = 0;
-                end    
-                                
+                end
+                
                 curNode.N = N;
                 
                 if strcmp(rootData.(rootData.ampModeParam), 'Cell attached')
@@ -78,7 +78,7 @@ classdef LightStepAnalysis < AnalysisTree
                 cellData.plotPSTH(epochInd, 10, rootData.deviceName);
             else
                 cellData.plotMeanData(epochInd, true, [], rootData.deviceName);
-            end            
+            end
         end
         
         function plotEpochData(node, cellData, device, epochIndex)
@@ -99,7 +99,7 @@ classdef LightStepAnalysis < AnalysisTree
                 hold('off');
             end
             if isfield(nodeData, 'ONlatency')
-               %draw lines here
+                %draw lines here
             end
         end
         
