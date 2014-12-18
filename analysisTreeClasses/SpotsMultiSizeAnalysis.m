@@ -1,7 +1,7 @@
 classdef SpotsMultiSizeAnalysis < AnalysisTree
     properties
         StartTime = 0;
-        EndTime = 500;
+        EndTime = 1000;
         respType = 'Charge';
     end
     
@@ -19,7 +19,7 @@ classdef SpotsMultiSizeAnalysis < AnalysisTree
             nameStr = [cellData.rawfilename ': ' dataSetName ': SpotsMultiSizeAnalysis'];
             obj = obj.setName(nameStr);
             dataSet = cellData.savedDataSets(dataSetName);
-            obj = obj.copyAnalysisParams(params);
+            obj = obj.copyAnalysisParams(params);    
             obj = obj.copyParamsFromSampleEpoch(cellData, dataSet, ...
                 {'RstarMean', 'RstarIntensity', params.ampModeParam, 'offsetX', 'offsetY'});
             obj = obj.buildCellTree(1, cellData, dataSet, {'curSpotSize'});
@@ -29,47 +29,22 @@ classdef SpotsMultiSizeAnalysis < AnalysisTree
             rootData = obj.get(1);
             leafIDs = obj.findleaves();
             L = length(leafIDs);
-            allBaselineSpikes = []; 
             for i=1:L
                 curNode = obj.get(leafIDs(i));
                 if strcmp(rootData.(rootData.ampModeParam), 'Cell attached')
-                    [baselineSpikes, respUnits, baselineLen] = getEpochResponses(cellData, curNode.epochID, 'Baseline spikes', 'DeviceName', rootData.deviceName, ...
+                    [resp, respUnits] = getEpochResponses(cellData, curNode.epochID, 'Spike count', 'DeviceName', rootData.deviceName, ...
                         'StartTime', obj.StartTime, 'EndTime', obj.EndTime);
-                    [spikes, respUnits, intervalLen] = getEpochResponses(cellData, curNode.epochID, 'Spike count', 'DeviceName', rootData.deviceName, ...
-                        'StartTime', obj.StartTime, 'EndTime', obj.EndTime);
-                    N = length(spikes);
-                    %'EndTime', 250);
                 else
                     [resp, respUnits] = getEpochResponses(cellData, curNode.epochID, obj.respType, 'DeviceName', rootData.deviceName, ...
                         'StartTime', obj.StartTime, 'EndTime', obj.EndTime);
-                    N = length(resp);
                 end
-                
+                N = length(resp);
+                curNode.resp = resp;
+                curNode.respMean = mean(resp);
+                curNode.respSEM = std(resp)./sqrt(N);
                 curNode.N = N;
-                
-                if strcmp(rootData.(rootData.ampModeParam), 'Cell attached')
-                    allBaselineSpikes = [allBaselineSpikes, baselineSpikes];
-                    curNode.spikes = spikes;
-                else
-                    curNode.resp = resp;
-                    curNode.respMean = mean(resp);
-                    curNode.respSEM = std(resp)./sqrt(N);
-                end
-                
                 obj = obj.set(leafIDs(i), curNode);
             end
-            %subtract baseline
-            baselineMean = mean(allBaselineSpikes);
-            if strcmp(rootData.(rootData.ampModeParam), 'Cell attached')
-                for i=1:L
-                    curNode = obj.get(leafIDs(i));
-                    curNode.resp = curNode.spikes - (baselineMean * intervalLen/baselineLen);
-                    curNode.respMean = mean(curNode.resp);
-                    curNode.respSEM = std(curNode.resp)./sqrt(curNode.N);
-                    obj = obj.set(leafIDs(i), curNode);
-                end
-            end
-            
             
             obj = obj.percolateUp(leafIDs, ...
                 'respMean', 'respMean', ...
@@ -77,7 +52,12 @@ classdef SpotsMultiSizeAnalysis < AnalysisTree
                 'N', 'N', ...
                 'splitValue', 'spotSize');
             
+            rootData = obj.get(1);
+            rootData.respSEM_norm = rootData.respSEM ./ max(rootData.respMean);
+            rootData.respMean_norm = rootData.respMean ./ max(rootData.respMean);
+            obj = obj.set(1, rootData);
         end
+        
     end
     
     methods(Static)

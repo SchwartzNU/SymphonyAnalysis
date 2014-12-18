@@ -70,6 +70,11 @@ classdef ContrastRespAnalysis < AnalysisTree
                 'respSEM', 'respSEM', ...
                 'N', 'N', ...
                 'splitValue', 'contrast');
+            
+            rootData = obj.get(1);
+            rootData.respSEM_norm = rootData.respSEM ./ max(rootData.respMean);
+            rootData.respMean_norm = rootData.respMean ./ max(rootData.respMean);
+            obj = obj.set(1, rootData);
         end
     end
     
