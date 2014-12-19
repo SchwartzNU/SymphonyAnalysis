@@ -142,8 +142,12 @@ classdef AnalysisTree < tree
         
         function cellName = getCellName(obj, nodeInd)
             nodeData = obj.get(nodeInd);
+            cellName = '';
             while ~isfield(nodeData, 'cellName');
                 nodeInd = obj.getparent(nodeInd);
+                if nodeInd == 0
+                   return;
+                end
                 nodeData = obj.get(nodeInd);
             end
             cellName = nodeData.cellName;            

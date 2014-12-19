@@ -201,25 +201,126 @@ classdef TreeBrowserGUI < handle
             selectedNodes = get(obj.guiTree, 'selectedNodes');
             curNodeIndex = get(selectedNodes(1), 'Value');
             
-            treePart =  obj.analysisTree.subtree(curNodeIndex);
-            leafIDs = treePart.findleaves;
-            %set tags for each epochs
+            curNode = obj.analysisTree.get(curNodeIndex);
             figName = get(obj.handles.fig, 'Name');
-            for i=1:length(leafIDs)
-                curNode = treePart.get(leafIDs(i));
-                curCellName = obj.analysisTree.getCellName(leafIDs(i));
+            %4 cases: at data set level, at cell level, below data set level, above cell level
+            if  isfield(curNode, 'cellName') %at data set cell level
+                curCellName = curNode.cellName;
+                epochIDs = [];
+                treePart =  obj.analysisTree.subtree(curNodeIndex);
+                leafIDs = treePart.findleaves;
+                %collect all IDs
+                for i=1:length(leafIDs)
+                    curNode = treePart.get(leafIDs(i));
+                    epochIDs = [epochIDs curNode.epochID];
+                end
                 obj.curCellData = loadAndSyncCellData(curCellName);
-                epochIDs = curNode.epochID;
-                
-                for i=1:length(epochIDs)
+                %set tags for each epochs
+                for j=1:length(epochIDs)
                     if strcmp(tagVal, 'remove')
                         set(obj.handles.fig, 'Name', 'Busy: removing tags');
                         drawnow;
-                        obj.curCellData.epochs(epochIDs(i)).attributes.remove(tagName);
+                        obj.curCellData.epochs(epochIDs(j)).attributes.remove(tagName);
                     else
                         set(obj.handles.fig, 'Name', 'Busy: adding tags');
                         drawnow;
-                        obj.curCellData.epochs(epochIDs(i)).attributes(tagName) = tagVal;
+                        obj.curCellData.epochs(epochIDs(j)).attributes(tagName) = tagVal;
+                    end
+                end
+                saveAndSyncCellData(obj.curCellData)
+                
+            elseif isempty(obj.analysisTree.getCellName(curNodeIndex)) && ~isfield(curNode, 'device') %above cell level
+                temp = obj.analysisTree.getchildren(curNodeIndex);
+                childInd = temp(1);
+                curNode = obj.analysisTree.get(childInd);
+                while ~isfield(curNode, 'cellName')
+                    temp = obj.analysisTree.getchildren(childInd);
+                    childInd = temp(1);
+                    curNode = obj.analysisTree.get(childInd);
+                end
+                %get siglings of parent (actual cell level instead of
+                %dataset level
+                siblings = obj.analysisTree.getsiblings(obj.analysisTree.getparent(childInd));
+                for c = 1:length(siblings);
+                    dataSetNodeInd = obj.analysisTree.getchildren(siblings(c));
+                    for d=1:length(dataSetNodeInd)
+                        curNodeIndex = dataSetNodeInd(d);
+                        cellNode = obj.analysisTree.get(curNodeIndex);
+                        curCellName = cellNode.cellName;
+                        epochIDs = [];
+                        treePart =  obj.analysisTree.subtree(curNodeIndex);
+                        leafIDs = treePart.findleaves;
+                        %collect all IDs
+                        for i=1:length(leafIDs)
+                            curNode = treePart.get(leafIDs(i));
+                            epochIDs = [epochIDs curNode.epochID];
+                        end
+                        obj.curCellData = loadAndSyncCellData(curCellName);
+                        %set tags for each epochs
+                        for j=1:length(epochIDs)
+                            if strcmp(tagVal, 'remove')
+                                set(obj.handles.fig, 'Name', 'Busy: removing tags');
+                                drawnow;
+                                obj.curCellData.epochs(epochIDs(j)).attributes.remove(tagName);
+                            else
+                                set(obj.handles.fig, 'Name', 'Busy: adding tags');
+                                drawnow;
+                                obj.curCellData.epochs(epochIDs(j)).attributes(tagName) = tagVal;
+                            end
+                        end
+                        saveAndSyncCellData(obj.curCellData)
+                    end
+                end
+            elseif isempty(obj.analysisTree.getCellName(curNodeIndex)) && isfield(curNode, 'device') %at cell level
+                childNodes = obj.analysisTree.getchildren(curNodeIndex);
+                for c=1:length(childNodes)
+                    curNodeIndex = childNodes(c);
+                    cellNode = obj.analysisTree.get(curNodeIndex);
+                    curCellName = cellNode.cellName;
+                    epochIDs = [];
+                    treePart =  obj.analysisTree.subtree(curNodeIndex);
+                    leafIDs = treePart.findleaves;
+                    %collect all IDs
+                    for i=1:length(leafIDs)
+                        curNode = treePart.get(leafIDs(i));
+                        epochIDs = [epochIDs curNode.epochID];
+                    end
+                    obj.curCellData = loadAndSyncCellData(curCellName);
+                    %set tags for each epochs
+                    for j=1:length(epochIDs)
+                        if strcmp(tagVal, 'remove')
+                            set(obj.handles.fig, 'Name', 'Busy: removing tags');
+                            drawnow;
+                            obj.curCellData.epochs(epochIDs(j)).attributes.remove(tagName);
+                        else
+                            set(obj.handles.fig, 'Name', 'Busy: adding tags');
+                            drawnow;
+                            obj.curCellData.epochs(epochIDs(j)).attributes(tagName) = tagVal;
+                        end
+                    end
+                    saveAndSyncCellData(obj.curCellData)
+                end
+            else %below cell level
+                curCellName = obj.analysisTree.getCellName(curNodeIndex);
+                epochIDs = [];
+                treePart =  obj.analysisTree.subtree(curNodeIndex);
+                leafIDs = treePart.findleaves;
+                %collect all IDs
+                for i=1:length(leafIDs)
+                    curNode = treePart.get(leafIDs(i));
+                    epochIDs = [epochIDs curNode.epochID];
+                end
+                obj.curCellData = loadAndSyncCellData(curCellName);
+                %set tags for each epochs
+                for j=1:length(epochIDs)
+                    if strcmp(tagVal, 'remove')
+                        set(obj.handles.fig, 'Name', 'Busy: removing tags');
+                        drawnow;
+                        obj.curCellData.epochs(epochIDs(j)).attributes.remove(tagName);
+                    else
+                        set(obj.handles.fig, 'Name', 'Busy: adding tags');
+                        drawnow;
+                        obj.curCellData.epochs(epochIDs(j)).attributes(tagName) = tagVal;
                     end
                 end
                 saveAndSyncCellData(obj.curCellData)
