@@ -203,26 +203,27 @@ classdef TreeBrowserGUI < handle
             
             treePart =  obj.analysisTree.subtree(curNodeIndex);
             leafIDs = treePart.findleaves;
-            epochIDs = [];
-            for i=1:length(leafIDs)
-                curNode = treePart.get(leafIDs(i));
-                epochIDs = [epochIDs curNode.epochID];
-            end
-            
             %set tags for each epochs
             figName = get(obj.handles.fig, 'Name');
-            for i=1:length(epochIDs)
-                if strcmp(tagVal, 'remove')
-                    set(obj.handles.fig, 'Name', 'Busy: removing tags');
-                    drawnow;
-                    obj.curCellData.epochs(epochIDs(i)).attributes.remove(tagName);
-                else
-                    set(obj.handles.fig, 'Name', 'Busy: adding tags');
-                    drawnow;
-                    obj.curCellData.epochs(epochIDs(i)).attributes(tagName) = tagVal;
+            for i=1:length(leafIDs)
+                curNode = treePart.get(leafIDs(i));
+                curCellName = obj.analysisTree.getCellName(leafIDs(i));
+                obj.curCellData = loadAndSyncCellData(curCellName);
+                epochIDs = curNode.epochID;
+                
+                for i=1:length(epochIDs)
+                    if strcmp(tagVal, 'remove')
+                        set(obj.handles.fig, 'Name', 'Busy: removing tags');
+                        drawnow;
+                        obj.curCellData.epochs(epochIDs(i)).attributes.remove(tagName);
+                    else
+                        set(obj.handles.fig, 'Name', 'Busy: adding tags');
+                        drawnow;
+                        obj.curCellData.epochs(epochIDs(i)).attributes(tagName) = tagVal;
+                    end
                 end
+                saveAndSyncCellData(obj.curCellData)
             end
-            saveAndSyncCellData(obj.curCellData)
             set(obj.handles.fig, 'Name', figName);
             drawnow;
         end
