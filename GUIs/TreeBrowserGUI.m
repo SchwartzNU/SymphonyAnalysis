@@ -173,6 +173,11 @@ classdef TreeBrowserGUI < handle
                 'String', 'Figure to Igor', ...
                 'Callback', @(uiobj, evt)obj.figToIgor);
             
+            obj.handles.curveFitButton = uicontrol('Parent', L_plotButtons, ...
+                'Style', 'pushbutton', ...
+                'String', 'Curve fit', ...
+                'Callback', @(uiobj, evt)obj.openCurveFitter);
+            
             obj.handles.rawDataToCommandLine = uicontrol('Parent', L_plotButtons, ...
                 'Style', 'pushbutton', ...
                 'String', 'Raw data to command line', ...
@@ -514,17 +519,21 @@ classdef TreeBrowserGUI < handle
             
             L = length(allFields);
             D = cell(L,2);
+            z=1;
             for i=1:L
-                D{i,1} = allFields{i};
+                %D{i,1} = allFields{i};
                 if isstruct(curNodeData.(allFields{i}))
-                    D{i,2} = '<struct>';
+                    %do nothing, don't add struct
+                    %D{i,2} = '<struct>';
                 else
+                    D{z,1} = allFields{i};
                     sizeVal = size(curNodeData.(allFields{i}));
                     if sizeVal(1) > 1 && sizeVal(2) > 1
-                        D{i,2} = '<array>';
+                        D{z,2} = '<array>';
                     else
-                        D{i,2} = num2str(curNodeData.(allFields{i}));
+                        D{z,2} = num2str(curNodeData.(allFields{i}));
                     end
+                    z=z+1;
                 end
             end
             set(obj.handles.nodePropertiesTable, 'data', D)
@@ -600,6 +609,10 @@ classdef TreeBrowserGUI < handle
         
         function figToIgor(obj)
             makeAxisStruct(obj.handles.plotAxes, obj.igorh5Folder);
+        end
+        
+        function openCurveFitter(obj)
+            
         end
         
         function rawDataToCommandLine(obj)

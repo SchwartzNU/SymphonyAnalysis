@@ -18,5 +18,7 @@ end
 fNames = fieldnames(s);
 
 for i = 1:length(fNames)
-    hdf5write(fileName, strcat(dataRoot, '/', fNames{i}), s.(fNames{i}), 'WriteMode', 'append');
+    if ~isstruct(s.(fNames{i}))
+        hdf5write(fileName, strcat(dataRoot, '/', fNames{i}), s.(fNames{i}), 'WriteMode', 'append');
+    end
 end

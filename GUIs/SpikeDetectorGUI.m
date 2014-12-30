@@ -114,6 +114,11 @@ classdef SpikeDetectorGUI < handle
             else
                 obj.spikeTimes = [];
             end
+            %remove double-counted spikes
+            if  length(obj.spikeTimes) >= 2
+                ISItest = diff(obj.spikeTimes);
+                obj.spikeTimes = obj.spikeTimes([(ISItest > 0.0015) true]);
+            end
             saveAndSyncCellData(obj.cellData) %save cellData file
             obj.updateUI();
         end
@@ -150,6 +155,12 @@ classdef SpikeDetectorGUI < handle
                     else
                         spikeResults = SpikeDetector_simple(data, 1./obj.sampleRate, obj.threshold);
                         spikeTimes = spikeResults.sp;
+                    end
+                    
+                    %remove double-counted spikes
+                    if  length(spikeTimes) >= 2
+                        ISItest = diff(spikeTimes);
+                        spikeTimes = spikeTimes([(ISItest > 0.0015) true]);
                     end
                     
                     if i==obj.curEpochInd

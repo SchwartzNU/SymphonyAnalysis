@@ -284,14 +284,14 @@ classdef LabData < handle
                     z=z+1;
                 end
                 if isempty(curCellNameParts)
-                    cellAnalysisTree = analyzeCell(curCellName);
-                    save([obj.analysisFolder 'analysisTrees' filesep curCellName], 'cellAnalysisTree');
+                    analysisTree = analyzeCell(curCellName);
+                    save([obj.analysisFolder 'analysisTrees' filesep curCellName], 'analysisTree');
                 else
                     for j=1:length(curCellNameParts)
                         %j
                         %curCellNameParts{j}
-                        cellAnalysisTree = analyzeCell(curCellNameParts{j});
-                        save([obj.analysisFolder 'analysisTrees' filesep curCellNameParts{j}], 'cellAnalysisTree');
+                        analysisTree = analyzeCell(curCellNameParts{j});
+                        save([obj.analysisFolder 'analysisTrees' filesep curCellNameParts{j}], 'analysisTree');
                     end
                 end
             end
@@ -324,8 +324,8 @@ classdef LabData < handle
                 end
                 if isempty(curCellNameParts)
                     load([obj.analysisFolder 'analysisTrees' filesep curCellName]);
-                    if length(cellAnalysisTree.Node)>1
-                        resultTree = resultTree.graft(1, cellAnalysisTree);
+                    if length(analysisTree.Node)>1
+                        resultTree = resultTree.graft(1, analysisTree);
                     end
                 else
                     splitCellTree = AnalysisTree;
@@ -334,8 +334,8 @@ classdef LabData < handle
                     splitCellTree = splitCellTree.set(1, nodeData);
                     for j=1:length(curCellNameParts)
                         load([obj.analysisFolder 'analysisTrees' filesep curCellNameParts{j}]);
-                        if length(cellAnalysisTree.Node)>1
-                            splitCellTree = splitCellTree.graft(1, cellAnalysisTree);
+                        if length(analysisTree.Node)>1
+                            splitCellTree = splitCellTree.graft(1, analysisTree);
                         end
                     end
                     if length(splitCellTree.Node)>1
