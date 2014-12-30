@@ -28,7 +28,7 @@ for i=1:length(fnames)
        
        %recalculate without outliers
        newVals = outputStruct.(curField).value(setdiff(1:N, outputStruct.(curField).outliers));
-       outputStruct.(curField).values_c = newVals;
+       outputStruct.(curField).value_c = newVals;
        outputStruct.(curField).mean_c = nanmean(newVals);
        outputStruct.(curField).median_c = nanmedian(newVals);
        outputStruct.(curField).SD_c = nanstd(newVals);

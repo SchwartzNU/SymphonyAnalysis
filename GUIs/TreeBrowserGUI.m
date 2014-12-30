@@ -797,9 +797,9 @@ classdef TreeBrowserGUI < handle
                 errvals = get(chInd, 'udata');
                 zeroInd = find(errvals==0);
                 if ~isempty(zeroInd)
-                    errvals(zeroInd) = min(errvals) / 2; %set zeros to half min
-                    weights = 1./errvals;
+                    errvals(zeroInd) = min(errvals) / 2; %set zeros to half min                    
                 end
+                weights = 1./errvals;
                 cftool(xvals,yvals,[],weights);
             else
                 cftool(xvals,yvals);

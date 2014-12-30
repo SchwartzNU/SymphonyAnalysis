@@ -372,7 +372,7 @@ for i=1:L
             ONSETspikes = sum((spikeTimes >= ONSETresponseStartTime) & (spikeTimes <= ONSETresponseEndTime));
             outputStruct.ONSET_ISI_full.value = diff(spikeTimes((spikeTimes >= ONSETresponseStartTime) & (spikeTimes <= ONSETresponseEndTime)));
             outputStruct.ONSETrespDuration.value(i) = ONSETresponseEndTime - ONSETresponseStartTime;
-            outputStruct.ONSETrespRate.value(i) = ONSETspikes / outputStruct.ONSETrespDuration.value(i);
+            outputStruct.ONSETrespRate.value(i) = ONSETspikes / outputStruct.ONSETrespDuration.value(i); %fix nan and inf here!
             outputStruct.ONSETrespRate_baselineSubtracted.value(i) = outputStruct.ONSETrespRate.value(i) - meanBaselineRate;
         end
         outputStruct.ONSETspikes.value(i) = ONSETspikes;
