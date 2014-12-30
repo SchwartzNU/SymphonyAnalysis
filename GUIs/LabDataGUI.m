@@ -1060,17 +1060,19 @@ classdef LabDataGUI < handle
                             %curName = [cellDataFolder cellDataNames{i} '.mat'];
                             %load(curName);
                             cellData = loadAndSyncCellData(cellDataNames{i});
+                            %keyboard;
                             if ~isnan(cellData.epochs(1).get('amp2')) %if 2 amps
                                 if strfind(cellData.cellType, ';')
                                     [cell1Name, cell2Name] = strtok(cellData.cellType, ';');
                                     cell2Name = cell2Name(2:end);
-                                    if strfind(obj.curCellName, [cellDataNames{i} '-Ch2']) %name for second cell
+                                    %keyboard;
+                                    if strfind(curCells(c), [cellDataNames{i} '-Ch2']) %name for second cell
                                         cellData.cellType = [cell1Name ';' cellTypeName];
                                     else
                                         cellData.cellType =  [cellTypeName ';' cell2Name];
                                     end
                                 else
-                                    if strfind(obj.curCellName, [cellDataNames{i} '-Ch2']) %name for second cell
+                                    if strfind(curCells(c), [cellDataNames{i} '-Ch2']) %name for second cell
                                         cellData.cellType = [' ;' cellTypeName];
                                     else
                                         cellData.cellType =  [cellTypeName '; '];
