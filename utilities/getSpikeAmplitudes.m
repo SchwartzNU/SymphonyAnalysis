@@ -4,8 +4,14 @@ L = length(spikeTimes);
 spikeAmps = zeros(L,1);
 waveformMatrix = zeros(L, 41);
 
+if isnan(spikeTimes)
+    spikeAmps = NaN;
+    averageWaveform = nan;
+    return;
+end
+
 for i=1:L
-   if spikeTimes(i) < 20 || spikeTimes(i) > length(trace) - 20  %need 2 ms before and after
+   if spikeTimes(i) < 21 || spikeTimes(i) > length(trace) - 20  %need 2 ms before and after
        spikeTimes(i) = nan;
    else
        segment = trace(spikeTimes(i) - 20 : spikeTimes(i) + 20);

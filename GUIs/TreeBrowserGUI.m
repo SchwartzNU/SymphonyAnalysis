@@ -22,7 +22,8 @@ classdef TreeBrowserGUI < handle
     end
     
     properties(Constant)
-        leafPlotMethods = {'plotMeanData'; 'plotEpochData'; 'plotSpikeRaster'; 'plotLeaf'}; %plotLeaf can be overwritten in analysis class
+        leafPlotMethods = {'plotEpochData'; 'plotMeanData'; 'plotSpikeRaster'; 'plotLeaf'}; %plotLeaf can be overwritten in analysis class
+        generalPlotMethods = {'XYplotter_epochParams'; 'XYplotter_singleValParams'};
     end
     
     methods
@@ -120,30 +121,31 @@ classdef TreeBrowserGUI < handle
             
             L_tables = uiextras.HBoxFlex('Parent', L_right, 'Spacing', 10);
             
-            L_plotControls = uiextras.VBox('Parent', L_tables);
-            
-            obj.handles.plotSelectionMenu = uicontrol('Parent', L_plotControls, ...
+            obj.handles.L_plotControls = uiextras.VBox('Parent', L_tables);
+                        
+            obj.handles.plotSelectionMenu = uicontrol('Parent', obj.handles.L_plotControls, ...
                 'Style', 'popupmenu', ...
                 'String', {'none'}, ...
+                'Tag', 'plotSelectionMenu', ...
                 'Units', 'normalized', ...
                 'Callback', @(uiobj, evt)obj.onPlotSelectionMenu);
             
-            obj.handles.plotSelectionApplyAllButton = uicontrol('Parent', L_plotControls, ...
+            obj.handles.plotSelectionApplyAllButton = uicontrol('Parent', obj.handles.L_plotControls, ...
                 'Style', 'pushbutton', ...
                 'String', 'Apply to all nodes of this type', ...
                 'Callback', @(uiobj, evt)obj.applyPlotSelection);
             
-            obj.handles.nodeToMatlabButton = uicontrol('Parent', L_plotControls, ...
+            obj.handles.nodeToMatlabButton = uicontrol('Parent', obj.handles.L_plotControls, ...
                 'Style', 'pushbutton', ...
                 'String', 'Node data to command line', ...
                 'Callback', @(uiobj, evt)obj.nodeToMatlab);
             
-            obj.handles.nodeToIgorButton = uicontrol('Parent', L_plotControls, ...
+            obj.handles.nodeToIgorButton = uicontrol('Parent', obj.handles.L_plotControls, ...
                 'Style', 'pushbutton', ...
                 'String', 'Node data to Igor', ...
                 'Callback', @(uiobj, evt)obj.nodeToIgor);
             
-            set(L_plotControls, 'Sizes', [-1, 40, 40, 40]);
+            set(obj.handles.L_plotControls, 'Sizes', [-1, 40, 40, 40]);
             
             obj.handles.nodePropertiesTable = uitable('Parent', L_tables, ...
                 'Units',    'pixels', ...
@@ -188,8 +190,6 @@ classdef TreeBrowserGUI < handle
             
             set(L_right, 'Sizes', [-1 -3], 'Spacing', 10);
             
-            t = obj.guiTree.Tree;
-            %set(t, 'MousePressedCallback', @(uiobj,evt)obj.showPlotMenu(evt));
             cmenu = uicontextmenu;
             plotType1 = uimenu(cmenu, 'label', 'plotFunc1');
             plotType2 = uimenu(cmenu, 'label', 'plotFunc2');
@@ -407,11 +407,67 @@ classdef TreeBrowserGUI < handle
                         allMethods = methods(analysisClass);
                         plotMethods = allMethods(strmatch('plot', allMethods));
                         plotMethods = plotMethods(~strcmp(plotMethods, 'plot'));
-                        plotMethods = plotMethods(~strcmp(plotMethods, 'plotLeaf'));
+                        plotMethods = plotMethods(~strcmp(plotMethods, 'plotLeaf'));   
+                        plotMethods = plotMethods(~strcmp(plotMethods, 'plotEpochData'));   
+                        plotMethods = [plotMethods; obj.generalPlotMethods];
                         obj.plotSelectionTable{i,2} = plotMethods;
                     end
                 end
             end
+        end
+        
+        function resetPlotControls(obj)      
+            if isfield(obj.handles, 'L_plotXY_box');
+                delete(obj.handles.L_plotXY_box);
+                set(obj.handles.L_plotControls, 'Sizes', [-1, 40, 40, 40]); 
+            end
+        end
+        
+        function addXYselectionToPlotControls(obj, xList, yList)    
+            plotControls_children = get(obj.handles.L_plotControls, 'children');
+            for i=1:length(plotControls_children)
+                if ~strcmp(get(plotControls_children(i), 'Tag'), 'plotSelectionMenu');                    
+                    delete(plotControls_children(i));
+                end
+            end
+                        
+            obj.handles.L_plotXY_box = uiextras.HBox('Parent', obj.handles.L_plotControls);
+            
+            obj.handles.plotXMenu = uicontrol('Parent', obj.handles.L_plotXY_box, ...
+                'Style', 'popupmenu', ...
+                'String', xList, ...
+                'Units', 'normalized', ...
+                'Callback', @(uiobj, evt)obj.updatePlot); %how are we going to save the selection here?
+            
+            vs_text = uicontrol('Parent', obj.handles.L_plotXY_box, ...
+                'Style', 'text', ...
+                'String', 'vs.', ...
+                'Units', 'normalized'); 
+            
+            obj.handles.plotYMenu = uicontrol('Parent', obj.handles.L_plotXY_box, ...
+                'Style', 'popupmenu', ...
+                'String', yList, ...
+                'Units', 'normalized', ...
+                'Callback', @(uiobj, evt)obj.updatePlot); 
+            
+            set(obj.handles.L_plotXY_box, 'Sizes', [-1, 20, -1]);
+            
+            obj.handles.plotSelectionApplyAllButton = uicontrol('Parent', obj.handles.L_plotControls, ...
+                'Style', 'pushbutton', ...
+                'String', 'Apply to all nodes of this type', ...
+                'Callback', @(uiobj, evt)obj.applyPlotSelection);
+            
+            obj.handles.nodeToMatlabButton = uicontrol('Parent', obj.handles.L_plotControls, ...
+                'Style', 'pushbutton', ...
+                'String', 'Node data to command line', ...
+                'Callback', @(uiobj, evt)obj.nodeToMatlab);
+            
+            obj.handles.nodeToIgorButton = uicontrol('Parent', obj.handles.L_plotControls, ...
+                'Style', 'pushbutton', ...
+                'String', 'Node data to Igor', ...
+                'Callback', @(uiobj, evt)obj.nodeToIgor);
+            
+            set(obj.handles.L_plotControls, 'Sizes', [-1, -1, 40, 40, 40]);
         end
         
         function updatePlot(obj)
@@ -429,7 +485,9 @@ classdef TreeBrowserGUI < handle
             
             plotFuncIndex = obj.plotSelectionTable{curNodeIndex, 3} - 1; %-1 to account for 'none' option
             if plotFuncIndex == 0,
+                reset(obj.handles.plotAxes);
                 cla(obj.handles.plotAxes);
+                obj.resetPlotControls();
                 return;
             end
             plotFuncList = obj.plotSelectionTable{curNodeIndex, 2};
@@ -447,6 +505,7 @@ classdef TreeBrowserGUI < handle
             reset(obj.handles.plotAxes);
             cla(obj.handles.plotAxes);
             if strcmp(strtok(plotClass, ':'), 'leaf') %special cases for leaf nodes
+                obj.resetPlotControls();
                 if strcmp(plotFunc, 'plotEpochData')
                     obj.curEpochIndex = 1;
                     device = obj.analysisTree.getDevice(curNodeIndex);
@@ -480,11 +539,124 @@ classdef TreeBrowserGUI < handle
                 elseif strcmp(plotFunc, 'plotLeaf')
                     [~,plotClass] = strtok(plotClass, ':');
                     plotClass = plotClass(2:end);
-                    eval([plotClass '.plotLeaf(curNode, cellData);']);
+                    eval([plotClass '.plotLeaf(curNode, cellData);']);                
                 end
-            else
-                eval([plotClass '.' plotFunc '(curNode, cellData);']);
+            else %not leaf
+                curNodeData = curNode.get(1);
+                if strcmp(plotFunc, 'XYplotter_epochParams') %special cases for generalized plotters
+                    if isfield(curNodeData, 'stimParameterList')
+                        xList = curNodeData.stimParameterList;
+                    else
+                        xList = [];
+                    end
+                    if isfield(curNodeData, 'byEpochParamList')
+                        yList = curNodeData.byEpochParamList;
+                    else
+                        yList = [];
+                    end
+                    if ~isfield(obj.handles, 'L_plotXY_box') || ~ishandle(obj.handles.L_plotXY_box)
+                        obj.addXYselectionToPlotControls(xList, yList);
+                    end
+                    if ~isequal(yList', get(obj.handles.plotYMenu, 'String'))
+                        disp('remaking menu'); 
+                        obj.addXYselectionToPlotControls(xList, yList);
+                    end
+                    %make the plot    
+                    xName = xList{get(obj.handles.plotXMenu, 'Value')};
+                    yName = yList{get(obj.handles.plotYMenu, 'Value')};
+                    xvals = curNodeData.(xName);
+                    yField = curNodeData.(yName);
+                    if strcmp(yField(1).units, 's') %if a time, take the median
+                        for i=1:length(yField)
+                           yvals(i) = yField(i).median_c;
+                           errs(i) = yField(i).SEM;
+                        end
+                    else
+                        for i=1:length(yField)
+                           yvals(i) = yField(i).mean_c;
+                           errs(i) = yField(i).SEM;
+                        end
+                    end                    
+                    errorbar(xvals, yvals, errs);
+                    xlabel(xName);
+                    ylabel([yName ' (' yField(1).units ')' ]);
+                    obj.printCodeForPlotterFunction_byEpoch(xName,yName);
+                elseif strcmp(plotFunc, 'XYplotter_singleValParams')
+                    if isfield(curNodeData, 'stimParameterList')
+                        xList = curNodeData.stimParameterList;
+                    else
+                        xList = [];
+                    end
+                    if isfield(curNodeData, 'singleValParamList')
+                        yList = curNodeData.singleValParamList;
+                    else
+                        yList = [];
+                    end
+                    if ~isfield(obj.handles, 'L_plotXY_box') || ~ishandle(obj.handles.L_plotXY_box)
+                        obj.addXYselectionToPlotControls(xList, yList);
+                    end
+                    if ~isequal(yList', get(obj.handles.plotYMenu, 'String'))
+                        disp('remaking menu'); 
+                        obj.addXYselectionToPlotControls(xList, yList);
+                    end
+                    %make the plot    
+                    xName = xList{get(obj.handles.plotXMenu, 'Value')};
+                    yName = yList{get(obj.handles.plotYMenu, 'Value')};
+                    xvals = curNodeData.(xName);
+                    yField = curNodeData.(yName);
+                    for i=1:length(yField)
+                        yvals(i) = yField(i).value;
+                    end
+                    plot(xvals, yvals, 'bx-');
+                    xlabel(xName);
+                    ylabel([yName ' (' yField(1).units ')' ]);  
+                    obj.printCodeForPlotterFunction_singleVal(xName,yName);
+                else
+                    obj.resetPlotControls();
+                    eval([plotClass '.' plotFunc '(curNode, cellData);']);
+                    
+                end
             end
+        end
+        
+        function printCodeForPlotterFunction_singleVal(obj, xName, yName)
+           disp('%%%%%%%%%%%%%% plotter code %%%%%%%%%%%%%%'); 
+           disp(['function plot_' xName 'Vs' yName '(node, cellData)']);
+           disp('rootData = node.get(1);');
+           disp(['xvals = rootData.' xName ';']);
+           disp(['yField = rootData.' yName ';']);
+           disp('for i=1:length(yField)');
+           disp('yvals(i) = yField(i).value;');
+           disp('end');
+           disp(['plot(xvals, yvals, ''' 'bx-' ''');']);
+           disp(['xlabel(''' xName ''');']);
+           disp(['ylabel([''' yName ' (' ''' yField(1).units ''' ')''' ']);']);
+           disp('end');
+           disp('%%%%%%%%%%%%%% plotter code %%%%%%%%%%%%%%'); 
+        end
+        
+        function printCodeForPlotterFunction_byEpoch(obj, xName, yName)
+           disp('%%%%%%%%%%%%%% plotter code %%%%%%%%%%%%%%'); 
+           disp(['function plot_' xName 'Vs' yName '(node, cellData)']);
+           disp('rootData = node.get(1);');
+           disp(['xvals = rootData.' xName ';']);
+           disp(['yField = rootData.' yName ';']);
+           disp('if strcmp(yField(1).units, ''s'')');
+           disp('for i=1:length(yField)');
+           disp('yvals(i) = yField(i).median_c;');
+           disp('errs(i) = yField(i).SEM;');
+           disp('end');
+           disp('else');
+           disp('for i=1:length(yField)');           
+           disp('yvals(i) = yField(i).mean_c;');
+           disp('errs(i) = yField(i).SEM;');
+           disp('end');
+           disp('end');
+           disp('errorbar(xvals, yvals, errs);');
+           disp(['xlabel(''' xName ''');']);
+           disp(['ylabel([''' yName ' (' ''' yField(1).units ''' ')''' ']);']);
+           disp('end');
+           disp('%%%%%%%%%%%%%% plotter code %%%%%%%%%%%%%%'); 
         end
         
         function onPlotSelectionMenu(obj)
@@ -525,6 +697,8 @@ classdef TreeBrowserGUI < handle
                 if isstruct(curNodeData.(allFields{i}))
                     %do nothing, don't add struct
                     %D{i,2} = '<struct>';
+                elseif iscell(curNodeData.(allFields{i}))
+                    D{z,2} = '<cellArray>';
                 else
                     D{z,1} = allFields{i};
                     sizeVal = size(curNodeData.(allFields{i}));
@@ -612,7 +786,24 @@ classdef TreeBrowserGUI < handle
         end
         
         function openCurveFitter(obj)
-            
+            chInd = get(obj.handles.plotAxes, 'children');            
+            %fit only first child for now
+            if length(chInd) > 1
+                chInd = chInd(1);
+            end
+            xvals = get(chInd, 'xdata');
+            yvals = get(chInd, 'ydata');
+            if isprop(chInd, 'udata') %if has errors
+                errvals = get(chInd, 'udata');
+                zeroInd = find(errvals==0);
+                if ~isempty(zeroInd)
+                    errvals(zeroInd) = min(errvals) / 2; %set zeros to half min
+                    weights = 1./errvals;
+                end
+                cftool(xvals,yvals,[],weights);
+            else
+                cftool(xvals,yvals);
+            end            
         end
         
         function rawDataToCommandLine(obj)

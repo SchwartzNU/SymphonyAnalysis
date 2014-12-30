@@ -22,11 +22,17 @@ else
     intervalEnd = ip.Results.EndTime * 1E-3; %s
 end
 
+%spike amplitude stuff here - TODO: figure out how to get amplitude profile
+[spikeAmps_all, ~, averageWaveform] = getSpikeAmplitudesForEpochs(cellData, epochInd, ip.Results.DeviceName);
+outputStruct.averageSpikeWaveform.value = averageWaveform;
+
 %first pass through epochsis for getting baseline spikes, ISIs.
 %These will be used later for figuring out the response probability
 
 blISI = cell(1,L); %initialize ISI dist
 blISI2 = cell(1,L);
+fullISI = [];
+fullSpikeAmpDiff = [];
 for i=1:L
     curEpoch = cellData.epochs(epochInd(i));
     
@@ -55,8 +61,13 @@ for i=1:L
     %TEMP HACK: This is to remove crazy refractory preiod violations from the spike detector
     if  length(spikeTimes) >= 2
         ISItest = diff(spikeTimes);
+        spikeAmps_all{i} = spikeAmps_all{i}([(ISItest > 0.0015) true]);
         spikeTimes = spikeTimes([(ISItest > 0.0015) true]);
     end;
+    fullISI = [fullISI, cumsum(diff(spikeTimes))];
+    %fraction difference of spikeAmps
+    spikeAmps_all{i} = spikeAmps_all{i} / max(spikeAmps_all{i});
+    fullSpikeAmpDiff = [fullSpikeAmpDiff; cumsum(diff(spikeAmps_all{i}))];
     % % %
     
     %get baselineISIs
@@ -67,6 +78,10 @@ for i=1:L
     blISI{i} = baselineInterSpTimes; %ISI to next spike
     blISI2{i} = baselineInterSpTimes(1:end-1)+baselineInterSpTimes(2:end); %ISI to two-spikes over
 end
+
+%add spikeAmp stuff
+outputStruct.fullISI.value = fullISI;
+outputStruct.fullSpikeAmpDiff.value = fullSpikeAmpDiff;
 
 %get response ISI threshold
 [blistQshort, baselineISI, blistQ10, blistQ90] = getResponseISIThreshold(blISI, blISI2);
@@ -90,6 +105,18 @@ for i=1:L
     %TODO: deal with missing "value" fields as NaN throughout (or fill them
     %in as such at the end)
     if i==1 %some stuff we only need to do once: units and types for each output
+        outputStruct.fullISI.units = 's';
+        outputStruct.fullISI.type = 'combinedAcrossEpochs';
+        %value already set
+
+        outputStruct.fullSpikeAmpDiff.units = '';
+        outputStruct.fullSpikeAmpDiff.type = 'combinedAcrossEpochs';
+        %value already set;
+        
+        outputStruct.averageSpikeWaveform.units = '';
+        outputStruct.averageSpikeWaveform.type = 'combinedAcrossEpochs';
+        %value already set
+        
         outputStruct.baselineRate.units = 'Hz';
         outputStruct.baselineRate.type = 'byEpoch';
         %value already set
@@ -342,7 +369,7 @@ for i=1:L
     if ~isempty(ONSETresponseStartTime)
         outputStruct.ONSETlatency.value(i) = ONSETresponseStartTime - intervalStart;
         if ~isempty(ONSETresponseEndTime)
-            ONSETspikes = length((spikeTimes >= ONSETresponseStartTime) & (spikeTimes <= ONSETresponseEndTime));
+            ONSETspikes = sum((spikeTimes >= ONSETresponseStartTime) & (spikeTimes <= ONSETresponseEndTime));
             outputStruct.ONSET_ISI_full.value = diff(spikeTimes((spikeTimes >= ONSETresponseStartTime) & (spikeTimes <= ONSETresponseEndTime)));
             outputStruct.ONSETrespDuration.value(i) = ONSETresponseEndTime - ONSETresponseStartTime;
             outputStruct.ONSETrespRate.value(i) = ONSETspikes / outputStruct.ONSETrespDuration.value(i);
@@ -355,7 +382,7 @@ for i=1:L
     if ~isempty(OFFSETresponseStartTime)
         outputStruct.OFFSETlatency.value(i) = OFFSETresponseStartTime - intervalEnd;
         if ~isempty(OFFSETresponseEndTime)
-            OFFSETspikes = length((spikeTimes >= OFFSETresponseStartTime) & (spikeTimes <= OFFSETresponseEndTime));
+            OFFSETspikes = sum((spikeTimes >= OFFSETresponseStartTime) & (spikeTimes <= OFFSETresponseEndTime));
             outputStruct.OFFSET_ISI_full.value = diff(spikeTimes((spikeTimes >= OFFSETresponseStartTime) & (spikeTimes <= OFFSETresponseEndTime)));
             outputStruct.OFFSETrespDuration.value(i) = OFFSETresponseEndTime - OFFSETresponseStartTime;
             outputStruct.OFFSETrespRate.value(i) = OFFSETspikes / outputStruct.OFFSETrespDuration.value(i);
@@ -372,12 +399,12 @@ for i=1:L
     if ~isempty(ONSETresponseStartTime)
         ONSET_burstEndTime = burstInResponse(spikeTimes, ONSETresponseStartTime, ONSETresponseEndTime);
         if ~isnan(ONSET_burstEndTime)
-            ONSET_burstSpikes = length((spikeTimes >= ONSETresponseStartTime) & (spikeTimes <= ONSET_burstEndTime));
-            ONSET_nonBurstSpikes = length((spikeTimes > ONSET_burstEndTime) & (spikeTimes <= ONSETresponseEndTime));
+            ONSET_burstSpikes = sum((spikeTimes >= ONSETresponseStartTime) & (spikeTimes <= ONSET_burstEndTime));
+            ONSET_nonBurstSpikes = sum((spikeTimes > ONSET_burstEndTime) & (spikeTimes <= ONSETresponseEndTime));
             outputStruct.ONSETburstSpikes.value(i) = ONSET_burstSpikes;
             outputStruct.ONSETnonBurstSpikes.value(i) = ONSET_nonBurstSpikes;
             outputStruct.ONSETburstDuration.value(i) = ONSET_burstEndTime - ONSETresponseStartTime;
-            outputStruct.ONSETnonBurstDuration.value(i) = ONSET_burstEndTime - ONSETresponseStartTime;
+            outputStruct.ONSETnonBurstDuration.value(i) = ONSETresponseEndTime - ONSET_burstEndTime;
             
             outputStruct.ONSETburstRate.value(i) = ONSET_burstSpikes / outputStruct.ONSETburstDuration.value(i);
             outputStruct.ONSETnonBurstRate.value(i) = ONSET_nonBurstSpikes / outputStruct.ONSETnonBurstDuration.value(i);
@@ -391,12 +418,12 @@ for i=1:L
     if ~isempty(OFFSETresponseStartTime)
         OFFSET_burstEndTime = burstInResponse(spikeTimes, OFFSETresponseStartTime, OFFSETresponseEndTime);
         if ~isnan(OFFSET_burstEndTime)
-            OFFSET_burstSpikes = length((spikeTimes >= OFFSETresponseStartTime) & (spikeTimes <= OFFSET_burstEndTime));
-            OFFSET_nonBurstSpikes = length((spikeTimes > OFFSET_burstEndTime) & (spikeTimes <= OFFSETresponseEndTime));
+            OFFSET_burstSpikes = sum((spikeTimes >= OFFSETresponseStartTime) & (spikeTimes <= OFFSET_burstEndTime));
+            OFFSET_nonBurstSpikes = sum((spikeTimes > OFFSET_burstEndTime) & (spikeTimes <= OFFSETresponseEndTime));
             outputStruct.OFFSETburstSpikes.value(i) = OFFSET_burstSpikes;
             outputStruct.OFFSETnonBurstSpikes.value(i) = OFFSET_nonBurstSpikes;
             outputStruct.OFFSETburstDuration.value(i) = OFFSET_burstEndTime - OFFSETresponseStartTime;
-            outputStruct.OFFSETnonBurstDuration.value(i) = OFFSET_burstEndTime - OFFSETresponseStartTime;
+            outputStruct.OFFSETnonBurstDuration.value(i) = OFFSETresponseEndTime - OFFSET_burstEndTime;
             
             outputStruct.OFFSETburstRate.value(i) = OFFSET_burstSpikes / outputStruct.OFFSETburstDuration.value(i);
             outputStruct.OFFSETnonBurstRate.value(i) = OFFSET_nonBurstSpikes / outputStruct.OFFSETnonBurstDuration.value(i);
@@ -433,8 +460,10 @@ if ONSETresponseEndTime_max > ONSETresponseStartTime_min
     psth_onset = psth(xvals >= ONSETresponseStartTime_min & xvals < ONSETresponseEndTime_max);
     outputStruct.ONSETpsth.value = psth_onset;
     [outputStruct.ONSET_FRmax.value, maxLoc] = max(psth_onset);
-    if ~isempty(maxLoc), maxLoc = maxLoc(1); end
-    outputStruct.ONSET_FRmaxLatency.value = xvals_onset(maxLoc);
+    if ~isempty(maxLoc)
+        maxLoc = maxLoc(1); 
+        outputStruct.ONSET_FRmaxLatency.value = xvals_onset(maxLoc);
+    end
     outputStruct.ONSET_FRrampLatency.value = outputStruct.ONSET_FRmaxLatency.value - nanmedian(outputStruct.ONSETlatency.value); %latency from start to peak
     outputStruct.ONSET_FRrange.value = outputStruct.ONSET_FRmax.value - min(psth_onset(maxLoc:end)); %range from max to end
     outputStruct.ONSET_FRrangeFrac.value = outputStruct.ONSET_FRrange.value / outputStruct.ONSET_FRmax.value;
@@ -445,8 +474,10 @@ if OFFSETresponseEndTime_max > OFFSETresponseStartTime_min
     psth_offset = psth(xvals >= OFFSETresponseStartTime_min & xvals < OFFSETresponseEndTime_max);
     outputStruct.OFFSETpsth.value = psth_offset;
     [outputStruct.OFFSET_FRmax.value, maxLoc] = max(psth_offset);
-    if ~isempty(maxLoc), maxLoc = maxLoc(1); end
-    outputStruct.OFFSET_FRmaxLatency.value = xvals_offset(maxLoc) - OFFSETresponseStartTime;
+    if ~isempty(maxLoc)
+        maxLoc = maxLoc(1); 
+        outputStruct.OFFSET_FRmaxLatency.value = xvals_offset(maxLoc) - OFFSETresponseStartTime;
+    end
     outputStruct.OFFSET_FRrampLatency.value = outputStruct.OFFSET_FRmaxLatency.value - nanmedian(outputStruct.OFFSETlatency.value); %latency from start to peak
     outputStruct.OFFSET_FRrange.value = outputStruct.OFFSET_FRmax.value - min(psth_offset(maxLoc:end)); %range from max to end
     outputStruct.OFFSET_FRrangeFrac.value = outputStruct.OFFSET_FRrange.value / outputStruct.OFFSET_FRmax.value;

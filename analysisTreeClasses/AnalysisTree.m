@@ -189,8 +189,13 @@ classdef AnalysisTree < tree
         end
         
         function obj = percolateUp(obj, nodeIDs, varargin)
-            inNames = varargin(1:2:end);
-            outNames = varargin(2:2:end);
+            if length(varargin) == 2 && iscell(varargin{1}) && iscell(varargin{2}) %specified as 2 long lists instead
+                inNames = varargin{1};
+                outNames = varargin{2};
+            else %in pairs
+                inNames = varargin(1:2:end);
+                outNames = varargin(2:2:end);
+            end
             
             if length(inNames) ~= length(outNames)
                 disp('Error: parameters must be specified in pairs');

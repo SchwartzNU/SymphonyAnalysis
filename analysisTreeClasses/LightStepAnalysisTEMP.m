@@ -52,23 +52,23 @@ classdef LightStepAnalysisTEMP < AnalysisTree
     
     methods(Static)
         
-        function plotBlistPdf(node, cellData)
-            rootData = node.get(1);
-            if strcmp(rootData.(rootData.ampModeParam), 'Cell attached')
-                baselineISI = [];
-                baselineISI2 = [];
-                for ind = 1:length(node.Node{2}.baselineISIepochs)
-                    ISI = node.Node{2}.baselineISIepochs{ind};
-                    ISI2 = ISI(1:end-1) + ISI(2:end);
-                    baselineISI = [baselineISI, ISI];
-                    baselineISI2 = [baselineISI2, ISI2];
-                end;     
-                X = (0.002:0.004:max(baselineISI2));
-                H = hist(baselineISI2, X);
-                bar(X,H./sum(H));
-                ylim([0,1]);
-            end;
-        end;
+%         function plotBlistPdf(node, cellData)
+%             rootData = node.get(1);
+%             if strcmp(rootData.(rootData.ampModeParam), 'Cell attached')
+%                 baselineISI = [];
+%                 baselineISI2 = [];
+%                 for ind = 1:length(node.Node{2}.baselineISIepochs)
+%                     ISI = node.Node{2}.baselineISIepochs{ind};
+%                     ISI2 = ISI(1:end-1) + ISI(2:end);
+%                     baselineISI = [baselineISI, ISI];
+%                     baselineISI2 = [baselineISI2, ISI2];
+%                 end;     
+%                 X = (0.002:0.004:max(baselineISI2));
+%                 H = hist(baselineISI2, X);
+%                 bar(X,H./sum(H));
+%                 ylim([0,1]);
+%             end;
+%         end;
         
 %         function plotONresponseISI(node, cellData)
 %             rootData = node.get(1);
@@ -124,7 +124,6 @@ classdef LightStepAnalysisTEMP < AnalysisTree
         end  
 
         function plotEpochData(node, cellData, device, epochIndex)
-            disp('Class specific plotEpochData');
             nodeData = node.get(1);
             cellData.epochs(nodeData.epochID(epochIndex)).plotData(device);
             title(['Epoch # ' num2str(nodeData.epochID(epochIndex)) ': ' num2str(epochIndex) ' of ' num2str(length(nodeData.epochID))]);
