@@ -2,7 +2,6 @@ classdef BarsMultiAngleAnalysis < AnalysisTree
     properties
         StartTime = 0;
         EndTime = 0;
-        respType = 'Charge';
     end
     
     methods
@@ -19,7 +18,7 @@ classdef BarsMultiAngleAnalysis < AnalysisTree
             nameStr = [cellData.savedFileName ': ' dataSetName ': BarsMultiAngleAnalysis'];
             obj = obj.setName(nameStr);
             dataSet = cellData.savedDataSets(dataSetName);
-            obj = obj.copyAnalysisParams(params);    
+            obj = obj.copyAnalysisParams(params);
             obj = obj.copyParamsFromSampleEpoch(cellData, dataSet, ...
                 {'RstarMean', 'RstarIntensity', params.ampModeParam, 'offsetX', 'offsetY'});
             obj = obj.buildCellTree(1, cellData, dataSet, {'barAngle'});
@@ -29,99 +28,185 @@ classdef BarsMultiAngleAnalysis < AnalysisTree
             rootData = obj.get(1);
             leafIDs = obj.findleaves();
             L = length(leafIDs);
-            allBaselineSpikes = []; 
             for i=1:L
                 curNode = obj.get(leafIDs(i));
                 if strcmp(rootData.(rootData.ampModeParam), 'Cell attached')
-                    [baselineSpikes, respUnits, baselineLen] = getEpochResponses(cellData, curNode.epochID, 'Baseline spikes', 'DeviceName', rootData.deviceName, ...
-                        'StartTime', obj.StartTime, 'EndTime', obj.EndTime);
-                    [spikes, respUnits, intervalLen] = getEpochResponses(cellData, curNode.epochID, 'Spike count', 'DeviceName', rootData.deviceName, ...
-                        'StartTime', obj.StartTime, 'EndTime', obj.EndTime);
-                    N = length(spikes);
-                    %'EndTime', 250);
-                else
-                    [resp, respUnits] = getEpochResponses(cellData, curNode.epochID, obj.respType, 'DeviceName', rootData.deviceName, ...
-                        'StartTime', obj.StartTime, 'EndTime', obj.EndTime);
-                    N = length(resp);
-                end
-                
-                curNode.N = N;
-                
-                if strcmp(rootData.(rootData.ampModeParam), 'Cell attached')
-                    allBaselineSpikes = [allBaselineSpikes, baselineSpikes];
-                    curNode.spikes = spikes;
-                else
-                    curNode.resp = resp;
-                    curNode.respMean = mean(resp);
-                    curNode.respSEM = std(resp)./sqrt(N);
+                    outputStruct = getEpochResponses_CA(cellData, curNode.epochID, ...
+                        'DeviceName', rootData.deviceName,'StartTime', obj.StartTime, 'EndTime', obj.EndTime);
+                    outputStruct = getEpochResponseStats(outputStruct);
+                    curNode = mergeIntoNode(curNode, outputStruct);
+                else %whole cell
+                    outputStruct = getEpochResponses_WC(cellData, curNode.epochID, ...
+                        'DeviceName', rootData.deviceName);
+                    outputStruct = getEpochResponseStats(outputStruct);
+                    curNode = mergeIntoNode(curNode, outputStruct);
                 end
                 
                 obj = obj.set(leafIDs(i), curNode);
             end
-            %subtract baseline
-            baselineMean = mean(allBaselineSpikes);
-            if strcmp(rootData.(rootData.ampModeParam), 'Cell attached')
-                for i=1:L
-                    curNode = obj.get(leafIDs(i));
-                    curNode.resp = curNode.spikes - (baselineMean * intervalLen/baselineLen);
-                    curNode.respMean = mean(curNode.resp);
-                    curNode.respSEM = std(curNode.resp)./sqrt(curNode.N);
-                    obj = obj.set(leafIDs(i), curNode);
-                end
-            end
             
             obj = obj.percolateUp(leafIDs, ...
-                'respMean', 'respMean', ...
-                'respSEM', 'respSEM', ...
-                'N', 'N', ...
-                'splitValue', 'BarAngle');
+                'splitValue', 'barAngle');
+            
+            %baseline subtraction and normalization (factor out in the
+            %future?
+            if strcmp(rootData.(rootData.ampModeParam), 'Cell attached')
+                for i=1:L %for each leaf node
+                    curNode = obj.get(leafIDs(i));
+                    %baseline subtraction
+                    grandBaselineMean = outputStruct.baselineRate.mean_c;
+                    tempStruct.ONSETrespRate_grandBaselineSubtracted = curNode.ONSETrespRate;
+                    tempStruct.ONSETrespRate_grandBaselineSubtracted.value = curNode.ONSETrespRate.value - grandBaselineMean;
+                    tempStruct.OFFSETrespRate_grandBaselineSubtracted = curNode.OFFSETrespRate;
+                    tempStruct.OFFSETrespRate_grandBaselineSubtracted.value = curNode.OFFSETrespRate.value - grandBaselineMean;
+                    tempStruct.ONSETspikes_grandBaselineSubtracted = curNode.ONSETspikes;
+                    tempStruct.ONSETspikes_grandBaselineSubtracted.value = curNode.ONSETspikes.value - grandBaselineMean.*curNode.ONSETrespDuration.value; %fix nan and INF here
+                    tempStruct.OFFSETspikes_grandBaselineSubtracted = curNode.OFFSETspikes;
+                    tempStruct.OFFSETspikes_grandBaselineSubtracted.value = curNode.OFFSETspikes.value - grandBaselineMean.*curNode.OFFSETrespDuration.value;
+                    tempStruct.ONSETspikes_400ms_grandBaselineSubtracted = curNode.spikeCount_ONSET_400ms;
+                    tempStruct.ONSETspikes_400ms_grandBaselineSubtracted.value = curNode.spikeCount_ONSET_400ms.value - grandBaselineMean.*0.4; %fix nan and INF here
+                    tempStruct.OFFSETspikes_400ms_grandBaselineSubtracted = curNode.OFFSETspikes;
+                    tempStruct.OFFSETspikes_400ms_grandBaselineSubtracted.value = curNode.OFFSETspikes.value - grandBaselineMean.*0.4;
+                    tempStruct = getEpochResponseStats(tempStruct);
+                    
+                    curNode = mergeIntoNode(curNode, tempStruct);
+                    obj = obj.set(leafIDs(i), curNode);
+                end
+                
+                
+            end
+            
+            [byEpochParamList, singleValParamList, collectedParamList] = getParameterListsByType(curNode);
+            obj = obj.percolateUp(leafIDs, byEpochParamList, byEpochParamList);
+            obj = obj.percolateUp(leafIDs, singleValParamList, singleValParamList);
+            obj = obj.percolateUp(leafIDs, collectedParamList, collectedParamList);
             
             %OSI, OSang
             rootData = obj.get(1);
-            Nangles = length(rootData.BarAngle);
-            R=0;
-            ROrtn=0;
-            
-            for j=1:Nangles
-                R=R+rootData.respMean(j);
-                ROrtn = ROrtn + (rootData.respMean(j)*exp(2*sqrt(-1)*rootData.BarAngle(j)*pi/180));
-            end
-           
-            OSI = abs(ROrtn/R);
-            OSang = angle(ROrtn/R)*90/pi;
-            
-            if OSang < 0
-                OSang = 180 + OSang;
-            end
-            
-            rootData.OSI = OSI;
-            rootData.OSang = OSang;
+            rootData = addOSI(rootData, 'barAngle');
+            rootData.stimParameterList = {'barAngle'};
+            rootData.byEpochParamList = byEpochParamList;
+            rootData.singleValParamList = singleValParamList;
+            rootData.collectedParamList = collectedParamList;
             obj = obj.set(1, rootData);
-            
         end
         
     end
     
     methods(Static)
         
-        function plotData(node, cellData)
+        function plot_barAngleVsspikeCount_stimInterval(node, cellData)
             rootData = node.get(1);
-            errorbar(rootData.BarAngle, rootData.respMean, rootData.respSEM);
-            xlabel('Bar angle (degrees)');
-            if strcmp(rootData.(rootData.ampModeParam), 'Cell attached')
-                ylabel('Spike count (norm)');
+            xvals = rootData.barAngle;
+            yField = rootData.spikeCount_stimInterval;
+            if strcmp(yField(1).units, 's')
+                for i=1:length(yField)
+                    yvals(i) = yField(i).median_c;
+                    errs(i) = yField(i).SEM;
+                end
             else
-                ylabel('Peak (pA or mV)');
+                for i=1:length(yField)
+                    yvals(i) = yField(i).mean_c;
+                    errs(i) = yField(i).SEM;
+                end
             end
+            errorbar(xvals, yvals, errs);
+            xlabel('barAngle');
+            ylabel(['spikeCount_stimInterval (' yField(1).units ')']);
+        end
+        
+        function plot_barAngleVsONSETspikes(node, cellData)
+            rootData = node.get(1);
+            xvals = rootData.barAngle;
+            yField = rootData.ONSETspikes;
+            if strcmp(yField.units, 's')
+                yvals = yField.median_c;
+            else
+                yvals = yField.mean_c;
+            end
+            errs = yField.SEM;
+            errorbar(xvals, yvals, errs);
+            xlabel('barAngle');
+            ylabel(['ONSETspikes (' yField.units ')']);
             
             hold on;
-            x = [rootData.OSang,rootData.OSang];
-            y = [min(rootData.respMean),max(rootData.respMean)];
+            x = [rootData.ONSETspikes_OSang,rootData.ONSETspikes_OSang];
+            y = get(gca, 'ylim');
             plot(x,y);
-            title(['OSI = ' num2str(rootData.OSI) ', OSang = ' num2str(rootData.OSang)]);
+            title(['OSI = ' num2str(rootData.ONSETspikes_OSI) ', OSang = ' num2str(rootData.ONSETspikes_OSang)]);
             hold off;
-            
         end
+        
+        function plot_barAngleVsOFFSETspikes(node, cellData)
+            rootData = node.get(1);
+            xvals = rootData.barAngle;
+            yField = rootData.OFFSETspikes;
+            if strcmp(yField.units, 's')
+                yvals = yField.median_c;
+            else
+                yvals = yField.mean_c;
+            end
+            errs = yField.SEM;
+            errorbar(xvals, yvals, errs);
+            xlabel('barAngle');
+            ylabel(['OFFSETspikes (' yField.units ')']);
+            
+            errorbar(xvals, yvals, errs);
+            xlabel('barAngle');
+            ylabel(['OFFSETspikes (' yField(1).units ')']);
+            
+            hold on;
+            x = [rootData.OFFSETspikes_OSang,rootData.OFFSETspikes_OSang];
+            y = get(gca, 'ylim');
+            plot(x,y);
+            title(['OSI = ' num2str(rootData.OFFSETspikes_OSI) ', OSang = ' num2str(rootData.OFFSETspikes_OSang)]);
+            hold off;
+        end
+        
+        function plot_barAngleVsONSET_peak(node, cellData)
+            rootData = node.get(1);
+            xvals = rootData.barAngle;
+            yField = rootData.ONSET_peak;
+            if strcmp(yField.units, 's')
+                yvals = yField.median_c;
+            else
+                yvals = yField.mean_c;
+            end
+            errs = yField.SEM;
+            errorbar(xvals, yvals, errs);
+            xlabel('barAngle');
+            ylabel(['ONSET_peak (' yField.units ')']);
+            
+            hold on;
+            x = [rootData.ONSET_peak_OSang,rootData.ONSET_peak_OSang];
+            y = get(gca, 'ylim');
+            plot(x,y);
+            title(['OSI = ' num2str(rootData.ONSET_peak_OSI) ', OSang = ' num2str(rootData.ONSET_peak_OSang)]);
+            hold off;
+        end
+        
+        function plot_barAngleVsOFFSET_peak(node, cellData)
+            rootData = node.get(1);
+            xvals = rootData.barAngle;
+            yField = rootData.OFFSET_peak;
+            if strcmp(yField.units, 's')
+                yvals = yField.median_c;
+            else
+                yvals = yField.mean_c;
+            end
+            errs = yField.SEM;
+            errorbar(xvals, yvals, errs);
+            xlabel('barAngle');
+            ylabel(['OFFSET_peak (' yField.units ')']);
+            
+            hold on;
+            x = [rootData.OFFSET_peak_OSang,rootData.OFFSET_peak_OSang];
+            y = get(gca, 'ylim');
+            plot(x,y);
+            title(['OSI = ' num2str(rootData.OFFSET_peak_OSI) ', OSang = ' num2str(rootData.OFFSET_peak_OSang)]);
+            hold off;
+        end
+
         
     end
     

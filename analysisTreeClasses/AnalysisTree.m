@@ -209,16 +209,45 @@ classdef AnalysisTree < tree
             for p=1:length(inNames)
                 for i=1:length(nodeIDs)
                     parent = obj.getparent(nodeIDs(i));
-                    chIndex = find(obj.getchildren(parent) == nodeIDs(i));
+                    %chIndex = find(obj.getchildren(parent) == nodeIDs(i));
                     nodeData = obj.get(parent);
                     if isfield(obj.get(nodeIDs(i)), inNames{p})
                         if ~isfield(nodeData, outNames{p})
                             nodeData.(outNames{p}) = []; 
                             %zeros(1,length(obj.getchildren(parent)));
                         end
-                        curVec = nodeData.(outNames{p});
-                        curVec = [curVec obj.get(nodeIDs(i)).(inNames{p})];
-                        nodeData.(outNames{p}) = curVec;
+                        %merging struct (special response struct) or just a
+                        %value
+                        if isstruct(obj.get(nodeIDs(i)).(inNames{p}))
+                            S = obj.get(nodeIDs(i)).(inNames{p});
+                            fnames = fieldnames(S);
+                            for f = 1:length(fnames)
+                                curField = fnames{f};
+                                if strcmp(curField, 'units') || strcmp(curField, 'type') 
+                                    %copy once
+                                    nodeData.(outNames{p}).(curField) = S.(curField);
+                                elseif length(S.(curField)) > 1
+                                    %strcmp(curField, 'value') || strcmp(curField, 'value_c') || strcmp(curField, 'outliers')
+                                    %do not copy these
+                                else
+                                    %copy as vector
+                                    if ~isfield(nodeData.(outNames{p}), curField)
+                                        curInd = 1;
+                                    else
+                                        curInd = length(nodeData.(outNames{p}).(curField)) + 1;
+                                    end
+                                    if isempty(S.(curField)) %why am I getting empties here?
+                                        nodeData.(outNames{p}).(curField)(curInd) = NaN; 
+                                    else
+                                        nodeData.(outNames{p}).(curField)(curInd) = S.(curField);
+                                    end
+                                end
+                            end
+                        else
+                            curVec = nodeData.(outNames{p});
+                            curVec = [curVec obj.get(nodeIDs(i)).(inNames{p})];
+                            nodeData.(outNames{p}) = curVec;
+                        end
                         obj = obj.set(parent, nodeData);
                     end
                 end

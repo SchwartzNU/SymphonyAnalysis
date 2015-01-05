@@ -1,10 +1,7 @@
 classdef LightStepAnalysis < AnalysisTree
     properties
-        
         StartTime = 0;
-        EndTime = 1000;
-        respType = 'Charge';
-        
+        EndTime = 0;
     end
     
     methods
@@ -31,38 +28,22 @@ classdef LightStepAnalysis < AnalysisTree
             rootData = obj.get(1);
             leafIDs = obj.findleaves();
             L = length(leafIDs);
-            allBaselineSpikes = [];
-            for i=1:L
+            
+            for i=1:L %for each leaf node
                 curNode = obj.get(leafIDs(i));
                 if strcmp(rootData.(rootData.ampModeParam), 'Cell attached')
-                    [baselineSpikes, respUnits, baselineLen] = getEpochResponses(cellData, curNode.epochID, 'Baseline spikes', 'DeviceName', rootData.deviceName, ...
-                        'StartTime', obj.StartTime, 'EndTime', obj.EndTime);
-                    [spikes, respUnits, intervalLen] = getEpochResponses(cellData, curNode.epochID, 'Spike count', 'DeviceName', rootData.deviceName, ...
-                        'StartTime', obj.StartTime, 'EndTime', obj.EndTime);
-                    N = length(spikes);
-                    %'EndTime', 250);
-                else
-                    N = 0;
-                end
-                
-                curNode.N = N;
-                
-                if strcmp(rootData.(rootData.ampModeParam), 'Cell attached')
-                    allBaselineSpikes = [allBaselineSpikes, baselineSpikes];
-                    curNode.spikes = spikes;
+                    outputStruct = getEpochResponses_CA(cellData, curNode.epochID, ...
+                        'DeviceName', rootData.deviceName,'StartTime', obj.StartTime, 'EndTime', obj.EndTime);
+                    outputStruct = getEpochResponseStats(outputStruct);
+                    curNode = mergeIntoNode(curNode, outputStruct);
+                else %whole cell
+                    outputStruct = getEpochResponses_WC(cellData, curNode.epochID, ...
+                        'DeviceName', rootData.deviceName,'StartTime', obj.StartTime, 'EndTime', obj.EndTime);
+                    outputStruct = getEpochResponseStats(outputStruct);
+                    curNode = mergeIntoNode(curNode, outputStruct);
                 end
                 
                 obj = obj.set(leafIDs(i), curNode);
-            end
-            
-            if strcmp(rootData.(rootData.ampModeParam), 'Cell attached')
-                for i=1:L
-                    curNode = obj.get(leafIDs(i));
-                    curNode.resp = curNode.spikes;
-                    curNode.respMean = mean(curNode.resp);
-                    curNode.respSEM = std(curNode.resp)./sqrt(curNode.N);
-                    obj = obj.set(leafIDs(i), curNode);
-                end
             end
             
         end
@@ -70,19 +51,24 @@ classdef LightStepAnalysis < AnalysisTree
     end
     
     methods(Static)
-        
+  
         function plotMeanTrace(node, cellData)
             rootData = node.get(1);
             epochInd = node.get(2).epochID;
             if strcmp(rootData.(rootData.ampModeParam), 'Cell attached')
                 cellData.plotPSTH(epochInd, 10, rootData.deviceName);
+                %                 hold on
+                %                 firingStart = node.get(2).meanONlatency;
+                %                 firingEnd = firingStart + node.get(2).meanONenhancedDuration;
+                %                 plot([firingStart firingEnd], [0 0]);
+                %                 hold off
             else
                 cellData.plotMeanData(epochInd, true, [], rootData.deviceName);
             end
+            %title(['ON latency: ',num2str(node.get(2).meanONlatency),' ste: ',num2str(node.get(2).steONlatency)]);
         end
         
         function plotEpochData(node, cellData, device, epochIndex)
-            disp('Class specific plotEpochData');
             nodeData = node.get(1);
             cellData.epochs(nodeData.epochID(epochIndex)).plotData(device);
             title(['Epoch # ' num2str(nodeData.epochID(epochIndex)) ': ' num2str(epochIndex) ' of ' num2str(length(nodeData.epochID))]);
@@ -98,11 +84,38 @@ classdef LightStepAnalysis < AnalysisTree
                 plot(xvals(spikeTimes), data(spikeTimes), 'rx');
                 hold('off');
             end
-            if isfield(nodeData, 'ONlatency')
+            
+            ONendTime = cellData.epochs(nodeData.epochID(epochIndex)).get('stimTime')*1E-3; %s
+            ONstartTime = 0;
+            if isfield(nodeData, 'ONSETlatency')
                 %draw lines here
+                hold on
+                firingStart = node.get(1).ONSETlatency.value(epochIndex)+ONstartTime;
+                firingEnd = firingStart + node.get(1).ONSETrespDuration.value(epochIndex);
+                burstBound = firingStart + node.get(1).ONSETburstDuration.value(epochIndex);
+                upperLim = max(data)+50;
+                lowerLim = min(data)-50;
+                plot([firingStart firingStart], [upperLim lowerLim], 'LineStyle','--','Color',[1 0 0]);
+                plot([firingEnd firingEnd], [upperLim lowerLim], 'LineStyle','--','Color',[1 0 0]);
+                plot([burstBound burstBound], [upperLim lowerLim], 'LineStyle','--');
+                hold off
+            end;
+            if isfield(nodeData, 'OFFSETlatency')
+                %draw lines here
+                hold on
+                firingStart = node.get(1).OFFSETlatency.value(epochIndex)+ONendTime;
+                firingEnd = firingStart + node.get(1).OFFSETrespDuration.value(epochIndex);
+                burstBound = firingStart + node.get(1).OFFSETburstDuration.value(epochIndex);
+                upperLim = max(data)+50;
+                lowerLim = min(data)-50;
+                plot([firingStart firingStart], [upperLim lowerLim], 'LineStyle','--','Color',[1 0 0]);
+                plot([firingEnd firingEnd], [upperLim lowerLim], 'LineStyle','--','Color',[1 0 0]);
+                plot([burstBound burstBound], [upperLim lowerLim], 'LineStyle','--');
+                hold off
             end
+            
         end
         
+        
     end
-    
 end

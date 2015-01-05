@@ -14,5 +14,7 @@ for i=1:length(fnames)
        else
            curNode.([curField '_mean']) = outputStruct.(curField).mean_c;
        end
+    elseif strcmp(outputStruct.(curField).type, 'singleValue');
+       curNode.([curField '_value']) = outputStruct.(curField).value;
     end
 end

@@ -138,15 +138,17 @@ end
 
 masterFolderName = splitKey;
 %make master folder if needed
-if exist([ANALYSIS_FOLDER filesep 'Projects' filesep masterFolderName]) ~= 7
-    mkdir([ANALYSIS_FOLDER filesep 'Projects' filesep masterFolderName]);
+if exist([ANALYSIS_FOLDER filesep 'Projects' filesep masterFolderName]) == 7
+    rmdir([ANALYSIS_FOLDER filesep 'Projects' filesep masterFolderName], 's');    
 end
+mkdir([ANALYSIS_FOLDER filesep 'Projects' filesep masterFolderName]);
 
 %write all the cellNames.txt
 for i=1:length(allKeys)
-    if exist([ANALYSIS_FOLDER filesep 'Projects' filesep masterFolderName filesep allKeys{i}]) ~= 7
-        mkdir([ANALYSIS_FOLDER filesep 'Projects' filesep masterFolderName filesep allKeys{i}])
+    if exist([ANALYSIS_FOLDER filesep 'Projects' filesep masterFolderName filesep allKeys{i}]) == 7
+        rmdir([ANALYSIS_FOLDER filesep 'Projects' filesep masterFolderName filesep allKeys{i}], 's')
     end
+    mkdir([ANALYSIS_FOLDER filesep 'Projects' filesep masterFolderName filesep allKeys{i}])
     fid = fopen([ANALYSIS_FOLDER filesep 'Projects' filesep masterFolderName filesep allKeys{i} filesep 'cellNames.txt'], 'w');
     curCells = projMap(allKeys{i});
     for j=1:length(curCells)

@@ -156,6 +156,14 @@ classdef TreeBrowserGUI < handle
                 'Data', cell(5,2), ...
                 'TooltipString', 'table of properties for currently selected node');
             
+            %set node prop table width 
+            tablePos = get(obj.handles.nodePropertiesTable,'Position');
+            tableWidth = tablePos(3);
+            col1W = round(tableWidth*.5);
+            col2W = round(tableWidth*.5);
+            set(obj.handles.nodePropertiesTable,'ColumnWidth',{col1W, col2W});
+            
+            
             L_plot = uiextras.VBox('Parent', L_right);
             
             obj.handles.plotAxes = axes('Parent', L_plot);
@@ -566,17 +574,12 @@ classdef TreeBrowserGUI < handle
                     yName = yList{get(obj.handles.plotYMenu, 'Value')};
                     xvals = curNodeData.(xName);
                     yField = curNodeData.(yName);
-                    if strcmp(yField(1).units, 's') %if a time, take the median
-                        for i=1:length(yField)
-                           yvals(i) = yField(i).median_c;
-                           errs(i) = yField(i).SEM;
-                        end
+                    if strcmp(yField.units, 's') %if a time, take the median
+                        yvals = yField.median_c;
                     else
-                        for i=1:length(yField)
-                           yvals(i) = yField(i).mean_c;
-                           errs(i) = yField(i).SEM;
-                        end
-                    end                    
+                        yvals = yField.mean_c;
+                    end
+                    errs = yField.SEM;
                     errorbar(xvals, yvals, errs);
                     xlabel(xName);
                     ylabel([yName ' (' yField(1).units ')' ]);
@@ -599,17 +602,16 @@ classdef TreeBrowserGUI < handle
                         disp('remaking menu'); 
                         obj.addXYselectionToPlotControls(xList, yList);
                     end
-                    %make the plot    
+                    %make the plot
                     xName = xList{get(obj.handles.plotXMenu, 'Value')};
                     yName = yList{get(obj.handles.plotYMenu, 'Value')};
                     xvals = curNodeData.(xName);
                     yField = curNodeData.(yName);
-                    for i=1:length(yField)
-                        yvals(i) = yField(i).value;
-                    end
+                    
+                    yvals = yField.value;
                     plot(xvals, yvals, 'bx-');
                     xlabel(xName);
-                    ylabel([yName ' (' yField(1).units ')' ]);  
+                    ylabel([yName ' (' yField(1).units ')' ]);
                     obj.printCodeForPlotterFunction_singleVal(xName,yName);
                 else
                     obj.resetPlotControls();
@@ -625,12 +627,10 @@ classdef TreeBrowserGUI < handle
            disp('rootData = node.get(1);');
            disp(['xvals = rootData.' xName ';']);
            disp(['yField = rootData.' yName ';']);
-           disp('for i=1:length(yField)');
-           disp('yvals(i) = yField(i).value;');
-           disp('end');
+           disp('yvals = yField.value;');
            disp(['plot(xvals, yvals, ''' 'bx-' ''');']);
            disp(['xlabel(''' xName ''');']);
-           disp(['ylabel([''' yName ' (' ''' yField(1).units ''' ')''' ']);']);
+           disp(['ylabel([''' yName ' (' ''' yField.units ''' ')''' ']);']);
            disp('end');
            disp('%%%%%%%%%%%%%% plotter code %%%%%%%%%%%%%%'); 
         end
@@ -641,20 +641,15 @@ classdef TreeBrowserGUI < handle
            disp('rootData = node.get(1);');
            disp(['xvals = rootData.' xName ';']);
            disp(['yField = rootData.' yName ';']);
-           disp('if strcmp(yField(1).units, ''s'')');
-           disp('for i=1:length(yField)');
-           disp('yvals(i) = yField(i).median_c;');
-           disp('errs(i) = yField(i).SEM;');
-           disp('end');
+           disp('if strcmp(yField.units, ''s'')');
+           disp('yvals = yField.median_c;');
            disp('else');
-           disp('for i=1:length(yField)');           
-           disp('yvals(i) = yField(i).mean_c;');
-           disp('errs(i) = yField(i).SEM;');
+           disp('yvals = yField.mean_c;');
            disp('end');
-           disp('end');
+           disp('errs = yField.SEM;');
            disp('errorbar(xvals, yvals, errs);');
            disp(['xlabel(''' xName ''');']);
-           disp(['ylabel([''' yName ' (' ''' yField(1).units ''' ')''' ']);']);
+           disp(['ylabel([''' yName ' (' ''' yField.units ''' ')''' ']);']);
            disp('end');
            disp('%%%%%%%%%%%%%% plotter code %%%%%%%%%%%%%%'); 
         end

@@ -202,64 +202,64 @@ classdef LabDataGUI < handle
             set(L_cellsAndDataSets, 'Sizes', [-1 50]);
             
             %Lower half: PrefsMaps
-            L_prefs = uiextras.VBox('Parent', L_cellsPanel);
-            L_prefsBoxes = uiextras.HBox('Parent', L_prefs);
-            L_prefsButtons = uiextras.HButtonBox('Parent', L_prefs);
-            
-            %PrefsMap list box
-            L_prefsMapBox = uiextras.BoxPanel('Parent', L_prefsBoxes, ...
-                'Title', 'Preferences Map', ...
-                'FontSize', 12, ...
-                'Padding', 5);
-            obj.handles.prefsMapList = uicontrol('Style', 'text', ...
-                'Parent', L_prefsMapBox, ...
-                'FontSize', 12, ...
-                'HorizontalAlignment', 'left', ...
-                'String', {'MyPrefsMap'});
-            
-            %PrefsMap elements list box
-            L_prefsMapElementsBox = uiextras.BoxPanel('Parent', L_prefsBoxes, ...
-                'Title', 'Preference Map Elements', ...
-                'FontSize', 12, ...
-                'Padding', 5);
-            obj.handles.prefsMapElementsListbox = uicontrol('Style', 'listbox', ...
-                'Parent', L_prefsMapElementsBox, ...
-                'FontSize', 12, ...
-                'String', {'SpotsMultiSize_ON', 'SpotsMultiSize_ON', 'MovingBar_ON', 'MovingBar_OFF'});
-            
-            %set layout for L_prefsBoxes
-            set(L_prefsBoxes, 'Sizes', [-1 -1]);
-            
-            %PrefsMap buttons
-            obj.handles.addChangePrefsMap_button = uicontrol('Style', 'pushbutton', ...
-                'Parent', L_prefsButtons, ...
-                'FontSize', 12, ...
-                'String', 'Add/Change Pref. Map', ...
-                'Callback', @(uiobj,evt)obj.setPrefsMap);
-            obj.handles.addChangePrefsMap_button = uicontrol('Style', 'pushbutton', ...
-                'Parent', L_prefsButtons, ...
-                'FontSize', 12, ...
-                'String', 'Delete Pref. Map', ...
-                'Callback', @(uiobj,evt)obj.deletePrefsMap);
-            obj.handles.addPrefElement_button = uicontrol('Style', 'pushbutton', ...
-                'Parent', L_prefsButtons, ...
-                'FontSize', 12, ...
-                'String', 'Open Pref. Map', ...
-                'Callback',  @(uiobj,evt)obj.openPrefsMap);
-            obj.handles.analysisParamsGUI_button = uicontrol('Style', 'pushbutton', ...
-                'Parent', L_prefsButtons, ...
-                'FontSize', 12, ...
-                'String', 'Open AnalysisParamsGUI', ...
-                'Callback',  @(uiobj,evt)obj.openAnalysisParamsGUI);
-            
-            %Set properties for L_cellsAndDataSetsButtons buttonbox
-            set(L_prefsButtons, 'ButtonSize', [160, 40]);
-            
-            %set layout for L_cellsPanel
-            set(L_cellsPanel, 'Sizes', [-2 -1]);
-            
-            %set layout for L_cellsAndDataSets
-            set(L_prefs, 'Sizes', [-1 50]);
+%             L_prefs = uiextras.VBox('Parent', L_cellsPanel);
+%             L_prefsBoxes = uiextras.HBox('Parent', L_prefs);
+%             L_prefsButtons = uiextras.HButtonBox('Parent', L_prefs);
+%             
+%             %PrefsMap list box
+%             L_prefsMapBox = uiextras.BoxPanel('Parent', L_prefsBoxes, ...
+%                 'Title', 'Preferences Map', ...
+%                 'FontSize', 12, ...
+%                 'Padding', 5);
+%             obj.handles.prefsMapList = uicontrol('Style', 'text', ...
+%                 'Parent', L_prefsMapBox, ...
+%                 'FontSize', 12, ...
+%                 'HorizontalAlignment', 'left', ...
+%                 'String', {'MyPrefsMap'});
+%             
+%             %PrefsMap elements list box
+%             L_prefsMapElementsBox = uiextras.BoxPanel('Parent', L_prefsBoxes, ...
+%                 'Title', 'Preference Map Elements', ...
+%                 'FontSize', 12, ...
+%                 'Padding', 5);
+%             obj.handles.prefsMapElementsListbox = uicontrol('Style', 'listbox', ...
+%                 'Parent', L_prefsMapElementsBox, ...
+%                 'FontSize', 12, ...
+%                 'String', {'SpotsMultiSize_ON', 'SpotsMultiSize_ON', 'MovingBar_ON', 'MovingBar_OFF'});
+%             
+%             %set layout for L_prefsBoxes
+%             set(L_prefsBoxes, 'Sizes', [-1 -1]);
+%             
+%             %PrefsMap buttons
+%             obj.handles.addChangePrefsMap_button = uicontrol('Style', 'pushbutton', ...
+%                 'Parent', L_prefsButtons, ...
+%                 'FontSize', 12, ...
+%                 'String', 'Add/Change Pref. Map', ...
+%                 'Callback', @(uiobj,evt)obj.setPrefsMap);
+%             obj.handles.addChangePrefsMap_button = uicontrol('Style', 'pushbutton', ...
+%                 'Parent', L_prefsButtons, ...
+%                 'FontSize', 12, ...
+%                 'String', 'Delete Pref. Map', ...
+%                 'Callback', @(uiobj,evt)obj.deletePrefsMap);
+%             obj.handles.addPrefElement_button = uicontrol('Style', 'pushbutton', ...
+%                 'Parent', L_prefsButtons, ...
+%                 'FontSize', 12, ...
+%                 'String', 'Open Pref. Map', ...
+%                 'Callback',  @(uiobj,evt)obj.openPrefsMap);
+%             obj.handles.analysisParamsGUI_button = uicontrol('Style', 'pushbutton', ...
+%                 'Parent', L_prefsButtons, ...
+%                 'FontSize', 12, ...
+%                 'String', 'Open AnalysisParamsGUI', ...
+%                 'Callback',  @(uiobj,evt)obj.openAnalysisParamsGUI);
+%             
+%             %Set properties for L_cellsAndDataSetsButtons buttonbox
+%             set(L_prefsButtons, 'ButtonSize', [160, 40]);
+%             
+%             %set layout for L_cellsPanel
+%             set(L_cellsPanel, 'Sizes', [-2 -1]);
+%             
+%             %set layout for L_cellsAndDataSets
+%             set(L_prefs, 'Sizes', [-1 50]);
             
             L_cellTypesTreeAndButtons = uiextras.VBox('Parent', obj.handles.L_cellTypesPanel);
             
@@ -547,15 +547,6 @@ classdef LabDataGUI < handle
             %set string for dataSetsList
             set(obj.handles.datasetsList, 'String', dataSetsList);
             
-            %set string for prefsMap box and curPrefsMap map
-            set(obj.handles.prefsMapList, 'String', obj.curCellData.prefsMapName);
-            if ~isempty(obj.curCellData.prefsMapName)
-                obj.curPrefsMap = loadPrefsMap(obj.curCellData.prefsMapName);
-            else
-                obj.curPrefsMap = [];
-            end
-            obj.updatePrefsMapElements();
-            
             %set title of L_cells boxPanel
             set(obj.handles.L_cells, 'Title', ['All cells: Current Cell Type = ' obj.labData.getCellType(obj.curCellName)]);
             
@@ -579,58 +570,58 @@ classdef LabDataGUI < handle
             end
         end
         
-        function deletePrefsMap(obj)
-            obj.curCellData.prefsMapName = '';
-            saveAndSyncCellData(obj.curCellData); %save cellData file
-            obj.curPrefsMap = [];
-            set(obj.handles.prefsMapList, 'String', obj.curCellData.prefsMapName);
-            obj.updatePrefsMapElements();
-        end
-        
-        function setPrefsMap(obj)
-            global ANALYSIS_FOLDER;
-            prefsMapSpec = [ANALYSIS_FOLDER filesep 'analysisParams' filesep 'ParameterPrefs' filesep '*.txt'];
-            fname = uigetfile(prefsMapSpec, 'Select prefsMap text file');
-            if ~isempty(fname)
-                obj.curCellData.prefsMapName = fname;
-                saveAndSyncCellData(obj.curCellData); %save cellData file
-                obj.curPrefsMap = loadPrefsMap(fname);
-                set(obj.handles.prefsMapList, 'String', obj.curCellData.prefsMapName);
-                obj.updatePrefsMapElements();
-            end
-        end
-        
-        function updatePrefsMapElements(obj)
-            if ~isempty(obj.curPrefsMap)
-                elementList = {};
-                k = obj.curPrefsMap.keys;
-                for i=1:length(k)
-                    curSet = obj.curPrefsMap(k{i});
-                    for j=1:length(curSet)
-                        curName = [k{i} ':' curSet{j}];
-                        elementList = [elementList; curName];
-                    end
-                end
-                set(obj.handles.prefsMapElementsListbox, 'String', elementList);
-                set(obj.handles.prefsMapElementsListbox, 'Value', 1);
-            else
-                set(obj.handles.prefsMapElementsListbox, 'String', '');
-                set(obj.handles.prefsMapElementsListbox, 'Value', 0);
-            end
-        end
-        
-        function openPrefsMap(obj)
-            global ANALYSIS_FOLDER;
-            prefsMapFolder = [ANALYSIS_FOLDER filesep 'analysisParams' filesep 'ParameterPrefs'];
-            mapName = obj.curCellData.prefsMapName;
-            if ~isempty(mapName)
-                open([prefsMapFolder filesep mapName]);
-            end
-        end
-        
-        function openAnalysisParamsGUI(obj)
-            AnalysisParamGUI();
-        end
+%         function deletePrefsMap(obj)
+%             obj.curCellData.prefsMapName = '';
+%             saveAndSyncCellData(obj.curCellData); %save cellData file
+%             obj.curPrefsMap = [];
+%             set(obj.handles.prefsMapList, 'String', obj.curCellData.prefsMapName);
+%             obj.updatePrefsMapElements();
+%         end
+%         
+%         function setPrefsMap(obj)
+%             global ANALYSIS_FOLDER;
+%             prefsMapSpec = [ANALYSIS_FOLDER filesep 'analysisParams' filesep 'ParameterPrefs' filesep '*.txt'];
+%             fname = uigetfile(prefsMapSpec, 'Select prefsMap text file');
+%             if ~isempty(fname)
+%                 obj.curCellData.prefsMapName = fname;
+%                 saveAndSyncCellData(obj.curCellData); %save cellData file
+%                 obj.curPrefsMap = loadPrefsMap(fname);
+%                 set(obj.handles.prefsMapList, 'String', obj.curCellData.prefsMapName);
+%                 obj.updatePrefsMapElements();
+%             end
+%         end
+%         
+%         function updatePrefsMapElements(obj)
+%             if ~isempty(obj.curPrefsMap)
+%                 elementList = {};
+%                 k = obj.curPrefsMap.keys;
+%                 for i=1:length(k)
+%                     curSet = obj.curPrefsMap(k{i});
+%                     for j=1:length(curSet)
+%                         curName = [k{i} ':' curSet{j}];
+%                         elementList = [elementList; curName];
+%                     end
+%                 end
+%                 set(obj.handles.prefsMapElementsListbox, 'String', elementList);
+%                 set(obj.handles.prefsMapElementsListbox, 'Value', 1);
+%             else
+%                 set(obj.handles.prefsMapElementsListbox, 'String', '');
+%                 set(obj.handles.prefsMapElementsListbox, 'Value', 0);
+%             end
+%         end
+%         
+%         function openPrefsMap(obj)
+%             global ANALYSIS_FOLDER;
+%             prefsMapFolder = [ANALYSIS_FOLDER filesep 'analysisParams' filesep 'ParameterPrefs'];
+%             mapName = obj.curCellData.prefsMapName;
+%             if ~isempty(mapName)
+%                 open([prefsMapFolder filesep mapName]);
+%             end
+%         end
+%         
+%         function openAnalysisParamsGUI(obj)
+%             AnalysisParamGUI();
+%         end
         
         
         function analyzeAndBrowseCell(obj)

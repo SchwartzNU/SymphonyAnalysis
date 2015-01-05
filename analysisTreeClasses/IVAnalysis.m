@@ -26,33 +26,38 @@ classdef IVAnalysis < AnalysisTree
             L = length(leafIDs);
             for i=1:L
                 curNode = obj.get(leafIDs(i));
-                [resp, respUnits] = getEpochResponses(cellData, curNode.epochID, 'Peak', ...
-                    'LowPassFreq', 100, 'DeviceName', rootData.deviceName, ...
-                    'StartTime', obj.StartTime, 'EndTime', obj.EndTime);
-                N = length(resp);
-                curNode.resp = resp;
-                curNode.respMean = mean(resp);
-                curNode.respSEM = std(resp)./sqrt(N);
-                curNode.N = N;
+                outputStruct = getEpochResponses_WC(cellData, curNode.epochID, ...
+                    'DeviceName', rootData.deviceName);
+                outputStruct = getEpochResponseStats(outputStruct);
+                curNode = mergeIntoNode(curNode, outputStruct);
                 obj = obj.set(leafIDs(i), curNode);
             end
             
             obj = obj.percolateUp(leafIDs, ...
-                'respMean', 'respMean', ...
-                'respSEM', 'respSEM', ...
-                'N', 'N', ...
                 'splitValue', 'holdSignal');
+            
+            [byEpochParamList, singleValParamList, collectedParamList] = getParameterListsByType(curNode);
+            obj = obj.percolateUp(leafIDs, byEpochParamList, byEpochParamList);
+            obj = obj.percolateUp(leafIDs, singleValParamList, singleValParamList);
+            obj = obj.percolateUp(leafIDs, collectedParamList, collectedParamList);
+            
+            rootData = obj.get(1);
+            rootData.stimParameterList = {'holdSignal'};
+            rootData.byEpochParamList = byEpochParamList;
+            rootData.singleValParamList = singleValParamList;
+            rootData.collectedParamList = collectedParamList;
+            obj = obj.set(1, rootData);
+            
         end
-        
     end
     
     methods(Static)
-        function plotData(node, cellData)
-            rootData = node.get(1);
-            errorbar(rootData.holdSignal, rootData.respMean, rootData.respSEM);
-            xlabel('Hold signal (mV)');
-            ylabel('Peak current (pA)');
-        end
+%         function plotData(node, cellData)
+%             rootData = node.get(1);
+%             errorbar(rootData.holdSignal, rootData.respMean, rootData.respSEM);
+%             xlabel('Hold signal (mV)');
+%             ylabel('Peak current (pA)');
+%         end
         
         function plotMeanTraces(node, cellData)
             rootData = node.get(1);

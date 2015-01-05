@@ -1,4 +1,4 @@
-function outputStruct = getEpochResponsesTEMP(cellData, epochInd, varargin)
+function outputStruct = getEpochResponses_CA(cellData, epochInd, varargin)
 ip = inputParser;
 ip.KeepUnmatched = true;
 ip.addParamValue('DeviceName', 'Amplifier_Ch1', @(x)ischar(x));
@@ -148,6 +148,22 @@ for i=1:L
         outputStruct.spikeRate_stimInterval.units = 'Hz';
         outputStruct.spikeRate_stimInterval.type = 'byEpoch';
         outputStruct.spikeRate_stimInterval.value = ones(1,L) * NaN;
+        
+        outputStruct.spikeCount_ONSET_400ms.units = 'spikes';
+        outputStruct.spikeCount_ONSET_400ms.type = 'byEpoch';
+        outputStruct.spikeCount_ONSET_400ms.value = ones(1,L) * NaN;
+        
+        outputStruct.spikeCount_OFFSET_400ms.units = 'spikes';
+        outputStruct.spikeCount_OFFSET_400ms.type = 'byEpoch';
+        outputStruct.spikeCount_OFFSET_400ms.value = ones(1,L) * NaN;
+        
+        outputStruct.spikeCount_ONSET_400ms_baselineSubtracted.units = 'spikes';
+        outputStruct.spikeCount_ONSET_400ms_baselineSubtracted.type = 'byEpoch';
+        outputStruct.spikeCount_ONSET_400ms_baselineSubtracted.value = ones(1,L) * NaN;
+        
+        outputStruct.spikeCount_OFFSET_400ms_baselineSubtracted.units = 'spikes';
+        outputStruct.spikeCount_OFFSET_400ms_baselineSubtracted.type = 'byEpoch';
+        outputStruct.spikeCount_OFFSET_400ms_baselineSubtracted.value = ones(1,L) * NaN;
         
         outputStruct.spikeCount_stimInterval_baselineSubtracted.units = 'spikes';
         outputStruct.spikeCount_stimInterval_baselineSubtracted.type = 'byEpoch';
@@ -350,10 +366,23 @@ for i=1:L
     outputStruct.spikeCount_stimInterval.value(i) = spikeCount;
     outputStruct.spikeRate_stimInterval.value(i) = spikeCount/responseIntervalLen;
     
+    %count spikes in 400 ms after onset and offset
+    if responseIntervalLen >= 0.4
+        spikeCount = length(find(spikeTimes >= intervalStart & spikeTimes < intervalStart + 0.4));
+        outputStruct.spikeCount_ONSET_400ms.value(i) = spikeCount;
+    end
+    if intervalEnd + 0.4 <= xvals(end)
+        spikeCount = length(find(spikeTimes >= intervalEnd & spikeTimes < intervalEnd + 0.4));
+        outputStruct.spikeCount_OFFSET_400ms.value(i) = spikeCount;
+    end
+    
     %subtract baseline
     spikeCount_baselineSubtracted = spikeCount - meanBaselineRate/responseIntervalLen;
     outputStruct.spikeCount_stimInterval_baselineSubtracted.value(i) = spikeCount_baselineSubtracted;
     outputStruct.spikeRate_stimInterval_baselineSubtracted.value(i) = spikeCount_baselineSubtracted/responseIntervalLen;
+    %subtract baseline
+    outputStruct.spikeCount_ONSET_400ms_baselineSubtracted.value(i) = outputStruct.spikeCount_ONSET_400ms.value(i) - meanBaselineRate/0.4;
+    outputStruct.spikeCount_OFFSET_400ms_baselineSubtracted.value(i) = outputStruct.spikeCount_OFFSET_400ms.value(i) - meanBaselineRate/0.4;
     
     %find response start and end times based on ISIs: This is for a
     %stimulus that starts and ends and a particular time
