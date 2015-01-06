@@ -6,6 +6,7 @@ cellDataDir = [ANALYSIS_FOLDER 'cellData' filesep];
 D_raw = dir(rawDataDir);
 D_cell = dir(cellDataDir);
 
+allCellDataNames = {};
 z = 1;
 for i=1:length(D_cell)
     if strfind(D_cell(i).name, '.mat')
