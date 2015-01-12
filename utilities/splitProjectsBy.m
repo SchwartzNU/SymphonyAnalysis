@@ -4,6 +4,9 @@ function [] = splitProjectsBy(varargin)
 %cellType - splits by cell type
 %any cell tag (not epoch properties)
 %hasDataSet followed by a second argument specifying the dataSet prefix
+%hasDataSets followed by a second argument specifying a cell array of
+%dataSet prefixes, optional third argument of epoch filters for each data
+%set
 global ANALYSIS_FOLDER;
 
 if exist([filesep 'Volumes' filesep 'SchwartzLab'  filesep 'CellDataMaster']) == 7
@@ -15,9 +18,18 @@ end
 
 if nargin==1
     splitKey = varargin{1};
-elseif nargin==2
+elseif nargin>1
     splitKey = varargin{1};
-    dataSetPrefix = varargin{2};
+    if strcmp(splitKey, 'hasDataSets');
+        dataSetPrefixList = varargin{2};
+        if nargin == 3
+            filterList = varargin{3}; %not implemented yet
+        else
+            filterList = [];
+        end
+    else
+        dataSetPrefix = varargin{2};
+    end
 else
     disp('Please call with either splitBy argument or hasDataSet and a second argument');
     return;
@@ -61,6 +73,32 @@ elseif strcmp(splitKey, 'hasDataSet');
             %check for dataset and add to ProjMap (in this case only one key)
             dataSetNames = cellData.savedDataSets.keys;
             if sum(cell2mat(strfind(dataSetNames, dataSetPrefix))) %if has dataSet with prefix
+                disp([dataSetPrefix ' found in cell '  cellDataBaseNames{i}]);
+                if projMap.isKey(dataSetPrefix)
+                    tempCells = projMap(dataSetPrefix);
+                    projMap(dataSetPrefix) = [tempCells, cellDataBaseNames{i}];
+                else
+                    projMap(dataSetPrefix) = {cellDataBaseNames{i}};
+                end
+            end
+        end
+    end
+elseif strcmp(splitKey, 'hasDataSets');
+    for i=1:L
+        disp(['Cell ' num2str(i) ' of ' num2str(L)]);
+        if ~isempty(cellDataBaseNames{i})
+            load([cellDataMasterFolder filesep cellDataBaseNames{i}]); %loads cellData
+            %check for dataset and add to ProjMap (in this case only one key)
+            dataSetNames = cellData.savedDataSets.keys;
+            hasAllDataSets = true;
+            for j=1:length(dataSetPrefixList)
+                if sum(cell2mat(strfind(dataSetNames, dataSetPrefixList{j}))) %if has dataSet with prefix
+                    %do nothing
+                else
+                    hasAllDataSets = false;
+                end
+            end
+            if hasAllDataSets
                 disp([dataSetPrefix ' found in cell '  cellDataBaseNames{i}]);
                 if projMap.isKey(dataSetPrefix)
                     tempCells = projMap(dataSetPrefix);

@@ -147,7 +147,15 @@ classdef TreeBrowserGUI < handle
             
             set(obj.handles.L_plotControls, 'Sizes', [-1, 40, 40, 40]);
             
-            obj.handles.nodePropertiesTable = uitable('Parent', L_tables, ...
+            L_twoTables = uiextras.VBoxFlex('Parent', L_tables, 'Spacing', 10);
+            
+            L_nodePropsPanel = uiextras.VBox('Parent', L_twoTables);
+            
+            nodePropText = uicontrol('Parent', L_nodePropsPanel, ...
+                'Style', 'text', ...
+                'String', 'Node properties');
+                        
+            obj.handles.nodePropertiesTable = uitable('Parent', L_nodePropsPanel, ...
                 'Units',    'pixels', ...
                 'FontSize', 12, ...
                 'ColumnName', {'Property', 'Value'}, ...
@@ -163,7 +171,34 @@ classdef TreeBrowserGUI < handle
             col2W = round(tableWidth*.5);
             set(obj.handles.nodePropertiesTable,'ColumnWidth',{col1W, col2W});
             
+            set(L_nodePropsPanel, 'Sizes', [15, -1]);
             
+            L_epochTagsPanel = uiextras.VBox('Parent', L_twoTables);
+            
+            epochTagsText = uicontrol('Parent', L_epochTagsPanel, ...
+                'Style', 'text', ...
+                'String', 'Epoch tags');
+            
+            obj.handles.epochTagsTable = uitable('Parent', L_epochTagsPanel, ...
+                'Units',    'pixels', ...
+                'FontSize', 12, ...
+                'ColumnName', {'Property', 'Value'}, ...
+                'RowName', [], ...
+                'ColumnEditable', logical([0 0]), ...
+                'Data', cell(5,2), ...
+                'TooltipString', 'table of epoch tags for data sets');
+            
+            %set epoch tags table width 
+            tablePos = get(obj.handles.epochTagsTable,'Position');
+            tableWidth = tablePos(3);
+            col1W = round(tableWidth*.5);
+            col2W = round(tableWidth*.5);
+            set(obj.handles.epochTagsTable,'ColumnWidth',{col1W, col2W});
+            
+            set(L_epochTagsPanel, 'Sizes', [15, -1]);
+            set(L_twoTables, 'Sizes', [-2, -1]);
+            
+            %plotter area
             L_plot = uiextras.VBox('Parent', L_right);
             
             obj.handles.plotAxes = axes('Parent', L_plot);
@@ -674,6 +709,7 @@ classdef TreeBrowserGUI < handle
                 end
             end
             
+            obj.populateEpochTagsTable();
             obj.populateNodePropertiesTable();
             obj.updatePlot();
         end
@@ -707,6 +743,47 @@ classdef TreeBrowserGUI < handle
             end
             set(obj.handles.nodePropertiesTable, 'data', D)
         end
+        
+        function populateEpochTagsTable(obj)
+            selectedNodes = get(obj.guiTree, 'selectedNodes');
+            curNodeIndex = get(selectedNodes(1), 'Value');
+            curNodeData = obj.analysisTree.get(curNodeIndex);            
+            curCellName = obj.analysisTree.getCellName(curNodeIndex);
+            if isfield(obj.curCellData, 'savedFileName') && strcmp(obj.curCellData.savedFileName, curCellName) %cellData already loaded
+                 %do nothing
+            else %load it
+                obj.curCellData = loadAndSyncCellData(curCellName);
+            end
+            D = cell(5,2);
+            if isfield(curNodeData, 'class') %only display for level of data sets
+                %get all epochsIDs under this node
+                treePart =  obj.analysisTree.subtree(curNodeIndex);
+                leafIDs = treePart.findleaves;
+                %collect all IDs
+                epochIDs = [];
+                for i=1:length(leafIDs)
+                    curNode = treePart.get(leafIDs(i));
+                    epochIDs = [epochIDs curNode.epochID];
+                end
+                %look for each tags
+                allTags = obj.epochTags.keys;
+                z = 1;
+                for i=1:length(allTags)
+                   curVals = getEpochVals(obj.curCellData, allTags{i}, epochIDs);
+                   curVals = curVals(~isnan(curVals));
+                   curVals = unique(curVals);
+                   if ~isempty(curVals)
+                       D{z,1} = allTags{i};
+                       D{z,2} = num2str(curVals);
+                       z=z+1;
+                   end
+                end
+                
+                %vals = getEpochVals(obj, paramName, epochInd)
+            end
+            set(obj.handles.epochTagsTable, 'data', D)
+        end
+        
         
         function resizeWindow(obj)
             if isfield(obj.handles, 'fig')
