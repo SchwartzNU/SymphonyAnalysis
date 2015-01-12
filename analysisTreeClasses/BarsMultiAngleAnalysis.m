@@ -99,20 +99,17 @@ classdef BarsMultiAngleAnalysis < AnalysisTree
             rootData = node.get(1);
             xvals = rootData.barAngle;
             yField = rootData.spikeCount_stimInterval;
-            if strcmp(yField(1).units, 's')
-                for i=1:length(yField)
-                    yvals(i) = yField(i).median_c;
-                    errs(i) = yField(i).SEM;
-                end
+            if strcmp(yField.units, 's')
+                yvals = yField.median_c;
             else
-                for i=1:length(yField)
-                    yvals(i) = yField(i).mean_c;
-                    errs(i) = yField(i).SEM;
-                end
+                yvals = yField.mean_c;
             end
+            
+            errs = yField.SEM;
             errorbar(xvals, yvals, errs);
             xlabel('barAngle');
-            ylabel(['spikeCount_stimInterval (' yField(1).units ')']);
+            ylabel(['spikeCount_stimInterval (' yField.units ')']);
+            
         end
         
         function plot_barAngleVsONSETspikes(node, cellData)
