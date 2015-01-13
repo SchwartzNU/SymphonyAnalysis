@@ -457,7 +457,7 @@ classdef LabDataGUI < handle
                     z=z+1;
                 end
             end
-            
+            %keyboard;
             set(obj.handles.analysisTypePopup, 'String', analysisClasses);
             %            set(obj.handles.cellTypePopup, 'String', ['All', obj.labData.allCellTypes]);
             %read in CellTypeNames.txt file
