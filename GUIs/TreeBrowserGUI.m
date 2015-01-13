@@ -770,8 +770,16 @@ classdef TreeBrowserGUI < handle
                 z = 1;
                 for i=1:length(allTags)
                    curVals = getEpochVals(obj.curCellData, allTags{i}, epochIDs);
-                   curVals = curVals(~isnan(curVals));
+                   if iscell(curVals)
+                       curVals = curVals(~isnan_cell(curVals));                       
+                   else
+                       curVals = curVals(~isnan(curVals));
+                   end
                    curVals = unique(curVals);
+                   if iscell(curVals)
+                       curVals = cell2mat(curVals);
+                   end
+                   
                    if ~isempty(curVals)
                        D{z,1} = allTags{i};
                        D{z,2} = num2str(curVals);

@@ -4,8 +4,8 @@ function [] = splitProjectsBy(varargin)
 %cellType - splits by cell type
 %any cell tag (not epoch properties)
 %hasDataSet followed by a second argument specifying the dataSet prefix
-%hasDataSets followed by a second argument specifying a cell array of
-%dataSet prefixes, optional third argument of epoch filters for each data
+%cellTypeWithDataSets followed by a second argument specifying the cell type, a cell array of
+%dataSet prefixes, and optional fourth argument of epoch filters for each data
 %set
 global ANALYSIS_FOLDER;
 
@@ -20,10 +20,11 @@ if nargin==1
     splitKey = varargin{1};
 elseif nargin>1
     splitKey = varargin{1};
-    if strcmp(splitKey, 'hasDataSets');
-        dataSetPrefixList = varargin{2};
-        if nargin == 3
-            filterList = varargin{3}; %not implemented yet
+    if strcmp(splitKey, 'cellTypeWithDataSets');
+        cellTypeName = varargin{2};
+        dataSetPrefixList = varargin{3};
+        if nargin == 4
+            filterList = varargin{4}; %not implemented yet
         else
             filterList = [];
         end
@@ -83,28 +84,50 @@ elseif strcmp(splitKey, 'hasDataSet');
             end
         end
     end
-elseif strcmp(splitKey, 'hasDataSets');
+elseif strcmp(splitKey, 'cellTypeWithDataSets');
     for i=1:L
         disp(['Cell ' num2str(i) ' of ' num2str(L)]);
         if ~isempty(cellDataBaseNames{i})
             load([cellDataMasterFolder filesep cellDataBaseNames{i}]); %loads cellData
-            %check for dataset and add to ProjMap (in this case only one key)
-            dataSetNames = cellData.savedDataSets.keys;
-            hasAllDataSets = true;
-            for j=1:length(dataSetPrefixList)
-                if sum(cell2mat(strfind(dataSetNames, dataSetPrefixList{j}))) %if has dataSet with prefix
-                    %do nothing
-                else
-                    hasAllDataSets = false;
+            %first check for correctCellName
+            cellType = cellData.cellType;
+            %            cellTypeName
+            has2cells = false;
+            correctCell = false;
+            if strfind(cellType, ';') %two parts
+                [cellType1, cellType2] = strtok(cellType, ';');
+                cellType2 = cellType2(2:end);
+                has2cells = true;
+            end
+            if has2cells
+                if strcmp(cellType1, cellTypeName) || strcmp(cellType2, cellTypeName)
+                    correctCell = true;
+                end
+            else
+                if strcmp(cellType, cellTypeName)
+                    correctCell = true;
                 end
             end
-            if hasAllDataSets
-                disp([dataSetPrefix ' found in cell '  cellDataBaseNames{i}]);
-                if projMap.isKey(dataSetPrefix)
-                    tempCells = projMap(dataSetPrefix);
-                    projMap(dataSetPrefix) = [tempCells, cellDataBaseNames{i}];
-                else
-                    projMap(dataSetPrefix) = {cellDataBaseNames{i}};
+            
+            if correctCell
+                %check for dataset and add to ProjMap (in this case only one key)
+                dataSetNames = cellData.savedDataSets.keys;
+                hasAllDataSets = true;
+                for j=1:length(dataSetPrefixList)
+                    if sum(cell2mat(strfind(dataSetNames, dataSetPrefixList{j}))) %if has dataSet with prefix
+                        %do nothing
+                    else
+                        hasAllDataSets = false;
+                    end
+                end
+                if hasAllDataSets
+                    disp(['All data sets found in cell '  cellDataBaseNames{i}]);
+                    if projMap.isKey(cellTypeName)
+                        tempCells = projMap(cellTypeName);
+                        projMap(cellTypeName) = [tempCells, cellDataBaseNames{i}];
+                    else
+                        projMap(cellTypeName) = {cellDataBaseNames{i}};
+                    end
                 end
             end
         end
@@ -175,11 +198,18 @@ for i=1:length(allKeys)
 end
 
 masterFolderName = splitKey;
-%make master folder if needed
-if exist([ANALYSIS_FOLDER filesep 'Projects' filesep masterFolderName]) == 7
-    rmdir([ANALYSIS_FOLDER filesep 'Projects' filesep masterFolderName], 's');    
+%do not remake for for cellTypeWithDataSets
+if strcmp(splitKey, 'cellTypeWithDataSets')
+    if ~exist([ANALYSIS_FOLDER filesep 'Projects' filesep masterFolderName]) == 7
+        mkdir([ANALYSIS_FOLDER filesep 'Projects' filesep masterFolderName]);
+    end
+else %all others, remake master folder
+    %remake master folder if needed
+    if exist([ANALYSIS_FOLDER filesep 'Projects' filesep masterFolderName]) == 7
+        rmdir([ANALYSIS_FOLDER filesep 'Projects' filesep masterFolderName], 's');
+        mkdir([ANALYSIS_FOLDER filesep 'Projects' filesep masterFolderName]);
+    end
 end
-mkdir([ANALYSIS_FOLDER filesep 'Projects' filesep masterFolderName]);
 
 %write all the cellNames.txt
 for i=1:length(allKeys)
