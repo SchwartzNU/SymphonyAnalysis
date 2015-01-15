@@ -204,7 +204,21 @@ classdef BarsMultiAngleAnalysis < AnalysisTree
             hold off;
         end
 
-        
+        function plot_barAngleVsspikeCount_ONSET_400ms(node, cellData)
+            rootData = node.get(1);
+            xvals = rootData.barAngle;
+            yField = rootData.spikeCount_ONSET_400ms;
+            if strcmp(yField.units, 's')
+                yvals = yField.median_c;
+            else
+                yvals = yField.mean_c;
+            end
+            errs = yField.SEM;
+            errorbar(xvals, yvals, errs);
+            xlabel('barAngle');
+            ylabel(['spikeCount_ONSET_400ms (' yField.units ')']);
+        end
+            
     end
     
 end
