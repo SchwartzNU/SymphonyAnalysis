@@ -1,10 +1,10 @@
-function [DSI, OSI, DSang, OSang] = dendritePolygonTracer(fname)
+function [DSI, OSI, DSang, OSang, area, centroidX, centroidY] = dendritePolygonTracer(fname)
     M = imread(fname);
     image(M);
     colormap('gray');    
     disp('Click on dendrite tips. Double click to finish.');
     [xpts, ypts] = getpts(gcf);
-    %centerPoint = centroid([xpts ypts]);
+    %centerPoint
     disp('Double click on soma.');
     [centerX, centerY] = getpts(gcf);
     xpts = xpts - centerX;
@@ -46,5 +46,13 @@ function [DSI, OSI, DSang, OSang] = dendritePolygonTracer(fname)
     x = x+centerX;
     y = y+centerY;
     line([centerX x], [centerY y], 'Color', 'g');
+    
+    %Area
+    area = polyarea(xpts,ypts);
+    
+    %Center of Mass
+    centroidX = mean(xpts);
+    centroidY = mean(ypts);
+  
 end
 
