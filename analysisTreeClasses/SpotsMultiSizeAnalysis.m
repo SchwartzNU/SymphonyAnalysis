@@ -173,6 +173,20 @@ classdef SpotsMultiSizeAnalysis < AnalysisTree
             xlabel('spotSize');
             ylabel(['OFFSETspikes (' yField.units ')']);
         end
+        function plot_spotSizeVsONSET_peak(node, cellData)
+            rootData = node.get(1);
+            xvals = rootData.spotSize;
+            yField = rootData.ONSET_peak;
+            if strcmp(yField.units, 's')
+            yvals = yField.median_c;
+            else
+            yvals = yField.mean_c;
+            end
+            errs = yField.SEM;
+            errorbar(xvals, yvals, errs);
+            xlabel('spotSize');
+            ylabel(['ONSET_peak (' yField.units ')']);
+        end
         
         function plotEpochData(node, cellData, device, epochIndex)
             nodeData = node.get(1);
