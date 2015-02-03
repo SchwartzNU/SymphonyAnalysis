@@ -50,12 +50,12 @@ baselineVal = zeros(1,L);
 for i=1:L
     curEpoch = cellData.epochs(epochInd(i));
     %get data
-    [data, xvals, units] = curEpoch.getData(ip.Results.DeviceName);
-    
-    data = LowPassFilter(data, ip.Results.LowPassFreq, 1/sampleRate);
+    [data, xvals, units] = curEpoch.getData(ip.Results.DeviceName);    
 
     baselineData = data(baselineInterval);
     baselineVal(i) = mean(baselineData);
+    
+    data = LowPassFilter(data, ip.Results.LowPassFreq, 1/sampleRate);
     %baseline subtraction
     data = data - baselineVal(i);
     stimData = data(responseIntverval);
@@ -78,7 +78,7 @@ for i=1:L
     if i==1 %some stuff we only need to do once: units and types for each output
         outputStruct.baseline.units = units;
         outputStruct.baseline.type = 'singleValue';
-        outputStruct.baseline.value = NaN;
+        %outputStruct.baseline.value = %already set;
         
         outputStruct.ONSET_peak.units = units;
         outputStruct.ONSET_peak.type = 'byEpoch';
@@ -192,6 +192,9 @@ for i=1:L
     end
     
 end
+
+%baseline 
+outputStruct.baseline.value = mean(baselineVal);
 
 %values that need to be calculated after collecting all data
 %ONSET
