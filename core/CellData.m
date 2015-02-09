@@ -11,6 +11,7 @@ classdef CellData < handle
         cellType = '';
         prefsMapName = '';
         imageFile = ''; %cell image
+        location = []; %[X, Y, whichEye] (X,Y in microns; whichEye is -1 for left eye and +1 for right eye)
     end
     
     

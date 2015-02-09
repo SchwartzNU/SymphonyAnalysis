@@ -150,6 +150,11 @@ classdef LabDataGUI < handle
                 'FontSize', 12, ...
                 'String', 'Assign cell type', ...
                 'Callback', @(uiobj,evt)obj.assignCellType());
+            obj.handles.assignCellType_cell_button = uicontrol('Style', 'pushbutton', ...
+                'Parent', L_cellsAndDataSetsButtons, ...
+                'FontSize', 12, ...
+                'String', 'Assign cell location', ...
+                'Callback', @(uiobj,evt)obj.assignCellLocation());
             obj.handles.cellDataCurator_button = uicontrol('Style', 'pushbutton', ...
                 'Parent', L_cellsAndDataSetsButtons, ...
                 'FontSize', 12, ...
@@ -1085,6 +1090,23 @@ classdef LabDataGUI < handle
                 end
             elseif get(node, 'Depth') == 0 %individual cell
                 obj.assignCellType();
+            end
+        end
+        
+        function assignCellLocation(obj)
+            answer = inputdlg('Enter cell location', '[X, Y, whichEye(L=-1,R=+1]', 1, {'[0 0 -1]'});
+            loc = str2num(answer{1});
+            if isempty(loc)|| length(loc)==3  %empty position to clear it
+                cellDataNames = cellNameToCellDataNames(obj.curCellName);
+                for i=1:length(cellDataNames)
+                    load([obj.cellData_folder filesep cellDataNames{i}]);
+                    %assuming one amp for now (TODO: deal with two???)
+                    cellData.location = loc;
+                    saveAndSyncCellData(cellData) %save cellData file
+                    loadCurrentCellData(obj)
+                end
+            else
+               errordlg('Three element vector required'); 
             end
         end
         
