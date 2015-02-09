@@ -31,37 +31,45 @@ for i=1:L
         %check for dataset and add to ProjMap (in this case only one key)
         dataSetNames = cellData.savedDataSets.keys;
         ind = strfind(dataSetNames, 'SpotsMultiSize');
-        %ind = strfind(dataSetNames, 'fromSpotsMultiSize');
+        %ind = strfind(dataSetNames, 'fromSMS');
         for d=1:length(ind);
             if ~isempty(ind{d})  %if has dataSet with prefix
-%                 oldName = dataSetNames{d};
-%                 newName = regexprep(oldName, 'fromSpotsMultiSize', 'fromSMS');
-%                 IDs = cellData.savedDataSets(oldName);
-%                 filt = cellData.savedFilters(oldName);
-%                 cellData.savedDataSets.remove(oldName);
-%                 cellData.savedDataSets(newName) = IDs;
-%                 cellData.savedFilters(newName) = filt;
+                %                 oldName = dataSetNames{d};
+                %                 newName = regexprep(oldName, 'fromSpotsMultiSize', 'fromSMS');
+                %                 IDs = cellData.savedDataSets(oldName);
+                %                 filt = cellData.savedFilters(oldName);
+                %                 cellData.savedDataSets.remove(oldName);
+                %                 cellData.savedDataSets(newName) = IDs;
+                %                 cellData.savedFilters(newName) = filt;     
+                curInd = d;
+                disp(['Found ' dataSetNames{curInd} ' in ' cellData.savedFileName]);
+                if  cellData.savedDataSets.isKey(dataSetNames{curInd})
+                    remove(cellData.savedDataSets, dataSetNames{curInd});
+                end
+                if cellData.savedFilters.isKey(dataSetNames{curInd})
+                    remove(cellData.savedFilters, dataSetNames{curInd});
+                end
                 
-                disp(['SpotsMultiSize found in cell '  cellDataBaseNames{i} ' dataSet: ' dataSetNames{d}]);  
-                curEpochIDs = cellData.savedDataSets(dataSetNames{d});
-                spotSizes = cellData.getEpochVals('curSpotSize', curEpochIDs);
-                uniqueSizes = unique(spotSizes);
-                [~, tempInd] = min(abs(uniqueSizes - optimalSpotSize));
-                matchingSize = uniqueSizes(tempInd);
-                matchingEpochIDs = spotSizes == matchingSize;
-                %now make new dataset
-                newDataSetName = ['LightStep_from' regexprep(dataSetNames{d}, 'SpotsMultiSize', 'SMS') '_size' num2str(round(matchingSize))];
-                newEpochIDs = curEpochIDs(matchingEpochIDs);
-                cellData.savedDataSets(newDataSetName) = newEpochIDs;
-                %tag each epoch
-                for ep = 1:length(newEpochIDs)  
-                    cellData.epochs(newEpochIDs(ep)).attributes('spotSize') = round(matchingSize);
-                    cellData.epochs(newEpochIDs(ep)).attributes(['autoDataSet_' newDataSetName]) = 1;
-                end                
-                tempStruct.filterPatternString = '@1';
-                tempStruct.filterData = {['autoDataSet_' newDataSetName], '==', '1'} ;                   
-                cellData.savedFilters(newDataSetName) = tempStruct;
-                save([cellDataMasterFolder filesep cellDataBaseNames{i}], 'cellData')
+                %                 disp(['SpotsMultiSize found in cell '  cellDataBaseNames{i} ' dataSet: ' dataSetNames{d}]);
+                %                 curEpochIDs = cellData.savedDataSets(dataSetNames{d});
+                %                 spotSizes = cellData.getEpochVals('curSpotSize', curEpochIDs);
+                %                 uniqueSizes = unique(spotSizes);
+                %                 [~, tempInd] = min(abs(uniqueSizes - optimalSpotSize));
+                %                 matchingSize = uniqueSizes(tempInd);
+                %                 matchingEpochIDs = spotSizes == matchingSize;
+                %                 %now make new dataset
+                %                 newDataSetName = ['LightStep_from' regexprep(dataSetNames{d}, 'SpotsMultiSize', 'SMS') '_size' num2str(round(matchingSize))];
+                %                 newEpochIDs = curEpochIDs(matchingEpochIDs);
+                %                 cellData.savedDataSets(newDataSetName) = newEpochIDs;
+                %                 %tag each epoch
+                %                 for ep = 1:length(newEpochIDs)
+                %                     cellData.epochs(newEpochIDs(ep)).attributes('spotSize') = round(matchingSize);
+                %                     cellData.epochs(newEpochIDs(ep)).attributes(['autoDataSet_' newDataSetName]) = 1;
+                %                 end
+                %                 tempStruct.filterPatternString = '@1';
+                %                 tempStruct.filterData = {['autoDataSet_' newDataSetName], '==', '1'} ;
+                %                 cellData.savedFilters(newDataSetName) = tempStruct;
+                 save([cellDataMasterFolder filesep cellDataBaseNames{i}], 'cellData')
             end
         end
     end
