@@ -149,9 +149,17 @@ for i=1:L
         outputStruct.spikeRate_stimInterval.type = 'byEpoch';
         outputStruct.spikeRate_stimInterval.value = ones(1,L) * NaN;
         
+        outputStruct.spikeCount_ONSET_after200ms.units = 'spikes';
+        outputStruct.spikeCount_ONSET_after200ms.type = 'byEpoch';
+        outputStruct.spikeCount_ONSET_after200ms.value = ones(1,L) * NaN;
+                
         outputStruct.spikeCount_ONSET_400ms.units = 'spikes';
         outputStruct.spikeCount_ONSET_400ms.type = 'byEpoch';
         outputStruct.spikeCount_ONSET_400ms.value = ones(1,L) * NaN;
+        
+        outputStruct.spikeCount_ONSET_200ms.units = 'spikes';
+        outputStruct.spikeCount_ONSET_200ms.type = 'byEpoch';
+        outputStruct.spikeCount_ONSET_200ms.value = ones(1,L) * NaN;
         
         outputStruct.spikeCount_OFFSET_400ms.units = 'spikes';
         outputStruct.spikeCount_OFFSET_400ms.type = 'byEpoch';
@@ -344,6 +352,23 @@ for i=1:L
         outputStruct.OFFSET_FRrangeFrac.units = 'Hz';
         outputStruct.OFFSET_FRrangeFrac.type = 'singleValue';
         outputStruct.OFFSET_FRrangeFrac.value = NaN;
+        
+        outputStruct.ONSETsuppressionTime.units = 's';
+        outputStruct.ONSETsuppressionTime.type = 'singleValue';
+        outputStruct.ONSETsuppressionTime.value = 0;
+        
+        outputStruct.ONSETsuppressedSpikes.units = 'spikes';        
+        outputStruct.ONSETsuppressedSpikes.type = 'singleValue';
+        outputStruct.ONSETsuppressedSpikes.value = 0;
+        
+        outputStruct.OFFSETsuppressionTime.units = 's';
+        outputStruct.OFFSETsuppressionTime.type = 'singleValue';
+        outputStruct.OFFSETsuppressionTime.value = 0;
+        
+        outputStruct.OFFSETsuppressedSpikes.units = 'spikes';        
+        outputStruct.OFFSETsuppressedSpikes.type = 'singleValue';
+        outputStruct.OFFSETsuppressedSpikes.value = 0;
+        
     end
     
     curEpoch = cellData.epochs(epochInd(i));
@@ -374,6 +399,18 @@ for i=1:L
     if intervalEnd + 0.4 <= xvals(end)
         spikeCount = length(find(spikeTimes >= intervalEnd & spikeTimes < intervalEnd + 0.4));
         outputStruct.spikeCount_OFFSET_400ms.value(i) = spikeCount;
+    end
+    
+    %count spikes in 200 ms after onset 
+    if responseIntervalLen >= 0.2
+        spikeCount = length(find(spikeTimes >= intervalStart & spikeTimes < intervalStart + 0.2));
+        outputStruct.spikeCount_ONSET_200ms.value(i) = spikeCount;
+    end
+    
+    %count spikes 200 ms after onset (removing initial burst from SbC)
+    if responseIntervalLen > 0.2
+        spikeCount = length(find(spikeTimes >= intervalStart + 0.2 & spikeTimes < intervalEnd));
+        outputStruct.spikeCount_ONSET_after200ms.value(i) = spikeCount;
     end
     
     %subtract baseline
@@ -511,6 +548,70 @@ if OFFSETresponseEndTime_max > OFFSETresponseStartTime_min
     outputStruct.OFFSET_FRrange.value = outputStruct.OFFSET_FRmax.value - min(psth_offset(maxLoc:end)); %range from max to end
     outputStruct.OFFSET_FRrangeFrac.value = outputStruct.OFFSET_FRrange.value / outputStruct.OFFSET_FRmax.value;
 end
+
+%PSTH smoothing and suppression detection
+baselineMean = mean(outputStruct.baselineRate.value);
+baselineRateThres = 4; %we need at least this baseline (Hz) to calculate a suppression
+if baselineMean > baselineRateThres
+    smoothWin = 20; %points, sliding window
+    suppressionThreshold = 0.5; %fraction of mean
+    suppressionMinThreshold = .25; %fraction of mean
+    psth_smooth = smooth(psth,smoothWin);
+    ONSET_ind = find(xvals>=0 & xvals < intervalEnd);
+    ONSET_to_end_ind = find(xvals>=0);
+    OFFSET_ind = find(xvals>=intervalEnd);
+    ONSET_part = psth_smooth(ONSET_ind);
+    ONSET_to_end_part = psth_smooth(ONSET_to_end_ind);
+    OFFSET_part = psth_smooth(OFFSET_ind);
+    %ONSET
+    suppFound = 0;
+    temp = find(ONSET_part<baselineMean*suppressionThreshold, 1);
+    if ~isempty(temp)
+        ONSET_suppression_start_ind = temp;
+        ONSET_suppression_start = xvals(ONSET_ind(ONSET_suppression_start_ind));
+        suppFound = 1;
+    end
+    temp = getThresCross(ONSET_to_end_part, baselineMean*suppressionThreshold, 1);
+    if suppFound
+        if ~isempty(temp)
+            [minVal, minLoc] = min(ONSET_part); %first min
+            if minVal<suppressionMinThreshold*baselineMean
+                thresInd = find(temp>minLoc);
+                if ~isempty(thresInd)
+                    ONSET_suppression_end_ind = temp(thresInd(1));
+                    ONSET_suppression_end = xvals(ONSET_to_end_ind(ONSET_suppression_end_ind));
+                    suppFound = suppFound + 1;
+                end
+            end
+        end
+    end
+    if suppFound == 2 %both onset and offset found    
+        outputStruct.ONSETsuppressionTime.value = ONSET_suppression_end - ONSET_suppression_start;
+        outputStruct.ONSETsuppressedSpikes.value = baselineMean * outputStruct.ONSETsuppressionTime.value - mean(ONSET_to_end_part(ONSET_suppression_start_ind:ONSET_suppression_end_ind));
+    end
+    
+    %OFFSET ( !!!not fixed to be like onset yet!!! )
+    suppFound = 0;
+    temp = find(OFFSET_part<baselineMean*suppressionThreshold, 1);
+    if ~isempty(temp)
+        OFFSET_suppression_start_ind = temp(1);
+        OFFSET_suppression_start = xvals(OFFSET_ind(OFFSET_suppression_start_ind));
+        suppFound = 1;
+    end
+    if suppFound
+        temp = getThresCross(OFFSET_part, baselineMean*suppressionThreshold, 1);
+        if ~isempty(temp) && temp(1) > OFFSET_suppression_start_ind
+            OFFSET_suppression_end_ind = temp(1);
+        else
+            OFFSET_suppression_end_ind = length(OFFSET_ind); %suppressed until the end of recording
+        end
+        OFFSET_suppression_end = xvals(OFFSET_ind(OFFSET_suppression_end_ind));
+        outputStruct.OFFSETsuppressionTime.value = OFFSET_suppression_end - OFFSET_suppression_start;
+        outputStruct.OFFSETsuppressedSpikes.value = baselineMean * outputStruct.OFFSETsuppressionTime.value - mean(OFFSET_part(OFFSET_suppression_start_ind:OFFSET_suppression_end_ind));
+    end
+    
+end
+%keyboard;
 
 end
 
