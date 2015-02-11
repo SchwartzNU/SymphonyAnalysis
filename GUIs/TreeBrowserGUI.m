@@ -17,6 +17,7 @@ classdef TreeBrowserGUI < handle
     
     properties(Hidden)
         epochTags = containers.Map;
+        cellTags = containers.Map;
         curEpochIndex = [];
         curCellData = [];
     end
@@ -57,6 +58,28 @@ classdef TreeBrowserGUI < handle
                 obj.epochTags(curTagName) = curVals;
             end
             fclose(fid);
+            
+            %read in CellTags.txt file
+            fid = fopen([PREFERENCE_FILES_FOLDER filesep 'CellTags.txt']);
+            fline = 'temp';
+            while ~isempty(fline)
+                fline = fgetl(fid);
+                if isempty(fline) || (isscalar(fline) && fline < 0)
+                    break;
+                end
+                curVals = {};
+                [curTagName, rem] = strtok(fline);
+                z=1;
+                while ~isempty(rem)
+                    [cval, rem] = strtok(rem);
+                    cval = strtrim(cval);
+                    curVals{z} = cval;
+                    z=z+1;
+                end
+                obj.cellTags(curTagName) = curVals;
+            end
+            fclose(fid);
+            
             
             obj.analysisTree = analysisTree;
             obj.makePlotSelectionTable();
@@ -107,6 +130,19 @@ classdef TreeBrowserGUI < handle
                     'Callback', @(uiobj,evt)obj.setEpochTags(k{i}, 'remove'));
             end
             
+            %cell tags menu
+            obj.handles.cellTagsMenu = uimenu(obj.handles.fig, 'Label', 'Cell tags');
+            k = obj.cellTags.keys;
+            for i=1:length(k)
+                obj.handles.cellTagMenuItems(i,1) = uimenu(obj.handles.cellTagsMenu, 'Label', k{i});
+                vals = obj.cellTags(k{i});
+                for j=1:length(vals)
+                    obj.handles.cellTagMenuItems(i,j+1) = uimenu(obj.handles.cellTagMenuItems(i,1), 'Label', vals{j}, ...
+                        'Callback', @(uiobj,evt)obj.setCellTags(k{i}, vals{j}));
+                end
+            end
+            
+            %UI tree
             obj.rootNode = uitreenode('v0', 1, rootName, obj.iconpath, false);
             obj.addChildren(1, obj.rootNode);
             obj.guiTree = uitree('v0', obj.handles.fig, ...
@@ -122,7 +158,7 @@ classdef TreeBrowserGUI < handle
             L_tables = uiextras.HBoxFlex('Parent', L_right, 'Spacing', 10);
             
             obj.handles.L_plotControls = uiextras.VBox('Parent', L_tables);
-                        
+            
             obj.handles.plotSelectionMenu = uicontrol('Parent', obj.handles.L_plotControls, ...
                 'Style', 'popupmenu', ...
                 'String', {'none'}, ...
@@ -154,7 +190,7 @@ classdef TreeBrowserGUI < handle
             nodePropText = uicontrol('Parent', L_nodePropsPanel, ...
                 'Style', 'text', ...
                 'String', 'Node properties');
-                        
+            
             obj.handles.nodePropertiesTable = uitable('Parent', L_nodePropsPanel, ...
                 'Units',    'pixels', ...
                 'FontSize', 12, ...
@@ -164,7 +200,7 @@ classdef TreeBrowserGUI < handle
                 'Data', cell(5,2), ...
                 'TooltipString', 'table of properties for currently selected node');
             
-            %set node prop table width 
+            %set node prop table width
             tablePos = get(obj.handles.nodePropertiesTable,'Position');
             tableWidth = tablePos(3);
             col1W = round(tableWidth*.5);
@@ -188,7 +224,7 @@ classdef TreeBrowserGUI < handle
                 'Data', cell(5,2), ...
                 'TooltipString', 'table of epoch tags for data sets');
             
-            %set epoch tags table width 
+            %set epoch tags table width
             tablePos = get(obj.handles.epochTagsTable,'Position');
             tableWidth = tablePos(3);
             col1W = round(tableWidth*.5);
@@ -240,6 +276,49 @@ classdef TreeBrowserGUI < handle
             %set(get(obj.guiTree, 'UIContainer'), 'uicontextmenu', cmenu);
             set(obj.handles.fig, 'uicontextmenu', cmenu);
             
+        end
+        
+        function setCellTags(obj, tagName, tagVal)
+            selectedNodes = get(obj.guiTree, 'selectedNodes');
+            curNodeIndex = get(selectedNodes(1), 'Value');
+            curNode = obj.analysisTree.get(curNodeIndex);
+            cellNodeFound = false;
+            [~, namePart] = strtok(curNode.name, ':');
+            if ~isempty(namePart)
+                namePart = strtok(namePart, ':');
+                namePart = strtrim(namePart(2:end))
+            end
+            if (length(namePart) == 9 || length(namePart) == 10) && isfield(curNode, 'device') %cell node
+                curCellName = namePart;
+                cellNodeFound = true;
+                disp(['Adding tag ' tagName '==' tagVal ' to ' curCellName]);
+                load([obj.cellDataFolder curCellName '.mat']); %loads cellData
+                cellData.tags(tagName) = tagVal;
+                saveAndSyncCellData(cellData) %save cellData file
+            elseif ~obj.analysisTree.isleaf(curNodeIndex) %check if children are cell nodes
+                chInd =  obj.analysisTree.getchildren(curNodeIndex);
+                for i=1:length(chInd)
+                    curNode = obj.analysisTree.get(chInd(i));
+                    [~, namePart] = strtok(curNode.name, ':');
+                    if ~isempty(namePart)
+                        namePart = strtok(namePart, ':');
+                        namePart = strtrim(namePart(2:end));
+                    end
+                    if (length(namePart) == 9 || length(namePart) == 10) && isfield(curNode, 'device') %cell node
+                        curCellName = namePart;
+                        cellNodeFound = true;
+                        disp(['Adding tag ' tagName ' == ' tagVal ' to ' curCellName]);
+                        load([obj.cellDataFolder curCellName '.mat']); %loads cellData
+                        cellData.tags(tagName) = tagVal;
+                        saveAndSyncCellData(cellData) %save cellData file
+                    end
+                end
+                if ~cellNodeFound
+                    disp('Error: must have cell level or above selected to add cell tag');
+                end
+            else
+                disp('Error: must have cell level or above selected to add cell tag');
+            end
         end
         
         function setEpochTags(obj, tagName, tagVal)
@@ -450,8 +529,8 @@ classdef TreeBrowserGUI < handle
                         allMethods = methods(analysisClass);
                         plotMethods = allMethods(strmatch('plot', allMethods));
                         plotMethods = plotMethods(~strcmp(plotMethods, 'plot'));
-                        plotMethods = plotMethods(~strcmp(plotMethods, 'plotLeaf'));   
-                        plotMethods = plotMethods(~strcmp(plotMethods, 'plotEpochData'));   
+                        plotMethods = plotMethods(~strcmp(plotMethods, 'plotLeaf'));
+                        plotMethods = plotMethods(~strcmp(plotMethods, 'plotEpochData'));
                         plotMethods = [plotMethods; obj.generalPlotMethods];
                         obj.plotSelectionTable{i,2} = plotMethods;
                     end
@@ -459,21 +538,21 @@ classdef TreeBrowserGUI < handle
             end
         end
         
-        function resetPlotControls(obj)      
+        function resetPlotControls(obj)
             if isfield(obj.handles, 'L_plotXY_box');
                 delete(obj.handles.L_plotXY_box);
-                set(obj.handles.L_plotControls, 'Sizes', [-1, 40, 40, 40]); 
+                set(obj.handles.L_plotControls, 'Sizes', [-1, 40, 40, 40]);
             end
         end
         
-        function addXYselectionToPlotControls(obj, xList, yList)    
+        function addXYselectionToPlotControls(obj, xList, yList)
             plotControls_children = get(obj.handles.L_plotControls, 'children');
             for i=1:length(plotControls_children)
-                if ~strcmp(get(plotControls_children(i), 'Tag'), 'plotSelectionMenu');                    
+                if ~strcmp(get(plotControls_children(i), 'Tag'), 'plotSelectionMenu');
                     delete(plotControls_children(i));
                 end
             end
-                        
+            
             obj.handles.L_plotXY_box = uiextras.HBox('Parent', obj.handles.L_plotControls);
             
             obj.handles.plotXMenu = uicontrol('Parent', obj.handles.L_plotXY_box, ...
@@ -485,13 +564,13 @@ classdef TreeBrowserGUI < handle
             vs_text = uicontrol('Parent', obj.handles.L_plotXY_box, ...
                 'Style', 'text', ...
                 'String', 'vs.', ...
-                'Units', 'normalized'); 
+                'Units', 'normalized');
             
             obj.handles.plotYMenu = uicontrol('Parent', obj.handles.L_plotXY_box, ...
                 'Style', 'popupmenu', ...
                 'String', yList, ...
                 'Units', 'normalized', ...
-                'Callback', @(uiobj, evt)obj.updatePlot); 
+                'Callback', @(uiobj, evt)obj.updatePlot);
             
             set(obj.handles.L_plotXY_box, 'Sizes', [-1, 20, -1]);
             
@@ -582,7 +661,7 @@ classdef TreeBrowserGUI < handle
                 elseif strcmp(plotFunc, 'plotLeaf')
                     [~,plotClass] = strtok(plotClass, ':');
                     plotClass = plotClass(2:end);
-                    eval([plotClass '.plotLeaf(curNode, cellData);']);                
+                    eval([plotClass '.plotLeaf(curNode, cellData);']);
                 end
             else %not leaf
                 curNodeData = curNode.get(1);
@@ -601,10 +680,10 @@ classdef TreeBrowserGUI < handle
                         obj.addXYselectionToPlotControls(xList, yList);
                     end
                     if ~isequal(yList', get(obj.handles.plotYMenu, 'String'))
-                        disp('remaking menu'); 
+                        disp('remaking menu');
                         obj.addXYselectionToPlotControls(xList, yList);
                     end
-                    %make the plot    
+                    %make the plot
                     xName = xList{get(obj.handles.plotXMenu, 'Value')};
                     yName = yList{get(obj.handles.plotYMenu, 'Value')};
                     xvals = curNodeData.(xName);
@@ -634,7 +713,7 @@ classdef TreeBrowserGUI < handle
                         obj.addXYselectionToPlotControls(xList, yList);
                     end
                     if ~isequal(yList', get(obj.handles.plotYMenu, 'String'))
-                        disp('remaking menu'); 
+                        disp('remaking menu');
                         obj.addXYselectionToPlotControls(xList, yList);
                     end
                     %make the plot
@@ -657,36 +736,36 @@ classdef TreeBrowserGUI < handle
         end
         
         function printCodeForPlotterFunction_singleVal(obj, xName, yName)
-           disp('%%%%%%%%%%%%%% plotter code %%%%%%%%%%%%%%'); 
-           disp(['function plot_' xName 'Vs' yName '(node, cellData)']);
-           disp('rootData = node.get(1);');
-           disp(['xvals = rootData.' xName ';']);
-           disp(['yField = rootData.' yName ';']);
-           disp('yvals = yField.value;');
-           disp(['plot(xvals, yvals, ''' 'bx-' ''');']);
-           disp(['xlabel(''' xName ''');']);
-           disp(['ylabel([''' yName ' (' ''' yField.units ''' ')''' ']);']);
-           disp('end');
-           disp('%%%%%%%%%%%%%% plotter code %%%%%%%%%%%%%%'); 
+            disp('%%%%%%%%%%%%%% plotter code %%%%%%%%%%%%%%');
+            disp(['function plot_' xName 'Vs' yName '(node, cellData)']);
+            disp('rootData = node.get(1);');
+            disp(['xvals = rootData.' xName ';']);
+            disp(['yField = rootData.' yName ';']);
+            disp('yvals = yField.value;');
+            disp(['plot(xvals, yvals, ''' 'bx-' ''');']);
+            disp(['xlabel(''' xName ''');']);
+            disp(['ylabel([''' yName ' (' ''' yField.units ''' ')''' ']);']);
+            disp('end');
+            disp('%%%%%%%%%%%%%% plotter code %%%%%%%%%%%%%%');
         end
         
         function printCodeForPlotterFunction_byEpoch(obj, xName, yName)
-           disp('%%%%%%%%%%%%%% plotter code %%%%%%%%%%%%%%'); 
-           disp(['function plot_' xName 'Vs' yName '(node, cellData)']);
-           disp('rootData = node.get(1);');
-           disp(['xvals = rootData.' xName ';']);
-           disp(['yField = rootData.' yName ';']);
-           disp('if strcmp(yField.units, ''s'')');
-           disp('yvals = yField.median_c;');
-           disp('else');
-           disp('yvals = yField.mean_c;');
-           disp('end');
-           disp('errs = yField.SEM;');
-           disp('errorbar(xvals, yvals, errs);');
-           disp(['xlabel(''' xName ''');']);
-           disp(['ylabel([''' yName ' (' ''' yField.units ''' ')''' ']);']);
-           disp('end');
-           disp('%%%%%%%%%%%%%% plotter code %%%%%%%%%%%%%%'); 
+            disp('%%%%%%%%%%%%%% plotter code %%%%%%%%%%%%%%');
+            disp(['function plot_' xName 'Vs' yName '(node, cellData)']);
+            disp('rootData = node.get(1);');
+            disp(['xvals = rootData.' xName ';']);
+            disp(['yField = rootData.' yName ';']);
+            disp('if strcmp(yField.units, ''s'')');
+            disp('yvals = yField.median_c;');
+            disp('else');
+            disp('yvals = yField.mean_c;');
+            disp('end');
+            disp('errs = yField.SEM;');
+            disp('errorbar(xvals, yvals, errs);');
+            disp(['xlabel(''' xName ''');']);
+            disp(['ylabel([''' yName ' (' ''' yField.units ''' ')''' ']);']);
+            disp('end');
+            disp('%%%%%%%%%%%%%% plotter code %%%%%%%%%%%%%%');
         end
         
         function onPlotSelectionMenu(obj)
@@ -747,10 +826,10 @@ classdef TreeBrowserGUI < handle
         function populateEpochTagsTable(obj)
             selectedNodes = get(obj.guiTree, 'selectedNodes');
             curNodeIndex = get(selectedNodes(1), 'Value');
-            curNodeData = obj.analysisTree.get(curNodeIndex);            
+            curNodeData = obj.analysisTree.get(curNodeIndex);
             curCellName = obj.analysisTree.getCellName(curNodeIndex);
             if isfield(obj.curCellData, 'savedFileName') && strcmp(obj.curCellData.savedFileName, curCellName) %cellData already loaded
-                 %do nothing
+                %do nothing
             else %load it
                 obj.curCellData = loadAndSyncCellData(curCellName);
             end
@@ -769,22 +848,22 @@ classdef TreeBrowserGUI < handle
                 allTags = obj.epochTags.keys;
                 z = 1;
                 for i=1:length(allTags)
-                   curVals = getEpochVals(obj.curCellData, allTags{i}, epochIDs);
-                   if iscell(curVals)
-                       curVals = curVals(~isnan_cell(curVals));                       
-                   else
-                       curVals = curVals(~isnan(curVals));
-                   end
-                   curVals = unique(curVals);
-                   if iscell(curVals)
-                       curVals = cell2mat(curVals);
-                   end
-                   
-                   if ~isempty(curVals)
-                       D{z,1} = allTags{i};
-                       D{z,2} = num2str(curVals);
-                       z=z+1;
-                   end
+                    curVals = getEpochVals(obj.curCellData, allTags{i}, epochIDs);
+                    if iscell(curVals)
+                        curVals = curVals(~isnan_cell(curVals));
+                    else
+                        curVals = curVals(~isnan(curVals));
+                    end
+                    curVals = unique(curVals);
+                    if iscell(curVals)
+                        curVals = cell2mat(curVals);
+                    end
+                    
+                    if ~isempty(curVals)
+                        D{z,1} = allTags{i};
+                        D{z,2} = num2str(curVals);
+                        z=z+1;
+                    end
                 end
                 
                 %vals = getEpochVals(obj, paramName, epochInd)
@@ -866,7 +945,7 @@ classdef TreeBrowserGUI < handle
         end
         
         function openCurveFitter(obj)
-            chInd = get(obj.handles.plotAxes, 'children');            
+            chInd = get(obj.handles.plotAxes, 'children');
             %fit only first child for now
             if length(chInd) > 1
                 chInd = chInd(1);
@@ -877,13 +956,13 @@ classdef TreeBrowserGUI < handle
                 errvals = get(chInd, 'udata');
                 zeroInd = find(errvals==0);
                 if ~isempty(zeroInd)
-                    errvals(zeroInd) = min(errvals) / 2; %set zeros to half min                    
+                    errvals(zeroInd) = min(errvals) / 2; %set zeros to half min
                 end
                 weights = 1./errvals;
                 cftool(xvals,yvals,[],weights);
             else
                 cftool(xvals,yvals);
-            end            
+            end
         end
         
         function rawDataToCommandLine(obj)

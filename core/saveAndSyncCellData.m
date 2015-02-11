@@ -117,6 +117,7 @@ if do_sync
         %do the copy
         disp([cellData.savedFileName ': Copying local file to server']);
         save([filesep 'Volumes' filesep 'SchwartzLab'  filesep 'CellDataMaster'  filesep cellData.savedFileName '.mat'], 'cellData'); 
+        pause(1.5);
         %resave local version so modification date is later
         disp([cellData.savedFileName ': Local resave']);
         save([ANALYSIS_FOLDER 'cellData' filesep cellData.savedFileName '.mat'], 'cellData'); 
