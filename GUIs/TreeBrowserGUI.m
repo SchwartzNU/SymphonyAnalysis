@@ -140,6 +140,8 @@ classdef TreeBrowserGUI < handle
                     obj.handles.cellTagMenuItems(i,j+1) = uimenu(obj.handles.cellTagMenuItems(i,1), 'Label', vals{j}, ...
                         'Callback', @(uiobj,evt)obj.setCellTags(k{i}, vals{j}));
                 end
+                 obj.handles.cellTagMenuItems(i,length(vals)+2) = uimenu(obj.handles.cellTagMenuItems(i,1), 'Label', 'Remove', ...
+                    'Callback', @(uiobj,evt)obj.setCellTags(k{i}, 'remove'));
             end
             
             %UI tree
@@ -209,6 +211,28 @@ classdef TreeBrowserGUI < handle
             
             set(L_nodePropsPanel, 'Sizes', [15, -1]);
             
+            L_cellTagsPanel = uiextras.VBox('Parent', L_twoTables);
+            
+            cellTagsText = uicontrol('Parent', L_cellTagsPanel, ...
+                'Style', 'text', ...
+                'String', 'Cell tags');
+            
+            obj.handles.cellTagsTable = uitable('Parent', L_cellTagsPanel, ...
+                'Units',    'pixels', ...
+                'FontSize', 12, ...
+                'ColumnName', {'Property', 'Value'}, ...
+                'RowName', [], ...
+                'ColumnEditable', logical([0 0]), ...
+                'Data', cell(5,2), ...
+                'TooltipString', 'table of epoch tags for data sets');
+            
+            %set epoch tags table width
+            tablePos = get(obj.handles.cellTagsTable,'Position');
+            tableWidth = tablePos(3);
+            col1W = round(tableWidth*.5);
+            col2W = round(tableWidth*.5);
+            set(obj.handles.cellTagsTable,'ColumnWidth',{col1W, col2W});
+            
             L_epochTagsPanel = uiextras.VBox('Parent', L_twoTables);
             
             epochTagsText = uicontrol('Parent', L_epochTagsPanel, ...
@@ -231,8 +255,9 @@ classdef TreeBrowserGUI < handle
             col2W = round(tableWidth*.5);
             set(obj.handles.epochTagsTable,'ColumnWidth',{col1W, col2W});
             
+            set(L_cellTagsPanel, 'Sizes', [15, -1]);
             set(L_epochTagsPanel, 'Sizes', [15, -1]);
-            set(L_twoTables, 'Sizes', [-2, -1]);
+            set(L_twoTables, 'Sizes', [-2, -1, -1]);
             
             %plotter area
             L_plot = uiextras.VBox('Parent', L_right);
@@ -264,10 +289,9 @@ classdef TreeBrowserGUI < handle
                 'String', 'Raw data to command line', ...
                 'Callback', @(uiobj, evt)obj.rawDataToCommandLine);
             
-            
             set(L_plot, 'Sizes', [-1, 50])
             
-            set(L_right, 'Sizes', [-1 -3], 'Spacing', 10);
+            set(L_right, 'Sizes', [-2 -3], 'Spacing', 10);
             
             cmenu = uicontextmenu;
             plotType1 = uimenu(cmenu, 'label', 'plotFunc1');
@@ -275,7 +299,6 @@ classdef TreeBrowserGUI < handle
             plotType3 = uimenu(cmenu, 'label', 'plotFunc3');
             %set(get(obj.guiTree, 'UIContainer'), 'uicontextmenu', cmenu);
             set(obj.handles.fig, 'uicontextmenu', cmenu);
-            
         end
         
         function setCellTags(obj, tagName, tagVal)
@@ -286,14 +309,19 @@ classdef TreeBrowserGUI < handle
             [~, namePart] = strtok(curNode.name, ':');
             if ~isempty(namePart)
                 namePart = strtok(namePart, ':');
-                namePart = strtrim(namePart(2:end))
+                namePart = strtrim(namePart(2:end));
             end
             if (length(namePart) == 9 || length(namePart) == 10) && isfield(curNode, 'device') %cell node
                 curCellName = namePart;
                 cellNodeFound = true;
-                disp(['Adding tag ' tagName '==' tagVal ' to ' curCellName]);
                 load([obj.cellDataFolder curCellName '.mat']); %loads cellData
-                cellData.tags(tagName) = tagVal;
+                if strcmp(tagVal, 'remove')
+                    disp(['Removing tag ' tagName ' from ' curCellName]); 
+                    cellData.tags.remove(tagName);
+                else
+                    disp(['Adding tag ' tagName '==' tagVal ' to ' curCellName]);                    
+                    cellData.tags(tagName) = tagVal;
+                end
                 saveAndSyncCellData(cellData) %save cellData file
             elseif ~obj.analysisTree.isleaf(curNodeIndex) %check if children are cell nodes
                 chInd =  obj.analysisTree.getchildren(curNodeIndex);
@@ -307,9 +335,14 @@ classdef TreeBrowserGUI < handle
                     if (length(namePart) == 9 || length(namePart) == 10) && isfield(curNode, 'device') %cell node
                         curCellName = namePart;
                         cellNodeFound = true;
-                        disp(['Adding tag ' tagName ' == ' tagVal ' to ' curCellName]);
                         load([obj.cellDataFolder curCellName '.mat']); %loads cellData
-                        cellData.tags(tagName) = tagVal;
+                        if strcmp(tagVal, 'remove')
+                            disp(['Removing tag ' tagName ' from ' curCellName]); 
+                            cellData.tags.remove(tagName);
+                        else
+                            disp(['Adding tag ' tagName ' == ' tagVal ' to ' curCellName]);                       
+                            cellData.tags(tagName) = tagVal;
+                        end
                         saveAndSyncCellData(cellData) %save cellData file
                     end
                 end
@@ -789,6 +822,7 @@ classdef TreeBrowserGUI < handle
             end
             
             obj.populateEpochTagsTable();
+            obj.populateCellTagsTable();
             obj.populateNodePropertiesTable();
             obj.updatePlot();
         end
@@ -871,7 +905,35 @@ classdef TreeBrowserGUI < handle
             set(obj.handles.epochTagsTable, 'data', D)
         end
         
+        function populateCellTagsTable(obj)
+            selectedNodes = get(obj.guiTree, 'selectedNodes');
+            curNodeIndex = get(selectedNodes(1), 'Value');
+            curNode = obj.analysisTree.get(curNodeIndex);
+            curCellName = obj.analysisTree.getCellName(curNodeIndex);
+            [~, namePart] = strtok(curNode.name, ':');
+            if ~isempty(namePart)
+                namePart = strtok(namePart, ':');
+                namePart = strtrim(namePart(2:end));
+            end
+            if (length(namePart) == 9 || length(namePart) == 10) && isfield(curNode, 'device') %cell node
+                curCellName = namePart;
+            end
+                        
+            D = cell(1,2);
+            if ~isempty(curCellName)
+                obj.curCellData = loadAndSyncCellData(curCellName);
+                tagNames = obj.curCellData.tags.keys;
+                L = length(tagNames);
+                D = cell(L,2);
+                for i=1:L
+                    D{i,1} = tagNames{i};
+                    D{i,2} = obj.curCellData.tags(tagNames{i});
+                end
+            end
+            set(obj.handles.cellTagsTable, 'data', D)
+        end
         
+
         function resizeWindow(obj)
             if isfield(obj.handles, 'fig')
                 figurePos = get(obj.handles.fig, 'Position');
