@@ -106,11 +106,11 @@ classdef LabDataGUI < handle
                 'Title', 'Cell Types', ...
                 'Units', 'pixels', ... %so that uitree can be resized inside it
                 'FontSize', 12);
+            L_cellInfoPanel = uiextras.BoxPanel('Parent', L_mainGrid, ...
+                'Title', 'Cell infromation', ...                
+                'FontSize', 12);
             L_filterPanel = uiextras.BoxPanel('Parent', L_mainGrid, ...
                 'Title', 'Filter Construction', ...
-                'FontSize', 12);
-            L_filterResultsPanel = uiextras.BoxPanel('Parent', L_mainGrid, ...
-                'Title', ' ', ...
                 'FontSize', 12);
             
             %set layput for main grid
@@ -126,6 +126,7 @@ classdef LabDataGUI < handle
             %Upper half: cells and data sets
             L_cellsAndDataSets = uiextras.VBox('Parent', L_cellsPanel);
             L_cellsAndDataSetsBoxes = uiextras.HBox('Parent', L_cellsAndDataSets);
+            L_cellsAndDataSetsButtonsR1 = uiextras.HButtonBox('Parent', L_cellsAndDataSets);
             L_cellsAndDataSetsButtons = uiextras.HButtonBox('Parent', L_cellsAndDataSets);
             
             %Cells list box
@@ -139,6 +140,23 @@ classdef LabDataGUI < handle
                 'String', {'cell 1', 'cell 2', 'cell 3'}, ...
                 'Callback', @(uiobj,evt)obj.cellSelectedFcn);
             
+            %Cells buttons_row1
+            obj.handles.cellDataCurator_button = uicontrol('Style', 'pushbutton', ...
+                'Parent', L_cellsAndDataSetsButtonsR1, ...
+                'FontSize', 12, ...
+                'String', 'Cell Data Curator', ...
+                'Callback', @(uiobj,evt)obj.openCellDataCurator());
+            obj.handles.detectSpikes_button = uicontrol('Style', 'pushbutton', ...
+                'Parent', L_cellsAndDataSetsButtonsR1, ...
+                'FontSize', 12, ...
+                'String', 'Detect Spikes', ...
+                'Callback', @(uiobj,evt)obj.runDetectSpikes());
+            obj.handles.assignCellLocation_button = uicontrol('Style', 'pushbutton', ...
+                'Parent', L_cellsAndDataSetsButtonsR1, ...
+                'FontSize', 12, ...
+                'String', 'Assign cell location', ...
+                'Callback', @(uiobj,evt)obj.assignCellLocation());
+            
             %Cells buttons
             obj.handles.analyzeBrowse_cell_button = uicontrol('Style', 'pushbutton', ...
                 'Parent', L_cellsAndDataSetsButtons, ...
@@ -150,24 +168,22 @@ classdef LabDataGUI < handle
                 'FontSize', 12, ...
                 'String', 'Assign cell type', ...
                 'Callback', @(uiobj,evt)obj.assignCellType());
-            obj.handles.assignCellType_cell_button = uicontrol('Style', 'pushbutton', ...
+            obj.handles.addCellTagSingle_button = uicontrol('Style', 'pushbutton', ...
                 'Parent', L_cellsAndDataSetsButtons, ...
                 'FontSize', 12, ...
-                'String', 'Assign cell location', ...
-                'Callback', @(uiobj,evt)obj.assignCellLocation());
-            obj.handles.cellDataCurator_button = uicontrol('Style', 'pushbutton', ...
+                'String', 'Add cell tag', ...
+                'Callback', @(uiobj,evt)obj.addCellTagSingle);
+            obj.handles.removeCellTagSingle_button = uicontrol('Style', 'pushbutton', ...
                 'Parent', L_cellsAndDataSetsButtons, ...
                 'FontSize', 12, ...
-                'String', 'Cell Data Curator', ...
-                'Callback', @(uiobj,evt)obj.openCellDataCurator());
-            obj.handles.detectSpikes_button = uicontrol('Style', 'pushbutton', ...
-                'Parent', L_cellsAndDataSetsButtons, ...
-                'FontSize', 12, ...
-                'String', 'Detect Spikes', ...
-                'Callback', @(uiobj,evt)obj.runDetectSpikes());
+                'String', 'Remove cell tag', ...
+                'Callback', @(uiobj,evt)obj.removeCellTagSingle);            
             
             %Set properties for L_cellsAndDataSetsButtons buttonbox
-            set(L_cellsAndDataSetsButtons, 'ButtonSize', [160, 40]);
+            set(L_cellsAndDataSetsButtonsR1, 'ButtonSize', [160, 35]);
+            
+            %Set properties for L_cellsAndDataSetsButtons buttonbox
+            set(L_cellsAndDataSetsButtons, 'ButtonSize', [160, 35]);
             
             %CellData and datasets boxes
             L_cellDataAndDataSetsBoxes = uiextras.VBox('Parent',  L_cellsAndDataSetsBoxes);
@@ -204,73 +220,13 @@ classdef LabDataGUI < handle
             set(L_cellsAndDataSetsBoxes, 'Sizes', [-1 -1]);
             
             %set layout for L_cellsAndDataSets
-            set(L_cellsAndDataSets, 'Sizes', [-1 50]);
-            
-            %Lower half: PrefsMaps
-%             L_prefs = uiextras.VBox('Parent', L_cellsPanel);
-%             L_prefsBoxes = uiextras.HBox('Parent', L_prefs);
-%             L_prefsButtons = uiextras.HButtonBox('Parent', L_prefs);
-%             
-%             %PrefsMap list box
-%             L_prefsMapBox = uiextras.BoxPanel('Parent', L_prefsBoxes, ...
-%                 'Title', 'Preferences Map', ...
-%                 'FontSize', 12, ...
-%                 'Padding', 5);
-%             obj.handles.prefsMapList = uicontrol('Style', 'text', ...
-%                 'Parent', L_prefsMapBox, ...
-%                 'FontSize', 12, ...
-%                 'HorizontalAlignment', 'left', ...
-%                 'String', {'MyPrefsMap'});
-%             
-%             %PrefsMap elements list box
-%             L_prefsMapElementsBox = uiextras.BoxPanel('Parent', L_prefsBoxes, ...
-%                 'Title', 'Preference Map Elements', ...
-%                 'FontSize', 12, ...
-%                 'Padding', 5);
-%             obj.handles.prefsMapElementsListbox = uicontrol('Style', 'listbox', ...
-%                 'Parent', L_prefsMapElementsBox, ...
-%                 'FontSize', 12, ...
-%                 'String', {'SpotsMultiSize_ON', 'SpotsMultiSize_ON', 'MovingBar_ON', 'MovingBar_OFF'});
-%             
-%             %set layout for L_prefsBoxes
-%             set(L_prefsBoxes, 'Sizes', [-1 -1]);
-%             
-%             %PrefsMap buttons
-%             obj.handles.addChangePrefsMap_button = uicontrol('Style', 'pushbutton', ...
-%                 'Parent', L_prefsButtons, ...
-%                 'FontSize', 12, ...
-%                 'String', 'Add/Change Pref. Map', ...
-%                 'Callback', @(uiobj,evt)obj.setPrefsMap);
-%             obj.handles.addChangePrefsMap_button = uicontrol('Style', 'pushbutton', ...
-%                 'Parent', L_prefsButtons, ...
-%                 'FontSize', 12, ...
-%                 'String', 'Delete Pref. Map', ...
-%                 'Callback', @(uiobj,evt)obj.deletePrefsMap);
-%             obj.handles.addPrefElement_button = uicontrol('Style', 'pushbutton', ...
-%                 'Parent', L_prefsButtons, ...
-%                 'FontSize', 12, ...
-%                 'String', 'Open Pref. Map', ...
-%                 'Callback',  @(uiobj,evt)obj.openPrefsMap);
-%             obj.handles.analysisParamsGUI_button = uicontrol('Style', 'pushbutton', ...
-%                 'Parent', L_prefsButtons, ...
-%                 'FontSize', 12, ...
-%                 'String', 'Open AnalysisParamsGUI', ...
-%                 'Callback',  @(uiobj,evt)obj.openAnalysisParamsGUI);
-%             
-%             %Set properties for L_cellsAndDataSetsButtons buttonbox
-%             set(L_prefsButtons, 'ButtonSize', [160, 40]);
-%             
-%             %set layout for L_cellsPanel
-%             set(L_cellsPanel, 'Sizes', [-2 -1]);
-%             
-%             %set layout for L_cellsAndDataSets
-%             set(L_prefs, 'Sizes', [-1 50]);
+            set(L_cellsAndDataSets, 'Sizes', [-1 40 40]);
             
             L_cellTypesTreeAndButtons = uiextras.VBox('Parent', obj.handles.L_cellTypesPanel);
             
             L_empty = uiextras.Empty('Parent', L_cellTypesTreeAndButtons);
             L_cellTypeButtons = uiextras.HButtonBox('Parent', L_cellTypesTreeAndButtons);
-            L_cellTypeButtons_secondRow = uiextras.HButtonBox('Parent', L_cellTypesTreeAndButtons);
+            L_cellTypeButtonsR2 = uiextras.HButtonBox('Parent', L_cellTypesTreeAndButtons);
             
             %Cell type panel buttons
             obj.handles.analyzeBrowse_cellType_button = uicontrol('Style', 'pushbutton', ...
@@ -281,51 +237,117 @@ classdef LabDataGUI < handle
             obj.handles.changeCellType_button = uicontrol('Style', 'pushbutton', ...
                 'Parent', L_cellTypeButtons, ...
                 'FontSize', 12, ...
-                'String', 'Change cell type', ...
+                'String', 'Assign cell type', ...
                 'Callback', @(uiobj,evt)obj.changeCellType);
-            obj.handles.AttachImage_button = uicontrol('Style', 'pushbutton', ...
-                'Parent', L_cellTypeButtons, ...
-                'FontSize', 12, ...
-                'String', 'Attach Image', ...
-                'Callback', @(uiobj,evt)obj.attachImage);
-            obj.handles.openImage_button = uicontrol('Style', 'pushbutton', ...
-                'Parent', L_cellTypeButtons, ...
-                'FontSize', 12, ...
-                'String', 'Open Image', ...
-                'Callback', @(uiobj,evt)obj.openImage);
+%             obj.handles.AttachImage_button = uicontrol('Style', 'pushbutton', ...
+%                 'Parent', L_cellTypeButtons, ...
+%                 'FontSize', 12, ...
+%                 'String', 'Attach Image', ...
+%                 'Callback', @(uiobj,evt)obj.attachImage);
+%             obj.handles.openImage_button = uicontrol('Style', 'pushbutton', ...
+%                 'Parent', L_cellTypeButtons, ...
+%                 'FontSize', 12, ...
+%                 'String', 'Open Image', ...
+%                 'Callback', @(uiobj,evt)obj.openImage);
             
-            %Cell type panel buttons second row
-            obj.handles.analyzeBrowse_cellType_button = uicontrol('Style', 'pushbutton', ...
-                'Parent', L_cellTypeButtons_secondRow, ...
-                'FontSize', 12, ...
-                'String', 'Add to project', ...
-                'Callback', @(uiobj,evt)obj.addToProject);
-            obj.handles.analyzeBrowse_cellType_button = uicontrol('Style', 'pushbutton', ...
-                'Parent', L_cellTypeButtons_secondRow, ...
-                'FontSize', 12, ...
-                'String', 'Delete from project', ...
-                'Callback', @(uiobj,evt)obj.removeFromProject);
-            obj.handles.changeCellType_button = uicontrol('Style', 'pushbutton', ...
-                'Parent', L_cellTypeButtons_secondRow, ...
+            obj.handles.addCellTag_button = uicontrol('Style', 'pushbutton', ...
+                'Parent', L_cellTypeButtons, ...
                 'FontSize', 12, ...
                 'String', 'Add cell tag', ...
                 'Callback', @(uiobj,evt)obj.addCellTag);
+            obj.handles.removeCellTag_button = uicontrol('Style', 'pushbutton', ...
+                'Parent', L_cellTypeButtons, ...
+                'FontSize', 12, ...
+                'String', 'Remove cell tag', ...
+                'Callback', @(uiobj,evt)obj.removeCellTag);
             
+            obj.handles.addToProject_button = uicontrol('Style', 'pushbutton', ...
+                'Parent', L_cellTypeButtonsR2, ...
+                'FontSize', 12, ...
+                'String', 'Add to project', ...
+                'Callback', @(uiobj,evt)obj.addToProject);
+            obj.handles.removeFromProject_button = uicontrol('Style', 'pushbutton', ...
+                'Parent', L_cellTypeButtonsR2, ...
+                'FontSize', 12, ...
+                'String', 'Delete from project', ...
+                'Callback', @(uiobj,evt)obj.removeFromProject);
+            
+            %Properties for L_cellTypeButtons
+            set(L_cellTypeButtonsR2, ...
+                'ButtonSize', [160, 35], ...
+                'VerticalAlignment', 'bottom', ...
+                'HorizontalAlignment', 'center');
             
             %Properties for L_cellTypeButtons
             set(L_cellTypeButtons, ...
                 'ButtonSize', [160, 35], ...
                 'VerticalAlignment', 'bottom', ...
                 'HorizontalAlignment', 'center');
-            
-            %Properties for L_cellTypeButtons_secondRow
-            set(L_cellTypeButtons_secondRow, ...
-                'ButtonSize', [160, 35], ...
-                'VerticalAlignment', 'bottom', ...
-                'HorizontalAlignment', 'center');
-            
+                        
             %Properties for obj.handles.L_cellTypesPanel
             set(L_cellTypesTreeAndButtons, 'Sizes', [-1 40 40]);
+            
+            
+            %cell info panel
+            L_cellInfoBox = uiextras.VBox('Parent',L_cellInfoPanel);
+                        
+            %Cell tags table
+            obj.handles.cellTagsTable = uitable('Parent', L_cellInfoBox, ...
+                'Units',    'pixels', ...
+                'FontSize', 12, ...
+                'ColumnName', {'Tag', 'Value'}, ...
+                'ColumnEditable', logical([0 0]), ...
+                'RowName', [], ...
+                'Data', cell(7,2));
+            
+            tablePos = get(obj.handles.cellTagsTable,'Position');
+            tableWidth = tablePos(3);
+            col1W = round(tableWidth*.5);
+            col2W = round(tableWidth*.5);
+            set(obj.handles.cellTagsTable,'ColumnWidth',{col1W, col2W});
+            
+            %Cell position table
+            obj.handles.cellPositionTable = uitable('Parent', L_cellInfoBox, ...
+                'Units',    'pixels', ...
+                'FontSize', 12, ...
+                'ColumnName', {'X', 'Y', 'Eye'}, ...
+                'ColumnEditable', logical([0 0 0]), ...
+                'RowName', [], ...
+                'Data', cell(1,3));
+                        
+            tablePos = get(obj.handles.cellPositionTable,'Position');
+            tableWidth = tablePos(3);
+            col1W = round(tableWidth*.33);
+            col2W = round(tableWidth*.33);
+            col3W = round(tableWidth*.33);
+            set(obj.handles.cellPositionTable,'ColumnWidth',{col1W, col2W, col3W});
+            
+            %Cell label
+            L_cellLabel = uiextras.HBox('Parent',L_cellInfoBox);
+            labelText = uicontrol('Parent', L_cellLabel, ...
+                'Style', 'text', ...
+                'FontSize', 12, ...
+                'String', 'Online label');
+            obj.handles.labelTextVal = uicontrol('Parent', L_cellLabel, ...
+                'Style', 'text', ...
+                'FontSize', 12, ...
+                'String', '');
+            set(L_cellLabel, 'Sizes', [-1, -1]);
+            
+            %Cell notes
+            L_cellNotes = uiextras.HBox('Parent',L_cellInfoBox);
+            notesText = uicontrol('Parent', L_cellNotes, ...
+                'Style', 'text', ...
+                'FontSize', 12, ...
+                'String', 'Notes');
+            obj.handles.notesTextVal = uicontrol('Parent', L_cellNotes, ...
+                'Style', 'edit', ...
+                'FontSize', 12, ...
+                'String', '', ...
+                'Callback', @(uiobj,evt)obj.setCellNotes);
+            set(L_cellNotes, 'Sizes', [40, -1]);
+            
+            set(L_cellInfoBox, 'Sizes', [-1, 60, 40, 40]);
             
             %%%%Filter panel
             L_filterBox = uiextras.VBox('Parent',L_filterPanel);
@@ -402,8 +424,9 @@ classdef LabDataGUI < handle
             set(L_epochFilterPattern, 'Sizes', [150, -1], 'Spacing', 20);
             
             L_filterControls = uiextras.HButtonBox('Parent', L_filterBox, ...
-                'ButtonSize', [100 30], ...
-                'Spacing', 20);
+                'VerticalAlignment', 'bottom', ...
+                'HorizontalAlignment', 'center', ...
+                'ButtonSize', [135 35]);
             obj.handles.analyzeBrowseResults_button = uicontrol('Style', 'pushbutton', ...
                 'Parent', L_filterControls, ...
                 'FontSize', 12, ...
@@ -419,34 +442,9 @@ classdef LabDataGUI < handle
                 'String', 'Load filter', ...
                 'FontSize', 12, ...
                 'Callback', @(uiobj,evt)obj.loadFilter);
-            %filter results buttons
-            
-            
+                        
             set(L_filterBox, 'Sizes', [-1, 25, -2, 25, 25, -2, 25, 40]);
-            
-            %filter resutls panel
-            L_filterResultsBox = uiextras.Empty('Parent',L_filterResultsPanel);
-            %uiextras.VBox('Parent',L_filterResultsPanel);
-            %            obj.handles.filterResultsTable =
-            %             uitable('Parent', L_filterResultsBox, ...
-            %                 'Units',    'pixels', ...
-            %                 'FontSize', 11, ...
-            %                 'ColumnEditable', logical([0 0]), ...
-            %                 'ColumnName', [], ...
-            %                 'RowName', [], ...
-            %                 'ColumnFormat', {'char', 'char'}, ...
-            %                 'Data', cell(7,2), ...
-            %                 'TooltipString', 'table for filter results');
-            
-            
-            
-            %Set properties for L_filterResultsBox
-            % set(L_filterResultsBox, 'Sizes', [-1]);
-            
-            %Set properties for L_filterResultsButtons buttonbox
-            %set(L_filterResultsButtons, 'ButtonSize', [160, 40]);
-            
-            
+                                  
         end
         
         function initializeCellTypeAndAnalysisMenus(obj)
@@ -495,6 +493,39 @@ classdef LabDataGUI < handle
             props = [' ', obj.allCellTags];
             columnFormat = {props, obj.operators, 'char'};
             set(obj.handles.cellFilterTable,'ColumnFormat',columnFormat)
+        end
+                
+        function updateCellTagsTable(obj)
+            tagNames = obj.curCellData.tags.keys;
+            L = length(tagNames);
+            D = cell(L,2);
+            for i=1:L
+                D{i,1} = tagNames{i};
+                D{i,2} = obj.curCellData.tags(tagNames{i});
+            end
+            set(obj.handles.cellTagsTable, 'Data', D);           
+        end
+        
+        function updateCellPositionTable(obj)
+            pos = obj.curCellData.location;
+            D = cell(1,3);
+            if ~isempty(pos)
+                D{1,1} = pos(1);
+                D{1,2} = pos(2);
+                if pos(3) == -1
+                    D{1,3} = 'left';
+                elseif pos(3) == 1
+                    D{1,3} = 'right';
+                else
+                    D{1,3} = '?';
+                end                
+            end
+            set(obj.handles.cellPositionTable, 'Data', D); 
+        end
+        
+        function setCellNotes(obj)
+            obj.curCellData.notes = get(obj.handles.notesTextVal, 'String');
+            saveAndSyncCellData(obj.curCellData);
         end
         
         function initializeEpochFilterTable(obj)
@@ -555,6 +586,18 @@ classdef LabDataGUI < handle
             %set title of L_cells boxPanel
             set(obj.handles.L_cells, 'Title', ['All cells: Current Cell Type = ' obj.labData.getCellType(obj.curCellName)]);
             
+            %set cellTagsTable
+            obj.updateCellTagsTable();
+            
+            %set cell position
+            obj.updateCellPositionTable();
+            
+            %set online label
+            set(obj.handles.labelTextVal, 'String', obj.curCellData.get('label'));
+            
+            %set notes
+            set(obj.handles.notesTextVal, 'String', obj.curCellData.notes);
+            
             %drawnow;
             %obj.updateDataSets();
         end
@@ -574,60 +617,6 @@ classdef LabDataGUI < handle
                 obj.curCellData.detectSpikes();
             end
         end
-        
-%         function deletePrefsMap(obj)
-%             obj.curCellData.prefsMapName = '';
-%             saveAndSyncCellData(obj.curCellData); %save cellData file
-%             obj.curPrefsMap = [];
-%             set(obj.handles.prefsMapList, 'String', obj.curCellData.prefsMapName);
-%             obj.updatePrefsMapElements();
-%         end
-%         
-%         function setPrefsMap(obj)
-%             global ANALYSIS_FOLDER;
-%             prefsMapSpec = [ANALYSIS_FOLDER filesep 'analysisParams' filesep 'ParameterPrefs' filesep '*.txt'];
-%             fname = uigetfile(prefsMapSpec, 'Select prefsMap text file');
-%             if ~isempty(fname)
-%                 obj.curCellData.prefsMapName = fname;
-%                 saveAndSyncCellData(obj.curCellData); %save cellData file
-%                 obj.curPrefsMap = loadPrefsMap(fname);
-%                 set(obj.handles.prefsMapList, 'String', obj.curCellData.prefsMapName);
-%                 obj.updatePrefsMapElements();
-%             end
-%         end
-%         
-%         function updatePrefsMapElements(obj)
-%             if ~isempty(obj.curPrefsMap)
-%                 elementList = {};
-%                 k = obj.curPrefsMap.keys;
-%                 for i=1:length(k)
-%                     curSet = obj.curPrefsMap(k{i});
-%                     for j=1:length(curSet)
-%                         curName = [k{i} ':' curSet{j}];
-%                         elementList = [elementList; curName];
-%                     end
-%                 end
-%                 set(obj.handles.prefsMapElementsListbox, 'String', elementList);
-%                 set(obj.handles.prefsMapElementsListbox, 'Value', 1);
-%             else
-%                 set(obj.handles.prefsMapElementsListbox, 'String', '');
-%                 set(obj.handles.prefsMapElementsListbox, 'Value', 0);
-%             end
-%         end
-%         
-%         function openPrefsMap(obj)
-%             global ANALYSIS_FOLDER;
-%             prefsMapFolder = [ANALYSIS_FOLDER filesep 'analysisParams' filesep 'ParameterPrefs'];
-%             mapName = obj.curCellData.prefsMapName;
-%             if ~isempty(mapName)
-%                 open([prefsMapFolder filesep mapName]);
-%             end
-%         end
-%         
-%         function openAnalysisParamsGUI(obj)
-%             AnalysisParamGUI();
-%         end
-        
         
         function analyzeAndBrowseCell(obj)
             set(obj.fig, 'Name', ['LabDataGUI' ' (analyzing cell)']);
@@ -719,7 +708,7 @@ classdef LabDataGUI < handle
             
             obj.guiTree = uitree('v0', obj.fig, ...
                 'Root', obj.rootNode, ...
-                'Position', [10 100 boxW - 15 boxH - 130], ...
+                'Position', [10 85 boxW - 15 boxH - 100], ...
                 'SelectionChangeFcn', @(uiobj, evt)obj.treeSelectionFcn);
             
             set(obj.fig, 'Name', ['LabDataGUI: ' obj.projName]);
@@ -733,54 +722,57 @@ classdef LabDataGUI < handle
             if get(node, 'Depth') == 1 %cell type
                 selectionName = get(node, 'Name');
                 obj.curCellType = strtrim(strtok(selectionName, ':'));
+                obj.clearCellInformation();
             elseif get(node, 'Depth') == 0 %individual cell
                 obj.curCellName = get(node, 'Name');
                 %set selection
                 ind = strcmp(obj.curCellName, obj.fullCellList);
                 set(obj.handles.allCellsListbox, 'Value', find(ind));
                 obj.cellSelectedFcn();
+            else %all cells
+                obj.clearCellInformation();
             end
             
         end
+%         
+%         function openImage(obj)
+%             cellDataFolder = obj.cellData_folder;
+%             selectedNodes = get(obj.guiTree, 'SelectedNodes');
+%             node = selectedNodes(1);
+%             
+%             [fname,pathname] = uigetfile({'*.png;*.tiff;*.tif'},'Choose image file');
+%             if get(node, 'Depth') == 1 %cell type
+%                 %figure out if I want to bother adding this to LabData
+%                 %class, not trivial to do so
+%             elseif get(node, 'Depth') == 0 %individual cell
+%                 %add cellImage to cellData
+%                 
+%                 load([cellDataFolder filesep obj.curDataSets{1}]);
+%                 open(cellData.imageFile);
+%             end
+%             
+%         end
         
-        function openImage(obj)
-            cellDataFolder = obj.cellData_folder;
-            selectedNodes = get(obj.guiTree, 'SelectedNodes');
-            node = selectedNodes(1);
-            
-            [fname,pathname] = uigetfile({'*.png;*.tiff;*.tif'},'Choose image file');
-            if get(node, 'Depth') == 1 %cell type
-                %figure out if I want to bother adding this to LabData
-                %class, not trivial to do so
-            elseif get(node, 'Depth') == 0 %individual cell
-                %add cellImage to cellData
-                
-                load([cellDataFolder filesep obj.curDataSets{1}]);
-                open(cellData.imageFile);
-            end
-            
-        end
-        
-        function attachImage(obj)
-            cellDataFolder = obj.cellData_folder;
-            selectedNodes = get(obj.guiTree, 'SelectedNodes');
-            node = selectedNodes(1);
-            
-            [fname,pathname] = uigetfile({'*.png;*.tiff;*.tif'},'Choose image file');
-            if get(node, 'Depth') == 1 %cell type
-                %figure out if I want to bother adding this to LabData
-                %class, not trivial to do so
-            elseif get(node, 'Depth') == 0 %individual cell
-                %add cellImage to cellData
-                for i=1:length(obj.curDataSets)
-                    load([cellDataFolder filesep obj.curDataSets{i}]);
-                    cellData.imageFile = fullfile(pathname, fname);
-                    saveAndSyncCellData(obj.curCellData); %save cellData file
-                end
-            end
-            
-            obj.loadCurrentCellData();
-        end
+%         function attachImage(obj)
+%             cellDataFolder = obj.cellData_folder;
+%             selectedNodes = get(obj.guiTree, 'SelectedNodes');
+%             node = selectedNodes(1);
+%             
+%             [fname,pathname] = uigetfile({'*.png;*.tiff;*.tif'},'Choose image file');
+%             if get(node, 'Depth') == 1 %cell type
+%                 %figure out if I want to bother adding this to LabData
+%                 %class, not trivial to do so
+%             elseif get(node, 'Depth') == 0 %individual cell
+%                 %add cellImage to cellData
+%                 for i=1:length(obj.curDataSets)
+%                     load([cellDataFolder filesep obj.curDataSets{i}]);
+%                     cellData.imageFile = fullfile(pathname, fname);
+%                     saveAndSyncCellData(obj.curCellData); %save cellData file
+%                 end
+%             end
+%             
+%             obj.loadCurrentCellData();
+%         end
         
         function loadCurrentCellData(obj)
             cellDataFolder = obj.cellData_folder;
@@ -1256,6 +1248,20 @@ classdef LabDataGUI < handle
             obj.loadTree;
         end
         
+        function clearCellInformation(obj)
+            %set cellTagsTable
+            set(obj.handles.cellTagsTable, 'Data', cell(7,2));
+            
+            %set cell position
+            set(obj.handles.cellPositionTable, 'Data', cell(1,3));
+            
+            %set online label
+            set(obj.handles.labelTextVal, 'String', '');
+            
+            %set notes
+            set(obj.handles.notesTextVal, 'String', '');
+        end
+        
         function addCellTag(obj)
             selectedNodes = get(obj.guiTree, 'SelectedNodes');
             node = selectedNodes(1);
@@ -1325,13 +1331,169 @@ classdef LabDataGUI < handle
             end
         end
         
+        function addCellTagSingle(obj)
+            %choose the tag to add with a dialog box
+            bounds = screenBounds;
+            obj.handles.cellTagFig = dialog('Name', 'Choose cell tag', ...
+                'Position', [bounds(3)/2-150, bounds(4)/2, 300, 200]);
+            
+            obj.handles.dlg_cellTagsPopup = uicontrol('Parent', obj.handles.cellTagFig, ...
+                'Style', 'popupmenu', ...
+                'units', 'normalized', ...
+                'position', [0.05, 0.6, 0.4, 0.3], ...
+                'String', obj.cellTags.keys, ...
+                'Callback', @(uiobj,evt)obj.onTagSelection);
+            
+            obj.handles.dlg_tagValuesPopup = uicontrol('Parent', obj.handles.cellTagFig, ...
+                'Style', 'popupmenu', ...
+                'units', 'normalized', ...
+                'position', [0.5, 0.6, 0.4, 0.3], ...
+                'String', ' ');
+            
+            ok_button = uicontrol('Parent', obj.handles.cellTagFig, ...
+                'Style', 'pushbutton', ...
+                'units', 'normalized', ...
+                'position', [0.05, 0.05, 0.3, 0.25], ...
+                'String', 'Ok', ...
+                'Callback', @(uiobj,evt)obj.tagChoiceOk);
+            
+            cancel_button = uicontrol('Parent', obj.handles.cellTagFig, ...
+                'Style', 'pushbutton', ...
+                'units', 'normalized', ...
+                'position', [0.65, 0.05, 0.3, 0.25], ...
+                'String', 'Cancel', ...
+                'Callback', @(uiobj,evt)obj.tagChoiceCancel);
+            
+            obj.onTagSelection();
+            
+            waitfor(obj.handles.cellTagFig)
+            %waiting for figure to be deleted
+            
+            if obj.tempAnswer
+                obj.curCellData.tags(obj.curTag) = obj.curTagVal;
+                saveAndSyncCellData(obj.curCellData) %save cellData file
+            end
+        end
+         
+        function removeCellTag(obj)
+            selectedNodes = get(obj.guiTree, 'SelectedNodes');
+            node = selectedNodes(1);
+            
+            if get(node, 'Depth') == 2 %All cells
+                cellNames = obj.labData.allCellNames();
+                cellDataNames = [];
+                for i=1:length(cellNames)
+                    cellDataNames = [cellDataNames; cellNameToCellDataNames(cellNames{i})];
+                end
+            elseif get(node, 'Depth') == 1 %cell type
+                if ~isempty(obj.curCellType)
+                    cellNames = obj.labData.getCellsOfType(obj.curCellType);
+                end
+                cellDataNames = [];
+                for i=1:length(cellNames)
+                    cellDataNames = [cellDataNames; cellNameToCellDataNames(cellNames{i})];
+                end
+            elseif get(node, 'Depth') == 0 %individual cell
+                cellName = get(node,'name');
+                cellDataNames = cellNameToCellDataNames(cellName);
+            end
+            
+            tagNames = [];
+            for i=1:length(cellDataNames)
+                tagNames = [tagNames obj.curCellData.tags.keys;];                
+            end
+            
+            tagNames = unique(tagNames);
+            
+            %choose the tag to add with a dialog box
+            if ~isempty(tagNames)
+                bounds = screenBounds;
+                obj.handles.cellTagFig = dialog('Name', 'Choose cell tag', ...
+                    'Position', [bounds(3)/2-150, bounds(4)/2, 300, 200]);
+                
+                obj.handles.dlg_cellTagsPopup = uicontrol('Parent', obj.handles.cellTagFig, ...
+                    'Style', 'popupmenu', ...
+                    'units', 'normalized', ...
+                    'position', [0.05, 0.6, 0.6, 0.3], ...
+                    'String', tagNames);
+                                
+                ok_button = uicontrol('Parent', obj.handles.cellTagFig, ...
+                    'Style', 'pushbutton', ...
+                    'units', 'normalized', ...
+                    'position', [0.05, 0.05, 0.3, 0.25], ...
+                    'String', 'Ok', ...
+                    'Callback', @(uiobj,evt)obj.tagRemoveChoiceOk);
+                
+                cancel_button = uicontrol('Parent', obj.handles.cellTagFig, ...
+                    'Style', 'pushbutton', ...
+                    'units', 'normalized', ...
+                    'position', [0.65, 0.05, 0.3, 0.25], ...
+                    'String', 'Cancel', ...
+                    'Callback', @(uiobj,evt)obj.tagChoiceCancel);
+                                
+                waitfor(obj.handles.cellTagFig)
+                %waiting for figure to be deleted
+                
+                if obj.tempAnswer
+                    disp(['removing tag ' obj.curTag]);
+                    for i=1:length(cellDataNames)
+                        load([obj.cellData_folder filesep cellDataNames{i} '.mat']); %loads cellData
+                        if cellData.tags.isKey(obj.curTag)
+                            cellData.tags.remove(obj.curTag);
+                            saveAndSyncCellData(cellData);
+                        end
+                    end
+                end
+            end
+        end
+        
+        function removeCellTagSingle(obj)            
+            tagNames = obj.curCellData.tags.keys;
+            
+            %choose the tag to add with a dialog box
+            if ~isempty(tagNames)
+                bounds = screenBounds;
+                obj.handles.cellTagFig = dialog('Name', 'Choose cell tag', ...
+                    'Position', [bounds(3)/2-150, bounds(4)/2, 300, 200]);
+                
+                obj.handles.dlg_cellTagsPopup = uicontrol('Parent', obj.handles.cellTagFig, ...
+                    'Style', 'popupmenu', ...
+                    'units', 'normalized', ...
+                    'position', [0.05, 0.6, 0.6, 0.3], ...
+                    'String', tagNames);
+                                
+                ok_button = uicontrol('Parent', obj.handles.cellTagFig, ...
+                    'Style', 'pushbutton', ...
+                    'units', 'normalized', ...
+                    'position', [0.05, 0.05, 0.3, 0.25], ...
+                    'String', 'Ok', ...
+                    'Callback', @(uiobj,evt)obj.tagRemoveChoiceOk);
+                
+                cancel_button = uicontrol('Parent', obj.handles.cellTagFig, ...
+                    'Style', 'pushbutton', ...
+                    'units', 'normalized', ...
+                    'position', [0.65, 0.05, 0.3, 0.25], ...
+                    'String', 'Cancel', ...
+                    'Callback', @(uiobj,evt)obj.tagChoiceCancel);
+                                
+                waitfor(obj.handles.cellTagFig)
+                %waiting for figure to be deleted
+                
+                if obj.tempAnswer
+                    disp(['removing tag ' obj.curTag]);
+                    obj.curCellData.tags.remove(obj.curTag);
+                    saveAndSyncCellData(obj.curCellData);
+                end
+            end
+        end
+        
         function onTagSelection(obj)
             s = get(obj.handles.dlg_cellTagsPopup, 'String');
             v = get(obj.handles.dlg_cellTagsPopup, 'Value');
             set(obj.handles.dlg_tagValuesPopup, 'String', obj.cellTags(s{v}));
             set(obj.handles.dlg_tagValuesPopup, 'Value', 1);
         end
-        
+                                      
         function tagChoiceOk(obj)
             obj.tempAnswer = true;
             s = get(obj.handles.dlg_cellTagsPopup, 'String');
@@ -1345,10 +1507,19 @@ classdef LabDataGUI < handle
             delete(obj.handles.cellTagFig)
         end
         
+        function tagRemoveChoiceOk(obj)
+            obj.tempAnswer = true;
+            s = get(obj.handles.dlg_cellTagsPopup, 'String');
+            v = get(obj.handles.dlg_cellTagsPopup, 'Value');
+            obj.curTag = s{v};
+            
+            delete(obj.handles.cellTagFig)
+        end
+        
         function tagChoiceCancel(obj)
             obj.tempAnswer = false;
             delete(obj.handles.cellTagFig)
-        end
+        end        
         
         function cellFilterTableEdit(obj, eventData)
             newData = eventData.EditData;
@@ -1431,7 +1602,7 @@ classdef LabDataGUI < handle
                             z=z+1;
                         end
                     else
-                        value = str2num(value_str); %#ok<ST2NM>
+                        value = num2str(value_str); %make all cell tags strings!!! Greg update 2/15/15
                     end
                     if ~isempty(value)
                         obj.cellFilter.values{i} = value;
@@ -1548,7 +1719,7 @@ classdef LabDataGUI < handle
                 pos = get(obj.handles.L_cellTypesPanel, 'Position');
                 boxW = pos(3);
                 boxH = pos(4);
-                set(obj.guiTree, 'Position', [10 100 boxW - 15 boxH - 130]);
+                set(obj.guiTree, 'Position', [10 85 boxW - 15 boxH - 100]);
             end
             
             %epoch filtTable
@@ -1569,6 +1740,23 @@ classdef LabDataGUI < handle
                 col2W = round(tableWidth*.20);
                 col3W = round(tableWidth*.35);
                 set(obj.handles.cellFilterTable,'ColumnWidth',{col1W, col2W, col3W});
+            end
+            
+            if isfield(obj.handles, 'cellTagsTable')
+                tablePos = get(obj.handles.cellTagsTable,'Position');
+                tableWidth = tablePos(3);
+                col1W = round(tableWidth*.5);
+                col2W = round(tableWidth*.5);
+                set(obj.handles.cellTagsTable,'ColumnWidth',{col1W, col2W});                
+            end
+            
+            if isfield(obj.handles, 'cellPositionTable')
+                tablePos = get(obj.handles.cellPositionTable,'Position');
+                tableWidth = tablePos(3);
+                col1W = round(tableWidth*.33);
+                col2W = round(tableWidth*.33);
+                col3W = round(tableWidth*.33);
+                set(obj.handles.cellPositionTable,'ColumnWidth',{col1W, col2W, col3W});
             end
         end
         

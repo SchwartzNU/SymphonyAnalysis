@@ -368,7 +368,7 @@ classdef LabData < handle
             resultTree = AnalysisTree;
             nodeData.name = ['Collected analysis tree: ' analysisName];
             resultTree = resultTree.set(1, nodeData);
-            
+
             for i=1:length(cellTypes)
                 curType = cellTypes{i};
                 disp(['Analyzing type ' curType ': ' num2str(i) ' of ' num2str(length(cellTypes))]);
