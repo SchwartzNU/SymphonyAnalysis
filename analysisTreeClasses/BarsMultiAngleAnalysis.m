@@ -233,6 +233,16 @@ classdef BarsMultiAngleAnalysis < AnalysisTree
             xlabel('barAngle');
             ylabel(['ONSET_charge400ms (' yField.units ')']);
         end
+        
+        function plot_barAngleVsONSET_avgTracePeak(node, cellData)
+            rootData = node.get(1);
+            xvals = rootData.barAngle;
+            yField = rootData.ONSET_avgTracePeak;
+            yvals = yField.value;
+            plot(xvals, yvals, 'bx-');
+            xlabel('barAngle');
+            ylabel(['ONSET_avgTracePeak (' yField.units ')']);
+        end
     end
     
 end
