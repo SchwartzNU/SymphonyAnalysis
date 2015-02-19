@@ -59,7 +59,7 @@ for i=1:L
     %baseline subtraction
     data = data - baselineVal(i);
     stimData = data(responseIntverval);
-    postData = data(postInterval);
+    postData = data(postInterval);    
     
     if responseIntervalLen >= 0.4
         stimData400 = data(xvals > 0 & xvals <= 0.4);
@@ -72,7 +72,7 @@ for i=1:L
         postData400 = [];
     end
     
-    Mstim(i,:) = stimData;
+    Mstim(i,:) = stimData;    
     Mpost(i,:) = postData;
     
     if i==1 %some stuff we only need to do once: units and types for each output
@@ -199,7 +199,9 @@ outputStruct.baseline.value = mean(baselineVal);
 %values that need to be calculated after collecting all data
 %ONSET
 meanTrace_stim = mean(Mstim, 1);
-if abs(max(meanTrace_stim)) > abs(min(meanTrace_stim)) %outward current larger
+meanTrace_stimToEnd = [mean(Mstim, 1), mean(Mpost, 1)];
+MstimToEnd = [Mstim Mpost];
+if abs(max(meanTrace_stimToEnd)) > abs(min(meanTrace_stimToEnd)) %outward current larger
     [outputStruct.ONSET_avgTracePeak.value, pos] = max(meanTrace_stim);
     outputStruct.ONSET_avgTrace_latencyToPeak.value = pos / sampleRate;
     thresDir = 1;
@@ -210,9 +212,9 @@ else %inward current larger
 end
 %thresholds
 maxVal = outputStruct.ONSET_avgTracePeak.value;
-T25_up = getThresCross(meanTrace_stim, 0.25*maxVal, thresDir);
-T25_down = getThresCross(meanTrace_stim, 0.25*maxVal, -thresDir);
-T50 = getThresCross(meanTrace_stim, 0.5*maxVal, thresDir);
+T25_up = getThresCross(meanTrace_stimToEnd, 0.25*maxVal, thresDir);
+T25_down = getThresCross(meanTrace_stimToEnd, 0.25*maxVal, -thresDir);
+T50 = getThresCross(meanTrace_stimToEnd, 0.5*maxVal, thresDir);
 if ~isempty(T25_up) && ~isempty(T25_down)
     timeDiff_up = T25_up - pos;
     timeDiff_up_abs = abs(timeDiff_up);
@@ -223,7 +225,7 @@ if ~isempty(T25_up) && ~isempty(T25_down)
     if ~isempty(prePos) && ~isempty(postPos)
         outputStruct.ONSET_respIntervalT25.value = (T25_down(postPos) - T25_up(prePos)) / sampleRate;
         for i=1:L
-            outputStruct.ONSET_chargeT25.value(i) = sum(Mstim(i,T25_up(prePos):T25_down(postPos))) * outputStruct.ONSET_respIntervalT25.value;
+            outputStruct.ONSET_chargeT25.value(i) = sum(MstimToEnd(i,T25_up(prePos):T25_down(postPos))) * outputStruct.ONSET_respIntervalT25.value;
         end
     end
 end
