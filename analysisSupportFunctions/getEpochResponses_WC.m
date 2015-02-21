@@ -201,7 +201,7 @@ outputStruct.baseline.value = mean(baselineVal);
 meanTrace_stim = mean(Mstim, 1);
 meanTrace_stimToEnd = [mean(Mstim, 1), mean(Mpost, 1)];
 MstimToEnd = [Mstim Mpost];
-if abs(max(meanTrace_stimToEnd)) > abs(min(meanTrace_stimToEnd)) %outward current larger
+if abs(max(meanTrace_stim)) > abs(min(meanTrace_stim)) %outward current larger
     [outputStruct.ONSET_avgTracePeak.value, pos] = max(meanTrace_stim);
     outputStruct.ONSET_avgTrace_latencyToPeak.value = pos / sampleRate;
     thresDir = 1;
@@ -225,7 +225,7 @@ if ~isempty(T25_up) && ~isempty(T25_down)
     if ~isempty(prePos) && ~isempty(postPos)
         outputStruct.ONSET_respIntervalT25.value = (T25_down(postPos) - T25_up(prePos)) / sampleRate;
         for i=1:L
-            outputStruct.ONSET_chargeT25.value(i) = sum(MstimToEnd(i,T25_up(prePos):T25_down(postPos))) * outputStruct.ONSET_respIntervalT25.value;
+            outputStruct.ONSET_chargeT25.value(i) = mean(MstimToEnd(i,T25_up(prePos):T25_down(postPos))) * outputStruct.ONSET_respIntervalT25.value;
         end
     end
 end
@@ -265,7 +265,7 @@ if ~isempty(T25_up) && ~isempty(T25_down)
     if ~isempty(prePos) && ~isempty(postPos)
         outputStruct.OFFSET_respIntervalT25.value = (T25_down(postPos) - T25_up(prePos)) / sampleRate;
         for i=1:L
-            outputStruct.OFFSET_chargeT25.value(i) = sum(Mpost(i,T25_up(prePos):T25_down(postPos))) * outputStruct.OFFSET_respIntervalT25.value;
+            outputStruct.OFFSET_chargeT25.value(i) = mean(Mpost(i,T25_up(prePos):T25_down(postPos))) * outputStruct.OFFSET_respIntervalT25.value;
         end
     end
 end

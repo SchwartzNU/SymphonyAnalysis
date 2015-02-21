@@ -269,6 +269,16 @@ classdef ContrastRespAnalysis < AnalysisTree
             ylabel(['ONSETsuppressedSpikes (' yField.units ')']);
         end
         
+        function plot_contrastVsONSET_respIntervalT25(node, cellData)
+            rootData = node.get(1);
+            xvals = rootData.contrast;
+            yField = rootData.ONSET_respIntervalT25;
+            yvals = yField.value;
+            plot(xvals, yvals, 'bx-');
+            xlabel('contrast');
+            ylabel(['ONSET_respIntervalT25 (' yField.units ')']);
+        end
+        
         function plotData(node, cellData)
             rootData = node.get(1);
             errorbar(rootData.contrast, rootData.respMean, rootData.respSEM);
