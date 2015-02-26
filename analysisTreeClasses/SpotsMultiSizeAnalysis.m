@@ -256,6 +256,16 @@ classdef SpotsMultiSizeAnalysis < AnalysisTree
             
         end
         
+        function plot_spotSizeVsONSET_avgTracePeak(node, cellData)
+            rootData = node.get(1);
+            xvals = rootData.spotSize;
+            yField = rootData.ONSET_avgTracePeak;
+            yvals = yField.value;
+            plot(xvals, yvals, 'bx-');
+            xlabel('spotSize');
+            ylabel(['ONSET_avgTracePeak (' yField.units ')']);
+        end
+        
     end
     
 end
