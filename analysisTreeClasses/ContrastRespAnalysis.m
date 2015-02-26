@@ -259,6 +259,21 @@ classdef ContrastRespAnalysis < AnalysisTree
             ylabel(['ONSETsuppressionTime (' yField.units ')']);
         end
         
+        function plot_contrastVsONSETspikes(node, cellData)
+            rootData = node.get(1);
+            xvals = rootData.contrast;
+            yField = rootData.ONSETspikes;
+            if strcmp(yField.units, 's')
+            yvals = yField.median_c;
+            else
+            yvals = yField.mean_c;
+            end
+            errs = yField.SEM;
+            errorbar(xvals, yvals, errs);
+            xlabel('contrast');
+            ylabel(['ONSETspikes (' yField.units ')']);
+        end
+        
         function plot_contrastVsONSETsuppressedSpikes(node, cellData)
             rootData = node.get(1);
             xvals = rootData.contrast;
