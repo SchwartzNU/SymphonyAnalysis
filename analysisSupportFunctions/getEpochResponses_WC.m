@@ -45,6 +45,7 @@ postIntervalLen = xvals(end) - intervalEnd; %s
 
 Mstim = zeros(L, sum(responseIntverval)); %full data matrix, baseline subrtacted on each epoch
 Mpost = zeros(L, sum(postInterval)); %full data matrix, baseline subrtacted on each epoch
+MstimToEnd = zeros(L, sum(responseIntverval) + sum(postInterval));
 baselineVal = zeros(1,L);
 
 for i=1:L
@@ -74,11 +75,42 @@ for i=1:L
     
     Mstim(i,:) = stimData;    
     Mpost(i,:) = postData;
+    stimToEndData = [stimData postData];
+    MstimToEnd(i,:) = stimToEndData;
+
     
     if i==1 %some stuff we only need to do once: units and types for each output
         outputStruct.baseline.units = units;
         outputStruct.baseline.type = 'singleValue';
         %outputStruct.baseline.value = %already set;
+        
+        outputStruct.stimToEnd_peak.units = units;
+        outputStruct.stimToEnd_peak.type = 'byEpoch';
+        outputStruct.stimToEnd_peak.value = ones(1,L) * NaN;
+        
+        outputStruct.stimToEnd_avgTracePeak.units = units;
+        outputStruct.stimToEnd_avgTracePeak.type = 'singleValue';
+        outputStruct.stimToEnd_avgTracePeak.value = NaN;
+        
+        outputStruct.stimToEnd_respIntervalT25.units = 's';
+        outputStruct.stimToEnd_respIntervalT25.type = 'singleValue';
+        outputStruct.stimToEnd_respIntervalT25.value = 0;
+        
+        outputStruct.stimToEnd_chargeT25.units = 'pC';
+        outputStruct.stimToEnd_chargeT25.type = 'byEpoch';
+        outputStruct.stimToEnd_chargeT25.value = ones(1,L) * NaN;
+        
+        outputStruct.stimToEnd_avgTrace_latencyToT50.units = 's';
+        outputStruct.stimToEnd_avgTrace_latencyToT50.type = 'singleValue';
+        outputStruct.stimToEnd_avgTrace_latencyToT50.value = NaN;
+        
+        outputStruct.stimToEnd_latencyToPeak.units = 's';
+        outputStruct.stimToEnd_latencyToPeak.type = 'byEpoch';
+        outputStruct.stimToEnd_latencyToPeak.value = NaN;
+        
+        outputStruct.stimToEnd_avgTrace_latencyToPeak.units = 's';
+        outputStruct.stimToEnd_avgTrace_latencyToPeak.type = 'singleValue';
+        outputStruct.stimToEnd_avgTrace_latencyToPeak.value = NaN;
         
         outputStruct.ONSET_peak.units = units;
         outputStruct.ONSET_peak.type = 'byEpoch';
@@ -153,6 +185,15 @@ for i=1:L
         outputStruct.OFFSET_avgTrace_latencyToT50.value = NaN;
     end
     
+    %stimToEnd
+    if abs(max(stimData)) > abs(min(stimData)) %outward current larger
+        [outputStruct.stimToEnd_peak.value(i), pos] = max(stimToEndData);
+        outputStruct.stimToEnd_latencyToPeak.value(i) = pos / sampleRate;
+    else %inward current larger
+        [outputStruct.stimToEnd_peak.value(i), pos] = min(stimToEndData);
+        outputStruct.stimToEnd_latencyToPeak.value(i) = pos / sampleRate;
+    end
+    
     %ONSET
     if abs(max(stimData)) > abs(min(stimData)) %outward current larger
         [outputStruct.ONSET_peak.value(i), pos] = max(stimData);
@@ -197,10 +238,48 @@ end
 outputStruct.baseline.value = mean(baselineVal);
 
 %values that need to be calculated after collecting all data
+%stimToEnd
+meanTrace_stimToEnd = [mean(Mstim, 1), mean(Mpost, 1)];
+if abs(max(meanTrace_stimToEnd)) > abs(min(meanTrace_stimToEnd)) %outward current larger
+    [outputStruct.stimToEnd_avgTracePeak.value, pos] = max(meanTrace_stimToEnd);
+    outputStruct.stimToEnd_avgTrace_latencyToPeak.value = pos / sampleRate;
+    thresDir = 1;
+else %inward current larger
+    [outputStruct.stimToEnd_avgTracePeak.value, pos] = min(meanTrace_stimToEnd);
+    outputStruct.stimToEnd_avgTrace_latencyToPeak.value = pos / sampleRate; 
+    thresDir = -1;
+end
+%thresholds
+maxVal = outputStruct.stimToEnd_avgTracePeak.value;
+T25_up = getThresCross(meanTrace_stimToEnd, 0.25*maxVal, thresDir);
+T25_down = getThresCross(meanTrace_stimToEnd, 0.25*maxVal, -thresDir);
+T50 = getThresCross(meanTrace_stimToEnd, 0.5*maxVal, thresDir);
+if ~isempty(T25_up) && ~isempty(T25_down)
+    timeDiff_up = T25_up - pos;
+    timeDiff_up_abs = abs(timeDiff_up);
+    timeDiff_down = T25_down - pos;
+    timeDiff_down_abs = abs(timeDiff_down);
+    [~, prePos] = min(timeDiff_up_abs(timeDiff_up<0));
+    [~, postPos] = min(timeDiff_down_abs(timeDiff_down>0));
+    if ~isempty(prePos) && ~isempty(postPos)
+        outputStruct.stimToEnd_respIntervalT25.value = (T25_down(postPos) - T25_up(prePos)) / sampleRate;
+        for i=1:L
+            outputStruct.stimToEnd_chargeT25.value(i) = mean(MstimToEnd(i,T25_up(prePos):T25_down(postPos))) * outputStruct.stimToEnd_respIntervalT25.value;
+        end
+    end
+end
+if ~isempty(T50)
+    timeDiff = T50 - pos;
+    timeDiff_abs = abs(timeDiff);
+    [~, prePos] = min(timeDiff_abs(timeDiff<0));
+    if ~isempty(prePos)
+        outputStruct.stimToEnd_avgTrace_latencyToT50.value = T50(prePos) / sampleRate;
+    end
+end
+
 %ONSET
 meanTrace_stim = mean(Mstim, 1);
 meanTrace_stimToEnd = [mean(Mstim, 1), mean(Mpost, 1)];
-MstimToEnd = [Mstim Mpost];
 if abs(max(meanTrace_stim)) > abs(min(meanTrace_stim)) %outward current larger
     [outputStruct.ONSET_avgTracePeak.value, pos] = max(meanTrace_stim);
     outputStruct.ONSET_avgTrace_latencyToPeak.value = pos / sampleRate;

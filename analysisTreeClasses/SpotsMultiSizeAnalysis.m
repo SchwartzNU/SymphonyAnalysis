@@ -188,6 +188,26 @@ classdef SpotsMultiSizeAnalysis < AnalysisTree
             ylabel(['ONSET_peak (' yField.units ')']);
         end
         
+        function plot_spotSizeVsONSETsuppressedSpikes(node, cellData)
+            rootData = node.get(1);
+            xvals = rootData.spotSize;
+            yField = rootData.ONSETsuppressedSpikes;
+            yvals = yField.value;
+            plot(xvals, yvals, 'bx-');
+            xlabel('spotSize');
+            ylabel(['ONSETsuppressedSpikes (' yField.units ')']);
+        end
+        
+        function plot_spotSizeVsONSETsuppressionTime(node, cellData)
+            rootData = node.get(1);
+            xvals = rootData.spotSize;
+            yField = rootData.ONSETsuppressionTime;
+            yvals = yField.value;
+            plot(xvals, yvals, 'bx-');
+            xlabel('spotSize');
+            ylabel(['ONSETsuppressionTime (' yField.units ')']);
+        end
+        
         function plotEpochData(node, cellData, device, epochIndex)
             nodeData = node.get(1);
             cellData.epochs(nodeData.epochID(epochIndex)).plotData(device);

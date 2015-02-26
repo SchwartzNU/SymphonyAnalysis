@@ -141,6 +141,10 @@ for i=1:L
         outputStruct.OFFSET_ISI_full.type = 'combinedAcrossEpochs';
         outputStruct.OFFSET_ISI_full.value = [];
         
+        outputStruct.spikeCount_stimToEnd.units = 'spikes';
+        outputStruct.spikeCount_stimToEnd.type = 'byEpoch';
+        outputStruct.spikeCount_stimToEnd.value = zeros(1,L);
+        
         outputStruct.spikeCount_stimInterval.units = 'spikes';
         outputStruct.spikeCount_stimInterval.type = 'byEpoch';
         outputStruct.spikeCount_stimInterval.value = zeros(1,L);
@@ -390,6 +394,10 @@ for i=1:L
     spikeCount = length(find(spikeTimes >= intervalStart & spikeTimes < intervalEnd));
     outputStruct.spikeCount_stimInterval.value(i) = spikeCount;
     outputStruct.spikeRate_stimInterval.value(i) = spikeCount/responseIntervalLen;
+    
+    %count spikes in stimulus to end interval
+    spikeCount = length(find(spikeTimes >= intervalStart));
+    outputStruct.spikeCount_stimToEnd.value(i) = spikeCount;
     
     %count spikes in 400 ms after onset and offset
     if responseIntervalLen >= 0.4
