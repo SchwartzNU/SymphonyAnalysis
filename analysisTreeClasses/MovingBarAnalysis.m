@@ -124,7 +124,7 @@ classdef MovingBarAnalysis < AnalysisTree
             rootData = node.get(1);
             xvals = rootData.barAngle;
             yField = rootData.ONSET_avgTracePeak;
-            yvals = yField.value;            
+            yvals = yField.value;
             polarerror(xvals*pi/180, yvals, zeros(1,length(xvals)));
             hold on;
             polar([0 rootData.ONSET_avgTracePeak_DSang*pi/180], [0 (100*rootData.ONSET_avgTracePeak_DSI)], 'r-');
@@ -134,6 +134,21 @@ classdef MovingBarAnalysis < AnalysisTree
             title(['DSI = ' num2str(rootData.ONSET_avgTracePeak_DSI) ', DSang = ' num2str(rootData.ONSET_avgTracePeak_DSang) ...
                 ' and OSI = ' num2str(rootData.ONSET_avgTracePeak_OSI) ', OSang = ' num2str(rootData.ONSET_avgTracePeak_OSang)]);
             hold off;
+        end
+        
+        function plot_barAngleVsspikeCount_stimToEnd(node, cellData)
+            rootData = node.get(1);
+            xvals = rootData.barAngle;
+            yField = rootData.spikeCount_stimToEnd;
+            if strcmp(yField.units, 's')
+                yvals = yField.median_c;
+            else
+                yvals = yField.mean_c;
+            end
+            errs = yField.SEM;
+            errorbar(xvals, yvals, errs);
+            xlabel('barAngle');
+            ylabel(['spikeCount_stimToEnd (' yField.units ')']);
         end
         
         function plotMeanTraces(node, cellData)

@@ -141,6 +141,22 @@ for i=1:L
         outputStruct.OFFSET_ISI_full.type = 'combinedAcrossEpochs';
         outputStruct.OFFSET_ISI_full.value = [];
         
+        outputStruct.spikeCount_stimTo100ms.units = 'spikes';
+        outputStruct.spikeCount_stimTo100ms.type = 'byEpoch';
+        outputStruct.spikeCount_stimTo100ms.value = zeros(1,L);
+        
+        outputStruct.spikeCount_stimTo200ms.units = 'spikes';
+        outputStruct.spikeCount_stimTo200ms.type = 'byEpoch';
+        outputStruct.spikeCount_stimTo200ms.value = zeros(1,L);
+        
+        outputStruct.spikeCount_stimAfter100ms.units = 'spikes';
+        outputStruct.spikeCount_stimAfter100ms.type = 'byEpoch';
+        outputStruct.spikeCount_stimAfter100ms.value = zeros(1,L);
+        
+        outputStruct.spikeCount_stimAfter200ms.units = 'spikes';
+        outputStruct.spikeCount_stimAfter200ms.type = 'byEpoch';
+        outputStruct.spikeCount_stimAfter200ms.value = zeros(1,L);
+        
         outputStruct.spikeCount_stimToEnd.units = 'spikes';
         outputStruct.spikeCount_stimToEnd.type = 'byEpoch';
         outputStruct.spikeCount_stimToEnd.value = zeros(1,L);
@@ -398,6 +414,16 @@ for i=1:L
     %count spikes in stimulus to end interval
     spikeCount = length(find(spikeTimes >= intervalStart));
     outputStruct.spikeCount_stimToEnd.value(i) = spikeCount;
+    
+    %count spikes in some other intervals 
+    spikeCount = length(find(spikeTimes >= intervalStart & spikeTimes < intervalStart + 0.1));
+    outputStruct.spikeCount_stimTo100ms.value(i) = spikeCount;
+    spikeCount = length(find(spikeTimes >= intervalStart & spikeTimes < intervalStart + 0.2));
+    outputStruct.spikeCount_stimTo200ms.value(i) = spikeCount;
+    spikeCount = length(find(spikeTimes >= intervalStart + 0.1));
+    outputStruct.spikeCount_stimAfter100ms.value(i) = spikeCount;
+    spikeCount = length(find(spikeTimes >= intervalStart + 0.2));
+    outputStruct.spikeCount_stimAfter200ms.value(i) = spikeCount;
     
     %count spikes in 400 ms after onset and offset
     if responseIntervalLen >= 0.4
