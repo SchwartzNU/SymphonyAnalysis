@@ -52,12 +52,22 @@ classdef IVAnalysis < AnalysisTree
     end
     
     methods(Static)
-%         function plotData(node, cellData)
-%             rootData = node.get(1);
-%             errorbar(rootData.holdSignal, rootData.respMean, rootData.respSEM);
-%             xlabel('Hold signal (mV)');
-%             ylabel('Peak current (pA)');
-%         end
+        %         function plotData(node, cellData)
+        %             rootData = node.get(1);
+        %             errorbar(rootData.holdSignal, rootData.respMean, rootData.respSEM);
+        %             xlabel('Hold signal (mV)');
+        %             ylabel('Peak current (pA)');
+        %         end
+        
+        function plot_holdSignalVsONSET_avgTracePeak(node, cellData)
+            rootData = node.get(1);
+            xvals = rootData.holdSignal;
+            yField = rootData.ONSET_avgTracePeak;
+            yvals = yField.value;
+            plot(xvals, yvals, 'bx-');
+            xlabel('holdSignal');
+            ylabel(['ONSET_avgTracePeak (' yField.units ')']);
+        end
         
         function plotMeanTraces(node, cellData)
             rootData = node.get(1);

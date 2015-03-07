@@ -47,6 +47,7 @@ classdef LabDataGUI < handle
             %different projects / labData structures
             global ANALYSIS_FOLDER
             global PREFERENCE_FILES_FOLDER
+            global SYNC_TO_SERVER
             folder_name = '';
             while isempty(folder_name)
                 folder_name = uigetdir([ANALYSIS_FOLDER 'Projects/'],'Choose project folder');
@@ -59,6 +60,11 @@ classdef LabDataGUI < handle
             
             obj.labData.clearContents();
             disp('Initializing cells');
+            
+            %copy newer versions of local cellData files to server
+            if SYNC_TO_SERVER
+                syncLocalCellDataToServer();
+            end
             
             %read in CellTags.txt file
             fid = fopen([PREFERENCE_FILES_FOLDER filesep 'CellTags.txt']);

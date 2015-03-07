@@ -1,5 +1,6 @@
 function [] = saveAndSyncCellData(cellData)
 global ANALYSIS_FOLDER;
+global SYNC_TO_SERVER;
 do_sync = true;
 fileinfo = dir([ANALYSIS_FOLDER 'cellData' filesep cellData.savedFileName '.mat']);
 localModDate = fileinfo.datenum;
@@ -24,7 +25,7 @@ end
 
 save([ANALYSIS_FOLDER 'cellData' filesep cellData.savedFileName '.mat'], 'cellData');
 
-if do_sync
+if do_sync && SYNC_TO_SERVER
     %synching stuff here
     FILE_IO_TIMEOUT = 1; %s
     BUSY_STATUS_TIMEOUT = 5; %s
