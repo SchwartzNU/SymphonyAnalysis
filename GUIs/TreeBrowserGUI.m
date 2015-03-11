@@ -356,7 +356,7 @@ classdef TreeBrowserGUI < handle
         
         function setEpochTags(obj, tagName, tagVal)
             %if isscalar(str2num(tagVal))
-            tagVal = num2str(tagVal);
+            %tagVal = num2str(tagVal);
             %end
             selectedNodes = get(obj.guiTree, 'selectedNodes');
             curNodeIndex = get(selectedNodes(1), 'Value');
