@@ -384,11 +384,14 @@ classdef TreeBrowserGUI < handle
                     else
                         set(obj.handles.fig, 'Name', 'Busy: adding tags');
                         drawnow;
-                        obj.curCellData.epochs(epochIDs(j)).attributes(tagName) = tagVal;
+                        if evalsToNumeric(tagVal)
+                            obj.curCellData.epochs(epochIDs(j)).attributes(tagName) = eval(tagVal);
+                        else
+                            obj.curCellData.epochs(epochIDs(j)).attributes(tagName) = tagVal;
+                        end
                     end
                 end
                 saveAndSyncCellData(obj.curCellData)
-                
             elseif isempty(obj.analysisTree.getCellName(curNodeIndex)) && ~isfield(curNode, 'device') %above cell level
                 temp = obj.analysisTree.getchildren(curNodeIndex);
                 childInd = temp(1);
@@ -425,7 +428,11 @@ classdef TreeBrowserGUI < handle
                             else
                                 set(obj.handles.fig, 'Name', 'Busy: adding tags');
                                 drawnow;
-                                obj.curCellData.epochs(epochIDs(j)).attributes(tagName) = tagVal;
+                                if evalsToNumeric(tagVal)
+                                    obj.curCellData.epochs(epochIDs(j)).attributes(tagName) = eval(tagVal);
+                                else
+                                    obj.curCellData.epochs(epochIDs(j)).attributes(tagName) = tagVal;
+                                end
                             end
                         end
                         saveAndSyncCellData(obj.curCellData)
@@ -455,7 +462,11 @@ classdef TreeBrowserGUI < handle
                         else
                             set(obj.handles.fig, 'Name', 'Busy: adding tags');
                             drawnow;
-                            obj.curCellData.epochs(epochIDs(j)).attributes(tagName) = tagVal;
+                            if evalsToNumeric(tagVal)
+                                obj.curCellData.epochs(epochIDs(j)).attributes(tagName) = eval(tagVal);
+                            else
+                                obj.curCellData.epochs(epochIDs(j)).attributes(tagName) = tagVal;
+                            end
                         end
                     end
                     saveAndSyncCellData(obj.curCellData)
@@ -480,7 +491,11 @@ classdef TreeBrowserGUI < handle
                     else
                         set(obj.handles.fig, 'Name', 'Busy: adding tags');
                         drawnow;
-                        obj.curCellData.epochs(epochIDs(j)).attributes(tagName) = tagVal;
+                        if evalsToNumeric(tagVal)
+                            obj.curCellData.epochs(epochIDs(j)).attributes(tagName) = eval(tagVal);
+                        else
+                            obj.curCellData.epochs(epochIDs(j)).attributes(tagName) = tagVal;
+                        end
                     end
                 end
                 saveAndSyncCellData(obj.curCellData)
