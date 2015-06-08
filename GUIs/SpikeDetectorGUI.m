@@ -80,20 +80,7 @@ classdef SpikeDetectorGUI < handle
         end
         
         function updateSpikeTimes(obj)
-            cellAttached = false;
-            if strcmp(obj.streamName, 'Amplifier_Ch1')
-                if strcmp(obj.cellData.epochs(obj.epochInd(obj.curEpochInd)).get('ampMode'), 'Cell attached')
-                    cellAttached = true;
-                end
-            elseif strcmp(obj.streamName, 'Amplifier_Ch2')
-                if strcmp(obj.cellData.epochs(obj.epochInd(obj.curEpochInd)).get('amp2Mode'), 'Cell attached')
-                    cellAttached = true;
-                end
-            else
-                disp(['Error in detectSpikes: unknown stream name ' streamName]);
-            end
-            
-            if cellAttached
+            if isSpikeEpoch(obj.cellData.epochs(obj.epochInd(obj.curEpochInd)), obj.streamName)
                 ind = get(obj.handles.detectorModeMenu, 'value');
                 s = get(obj.handles.detectorModeMenu, 'String');
                 obj.mode = s{ind};
@@ -101,8 +88,11 @@ classdef SpikeDetectorGUI < handle
                 
                 if strcmp(obj.mode, 'Simple threshold')
                     obj.spikeTimes = getThresCross(obj.data,obj.threshold,sign(obj.threshold));
-                else
+                elseif strcmp(obj.cellData.epochs(obj.epochInd(obj.curEpochInd)).get('ampMode'), 'Cell attached')
                     spikeResults = SpikeDetector_simple(obj.data, 1./obj.sampleRate, obj.threshold);
+                    obj.spikeTimes = spikeResults.sp;
+                else %different spike dtector for Iclamp data
+                    spikeResults = SpikeDetector_simple_Iclamp(obj.data, 1./obj.sampleRate, obj.threshold);
                     obj.spikeTimes = spikeResults.sp;
                 end
                 
@@ -132,28 +122,18 @@ classdef SpikeDetectorGUI < handle
             set(obj.fig, 'Name', 'Busy...');
             drawnow;
             for i=1:length(obj.epochInd)
-                cellAttached = false;
-                if strcmp(obj.streamName, 'Amplifier_Ch1')
-                    if strcmp(obj.cellData.epochs(obj.epochInd(i)).get('ampMode'), 'Cell attached')
-                        cellAttached = true;
-                    end
-                elseif strcmp(obj.streamName, 'Amplifier_Ch2')
-                    if strcmp(obj.cellData.epochs(obj.epochInd(i)).get('amp2Mode'), 'Cell attached')
-                        cellAttached = true;
-                    end
-                else
-                    disp(['Error in detectSpikes: unknown stream name ' streamName]);
-                end
-                
-                if cellAttached
+              if isSpikeEpoch(obj.cellData.epochs(obj.epochInd(i)), obj.streamName)
                     data = obj.cellData.epochs(obj.epochInd(i)).getData(obj.streamName);
                     data = data - mean(data);
                     data = data';
                     
                     if strcmp(obj.mode, 'Simple threshold')
                         spikeTimes = getThresCross(data,obj.threshold,sign(obj.threshold));
-                    else
+                    elseif strcmp(obj.cellData.epochs(obj.epochInd(obj.curEpochInd)).get('ampMode'), 'Cell attached')
                         spikeResults = SpikeDetector_simple(data, 1./obj.sampleRate, obj.threshold);
+                        spikeTimes = spikeResults.sp;
+                    else
+                        spikeResults = SpikeDetector_simple_Iclamp(data, 1./obj.sampleRate, obj.threshold);
                         spikeTimes = spikeResults.sp;
                     end
                     

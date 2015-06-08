@@ -193,7 +193,12 @@ end
 
 %do the mergeCells here for each element of projMap
 allKeys = projMap.keys;
+disp('doing merge cells');
+length(allKeys)
 for i=1:length(allKeys)
+    i
+    allKeys{i}
+    projMap(allKeys{i})
     projMap(allKeys{i}) = mergeCellNames(projMap(allKeys{i}));
 end
 
@@ -212,7 +217,10 @@ else %all others, remake master folder
 end
 
 %write all the cellNames.txt
+length(allKeys)
 for i=1:length(allKeys)
+    i
+    [ANALYSIS_FOLDER filesep 'Projects' filesep masterFolderName filesep allKeys{i}]
     if exist([ANALYSIS_FOLDER filesep 'Projects' filesep masterFolderName filesep allKeys{i}]) == 7
         rmdir([ANALYSIS_FOLDER filesep 'Projects' filesep masterFolderName filesep allKeys{i}], 's')
     end

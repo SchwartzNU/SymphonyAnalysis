@@ -23,8 +23,13 @@ else
 end
 
 %spike amplitude stuff here - TODO: figure out how to get amplitude profile
-[spikeAmps_all, ~, averageWaveform] = getSpikeAmplitudesForEpochs(cellData, epochInd, ip.Results.DeviceName);
-outputStruct.averageSpikeWaveform.value = averageWaveform;
+if strcmp(sampleEpoch.get('ampMode'), 'Cell attached')
+    [spikeAmps_all, ~, averageWaveform] = getSpikeAmplitudesForEpochs(cellData, epochInd, ip.Results.DeviceName);
+    outputStruct.averageSpikeWaveform.value = averageWaveform;
+else %current clamp
+    spikeAmps_all = [];
+    outputStruct.averageSpikeWaveform.value = [];
+end
 
 %first pass through epochsis for getting baseline spikes, ISIs.
 %These will be used later for figuring out the response probability
@@ -61,13 +66,17 @@ for i=1:L
     %TEMP HACK: This is to remove crazy refractory preiod violations from the spike detector
     if  length(spikeTimes) >= 2
         ISItest = diff(spikeTimes);
-        spikeAmps_all{i} = spikeAmps_all{i}([(ISItest > 0.0015) true]);
+        if ~isempty(spikeAmps_all)
+            spikeAmps_all{i} = spikeAmps_all{i}([(ISItest > 0.0015) true]);
+        end
         spikeTimes = spikeTimes([(ISItest > 0.0015) true]);
     end;
     fullISI = [fullISI, cumsum(diff(spikeTimes))];
     %fraction difference of spikeAmps
-    spikeAmps_all{i} = spikeAmps_all{i} / max(spikeAmps_all{i});
-    fullSpikeAmpDiff = [fullSpikeAmpDiff; cumsum(diff(spikeAmps_all{i}))];
+    if ~isempty(spikeAmps_all)
+        spikeAmps_all{i} = spikeAmps_all{i} / max(spikeAmps_all{i});
+        fullSpikeAmpDiff = [fullSpikeAmpDiff; cumsum(diff(spikeAmps_all{i}))];
+    end
     % % %
     
     %get baselineISIs

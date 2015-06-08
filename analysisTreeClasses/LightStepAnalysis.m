@@ -20,7 +20,7 @@ classdef LightStepAnalysis < AnalysisTree
             dataSet = cellData.savedDataSets(dataSetName);
             obj = obj.copyAnalysisParams(params);
             obj = obj.copyParamsFromSampleEpoch(cellData, dataSet, ...
-                {'RstarMean', 'RstarIntensity', params.ampModeParam, 'spotSize', 'offsetX', 'offsetY'});
+                {'RstarMean', 'RstarIntensity', params.ampModeParam, 'amplifierMode', 'spotSize', 'offsetX', 'offsetY'}); %TODO: fix amplifier mode part for 2 amp experiments
             obj = obj.buildCellTree(1, cellData, dataSet, {'RstarMean'});
         end
         
@@ -34,15 +34,22 @@ classdef LightStepAnalysis < AnalysisTree
                 if strcmp(rootData.(rootData.ampModeParam), 'Cell attached')
                     outputStruct = getEpochResponses_CA(cellData, curNode.epochID, ...
                         'DeviceName', rootData.deviceName,'StartTime', obj.StartTime, 'EndTime', obj.EndTime);
-                    outputStruct = getEpochResponseStats(outputStruct);
-                    curNode = mergeIntoNode(curNode, outputStruct);
-                else %whole cell
+                elseif strcmp(rootData.amplifierMode, 'IClamp')
+                    %spike data?
+                    spCount = cellData.getPSTH(curNode.epochID, [], rootData.deviceName);
+                    if sum(spCount) > 0 %has spikes
+                        outputStruct = getEpochResponses_CA(cellData, curNode.epochID, ...
+                        'DeviceName', rootData.deviceName,'StartTime', obj.StartTime, 'EndTime', obj.EndTime);
+                    else
+                        outputStruct = getEpochResponses_WC(cellData, curNode.epochID, ...
+                        'DeviceName', rootData.deviceName,'StartTime', obj.StartTime, 'EndTime', obj.EndTime);
+                    end                                        
+                else %whole cell, Vclamp
                     outputStruct = getEpochResponses_WC(cellData, curNode.epochID, ...
                         'DeviceName', rootData.deviceName,'StartTime', obj.StartTime, 'EndTime', obj.EndTime);
-                    outputStruct = getEpochResponseStats(outputStruct);
-                    curNode = mergeIntoNode(curNode, outputStruct);
                 end
-                
+                outputStruct = getEpochResponseStats(outputStruct);
+                curNode = mergeIntoNode(curNode, outputStruct);
                 obj = obj.set(leafIDs(i), curNode);
             end
             

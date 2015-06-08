@@ -691,7 +691,8 @@ classdef TreeBrowserGUI < handle
                     end
                 elseif strcmp(plotFunc, 'plotMeanData')
                     epochID = obj.analysisTree.get(curNodeIndex).epochID;
-                    if strcmp(obj.analysisTree.getMode(curNodeIndex), 'Cell attached')
+                    spCount = cellData.getPSTH(epochID, [], obj.analysisTree.getDevice(curNodeIndex));
+                    if sum(spCount) > 0 %has spikes
                         cellData.plotPSTH(epochID, [], obj.analysisTree.getDevice(curNodeIndex));
                         %get correct channel here
                     else

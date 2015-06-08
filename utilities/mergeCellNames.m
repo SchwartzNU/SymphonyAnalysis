@@ -10,6 +10,9 @@ while ~isempty(fline)
     if isempty(fline)
         break;
     end
+    if fline == -1
+        break;
+    end
     mergedCells{z} = {};
     [cname, rem] = strtok(fline);
     mergedCells{z} = [mergedCells{z}; cname];
