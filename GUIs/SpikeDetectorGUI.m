@@ -11,6 +11,7 @@ classdef SpikeDetectorGUI < handle
         curEpochInd
         sampleRate
         streamName
+        epochsInDataSets
     end
     
     methods
@@ -24,10 +25,13 @@ classdef SpikeDetectorGUI < handle
             obj.cellData = cellData;
             obj.epochInd = epochInd;
             obj.mode = params.spikeDetectorMode;
-            obj.threshold = params.spikeThreshold;
+            obj.threshold = params.spikeThreshold;            
             obj.curEpochInd = 1;
+            obj.initializeEpochsInDataSetsList();
+            obj.epochInd = sort(unique(obj.epochsInDataSets));
             
             obj.buildUI();
+            
             obj.loadData();
             obj.updateSpikeTimes();
             obj.updateUI();
@@ -181,6 +185,13 @@ classdef SpikeDetectorGUI < handle
             end
             
             obj.updateUI();
+        end
+        
+        function initializeEpochsInDataSetsList(obj)
+           k = obj.cellData.savedDataSets.keys;
+           for i=1:length(k)
+               obj.epochsInDataSets = [obj.epochsInDataSets obj.cellData.savedDataSets(k{i})];
+           end
         end
         
         function updateUI(obj)
