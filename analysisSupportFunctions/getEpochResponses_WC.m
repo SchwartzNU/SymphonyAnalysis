@@ -112,6 +112,10 @@ for i=1:L
         outputStruct.stimToEnd_avgTrace_latencyToPeak.type = 'singleValue';
         outputStruct.stimToEnd_avgTrace_latencyToPeak.value = NaN;
         
+        outputStruct.stimInterval_charge.units = 'pC';
+        outputStruct.stimInterval_charge.type = 'byEpoch';
+        outputStruct.stimInterval_charge.value = ones(1,L) * NaN;
+        
         outputStruct.ONSET_peak.units = units;
         outputStruct.ONSET_peak.type = 'byEpoch';
         outputStruct.ONSET_peak.value = ones(1,L) * NaN;
@@ -202,6 +206,7 @@ for i=1:L
         [outputStruct.ONSET_peak.value(i), pos] = min(stimData);
         outputStruct.ONSET_latencyToPeak.value(i) = pos / sampleRate;
     end
+    outputStruct.stimInterval_charge.value(i) = sum(stimData) * responseIntervalLen / sampleRate; %pC
     
     %ONSET
     if ~isempty(stimData400)

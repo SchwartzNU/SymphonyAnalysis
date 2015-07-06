@@ -256,6 +256,41 @@ classdef SpotsMultiSizeAnalysis < AnalysisTree
             
         end
         
+        function plot_spotSizeVsONSET_FRhalfMaxLatency(node, cellData)
+            rootData = node.get(1);
+            xvals = rootData.spotSize;
+            yField = rootData.ONSET_FRhalfMaxLatency;
+            yvals = yField.value;
+            plot(xvals, yvals, 'bx-');
+            xlabel('spotSize');
+            ylabel(['ONSET_FRhalfMaxLatency (' yField.units ')']);
+        end
+        
+        function plot_spotSizeVsONSET_FRmax(node, cellData)
+            rootData = node.get(1);
+            xvals = rootData.spotSize;
+            yField = rootData.ONSET_FRmax;
+            yvals = yField.value;
+            plot(xvals, yvals, 'bx-');
+            xlabel('spotSize');
+            ylabel(['ONSET_FRmax (' yField.units ')']);
+        end
+        
+        function plot_spotSizeVsstimInterval_charge(node, cellData)
+            rootData = node.get(1);
+            xvals = rootData.spotSize;
+            yField = rootData.stimInterval_charge;
+            if strcmp(yField.units, 's')
+                yvals = yField.median_c;
+            else
+                yvals = yField.mean_c;
+            end
+            errs = yField.SEM;
+            errorbar(xvals, yvals, errs);
+            xlabel('spotSize');
+            ylabel(['stimInterval_charge (' yField.units ')']);
+        end
+        
         function plot_spotSizeVsONSET_avgTracePeak(node, cellData)
             rootData = node.get(1);
             xvals = rootData.spotSize;

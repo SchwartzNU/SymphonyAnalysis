@@ -117,13 +117,14 @@ samplesPerMS = sampleRate/1E3;
 samplesPerBin = binWidth*samplesPerMS;
 
 freq = sampleEpoch.get('temporalFreq'); %Hz
+startDelayBins = floor(sampleEpoch.get('movementDelay') / binWidth);
 cyclePts = floor(sampleRate/samplesPerBin/freq);
-numCycles = floor(length(psth) / cyclePts);
+numCycles = floor((length(psth) - startDelayBins) / cyclePts);
 
 % Get the average cycle.
 cycles = zeros(numCycles, cyclePts);
 for j = 1 : numCycles
-    index = round(((j-1)*cyclePts + (1 : floor(cyclePts))));
+    index = startDelayBins + round(((j-1)*cyclePts + (1 : floor(cyclePts))));
     cycles(j,:) =  psth(index);
 end
 % Take the mean, skipping first cycle
@@ -133,6 +134,13 @@ outputStruct.cycleAvgPSTH_x.value = xvals(1:length(avgCycle));
 
 % Do the FFT.
 ft = fft(avgCycle);
+% figure(10)
+% subplot(3,1,1)
+% plot(psth)
+% subplot(3,1,2)
+% plot(avgCycle)
+% subplot(3,1,3)
+% plot(abs(ft))
 
 % Pull out the F1 and F2 amplitudes.
 outputStruct.F1amplitude.value = abs(ft(2))/length(ft)*2;

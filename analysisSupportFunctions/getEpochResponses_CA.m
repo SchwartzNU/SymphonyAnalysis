@@ -346,6 +346,10 @@ for i=1:L
         outputStruct.ONSET_FRmaxLatency.type = 'singleValue';
         outputStruct.ONSET_FRmaxLatency.value = NaN;
         
+        outputStruct.ONSET_FRhalfMaxLatency.units = 's';
+        outputStruct.ONSET_FRhalfMaxLatency.type = 'singleValue';
+        outputStruct.ONSET_FRhalfMaxLatency.value = NaN;
+        
         outputStruct.ONSET_FRrampLatency.units = 's';
         outputStruct.ONSET_FRrampLatency.type = 'singleValue';
         outputStruct.ONSET_FRrampLatency.value = NaN;
@@ -567,6 +571,8 @@ OFFSETresponseEndTime_max = max(OFFSETresponseEndTime_all);
 if ONSETresponseEndTime_max > ONSETresponseStartTime_min
     xvals_onset = xvals(xvals >= ONSETresponseStartTime_min & xvals < ONSETresponseEndTime_max);
     psth_onset = psth(xvals >= ONSETresponseStartTime_min & xvals < ONSETresponseEndTime_max);
+    xvals_stimToEnd = xvals(xvals >= 0);
+    psth_stimToEnd = psth(xvals >= 0);
     outputStruct.ONSETpsth.value = psth_onset;
     [outputStruct.ONSET_FRmax.value, maxLoc] = max(psth_onset);
     if ~isempty(maxLoc)
@@ -574,8 +580,12 @@ if ONSETresponseEndTime_max > ONSETresponseStartTime_min
         outputStruct.ONSET_FRmaxLatency.value = xvals_onset(maxLoc);
     end
     outputStruct.ONSET_FRrampLatency.value = outputStruct.ONSET_FRmaxLatency.value - nanmedian(outputStruct.ONSETlatency.value); %latency from start to peak
-    outputStruct.ONSET_FRrange.value = outputStruct.ONSET_FRmax.value - min(psth_onset(maxLoc:end)); %range from max to end
-    outputStruct.ONSET_FRrangeFrac.value = outputStruct.ONSET_FRrange.value / outputStruct.ONSET_FRmax.value;
+    FRthres = outputStruct.ONSET_FRmax.value / 2; %half max
+    if FRthres>0
+        outputStruct.ONSET_FRhalfMaxLatency.value = min(xvals_stimToEnd(getThresCross(psth_stimToEnd, FRthres, 1)));
+        outputStruct.ONSET_FRrange.value = outputStruct.ONSET_FRmax.value - min(psth_onset(maxLoc:end)); %range from max to end
+        outputStruct.ONSET_FRrangeFrac.value = outputStruct.ONSET_FRrange.value / outputStruct.ONSET_FRmax.value;
+    end
 end
 %OFFSET
 if OFFSETresponseEndTime_max > OFFSETresponseStartTime_min

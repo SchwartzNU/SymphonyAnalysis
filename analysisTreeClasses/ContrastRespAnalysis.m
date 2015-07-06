@@ -60,6 +60,8 @@ classdef ContrastRespAnalysis < AnalysisTree
                     
                     tempStruct.ONSETrespRate_grandBaselineSubtracted = curNode.ONSETrespRate;
                     tempStruct.ONSETrespRate_grandBaselineSubtracted.value = curNode.ONSETrespRate.value - grandBaselineMean;
+                    tempStruct.spikeCount_stimInterval_grandBaselineSubtracted = curNode.spikeCount_stimInterval;
+                    tempStruct.spikeCount_stimInterval_grandBaselineSubtracted.value = curNode.spikeCount_stimInterval.value - grandBaselineMean; %assumes 1 sec stimInterval
                     tempStruct.OFFSETrespRate_grandBaselineSubtracted = curNode.OFFSETrespRate;
                     tempStruct.OFFSETrespRate_grandBaselineSubtracted.value = curNode.OFFSETrespRate.value - grandBaselineMean;
                     tempStruct.ONSETspikes_grandBaselineSubtracted = curNode.ONSETspikes;
@@ -304,6 +306,22 @@ classdef ContrastRespAnalysis < AnalysisTree
                 ylabel('Charge (pC)');
             end
         end
+        
+        function plot_contrastVsONSETspikes_grandBaselineSubtracted(node, cellData)
+            rootData = node.get(1);
+            xvals = rootData.contrast;
+            yField = rootData.ONSETspikes_grandBaselineSubtracted;
+            if strcmp(yField.units, 's')
+                yvals = yField.median_c;
+            else
+                yvals = yField.mean_c;
+            end
+            errs = yField.SEM;
+            errorbar(xvals, yvals, errs);
+            xlabel('contrast');
+            ylabel(['ONSETspikes_grandBaselineSubtracted (' yField.units ')']);
+        end
+
         
     end
     
