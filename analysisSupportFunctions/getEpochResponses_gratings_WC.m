@@ -112,13 +112,14 @@ meanTrace_stim = mean(Mstim_baselineSubtracted, 1);
 xvals = [0:length(meanTrace_stim)] ./ sampleRate;
 
 freq = sampleEpoch.get('temporalFreq'); %Hz
+startDelayBins = floor(sampleEpoch.get('movementDelay') / binWidth);
 cyclePts = floor(sampleRate/freq);
 numCycles = floor(length(meanTrace_stim) / cyclePts);
 
 % Get the average cycle.
 cycles = zeros(numCycles, cyclePts);
 for j = 1 : numCycles
-    index = round(((j-1)*cyclePts + (1 : floor(cyclePts))));
+    index = startDelayBins + round(((j-1)*cyclePts + (1 : floor(cyclePts))));
     cycles(j,:) =  meanTrace_stim(index);
 end
 % Take the mean, skipping first cycle
