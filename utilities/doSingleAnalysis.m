@@ -20,7 +20,7 @@ Nanalyses = length(analysisTable{1});
 analysisInd = 0;
 for i=1:Nanalyses
     if strcmp(analysisTable{2}{i}, analysisClassName);
-        analysisInd = i; 
+        analysisInd = i;
         break;
     end
 end
@@ -54,7 +54,7 @@ cellData = loadAndSyncCellData(cellName);
 %load([ANALYSIS_FOLDER 'cellData' filesep cellName]);
 dataSetKeys = cellData.savedDataSets.keys;
 
-%run cell filter 
+%run cell filter
 if ~isempty(cellFilter);
     analyzeThisCell = cellData.filterCell(cellFilter.makeQueryString());
     if ~analyzeThisCell
@@ -80,29 +80,29 @@ for i=1:length(dataSetKeys);
     end
     if analyzeDataSet
         usePrefs = false;
-        if ~isempty(cellData.prefsMapName)
-            prefsMap = loadPrefsMap(cellData.prefsMapName);
-            [hasKey, keyName] = hasMatchingKey(prefsMap, curDataSet); %loading particular parameters from prefsMap
-            if hasKey
-                usePrefs = true;
-                paramSets = prefsMap(keyName);
-                for p=1:length(paramSets)
-                    T = [];
-                    curParamSet = paramSets{p};
-                    load([ANALYSIS_FOLDER 'analysisParams' filesep analysisClassName filesep curParamSet]); %loads params
-                    params.deviceName = params_deviceOnly.deviceName;
-                    params.parameterSetName = curParamSet;
-                    params.class = analysisClassName;
-                    params.cellName = cellName;
-                    eval(['T = ' analysisClassName '(cellData,' '''' curDataSet '''' ', params);']);
-                    T = T.doAnalysis(cellData);
-                    
-                    if ~isempty(T)
-                        resultTree = resultTree.graft(1, T); 
-                    end
-                end
-            end
-        end
+        %         if ~isempty(cellData.prefsMapName)
+        %             prefsMap = loadPrefsMap(cellData.prefsMapName);
+        %             [hasKey, keyName] = hasMatchingKey(prefsMap, curDataSet); %loading particular parameters from prefsMap
+        %             if hasKey
+        %                 usePrefs = true;
+        %                 paramSets = prefsMap(keyName);
+        %                 for p=1:length(paramSets)
+        %                     T = [];
+        %                     curParamSet = paramSets{p};
+        %                     load([ANALYSIS_FOLDER 'analysisParams' filesep analysisClassName filesep curParamSet]); %loads params
+        %                     params.deviceName = params_deviceOnly.deviceName;
+        %                     params.parameterSetName = curParamSet;
+        %                     params.class = analysisClassName;
+        %                     params.cellName = cellName;
+        %                     eval(['T = ' analysisClassName '(cellData,' '''' curDataSet '''' ', params);']);
+        %                     T = T.doAnalysis(cellData);
+        %
+        %                     if ~isempty(T)
+        %                         resultTree = resultTree.graft(1, T);
+        %                     end
+        %                 end
+        %end
+        %end
         
         if ~usePrefs
             params = params_deviceOnly;
@@ -112,7 +112,7 @@ for i=1:length(dataSetKeys);
             T = T.doAnalysis(cellData);
             
             if ~isempty(T)
-                resultTree = resultTree.graft(1, T); 
+                resultTree = resultTree.graft(1, T);
             end
         end
         
