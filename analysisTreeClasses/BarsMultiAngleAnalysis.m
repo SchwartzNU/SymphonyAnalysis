@@ -242,6 +242,35 @@ classdef BarsMultiAngleAnalysis < AnalysisTree
             plot(xvals, yvals, 'bx-');
             xlabel('barAngle');
             ylabel(['ONSET_avgTracePeak (' yField.units ')']);
+            
+            hold on;
+            x = [rootData.ONSET_avgTracePeak_OSang,rootData.ONSET_avgTracePeak_OSang];
+            y = get(gca, 'ylim');
+            plot(x,y);
+            title(['OSI = ' num2str(rootData.ONSET_avgTracePeak_OSI) ', OSang = ' num2str(rootData.ONSET_avgTracePeak_OSang)]);
+            hold off;
+        end
+        
+        function plot_barAngleVsspikeCount_stimInterval_baselineSubtracted(node, cellData)
+            rootData = node.get(1);
+            xvals = rootData.barAngle;
+            yField = rootData.spikeCount_stimInterval_baselineSubtracted;
+            if strcmp(yField.units, 's')
+            yvals = yField.median_c;
+            else
+            yvals = yField.mean_c;
+            end
+            errs = yField.SEM;
+            errorbar(xvals, yvals, errs);
+            xlabel('barAngle');
+            ylabel(['spikeCount_stimInterval_baselineSubtracted (' yField.units ')']);
+            
+             hold on;
+            x = [rootData.ONSET_peak_OSang,rootData.ONSET_peak_OSang];
+            y = get(gca, 'ylim');
+            plot(x,y);
+            title(['OSI = ' num2str(rootData.spikeCount_stimInterval_baselineSubtracted_OSI) ', OSang = ' num2str(rootData.spikeCount_stimInterval_baselineSubtracted_OSang)]);
+            hold off;
         end
     end
     
