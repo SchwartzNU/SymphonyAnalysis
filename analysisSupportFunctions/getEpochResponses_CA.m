@@ -8,6 +8,7 @@ ip.addParamValue('EndTime', 0, @(x)isnumeric(x)); %ms
 ip.addParamValue('LowPassFreq', 30, @(x)isnumeric(x)); %Hz
 ip.addParamValue('BinWidth', 10, @(x)isnumeric(x)); %ms
 ip.addParamValue('EndOffset', 0, @(x)isnumeric(x)); %ms
+ip.addParamValue('FitPSTH', 0, @(x)isnumeric(x)); %number of peaks to fit in PSTH
 
 ip.parse(varargin{:});
 
@@ -117,7 +118,7 @@ for i=1:L
         outputStruct.fullISI.units = 's';
         outputStruct.fullISI.type = 'combinedAcrossEpochs';
         %value already set
-
+        
         outputStruct.fullSpikeAmpDiff.units = '';
         outputStruct.fullSpikeAmpDiff.type = 'combinedAcrossEpochs';
         %value already set;
@@ -150,6 +151,14 @@ for i=1:L
         outputStruct.OFFSET_ISI_full.type = 'combinedAcrossEpochs';
         outputStruct.OFFSET_ISI_full.value = [];
         
+        outputStruct.spikeCount_peak1.units = 'spikes';
+        outputStruct.spikeCount_peak1.type = 'byEpoch';
+        outputStruct.spikeCount_peak1.value = zeros(1,L);
+        
+        outputStruct.spikeCount_peak2.units = 'spikes';
+        outputStruct.spikeCount_peak2.type = 'byEpoch';
+        outputStruct.spikeCount_peak2.value = zeros(1,L);
+        
         outputStruct.spikeCount_stimTo100ms.units = 'spikes';
         outputStruct.spikeCount_stimTo100ms.type = 'byEpoch';
         outputStruct.spikeCount_stimTo100ms.value = zeros(1,L);
@@ -181,7 +190,7 @@ for i=1:L
         outputStruct.spikeCount_ONSET_after200ms.units = 'spikes';
         outputStruct.spikeCount_ONSET_after200ms.type = 'byEpoch';
         outputStruct.spikeCount_ONSET_after200ms.value = ones(1,L) * NaN;
-                
+        
         outputStruct.spikeCount_ONSET_400ms.units = 'spikes';
         outputStruct.spikeCount_ONSET_400ms.type = 'byEpoch';
         outputStruct.spikeCount_ONSET_400ms.value = ones(1,L) * NaN;
@@ -390,7 +399,7 @@ for i=1:L
         outputStruct.ONSETsuppressionTime.type = 'singleValue';
         outputStruct.ONSETsuppressionTime.value = 0;
         
-        outputStruct.ONSETsuppressedSpikes.units = 'spikes';        
+        outputStruct.ONSETsuppressedSpikes.units = 'spikes';
         outputStruct.ONSETsuppressedSpikes.type = 'singleValue';
         outputStruct.ONSETsuppressedSpikes.value = 0;
         
@@ -398,7 +407,7 @@ for i=1:L
         outputStruct.OFFSETsuppressionTime.type = 'singleValue';
         outputStruct.OFFSETsuppressionTime.value = 0;
         
-        outputStruct.OFFSETsuppressedSpikes.units = 'spikes';        
+        outputStruct.OFFSETsuppressedSpikes.units = 'spikes';
         outputStruct.OFFSETsuppressedSpikes.type = 'singleValue';
         outputStruct.OFFSETsuppressedSpikes.value = 0;
         
@@ -428,7 +437,7 @@ for i=1:L
     spikeCount = length(find(spikeTimes >= intervalStart));
     outputStruct.spikeCount_stimToEnd.value(i) = spikeCount;
     
-    %count spikes in some other intervals 
+    %count spikes in some other intervals
     spikeCount = length(find(spikeTimes >= intervalStart & spikeTimes < intervalStart + 0.1));
     outputStruct.spikeCount_stimTo100ms.value(i) = spikeCount;
     spikeCount = length(find(spikeTimes >= intervalStart & spikeTimes < intervalStart + 0.2));
@@ -448,7 +457,7 @@ for i=1:L
         outputStruct.spikeCount_OFFSET_400ms.value(i) = spikeCount;
     end
     
-    %count spikes in 200 ms after onset 
+    %count spikes in 200 ms after onset
     if responseIntervalLen >= 0.2
         spikeCount = length(find(spikeTimes >= intervalStart & spikeTimes < intervalStart + 0.2));
         outputStruct.spikeCount_ONSET_200ms.value(i) = spikeCount;
@@ -567,6 +576,43 @@ ONSETresponseEndTime_max = max(ONSETresponseEndTime_all);
 OFFSETresponseStartTime_min = min(OFFSETresponseStartTime_all);
 OFFSETresponseEndTime_max = max(OFFSETresponseEndTime_all);
 [psth, xvals] = cellData.getPSTH(epochInd, ip.Results.BinWidth, ip.Results.DeviceName);
+
+%PSTH fit
+if ip.Results.FitPSTH > 0
+    [params_fit, PSTH_fit] = PSTH_fitter_sequential(psth, ip.Results.FitPSTH);
+    span = length(psth);
+    if ip.Results.FitPSTH == 2 %split spikes into peak1 and peak2
+        spCount_peak1 = zeros(1,L);
+        spCount_peak2 = zeros(1,L);
+        
+        fitVals_p1 = raisedCosine(params_fit(1,:), span);
+        ind_p1 = find(fitVals_p1>0);
+        fitVals_p2 = raisedCosine(params_fit(2,:), span);
+        ind_p2 = find(fitVals_p2>0);
+        
+        if ~isempty(ind_p1) && ~isempty(ind_p2)
+            start_p1 = xvals(ind_p1(1));
+            end_p1 = xvals(ind_p1(end));
+            start_p2 = xvals(ind_p2(1));
+            end_p2 = xvals(ind_p2(end));
+            
+            for i=1:L
+                curEpoch = cellData.epochs(epochInd(i));
+                sp = curEpoch.getSpikes(ip.Results.DeviceName);
+                sp = sp - stimStart;
+                sp = sp / sampleRate;
+                spCount_peak1(i) = length(find(sp>=start_p1 & sp <= end_p1));
+                spCount_peak2(i) = length(find(sp>=start_p2 & sp <= end_p2));
+            end
+        end
+    end
+    
+    outputStruct.spikeCount_peak1.value = spCount_peak1;
+    outputStruct.spikeCount_peak2.value = spCount_peak2;
+end
+
+
+
 %ONSET
 if ONSETresponseEndTime_max > ONSETresponseStartTime_min
     xvals_onset = xvals(xvals >= ONSETresponseStartTime_min & xvals < ONSETresponseEndTime_max);
@@ -576,7 +622,7 @@ if ONSETresponseEndTime_max > ONSETresponseStartTime_min
     outputStruct.ONSETpsth.value = psth_onset;
     [outputStruct.ONSET_FRmax.value, maxLoc] = max(psth_onset);
     if ~isempty(maxLoc)
-        maxLoc = maxLoc(1); 
+        maxLoc = maxLoc(1);
         outputStruct.ONSET_FRmaxLatency.value = xvals_onset(maxLoc);
     end
     outputStruct.ONSET_FRrampLatency.value = outputStruct.ONSET_FRmaxLatency.value - nanmedian(outputStruct.ONSETlatency.value); %latency from start to peak
@@ -594,7 +640,7 @@ if OFFSETresponseEndTime_max > OFFSETresponseStartTime_min
     outputStruct.OFFSETpsth.value = psth_offset;
     [outputStruct.OFFSET_FRmax.value, maxLoc] = max(psth_offset);
     if ~isempty(maxLoc)
-        maxLoc = maxLoc(1); 
+        maxLoc = maxLoc(1);
         outputStruct.OFFSET_FRmaxLatency.value = xvals_offset(maxLoc) - OFFSETresponseStartTime;
     end
     outputStruct.OFFSET_FRrampLatency.value = outputStruct.OFFSET_FRmaxLatency.value - nanmedian(outputStruct.OFFSETlatency.value); %latency from start to peak
@@ -638,7 +684,7 @@ if baselineMean > baselineRateThres
             end
         end
     end
-    if suppFound == 2 %both onset and offset found    
+    if suppFound == 2 %both onset and offset found
         outputStruct.ONSETsuppressionTime.value = ONSET_suppression_end - ONSET_suppression_start;
         outputStruct.ONSETsuppressedSpikes.value = baselineMean * outputStruct.ONSETsuppressionTime.value - mean(ONSET_to_end_part(ONSET_suppression_start_ind:ONSET_suppression_end_ind));
     end
@@ -664,7 +710,6 @@ if baselineMean > baselineRateThres
     end
     
 end
-%keyboard;
 
 end
 
