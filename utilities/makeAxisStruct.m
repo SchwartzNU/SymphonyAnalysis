@@ -96,6 +96,7 @@ if ~isempty(fname)
         if iscell(datasetName)
             datasetName = datasetName{1}; %inputdlg returns a cell array instead of a string
         end
+        %fullfile(pathname, fname)
         exportStructToHDF5(s, fullfile(pathname, fname), datasetName);
     end
 end

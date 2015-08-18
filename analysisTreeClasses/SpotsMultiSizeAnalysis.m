@@ -30,37 +30,37 @@ classdef SpotsMultiSizeAnalysis < AnalysisTree
             L = length(leafIDs);
             
             %get grand mean for multi-peak fitting (with zero crossings)
-%             if strcmp(rootData.(rootData.ampModeParam), 'Whole cell')
-%                 allEpochIDs = [];
-%                 lowPassFreq = 10;
-%                 
-%                 for i=1:L %for each leaf node
-%                     curNode = obj.get(leafIDs(i));
-%                     allEpochIDs = [allEpochIDs, curNode.epochID];
-%                 end
-%                 [dataMean, xvals] = cellData.getMeanData(allEpochIDs, rootData.deviceName);
-%                 
-%                 %multiple peaks from zero crossings
-%                 [zeroCrossings, directions] = findZeroCrossings(dataMean, xvals, obj.EndTime*1E-3, lowPassFreq, 1E-4);
-%                 for i=1:length(zeroCrossings)
-%                     
-%                     
-%                 end
-%                 
-%                 zeroCrossings = [zeroCrossings getThresCross(xvals, obj.EndTime*1E-3, 1)]; %add end time to get last peak;
-%                 directions = [directions, 0];
-%                 zeroCrossings(1) = getThresCross(xvals, 0, 1); %replace first zero crossing with stim start
-%                 zeroCrossings(2) = getThresCross(xvals, 0.13, 1); %temp hack
-% 
-%                 Npeaks = length(zeroCrossings)-1;
-%                 if Npeaks > 1                    
-%                     crossingParam = [zeroCrossings; directions]
-%                 else
-%                     crossingParam = [];
-%                 end
-%                 %keyboard;
-%             end
-                            
+            %             if strcmp(rootData.(rootData.ampModeParam), 'Whole cell')
+            %                 allEpochIDs = [];
+            %                 lowPassFreq = 10;
+            %
+            %                 for i=1:L %for each leaf node
+            %                     curNode = obj.get(leafIDs(i));
+            %                     allEpochIDs = [allEpochIDs, curNode.epochID];
+            %                 end
+            %                 [dataMean, xvals] = cellData.getMeanData(allEpochIDs, rootData.deviceName);
+            %
+            %                 %multiple peaks from zero crossings
+            %                 [zeroCrossings, directions] = findZeroCrossings(dataMean, xvals, obj.EndTime*1E-3, lowPassFreq, 1E-4);
+            %                 for i=1:length(zeroCrossings)
+            %
+            %
+            %                 end
+            %
+            %                 zeroCrossings = [zeroCrossings getThresCross(xvals, obj.EndTime*1E-3, 1)]; %add end time to get last peak;
+            %                 directions = [directions, 0];
+            %                 zeroCrossings(1) = getThresCross(xvals, 0, 1); %replace first zero crossing with stim start
+            %                 zeroCrossings(2) = getThresCross(xvals, 0.13, 1); %temp hack
+            %
+            %                 Npeaks = length(zeroCrossings)-1;
+            %                 if Npeaks > 1
+            %                     crossingParam = [zeroCrossings; directions]
+            %                 else
+            %                     crossingParam = [];
+            %                 end
+            %                 %keyboard;
+            %             end
+            
             
             
             for i=1:L %for each leaf node
@@ -73,7 +73,7 @@ classdef SpotsMultiSizeAnalysis < AnalysisTree
                 else %whole cell
                     outputStruct = getEpochResponses_WC(cellData, curNode.epochID, ...
                         'DeviceName', rootData.deviceName);
-                        %'ZeroCrossingPeaks', crossingParam);
+                    %'ZeroCrossingPeaks', crossingParam);
                     outputStruct = getEpochResponseStats(outputStruct);
                     curNode = mergeIntoNode(curNode, outputStruct);
                 end
@@ -295,6 +295,21 @@ classdef SpotsMultiSizeAnalysis < AnalysisTree
             plot(xvals, yvals, 'bx-');
             xlabel('spotSize');
             ylabel(['ONSET_avgTracePeak (' yField.units ')']);
+        end
+        
+        function plot_spotSizeVsspikeCount_stimInterval_baselineSubtracted(node, cellData)
+            rootData = node.get(1);
+            xvals = rootData.spotSize;
+            yField = rootData.spikeCount_stimInterval_baselineSubtracted;
+            if strcmp(yField.units, 's')
+                yvals = yField.median_c;
+            else
+                yvals = yField.mean_c;
+            end
+            errs = yField.SEM;
+            errorbar(xvals, yvals, errs);
+            xlabel('spotSize');
+            ylabel(['spikeCount_stimInterval_baselineSubtracted (' yField.units ')']);
         end
         
     end
