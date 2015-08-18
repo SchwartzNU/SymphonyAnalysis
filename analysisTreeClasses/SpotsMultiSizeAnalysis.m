@@ -1,7 +1,7 @@
 classdef SpotsMultiSizeAnalysis < AnalysisTree
     properties
         StartTime = 0;
-        EndTime = 0;
+        EndTime = 1000;
     end
     
     methods
@@ -29,6 +29,40 @@ classdef SpotsMultiSizeAnalysis < AnalysisTree
             leafIDs = obj.findleaves();
             L = length(leafIDs);
             
+            %get grand mean for multi-peak fitting (with zero crossings)
+%             if strcmp(rootData.(rootData.ampModeParam), 'Whole cell')
+%                 allEpochIDs = [];
+%                 lowPassFreq = 10;
+%                 
+%                 for i=1:L %for each leaf node
+%                     curNode = obj.get(leafIDs(i));
+%                     allEpochIDs = [allEpochIDs, curNode.epochID];
+%                 end
+%                 [dataMean, xvals] = cellData.getMeanData(allEpochIDs, rootData.deviceName);
+%                 
+%                 %multiple peaks from zero crossings
+%                 [zeroCrossings, directions] = findZeroCrossings(dataMean, xvals, obj.EndTime*1E-3, lowPassFreq, 1E-4);
+%                 for i=1:length(zeroCrossings)
+%                     
+%                     
+%                 end
+%                 
+%                 zeroCrossings = [zeroCrossings getThresCross(xvals, obj.EndTime*1E-3, 1)]; %add end time to get last peak;
+%                 directions = [directions, 0];
+%                 zeroCrossings(1) = getThresCross(xvals, 0, 1); %replace first zero crossing with stim start
+%                 zeroCrossings(2) = getThresCross(xvals, 0.13, 1); %temp hack
+% 
+%                 Npeaks = length(zeroCrossings)-1;
+%                 if Npeaks > 1                    
+%                     crossingParam = [zeroCrossings; directions]
+%                 else
+%                     crossingParam = [];
+%                 end
+%                 %keyboard;
+%             end
+                            
+            
+            
             for i=1:L %for each leaf node
                 curNode = obj.get(leafIDs(i));
                 if strcmp(rootData.(rootData.ampModeParam), 'Cell attached')
@@ -39,6 +73,7 @@ classdef SpotsMultiSizeAnalysis < AnalysisTree
                 else %whole cell
                     outputStruct = getEpochResponses_WC(cellData, curNode.epochID, ...
                         'DeviceName', rootData.deviceName);
+                        %'ZeroCrossingPeaks', crossingParam);
                     outputStruct = getEpochResponseStats(outputStruct);
                     curNode = mergeIntoNode(curNode, outputStruct);
                 end
@@ -104,45 +139,6 @@ classdef SpotsMultiSizeAnalysis < AnalysisTree
     
     methods(Static)
         
-        %         function plotDataSpikeCount(node, cellData)
-        %             rootData = node.get(1);
-        %             %errorbar(rootData.spotSize, rootData.respMean, rootData.respSEM);
-        %             plot(rootData.spotSize, [rootData.meanONenhancedSpikes; rootData.meanOFFenhancedSpikes])
-        %             xlabel('Spot size (microns)');
-        %             if strcmp(rootData.(rootData.ampModeParam), 'Cell attached')
-        %                 ylabel('ON spikes, OFF spikes');
-        %             else
-        %                 ylabel('Charge (pC)');
-        %             end
-        %         end
-        %
-        %         function plotDataLatencies(node, cellData)
-        %             rootData = node.get(1);
-        %             %errorbar(rootData.spotSize, rootData.respMean, rootData.respSEM);
-        %             plot(rootData.spotSize, [rootData.medianONlatency; rootData.medianOFFlatency])
-        %             xlabel('Spot size (microns)');
-        %             if strcmp(rootData.(rootData.ampModeParam), 'Cell attached')
-        %                 ylabel('ON spikes, OFF spikes');
-        %             else
-        %                 ylabel('Charge (pC)');
-        %             end
-        %         end
-%         
-%         function plotMeanTrace(node, cellData)
-%             rootData = node.get(1);
-%             epochInd = node.get(2).epochID;
-%             if strcmp(rootData.(rootData.ampModeParam), 'Cell attached')
-%                 cellData.plotPSTH(epochInd, 10, rootData.deviceName);
-%                 %                 hold on
-%                 %                 firingStart = node.get(2).meanONlatency;
-%                 %                 firingEnd = firingStart + node.get(2).meanONenhancedDuration;
-%                 %                 plot([firingStart firingEnd], [0 0]);
-%                 %                 hold off
-%             else
-%                 cellData.plotMeanData(epochInd, true, [], rootData.deviceName);
-%             end
-%             %title(['ON latency: ',num2str(node.get(2).meanONlatency),' ste: ',num2str(node.get(2).steONlatency)]);
-%         end
         
         function plot_spotSizeVsONSETspikes(node, cellData)
             rootData = node.get(1);
@@ -178,9 +174,9 @@ classdef SpotsMultiSizeAnalysis < AnalysisTree
             xvals = rootData.spotSize;
             yField = rootData.ONSET_peak;
             if strcmp(yField.units, 's')
-            yvals = yField.median_c;
+                yvals = yField.median_c;
             else
-            yvals = yField.mean_c;
+                yvals = yField.mean_c;
             end
             errs = yField.SEM;
             errorbar(xvals, yvals, errs);

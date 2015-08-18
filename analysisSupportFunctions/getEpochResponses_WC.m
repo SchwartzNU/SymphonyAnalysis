@@ -8,6 +8,7 @@ ip.addParamValue('EndTime', 0, @(x)isnumeric(x)); %ms
 ip.addParamValue('LowPassFreq', 100, @(x)isnumeric(x)); %Hz
 ip.addParamValue('BinWidth', 10, @(x)isnumeric(x)); %ms
 ip.addParamValue('EndOffset', 0, @(x)isnumeric(x)); %ms
+ip.addParamValue('ZeroCrossingPeaks', [], @(x)isnumeric(x)); %parameter is a Nx2 matrix of zero crossings (in samples) and directions 
 
 ip.parse(varargin{:});
 
@@ -242,6 +243,33 @@ end
 %baseline 
 outputStruct.baseline.value = mean(baselineVal);
 
+if ~isempty(ip.Results.ZeroCrossingPeaks)
+    zeroCrossings = ip.Results.ZeroCrossingPeaks(1,:);
+    directions = ip.Results.ZeroCrossingPeaks(2,:);
+    Npeaks = length(zeroCrossings)-1;
+    dataMean = mean(data, 1);
+    
+    
+    %start from the end and count 
+    for i=1:Npeaks
+        varName = ['peak' num2str(i) '_avgTracePeak'];
+        outputStruct.(varName).units = units;
+        outputStruct.(varName).type = 'singleValue';
+        if directions(i) == -1 %negative peak
+            [peakVal, ind] = min(dataMean(zeroCrossings(i):zeroCrossings(i+1)));
+        else
+            [peakVal, ind] = max(dataMean(zeroCrossings(i):zeroCrossings(i+1)));
+        end
+        peakTime = xvals(ind(1) + zeroCrossings(i));
+        outputStruct.(varName).value = peakVal;
+        
+        varName = ['peak' num2str(i) '_avgTraceLatencyToPeak'];
+        outputStruct.(varName).units = 's';
+        outputStruct.(varName).type = 'singleValue';
+        outputStruct.(varName).value = peakTime;
+    end
+end
+                
 %values that need to be calculated after collecting all data
 %stimToEnd
 meanTrace_stimToEnd = [mean(Mstim, 1), mean(Mpost, 1)];
@@ -254,6 +282,7 @@ else %inward current larger
     outputStruct.stimToEnd_avgTrace_latencyToPeak.value = pos / sampleRate; 
     thresDir = -1;
 end
+
 %thresholds
 maxVal = outputStruct.stimToEnd_avgTracePeak.value;
 T25_up = getThresCross(meanTrace_stimToEnd, 0.25*maxVal, thresDir);
