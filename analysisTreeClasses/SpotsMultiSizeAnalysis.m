@@ -67,7 +67,8 @@ classdef SpotsMultiSizeAnalysis < AnalysisTree
                 curNode = obj.get(leafIDs(i));
                 if strcmp(rootData.(rootData.ampModeParam), 'Cell attached')
                     outputStruct = getEpochResponses_CA(cellData, curNode.epochID, ...
-                        'DeviceName', rootData.deviceName,'StartTime', obj.StartTime, 'EndTime', obj.EndTime);
+                        'DeviceName', rootData.deviceName,'StartTime', obj.StartTime, 'EndTime', obj.EndTime, ...
+                        'FitPSTH', 1);
                     outputStruct = getEpochResponseStats(outputStruct);
                     curNode = mergeIntoNode(curNode, outputStruct);
                 else %whole cell

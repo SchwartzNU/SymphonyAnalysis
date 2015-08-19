@@ -151,14 +151,6 @@ for i=1:L
         outputStruct.OFFSET_ISI_full.type = 'combinedAcrossEpochs';
         outputStruct.OFFSET_ISI_full.value = [];
         
-        outputStruct.spikeCount_peak1.units = 'spikes';
-        outputStruct.spikeCount_peak1.type = 'byEpoch';
-        outputStruct.spikeCount_peak1.value = zeros(1,L);
-        
-        outputStruct.spikeCount_peak2.units = 'spikes';
-        outputStruct.spikeCount_peak2.type = 'byEpoch';
-        outputStruct.spikeCount_peak2.value = zeros(1,L);
-        
         outputStruct.spikeCount_stimTo100ms.units = 'spikes';
         outputStruct.spikeCount_stimTo100ms.type = 'byEpoch';
         outputStruct.spikeCount_stimTo100ms.value = zeros(1,L);
@@ -579,14 +571,36 @@ OFFSETresponseEndTime_max = max(OFFSETresponseEndTime_all);
 
 %PSTH fit
 if ip.Results.FitPSTH > 0
+    outputStruct.spikeCount_peak1.units = 'spikes';
+    outputStruct.spikeCount_peak1.type = 'byEpoch';
+    outputStruct.spikeCount_peak1.value = zeros(1,L);
+    
+    outputStruct.latencyTo_peak1.units = 's';
+    outputStruct.latencyTo_peak1.type = 'singleValue';
+    outputStruct.latencyTo_peak1.value = NaN;
+
     [params_fit, PSTH_fit] = PSTH_fitter_sequential(psth, ip.Results.FitPSTH);
+
+    outputStruct.PSTH_fit.units = 'Hz';
+    outputStruct.PSTH_fit.type = 'combinedAcrossEpochs';
+    outputStruct.PSTH_fit.value = PSTH_fit;
+    
     span = length(psth);
+    spCount_peak1 = zeros(1,L);
+    fitVals_p1 = raisedCosine(params_fit(1,:), span);
+    ind_p1 = find(fitVals_p1>0);
+    
     if ip.Results.FitPSTH == 2 %split spikes into peak1 and peak2
-        spCount_peak1 = zeros(1,L);
+        outputStruct.spikeCount_peak2.units = 'spikes';
+        outputStruct.spikeCount_peak2.type = 'byEpoch';
+        outputStruct.spikeCount_peak2.value = zeros(1,L);
+        
+        outputStruct.latencyTo_peak2.units = 's';
+        outputStruct.latencyTo_peak2.type = 'singleValue';
+        outputStruct.latencyTo_peak2.value = NaN;
+                
         spCount_peak2 = zeros(1,L);
         
-        fitVals_p1 = raisedCosine(params_fit(1,:), span);
-        ind_p1 = find(fitVals_p1>0);
         fitVals_p2 = raisedCosine(params_fit(2,:), span);
         ind_p2 = find(fitVals_p2>0);
         
@@ -605,10 +619,36 @@ if ip.Results.FitPSTH > 0
                 spCount_peak2(i) = length(find(sp>=start_p2 & sp <= end_p2));
             end
         end
+        outputStruct.spikeCount_peak1.value = spCount_peak1;
+        outputStruct.spikeCount_peak2.value = spCount_peak2;
+        [~, peak1_ind] = max(fitVals_p1);
+        if ~isempty(peak1_ind)
+            outputStruct.latencyTo_peak1.value = xvals(peak1_ind(1));
+        end        
+        [~, peak2_ind] = max(fitVals_p2);
+        if ~isempty(peak2_ind)
+            outputStruct.latencyTo_peak1.value = xvals(peak2_ind(1));
+        end
+    else % 1 peak
+        if ~isempty(ind_p1) 
+            start_p1 = xvals(ind_p1(1));
+            end_p1 = xvals(ind_p1(end));
+            
+            for i=1:L
+                curEpoch = cellData.epochs(epochInd(i));
+                sp = curEpoch.getSpikes(ip.Results.DeviceName);
+                sp = sp - stimStart;
+                sp = sp / sampleRate;
+                spCount_peak1(i) = length(find(sp>=start_p1 & sp <= end_p1));
+            end
+        end
+        outputStruct.spikeCount_peak1.value = spCount_peak1;
+        [~, peak1_ind] = max(fitVals_p1);
+        if ~isempty(peak1_ind)
+            outputStruct.latencyTo_peak1.value = xvals(peak1_ind(1));
+        end
     end
-    
-    outputStruct.spikeCount_peak1.value = spCount_peak1;
-    outputStruct.spikeCount_peak2.value = spCount_peak2;
+        
 end
 
 
