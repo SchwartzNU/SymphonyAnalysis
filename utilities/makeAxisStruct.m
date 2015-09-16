@@ -1,4 +1,10 @@
-function [] = makeAxisStruct(ax, igorh5path)
+function [] = makeAxisStruct(ax, igorh5path, fname, datasetName)
+if nargin < 4
+    datasetName = [];
+end
+if nargin < 3
+    fname = [];
+end
 
 s = struct;
 %get axis properties
@@ -63,10 +69,10 @@ for i=1:length(plotLines)
         s.([line_prefix '_linestyle']) = get(curLine,'linestyle');
     end
     if isprop(curLine,'markersize')
-        s.([line_prefix '_markerSize']) = get(curLine,'markersize');     
+        s.([line_prefix '_markerSize']) = get(curLine,'markersize');
     end
     %error bars?
-    if isprop(curLine,'UData') && ~isempty(get(curLine,'UData'))        
+    if isprop(curLine,'UData') && ~isempty(get(curLine,'UData'))
         s.([line_prefix '_err']) = get(curLine,'UData');
     end
     %keyboard;
@@ -77,11 +83,20 @@ end
 %if isempty(fname)
 %    fname = input('Figure Name: ', 's');
 %end
-[fname,pathname] = uiputfile('*.h5', 'Specify hdf5 export file for Igor', igorh5path);     
+if isempty(fname)
+    [fname,pathname] = uiputfile('*.h5', 'Specify hdf5 export file for Igor', igorh5path);
+else
+    pathname = igorh5path;
+end
 if ~isempty(fname)
-    datasetName = inputdlg('Enter dataset name', 'Dataset name');
+    if isempty(datasetName)
+        datasetName = inputdlg('Enter dataset name', 'Dataset name');
+    end
     if ~isempty(datasetName)
-        datasetName = datasetName{1}; %inputdlg returns a cell array instead of a string
+        if iscell(datasetName)
+            datasetName = datasetName{1}; %inputdlg returns a cell array instead of a string
+        end
+        %fullfile(pathname, fname)
         exportStructToHDF5(s, fullfile(pathname, fname), datasetName);
     end
 end
