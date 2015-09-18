@@ -74,6 +74,17 @@ for i=1:L
         postData400 = [];
     end
     
+    if responseIntervalLen >= 1
+        stimData1000 = data(xvals > 0 & xvals <= 1);
+    else
+        stimData1000 = [];
+    end
+    if responseIntervalLen >= 1
+        stimData_next1000 = data(xvals > 1 & xvals < 2);
+    else
+        stimData_next1000 = [];
+    end
+    
     Mstim(i,:) = stimData;    
     Mpost(i,:) = postData;
     stimToEndData = [stimData postData];
@@ -129,6 +140,14 @@ for i=1:L
         outputStruct.ONSET_peak400ms.type = 'byEpoch';
         outputStruct.ONSET_peak400ms.value = ones(1,L) * NaN;
         
+        outputStruct.ONSET_peak1000ms.units = units;
+        outputStruct.ONSET_peak1000ms.type = 'byEpoch';
+        outputStruct.ONSET_peak1000ms.value = ones(1,L) * NaN;
+        
+        outputStruct.ONSET_peak_next1000ms.units = units;
+        outputStruct.ONSET_peak_next1000ms.type = 'byEpoch';
+        outputStruct.ONSET_peak_next1000ms.value = ones(1,L) * NaN;
+        
         outputStruct.OFFSET_peak400ms.units = units;
         outputStruct.OFFSET_peak400ms.type = 'byEpoch';
         outputStruct.OFFSET_peak400ms.value = ones(1,L) * NaN;
@@ -144,6 +163,14 @@ for i=1:L
         outputStruct.ONSET_charge400ms.units = 'pC';
         outputStruct.ONSET_charge400ms.type = 'byEpoch';
         outputStruct.ONSET_charge400ms.value = ones(1,L) * NaN;
+        
+        outputStruct.ONSET_charge1000ms.units = 'pC';
+        outputStruct.ONSET_charge1000ms.type = 'byEpoch';
+        outputStruct.ONSET_charge1000ms.value = ones(1,L) * NaN;
+        
+        outputStruct.ONSET_charge_next1000ms.units = 'pC';
+        outputStruct.ONSET_charge_next1000ms.type = 'byEpoch';
+        outputStruct.ONSET_charge_next1000ms.value = ones(1,L) * NaN;
         
         outputStruct.OFFSET_charge400ms.units = 'pC';
         outputStruct.OFFSET_charge400ms.type = 'byEpoch';
@@ -219,6 +246,37 @@ for i=1:L
         outputStruct.ONSET_charge400ms.value(i) = sum(stimData400) * 0.4 / sampleRate;
     end
     
+    %ONSET
+    if ~isempty(stimData1000)
+        if abs(max(stimData1000)) > abs(min(stimData1000)) %outward current larger
+            outputStruct.ONSET_peak1000ms.value(i) = max(stimData1000);
+        else %inward current larger
+            outputStruct.ONSET_peak1000ms.value(i) = min(stimData1000);
+        end
+        outputStruct.ONSET_charge1000ms.value(i) = sum(stimData1000) * 1 / sampleRate;
+    end
+    
+    %ONSET
+    if ~isempty(stimData_next1000)
+        if abs(max(stimData_next1000)) > abs(min(stimData_next1000)) %outward current larger
+            outputStruct.ONSET_peak_next1000ms.value(i) = max(stimData_next1000);
+        else %inward current larger
+            outputStruct.ONSET_peak_next1000ms.value(i) = min(stimData_next1000);
+        end
+        outputStruct.ONSET_charge_next1000ms.value(i) = sum(stimData_next1000) * 1 / sampleRate;
+    end
+    
+    %ONSET
+    if ~isempty(stimData400)
+        if abs(max(stimData400)) > abs(min(stimData400)) %outward current larger
+            outputStruct.ONSET_peak400ms.value(i) = max(stimData400);
+        else %inward current larger
+            outputStruct.ONSET_peak400ms.value(i) = min(stimData400);
+        end
+        outputStruct.ONSET_charge400ms.value(i) = sum(stimData400) * 0.4 / sampleRate;
+    end
+    
+    
     %OFFSET
     if abs(max(postData)) > abs(min(postData)) %outward current larger
         [outputStruct.OFFSET_peak.value(i), pos] = max(postData);
@@ -249,7 +307,7 @@ if ~isempty(ip.Results.ZeroCrossingPeaks)
     Npeaks = length(zeroCrossings)-1;
     dataMean = mean(data, 1);
     
-    
+    %keyboard;
     %start from the end and count 
     for i=1:Npeaks
         varName = ['peak' num2str(i) '_avgTracePeak'];

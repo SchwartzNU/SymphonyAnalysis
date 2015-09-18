@@ -35,8 +35,8 @@ classdef MovingBarAnalysis < AnalysisTree
                 if strcmp(rootData.(rootData.ampModeParam), 'Cell attached')
                     outputStruct = getEpochResponses_CA(cellData, curNode.epochID, ...
                         'DeviceName', rootData.deviceName,'StartTime', obj.StartTime, 'EndTime', obj.EndTime, ...
-                        'BaselineTime', 250, ...
-                        'FitPSTH', 2); %fit 2 peaks in PSTH
+                        'BaselineTime', 250);
+                        %'FitPSTH', 2); %fit 2 peaks in PSTH
                     outputStruct = getEpochResponseStats(outputStruct);
                     curNode = mergeIntoNode(curNode, outputStruct);
                 else %whole cell

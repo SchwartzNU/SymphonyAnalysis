@@ -13,6 +13,7 @@ zeroCrossings_down = getThresCross(stimPart, 0, -1);
 zeroCrossings_up_raw = getThresCross(stimPart_raw, 0, 1);
 zeroCrossings_down_raw = getThresCross(stimPart_raw, 0, -1);
 
+zeroCrossings_up_temp = [];
 for i=1:length(zeroCrossings_up)
     D = abs(zeroCrossings_up_raw - zeroCrossings_up(i));
     [~, ind] = min(D);   
@@ -20,6 +21,7 @@ for i=1:length(zeroCrossings_up)
 end
 zeroCrossings_up = zeroCrossings_up_temp;
 
+zeroCrossings_down_temp = [];
 for i=1:length(zeroCrossings_down)
     D = abs(zeroCrossings_down_raw - zeroCrossings_down(i));
     [~, ind] = min(D);   
