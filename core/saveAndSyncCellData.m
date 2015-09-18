@@ -26,7 +26,7 @@ end
 save([ANALYSIS_FOLDER 'cellData' filesep cellData.savedFileName '.mat'], 'cellData');
 
 if do_sync && SYNC_TO_SERVER
-    %synching stuff here
+    %syncing stuff here
     FILE_IO_TIMEOUT = 1; %s
     BUSY_STATUS_TIMEOUT = 5; %s
     
