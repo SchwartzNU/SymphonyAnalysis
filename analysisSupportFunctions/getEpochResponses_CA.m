@@ -355,6 +355,12 @@ for i=1:L
         outputStruct.ONSET_FRrampLatency.type = 'singleValue';
         outputStruct.ONSET_FRrampLatency.value = NaN;
         
+        %Adam 8/27/15
+        outputStruct.centerOfMassLatency.units = 's';
+        outputStruct.centerOfMassLatency.type = 'singleValue';
+        outputStruct.centerOfMassLatency.value = NaN;
+        %%%
+        
         outputStruct.OFFSET_FRmax.units = 'Hz';
         outputStruct.OFFSET_FRmax.type = 'singleValue';
         outputStruct.OFFSET_FRmax.value = NaN;
@@ -568,6 +574,14 @@ ONSETresponseEndTime_max = max(ONSETresponseEndTime_all);
 OFFSETresponseStartTime_min = min(OFFSETresponseStartTime_all);
 OFFSETresponseEndTime_max = max(OFFSETresponseEndTime_all);
 [psth, xvals] = cellData.getPSTH(epochInd, ip.Results.BinWidth, ip.Results.DeviceName);
+
+%%%%%%%%%Adam 8/27/15 temp hack centerOfMassLatency
+respOffs = 0.15;
+stimXvals = xvals((xvals >= respOffs)&(xvals <= 1 + respOffs)); 
+stimPsth = psth((xvals >= respOffs)&(xvals <= 1 + respOffs)); 
+comTime = sum(stimXvals.*stimPsth)/sum(stimPsth);
+outputStruct.centerOfMassLatency.value = comTime;
+%%%%%%%%%%
 
 %PSTH fit
 if ip.Results.FitPSTH > 0
