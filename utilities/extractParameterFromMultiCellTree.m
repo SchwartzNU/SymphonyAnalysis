@@ -4,7 +4,7 @@ cellTypeNode = T.getchildren(1);
 cellNodes = T.getchildren(cellTypeNode);
 
 L = length(cellNodes);
-paramVec = ones(1,L)*nan;
+paramVec = ones(L,1)*nan;
 
 
 for i=1:L
