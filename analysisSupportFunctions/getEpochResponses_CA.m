@@ -351,6 +351,12 @@ for i=1:L
         outputStruct.ONSET_FRhalfMaxLatency.type = 'singleValue';
         outputStruct.ONSET_FRhalfMaxLatency.value = NaN;
         
+        %%%%Adam 9/22/15
+        outputStruct.ONSET_FRhalfMaxSusLatency.units = 's';
+        outputStruct.ONSET_FRhalfMaxSusLatency.type = 'singleValue';
+        outputStruct.ONSET_FRhalfMaxSusLatency.value = NaN;
+        %%%%
+        
         outputStruct.ONSET_FRrampLatency.units = 's';
         outputStruct.ONSET_FRrampLatency.type = 'singleValue';
         outputStruct.ONSET_FRrampLatency.value = NaN;
@@ -577,8 +583,8 @@ OFFSETresponseEndTime_max = max(OFFSETresponseEndTime_all);
 
 %%%%%%%%%Adam 8/27/15 temp hack centerOfMassLatency
 respOffs = 0.15;
-stimXvals = xvals((xvals >= respOffs)&(xvals <= 1 + respOffs)); 
-stimPsth = psth((xvals >= respOffs)&(xvals <= 1 + respOffs)); 
+stimXvals = xvals((xvals >= respOffs)&(xvals <= 1 + respOffs));
+stimPsth = psth((xvals >= respOffs)&(xvals <= 1 + respOffs));
 comTime = sum(stimXvals.*stimPsth)/sum(stimPsth);
 outputStruct.centerOfMassLatency.value = comTime;
 %%%%%%%%%%
@@ -592,9 +598,9 @@ if ip.Results.FitPSTH > 0
     outputStruct.latencyTo_peak1.units = 's';
     outputStruct.latencyTo_peak1.type = 'singleValue';
     outputStruct.latencyTo_peak1.value = NaN;
-
+    
     [params_fit, PSTH_fit] = PSTH_fitter_sequential(psth, ip.Results.FitPSTH);
-
+    
     outputStruct.PSTH_fit.units = 'Hz';
     outputStruct.PSTH_fit.type = 'combinedAcrossEpochs';
     outputStruct.PSTH_fit.value = PSTH_fit;
@@ -612,7 +618,7 @@ if ip.Results.FitPSTH > 0
         outputStruct.latencyTo_peak2.units = 's';
         outputStruct.latencyTo_peak2.type = 'singleValue';
         outputStruct.latencyTo_peak2.value = NaN;
-                
+        
         spCount_peak2 = zeros(1,L);
         
         fitVals_p2 = raisedCosine(params_fit(2,:), span);
@@ -638,13 +644,13 @@ if ip.Results.FitPSTH > 0
         [~, peak1_ind] = max(fitVals_p1);
         if ~isempty(peak1_ind)
             outputStruct.latencyTo_peak1.value = xvals(peak1_ind(1));
-        end        
+        end
         [~, peak2_ind] = max(fitVals_p2);
         if ~isempty(peak2_ind)
             outputStruct.latencyTo_peak1.value = xvals(peak2_ind(1));
         end
     else % 1 peak
-        if ~isempty(ind_p1) 
+        if ~isempty(ind_p1)
             start_p1 = xvals(ind_p1(1));
             end_p1 = xvals(ind_p1(end));
             
@@ -662,7 +668,7 @@ if ip.Results.FitPSTH > 0
             outputStruct.latencyTo_peak1.value = xvals(peak1_ind(1));
         end
     end
-        
+    
 end
 
 
@@ -683,6 +689,7 @@ if ONSETresponseEndTime_max > ONSETresponseStartTime_min
     FRthres = outputStruct.ONSET_FRmax.value / 2; %half max
     if FRthres>0
         outputStruct.ONSET_FRhalfMaxLatency.value = min(xvals_stimToEnd(getThresCross(psth_stimToEnd, FRthres, 1)));
+        outputStruct.ONSET_FRhalfMaxSusLatency.value = min(xvals_onset(getSustainedThresCross(psth_onset, FRthres))); % Adam 9/22/15
         outputStruct.ONSET_FRrange.value = outputStruct.ONSET_FRmax.value - min(psth_onset(maxLoc:end)); %range from max to end
         outputStruct.ONSET_FRrangeFrac.value = outputStruct.ONSET_FRrange.value / outputStruct.ONSET_FRmax.value;
     end
