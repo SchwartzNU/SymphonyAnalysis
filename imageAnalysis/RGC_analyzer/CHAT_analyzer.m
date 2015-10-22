@@ -1,10 +1,11 @@
-function [X_flat, Y_flat, Z_flat_ON, Z_flat_OFF] = CHAT_analyzer(image_fname, Nchannels, CHAT_channel, resampleFactor, pixelRes_XY)
+function [X_flat, Y_flat, Z_flat_ON, Z_flat_OFF] = CHAT_analyzer(image_fname, Nchannels, CHAT_channel, resampleSquares, pixelRes_XY)
 imageData = bfopen(image_fname);
 rawImageSequence = imageData{1,1};
 CHATsequence_raw = rawImageSequence(CHAT_channel:Nchannels:end,1);
 
 Nframes = length(CHATsequence_raw);
 [pixX, pixY] = size(CHATsequence_raw{1});
+resampleFactor = pixX / resampleSquares;
 voxelsX = round(pixX/resampleFactor);
 voxelsY = round(pixY/resampleFactor);
 CHATsequence = zeros(voxelsX, voxelsY, Nframes);
