@@ -54,11 +54,21 @@ classdef CellMorphologyGUI < handle
                 'FontSize', 12);
             %right
             obj.handles.L_plotsPanel = uipanel('Parent', L_right);
+            
+            obj.handles.statsTable = uitable('Parent', L_right, ...
+                'Units',    'pixels', ...
+                'FontSize', 12, ...
+                'ColumnName', {'Property', 'Value'}, ...
+                'RowName', [], ...
+                'ColumnEditable', logical([0 0]), ...
+                'Data', cell(5,2), ...
+                'TooltipString', 'table of properties for currently selected node');
+            
             L_plotControlsPanel = uiextras.BoxPanel('Parent', L_right, ...
                 'Title', 'Plot controls', ...
                 'FontSize', 12);
             
-            %set layput for left and right
+            %set layout for left and right
             set(L_left, ...
                 'Units', 'normalized', ...
                 'Position', [0 0 1 1], ...
@@ -70,7 +80,7 @@ classdef CellMorphologyGUI < handle
                 'Position', [0 0 1 1], ...
                 'Padding', 5, ...
                 'Spacing', 10, ...
-                'Heights', [-4 -1]);
+                'Heights', [-3 -1 -1]);
             
             %Cells table
             obj.handles.cellsTable = uitable('Parent', obj.handles.L_cellsTablePanel, ...
@@ -171,6 +181,12 @@ classdef CellMorphologyGUI < handle
                     obj.handles.cellsTable.set('ColumnWidth', num2cell(panelWidth.*[0.2 0.2 0.05 0.05 0.05 0.05 0.37]));
                 end
             end
+            if isfield(obj.handles, 'statsTable')
+                temp = obj.handles.statsTable.get('position');
+                temp(3) = panelWidth;
+                obj.handles.statsTable.set('position', temp);
+                obj.handles.statsTable.set('ColumnWidth', num2cell(panelWidth.*[0.45 0.45]));
+            end
         end
         
         function loadCells(obj)
@@ -253,9 +269,37 @@ classdef CellMorphologyGUI < handle
         end
         
         function updateDataTable(obj)
-            
+            tableData = obj.handles.cellsTable.get('Data');
+            L = length(obj.selectedRows);
+            %clear previous stats from table
+            statsData = {};
+            set(obj.handles.statsTable, 'Data', statsData); 
+            %add new stats
+            if L==1 %single selection
+                curName = tableData{obj.selectedRows(1), 1};
+                curDir = [obj.imageRoot_confocal filesep curName filesep];
+                morphology_fname = [curName '_morphologyData.mat'];
+                %load data
+                load([curDir morphology_fname], 'outputStruct');
+                fnames = fieldnames(outputStruct);
+                Nfields = length(fnames);
+                z=1;
+                
+                for j=1:Nfields
+                    curVal = outputStruct.(fnames{j});
+                    if isscalar(curVal)
+                        statsData{z,1} = fnames{j};
+                        statsData{z,2} = curVal;
+                        z=z+1;
+                    end
+                end
+                set(obj.handles.statsTable, 'Data', statsData);                
+            else
+               %multiple selection: what do we do here?
+               
+            end
         end
-        
+                
         function updatePlots(obj)
             tableData = obj.handles.cellsTable.get('Data');
             %clear plots
@@ -337,14 +381,17 @@ classdef CellMorphologyGUI < handle
                     end
  
                     if isempty(outputStruct.ON_OFF_division); %monostratified
-                        scatter(obj.handles.dend_ax(i), outputStruct.allXYpos(:,1), outputStruct.allXYpos(:,2), 'kx');
+                        scatter(obj.handles.dend_ax(i), outputStruct.allXYpos(:,1), outputStruct.allXYpos(:,2), 'k.');
+                        hold(obj.handles.dend_ax(i), 'on');
+                        plot(obj.handles.dend_ax(i), outputStruct.allXYpos(outputStruct.boundaryPoints,1), outputStruct.allXYpos(outputStruct.boundaryPoints,2), 'k-');
                     else  %bistratified
                         ON_ind = find(outputStruct.allZpos<=outputStruct.ON_OFF_division);
                         OFF_ind = find(outputStruct.allZpos>outputStruct.ON_OFF_division);
-                        scatter(obj.handles.dend_ax(i), outputStruct.allXYpos(ON_ind,1), outputStruct.allXYpos(ON_ind,2), 'gx')
+                        scatter(obj.handles.dend_ax(i), outputStruct.allXYpos(ON_ind,1), outputStruct.allXYpos(ON_ind,2), 'g.')
                         hold(obj.handles.dend_ax(i), 'on');
-                        scatter(obj.handles.dend_ax(i), outputStruct.allXYpos(OFF_ind,1), outputStruct.allXYpos(OFF_ind,2), 'rx')
-                        %hold(obj.handles.dend_ax(i), 'off');
+                        plot(obj.handles.dend_ax(i), outputStruct.allXYpos(ON_ind(outputStruct.boundaryPoints_ON),1), outputStruct.allXYpos(ON_ind(outputStruct.boundaryPoints_ON),2), 'g-');
+                        scatter(obj.handles.dend_ax(i), outputStruct.allXYpos(OFF_ind,1), outputStruct.allXYpos(OFF_ind,2), 'r.')
+                        plot(obj.handles.dend_ax(i), outputStruct.allXYpos(OFF_ind(outputStruct.boundaryPoints_OFF),1), outputStruct.allXYpos(OFF_ind(outputStruct.boundaryPoints_OFF),2), 'r-');
                     end
                     axis(obj.handles.dend_ax(i), 'equal');
                     if L==1
@@ -354,6 +401,7 @@ classdef CellMorphologyGUI < handle
                     else
                         title(obj.handles.dend_ax(i), curName);
                     end
+                    hold(obj.handles.dend_ax(i), 'off');
                 else %not analyzed, so do nothing
                     
                 end
@@ -378,6 +426,7 @@ classdef CellMorphologyGUI < handle
         
         function cellSelection(obj, eventData)
             obj.selectedRows = eventData.Indices(:, 1);
+            obj.updateDataTable();
             obj.updatePlots();
         end
         

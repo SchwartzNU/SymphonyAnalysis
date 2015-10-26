@@ -66,10 +66,34 @@ if ~exist('ON_OFF_division', 'var')
 end
 subplot(1, 2, 2);
 if isempty(ON_OFF_division); %monostratified
-    scatter(allXYpos(:,1), allXYpos(:,2), 'kx');
+    %find boundary
+    [boundaryPoints, polygonArea] = boundary(allXYpos(:,1), allXYpos(:,2), 1);
+    [~, polygonArea_convex] = boundary(allXYpos(:,1), allXYpos(:,2), 0);
+    outputStruct.polygonArea = polygonArea;
+    outputStruct.boundaryPoints = boundaryPoints;
+    outputStruct.convexityIndex = polygonArea_convex ./ polygonArea;        
+    %plot
+    scatter(allXYpos(:,1), allXYpos(:,2), 'kx');    
+    xlabel('microns');
+    ylabel('microns');
 else  %bistratified
     ON_ind = find(allZpos<=ON_OFF_division);
     OFF_ind = find(allZpos>ON_OFF_division);
+    %find boundary ON
+    [boundaryPoints, polygonArea] = boundary(allXYpos(ON_ind,1), allXYpos(ON_ind,2), 1);
+    [~, polygonArea_convex] = boundary(allXYpos(ON_ind,1), allXYpos(ON_ind,2), 0);
+    outputStruct.polygonArea_ON = polygonArea;
+    outputStruct.boundaryPoints_ON = boundaryPoints;
+    outputStruct.convexityIndex_ON = polygonArea_convex ./ polygonArea;   
+    %find boundary OFF
+    [boundaryPoints, polygonArea] = boundary(allXYpos(OFF_ind,1), allXYpos(OFF_ind,2), 1);
+    [~, polygonArea_convex] = boundary(allXYpos(OFF_ind,1), allXYpos(OFF_ind,2), 0);
+    outputStruct.polygonArea_OFF = polygonArea;
+    outputStruct.boundaryPoints_OFF = boundaryPoints;
+    outputStruct.convexityIndex_OFF = polygonArea_convex ./ polygonArea;  
+    %ON_OFF stats
+    outputStruct.ON_OFF_areaIndex = (outputStruct.polygonArea_ON - outputStruct.polygonArea_OFF) ./ (outputStruct.polygonArea_ON + outputStruct.polygonArea_OFF);
+    %plot
     scatter(allXYpos(ON_ind,1), allXYpos(ON_ind,2), 'gx')
     hold on;
     scatter(allXYpos(OFF_ind,1), allXYpos(OFF_ind,2), 'rx')
@@ -77,7 +101,7 @@ else  %bistratified
     xlabel('microns');
     ylabel('microns');
 end
-
+disp('done');
 outputStruct.ON_OFF_division = ON_OFF_division;
 outputStruct.strat_x = strat_x;
 outputStruct.strat_y = strat_y;
