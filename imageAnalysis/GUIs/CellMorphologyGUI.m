@@ -470,7 +470,30 @@ classdef CellMorphologyGUI < handle
         end
         
         function exportStrat(obj)
-            
+            global IGOR_H5_folder
+            tableData = obj.handles.cellsTable.get('Data');
+            L = length(obj.selectedRows);
+            for i=1:L
+                curName = tableData{obj.selectedRows(i), 1};
+                curDir = [obj.imageRoot_confocal filesep curName filesep];
+                morphology_fname = [curName '_morphologyData.mat'];
+                %load data
+                load([curDir morphology_fname], 'outputStruct');
+                %make output struct
+                s.strat_x = outputStruct.strat_x;
+                s.strat_y = outputStruct.strat_y;
+                s.strat_y_norm = outputStruct.strat_y_norm;
+                if i==1
+                    %get filename
+                    [h5name,pathname] = uiputfile('*.h5', 'Specify hdf5 export file for Igor', IGOR_H5_folder);            
+                end
+                if ~isempty(h5name)
+                    %do export
+                    datasetName = ['c' curName];
+                    exportStructToHDF5(s, fullfile(pathname, h5name), datasetName);
+                    %pause(1);
+                end
+            end
         end
         
         function exportDataTable(obj)
