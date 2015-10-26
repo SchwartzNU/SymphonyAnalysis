@@ -1,5 +1,5 @@
 function [nodes] = localLSregistration(nodes,topInputPos,botInputPos,topOutputPos,botOutputPos)
-window=8; % neighborhood size for the LS registration
+window=16; % neighborhood size for the LS registration
 maxOrder=2; % maximum multinomial order in xy
 % aX^2+bXY+cY^2+dX+eY+f+gZX^2+hXYZ+iZY^2+jXZ+kYZ+lZ -> at least 12 equations needed
 for kk = 1:size(nodes,1)
