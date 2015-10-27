@@ -9,6 +9,7 @@ resampleFactor = pixX / resampleSquares;
 voxelsX = round(pixX/resampleFactor);
 voxelsY = round(pixY/resampleFactor);
 CHATsequence = zeros(voxelsX, voxelsY, Nframes);
+keyboard;
 for i=1:Nframes
     CHATsequence(:,:,i) = imresize(CHATsequence_raw{i}, 1/resampleFactor);
 end
@@ -82,7 +83,7 @@ for i=1:voxelsX
 end
 
 %format into x,y,z, values
-[Xvals, Yvals] = meshgrid(resampleFactor * [1:voxelsX] - resampleFactor/2, resampleFactor * [1:voxelsY] - resampleFactor/2);
+[Xvals, Yvals] = meshgrid(resampleFactor * [1:voxelsX] * pixelRes_XY, resampleFactor * [1:voxelsY] * pixelRes_XY);
 X_flat = reshape(Xvals, [1, (pixX./resampleFactor)^2]);
 Y_flat = reshape(Yvals, [1, (pixX./resampleFactor)^2]);
 Z_flat_ON = reshape(squeeze(CHAT_pos(:,:,1)), [1, (pixX./resampleFactor)^2]);

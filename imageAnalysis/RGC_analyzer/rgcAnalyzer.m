@@ -15,7 +15,7 @@ else
     save(prefsName, 'voxelRes_XY', 'voxelRes_Z', 'Nchannels', 'CHAT_channel');
 end
 
-conformalJump = 10;
+conformalJump = 1;
 Nbins = 51;
 % read the arbor trace file - add 1 to node positions because FIJI format for arbor tracing starts from 0
 [nodes,edges,radii,nodeTypes,abort] = readArborTrace(arborFileName,[-1 0 1 2 3 4 5]); 
@@ -24,12 +24,31 @@ arborBoundaries(1) = min(nodes(:,1)); arborBoundaries(2) = max(nodes(:,1));
 arborBoundaries(3) = min(nodes(:,2)); arborBoundaries(4) = max(nodes(:,2));
 
 if exist(CHATsurfName, 'file')
-    load(CHATsurfName);
+   load(CHATsurfName);
 else
     resampleSquares = 16;
     [X_flat, Y_flat, Z_flat_ON, Z_flat_OFF] = CHAT_analyzer(image_fname, Nchannels, CHAT_channel, resampleSquares, voxelRes_XY);
     save(CHATsurfName, 'X_flat', 'Y_flat', 'Z_flat_ON', 'Z_flat_OFF');
 end
+
+%fix mixed up X-Y dimensions
+% L = length(Z_flat_ON);
+% Z_ON = reshape(Z_flat_ON, [sqrt(L), sqrt(L)]);
+% Z_ON = fliplr(Z_ON);
+% Z_flat_ON = reshape(Z_ON, [1, L]);
+% 
+% Z_OFF = reshape(Z_flat_OFF, [sqrt(L), sqrt(L)]);
+% Z_OFF = fliplr(Z_OFF);
+% Z_flat_OFF = reshape(Z_OFF, [1, L]);
+
+% X = reshape(X_flat, [sqrt(L), sqrt(L)]);
+% X = X;
+% X_flat = reshape(X, [1, L]);
+% 
+% Y = reshape(Y_flat, [sqrt(L), sqrt(L)]);
+% Y = Y;
+% Y_flat = reshape(Y, [1, L]);
+
 
 thisVZminmesh = fitSurfaceToSACAnnotation_fromPoints(X_flat,Y_flat,Z_flat_ON);
 thisVZmaxmesh = fitSurfaceToSACAnnotation_fromPoints(X_flat,Y_flat,Z_flat_OFF);
@@ -39,6 +58,7 @@ thisVZmaxmesh = thisVZmaxmesh*voxelRes_Z;
 % find conformal maps of the ChAT surfaces onto the median plane
 surfaceMapping = calcWarpedSACsurfaces(thisVZminmesh,thisVZmaxmesh,arborBoundaries,conformalJump);
 warpedArbor = calcWarpedArbor(nodes,edges,radii,surfaceMapping);
+%keyboard;
 
 if warpedArbor.medVZmin > warpedArbor.medVZmax %chat band order reversed
     ON_chat_pos = warpedArbor.medVZmax;
