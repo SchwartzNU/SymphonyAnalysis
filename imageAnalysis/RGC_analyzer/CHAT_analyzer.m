@@ -9,7 +9,7 @@ resampleFactor = pixX / resampleSquares;
 voxelsX = round(pixX/resampleFactor);
 voxelsY = round(pixY/resampleFactor);
 CHATsequence = zeros(voxelsX, voxelsY, Nframes);
-keyboard;
+
 for i=1:Nframes
     CHATsequence(:,:,i) = imresize(CHATsequence_raw{i}, 1/resampleFactor);
 end
