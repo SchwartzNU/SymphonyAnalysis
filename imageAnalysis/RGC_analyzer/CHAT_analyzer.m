@@ -10,34 +10,49 @@ voxelsX = round(pixX/resampleFactor);
 voxelsY = round(pixY/resampleFactor);
 CHATsequence = zeros(voxelsX, voxelsY, Nframes);
 
+CHATsequence_raw_mat = zeros(pixX, pixY, Nframes);
 for i=1:Nframes
     CHATsequence(:,:,i) = imresize(CHATsequence_raw{i}, 1/resampleFactor);
+    CHATsequence_raw_mat(:,:,i) = CHATsequence_raw{i};
 end
+CHAT_proj_full = squeeze(max(CHATsequence_raw_mat, [], 3));
+figure;
+imagesc(CHAT_proj_full);
+projImageAx = gca;
+clear('CHATsequence_raw_mat', 'CHATsequence_raw');
 
 CHAT_pos = ones(voxelsX, voxelsY, 2)*nan;
+
 figure;
+peaksAx = gca;
+pixStepX = pixX / voxelsX;
+pixStepY = pixY / voxelsY;
 for i=1:voxelsX
-    i
     for j=1:voxelsY
-        j
+        r = rectangle('Parent', projImageAx, 'Position', [(i-1)*pixStepX, (j-1)*pixStepY, pixStepX, pixStepY], 'EdgeColor', 'r');
+        
         %whichRect = whichRectangle(i, j, x, y, w, h, resampleFactor, pixelRes_XY);
         repeatPeakPick = true;
         while repeatPeakPick
             curProj = squeeze(CHATsequence(i,j,:));
             curProj = smooth(curProj, 9);
-            hold('off');
-            plot(curProj);
+            hold(peaksAx, 'off');
+            plot(peaksAx, curProj);
             ylabel('ChAT flourescence');
             xlabel('z-position (frame)')
             [px, ~] = ginput(1);
-            hold('on');
+            hold(peaksAx, 'on');
             pos1 = px;
             px = round(px);
-            scatter(px, curProj(px), 'rx');
+            if px>0
+                scatter(peaksAx, px, curProj(px), 'rx');
+            end
             [px, ~] = ginput(1);
             pos2 = px;
             px = round(px);
-            scatter(px, curProj(px), 'rx');
+            if px>0
+                scatter(peaksAx, px, curProj(px), 'rx');
+            end
             
             key = input('ok?: [y=return, skip=s, redo=r]', 's');
             switch key
@@ -45,17 +60,19 @@ for i=1:voxelsX
                     repeatPeakPick = true;
                 case 's'
                     repeatPeakPick = false;
+                    set(r, 'EdgeColor', 'g');
                 otherwise
                     chatFrames = sort([pos1, pos2]);
                     CHAT_pos(i,j,1) = chatFrames(1);
                     CHAT_pos(i,j,2) = chatFrames(2);
                     repeatPeakPick = false;
+                    text((i-1)*pixStepX+1, (j-1)*pixStepY+pixStepY/2, [num2str(round(chatFrames(1))), ', ' num2str(round(chatFrames(2)))], 'Parent', projImageAx)
+                    set(r, 'EdgeColor', 'k');
             end
         end
         %curProj = curProj' - min(curProj);
         %[x_fit, proj_fit] = CHAT_fitter(curProj, 2); %fit 2 peaks
         %keyboard;
-        
     end
 end
 
