@@ -1,7 +1,7 @@
 classdef SpotsMultiSizeAnalysis < AnalysisTree
     properties
         StartTime = 0;
-        EndTime = 1000;
+        EndTime = 0;
     end
     
     methods
