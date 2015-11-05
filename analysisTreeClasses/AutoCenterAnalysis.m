@@ -47,7 +47,7 @@ classdef AutoCenterAnalysis < AnalysisTree
     
     methods(Static)
         
-        function plotAnalysis(node, ~)
+        function plotSpatial(node, ~)
             
             nodeData = node.get(1);
                         
@@ -56,10 +56,24 @@ classdef AutoCenterAnalysis < AnalysisTree
                 
                 outputData = nodeData.outputData.value;
                 
-                plotShapeData(outputData);
+                plotShapeData(outputData, 'spatial');
 
             end
         end
+        
+        function plotSubunit(node, ~)
+            
+            nodeData = node.get(1);
+                        
+            if isfield(nodeData.outputData, 'value')
+                figure(12);
+                
+                outputData = nodeData.outputData.value;
+                
+                plotShapeData(outputData, 'subunit');
+
+            end
+        end        
     end
 end
 

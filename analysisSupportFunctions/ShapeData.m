@@ -1,4 +1,4 @@
-classdef ShapeData
+classdef ShapeData < handle
     
     properties
         ampMode
@@ -12,6 +12,7 @@ classdef ShapeData
         spotTotalTime
         spotOnTime
         numSpots
+        totalNumSpots % including values and repeats
         
         shapeDataMatrix
         shapeDataColumns
@@ -40,6 +41,7 @@ classdef ShapeData
             end
             
             % process shape data from epoch
+            
             obj.shapeDataColumns = containers.Map;
             if ~isnan(sdc)
                 txt = strsplit(char(sdc), ',');
@@ -57,56 +59,46 @@ classdef ShapeData
                 shapeData = horzcat(shapeData, ones(length(shapeData),1));
             end
             obj.shapeDataMatrix = shapeData;
+            obj.totalNumSpots = size(obj.shapeDataMatrix,1);
             
             
             % process actual response or spikes from epoch
             if strcmp(runmode, 'offline')
-            if strcmp(obj.ampMode, 'Cell attached')
-                data.spikes = epoch.getSpikes();
-                data.response = [];
+                if strcmp(obj.ampMode, 'Cell attached')
+                    obj.spikes = epoch.getSpikes();
+                    obj.processSpikes();
+                    obj.response = [];
+                else
+                    disp('not handling whole cell offline response')
+                    obj.spikes = [];
+                    obj.response = [];
+                end
             else
-                % whole cell
-                data.response = epoch.response();
-                data.spikes = [];
+                obj.spikes = [];
+                obj.response = [];                
             end
-            
+        end
+        
+        function setResponse(obj, response)
+            obj.response = response;
+        end
+        
+        function setSpikes(obj, spikes)
+            obj.spikes = spikes;
+            obj.processSpikes()
+        end
+    
+        function processSpikes(obj)
+            spikeRate_orig = zeros(round((obj.numSpots + 1) * obj.spotTotalTime * 10000), 1);
+            spikeRate_orig(obj.spikes) = 1.0;
+            spikeRate_f = filtfilt(hann(obj.sampleRate / 10), 1, spikeRate_orig); % 10 ms (100 samples) window filter
+            obj.spikeRate = resample(spikeRate_f, obj.sampleRate, 10000);
+            obj.t = (0:(length(obj.spikeRate)-1)) / obj.sampleRate;
+        end
     end
-    
-end
-    
-    
-
-
-
-
-
-% below might error
-if strcmp(data.ampMode, 'Cell attached')
-    data.spikes = epoch.getSpikes();
-    data.response = [];
-else
-    % whole cell
-    data.response = epoch.response();
-    data.spikes = [];
 end
 
 
-function processSpikes()
-    spikeRate_orig = zeros(round((data.numSpots + 1) * data.spotTotalTime * 10000), 1);
-    spikeRate_orig(data.spikes) = 1.0;
-    spikeRate_f = filtfilt(hann(data.sampleRate / 10), 1, spikeRate_orig); % 10 ms (100 samples) window filter
-    spikeRate = resample(spikeRate_f, data.sampleRate, 10000);
-    t = (0:(length(spikeRate)-1)) / data.sampleRate;
-    data.spikeRate = spikeRate;
-    data.t = t;
-end
-
-if ~isempty(data.spikes)
-    processSpikes
-else
-    data.spikeRate = [];
-    data.t = [];
-end
 
 % signalData = {};
 % if strcmp(responsemode, 'ca')
@@ -131,8 +123,3 @@ end
 %         signalData = varargin{1};
 %     end
 % end
-
-
-
-
-end

@@ -1,10 +1,11 @@
 function [] = makeTempFolderForExperiment(expName)
 global ANALYSIS_FOLDER;
-eval(['!rm -rf ' ANALYSIS_FOLDER 'Projects' filesep 'tempProject']);
-eval(['!mkdir ' ANALYSIS_FOLDER 'Projects' filesep 'tempProject']);
+projectFolder = [ANALYSIS_FOLDER 'Projects' filesep expName '_temp'];
+eval(['!rm -rf ' projectFolder]);
+eval(['!mkdir ' projectFolder]);
 cellNames = ls([ANALYSIS_FOLDER 'cellData' filesep expName 'c*.mat']);
 cellNames = strsplit(cellNames); %this will be different on windows - see doc ls
-fid = fopen([ANALYSIS_FOLDER 'Projects' filesep 'tempProject' filesep 'cellNames.txt'], 'w');
+fid = fopen([projectFolder filesep 'cellNames.txt'], 'w');
 
 cellBaseNames = cell(length(cellNames), 1);
 for i=1:length(cellNames)      
