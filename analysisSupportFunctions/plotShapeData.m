@@ -68,9 +68,7 @@ if strcmp(mode,'spatial')
     set(p,'EdgeColor','none');
 
     title(timeOffset)
-end
-
-if strcmp(mode, 'subunit')
+elseif strcmp(mode, 'subunit')
 
     %% Plot figure with subunit models
 %     figure(12);clf;
@@ -93,6 +91,8 @@ if strcmp(mode, 'subunit')
         rate = responses(:,2);
         plot(intensity, rate)
     end
+else
+    disp('incorrect plot type')
 end
 
 

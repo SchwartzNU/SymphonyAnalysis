@@ -43,7 +43,7 @@ classdef ShapeData < handle
             % process shape data from epoch
             
             obj.shapeDataColumns = containers.Map;
-            if ~isnan(sdc)
+            if isa(sdc,'System.String')
                 txt = strsplit(char(sdc), ',');
                 obj.shapeDataColumns('intensity') = find(not(cellfun('isempty', strfind(txt, 'intensity'))));
                 obj.shapeDataColumns('X') = find(not(cellfun('isempty', strfind(txt, 'X'))));

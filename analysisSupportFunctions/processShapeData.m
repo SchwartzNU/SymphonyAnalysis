@@ -1,9 +1,5 @@
 function od = processShapeData(epochData)
-% runmode: 'online' or 'offline'
-% responsemode: 'wc' or 'ca'
-% epochData: cell array of epochs (format varies by runmode)
-% signalData: include signals from cell
-
+% epochData: cell array of ShapeData
 
 od = struct();
 
@@ -100,7 +96,7 @@ centerOfMassXY = [sum(all_positions(:,1) .* maxIntensityResponses)/sum(maxIntens
                     sum(all_positions(:,2) .* maxIntensityResponses)/sum(maxIntensityResponses)];
 
 % find the farthest point above a threshold level for autocenter refinement
-positions_rel = [all_positions(:,1) - centerOfMassXY(1), all_positions(:,2) - centerOfMassXY(2)];
+positions_rel = bsxfun(@plus, all_positions, -1*centerOfMassXY);
 distances = sqrt(sum(positions_rel .^ 2, 2));
 prz = [positions_rel, distances, maxIntensityResponses];
 prz = sortrows(prz, 3); % sort on distances
