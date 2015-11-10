@@ -102,4 +102,3 @@ if ~isempty(fname)
 end
 %exportStructToHDF5(s,[fname '.h5'],'FigData',options);
 %movefile([fname '.h5'], [basedir fname '.h5']);
-

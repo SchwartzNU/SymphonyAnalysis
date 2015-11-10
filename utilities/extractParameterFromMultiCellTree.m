@@ -16,8 +16,13 @@ for i=1:L
         curNode = sT.get(leafNodes(1));
         paramStruct = curNode.(paramName);
         paramType = paramStruct.type;
+        paramUnits = paramStruct.units;
         if strcmp(paramType, 'byEpoch')
-            paramName = [paramName '_mean'];
+            if strcmp(paramUnits, 's')
+                paramName = [paramName '_median'];
+            else
+                paramName = [paramName '_mean'];
+            end
         else
             paramName = [paramName '_value'];
         end

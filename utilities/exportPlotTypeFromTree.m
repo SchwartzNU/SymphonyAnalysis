@@ -1,5 +1,6 @@
 function [] = exportPlotTypeFromTree(T, fname, plotterName, analysisClass)
 global IGOR_H5_folder;
+IGOR_H5_folder = './';
 nodes = getTreeLevel_new(T, 'class', analysisClass);
 L = length(nodes);
 h = figure;
@@ -16,7 +17,8 @@ for i=1:L
     temp = temp{1};
     datasetName = temp{2};
     try
-        %disp([analysisClass '.' plotterName '(curNode, cellData);']);
+        disp([analysisClass '.' plotterName '(curNode, cellData);']);
+        %pause;
         eval([analysisClass '.' plotterName '(curNode, cellData);']);        
         makeAxisStruct(ax, IGOR_H5_folder, fname, [cellName '_' datasetName])
     catch
