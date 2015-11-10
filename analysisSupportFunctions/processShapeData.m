@@ -98,11 +98,12 @@ centerOfMassXY = [sum(all_positions(:,1) .* maxIntensityResponses)/sum(maxIntens
 % find the farthest point above a threshold level for autocenter refinement
 positions_rel = bsxfun(@plus, all_positions, -1*centerOfMassXY);
 distances = sqrt(sum(positions_rel .^ 2, 2));
-prz = [positions_rel, distances, maxIntensityResponses];
-prz = sortrows(prz, 3); % sort on distances
+pos_dist_intensity = [positions_rel, distances, maxIntensityResponses];
+pos_dist_intensity = sortrows(pos_dist_intensity, 3); % sort on distances
+
+%TODO: figure out the right threshold for the distance refinement
 % max_response = max(simpleResponses);
-% prz
-farthestResponseDistance = prz(find(prz(:,4) > 0, 1, 'last'), 3);
+farthestResponseDistance = pos_dist_intensity(find(pos_dist_intensity(:,4) > 0, 1, 'last'), 3);
 % figure(12)
 % plot(prz(:,3), prz(:,4))
 
