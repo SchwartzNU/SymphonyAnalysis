@@ -60,7 +60,19 @@ surfaceMapping = calcWarpedSACsurfaces(thisVZminmesh,thisVZmaxmesh,arborBoundari
 warpedArbor = calcWarpedArbor(nodes,edges,radii,surfaceMapping);
 %keyboard;
 
-if warpedArbor.medVZmin > warpedArbor.medVZmax %chat band order reversed
+%if warpedArbor.medVZmin > warpedArbor.medVZmax %chat band order reversed
+
+if ~exist('imageInverted', 'var')
+     temp = input('Is the image inverted? [y|n]', 's');
+     if strcmp(temp, 'y')
+         imageInverted = true;
+     else
+         imageInverted = false;
+     end
+     save(prefsName, 'imageInverted', '-append');
+end
+   
+if imageInverted
     ON_chat_pos = warpedArbor.medVZmax;
     OFF_chat_pos = warpedArbor.medVZmin;
 else

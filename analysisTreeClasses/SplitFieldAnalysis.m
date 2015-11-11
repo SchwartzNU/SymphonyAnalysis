@@ -76,10 +76,7 @@ classdef SplitFieldAnalysis < AnalysisTree
             
         end
         
-    end
-    
-    
-    
+    end    
     
     methods(Static)
         function plot_positionVsONSETspikes(node, cellData)
