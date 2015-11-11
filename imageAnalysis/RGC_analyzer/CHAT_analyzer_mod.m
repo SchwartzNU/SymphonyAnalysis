@@ -2,6 +2,7 @@
 
 % load chat_analyzer_temp.mat
 
+
 pixelRes_Z = 0.2;
 resampleSquares = 16;
 
@@ -51,6 +52,7 @@ end
 CHAT_pos = ones(voxelsX, voxelsY, 2)*nan;
 
 figure(12);
+clf;
 projAx = gca;
 pixStepX = pixX / voxelsX;
 pixStepY = pixY / voxelsY;
@@ -70,13 +72,13 @@ while 1
     % pick points loop
     %         repeatPeakPick = true;
     %         while repeatPeakPick
-    curProj = squeeze(CHATsequence(i,j,:));
+%     curProj = squeeze(CHATsequence(i,j,:));
 %     curProj = smooth(curProj, 5);
     
-    curProj_d1 = smooth(diff(curProj),7);
+%     curProj_d1 = smooth(diff(curProj),7);
 %     curProj_d2 = smooth(diff(curProj_d1),5);
     
-    curProj = curProj ./ max(curProj);
+%     curProj = curProj ./ max(curProj);
 %     curProj_d1 = curProj_d1 ./ max(abs(curProj_d1));
 %     curProj_d2 = curProj_d2 ./ max(abs(curProj_d2));
     
@@ -86,55 +88,53 @@ while 1
     %             plot(projAx, smooth(curProj_d1,3), 'LineWidth',3);
 %     plot(projAx, 2:(length(curProj)-1), curProj_d2, 'LineWidth',1);
     
-  
-    
     % add image statistics curves per frame
     i_ = (i-1) * resampleFactor;
     j_ = (j-1) * resampleFactor;
     
-    variance_by_frame = zeros(Nframes, 1);
-    empty_fraction_by_frame = zeros(Nframes, 1);
-    max_by_frame = zeros(Nframes, 1);
-    mean_by_frame = zeros(Nframes, 1);
+    stats = {'projection','empty fraction','variance','maximum','mean'};
+    proj_by_stat_frame = zeros(length(stats), Nframes);
+    
+    proj_by_stat_frame(1,:) = squeeze(CHATsequence(i,j,:));
+    
     for z = 1:Nframes
         sliceArea = squeeze(CHATsequence_raw_mat(i_+(1:resampleFactor),j_+(1:resampleFactor),z));                
-        empty_fraction_by_frame(z) = sum(sliceArea(:) < 0.1 * max(sliceArea(:))) / length(sliceArea(:));
-        variance_by_frame(z) = var(sliceArea(:))./length(sliceArea(:));
-        max_by_frame(z) = max(sliceArea(:));
-        mean_by_frame(z) = mean(sliceArea(:));
+        proj_by_stat_frame(2,z) = sum(sliceArea(:) < 0.1 * max(sliceArea(:))) / length(sliceArea(:));
+        proj_by_stat_frame(3,z) = var(sliceArea(:))./length(sliceArea(:));
+        proj_by_stat_frame(4,z) = max(sliceArea(:));
+        proj_by_stat_frame(5,z) = mean(sliceArea(:));
     end
     smooth_order = 7;
-    empty_fraction_by_frame = smooth(empty_fraction_by_frame ./ max(abs(empty_fraction_by_frame)), smooth_order);
-    variance_by_frame = smooth(variance_by_frame ./ max(abs(variance_by_frame)), smooth_order);
-    max_by_frame = smooth(max_by_frame ./ max(abs(max_by_frame)), smooth_order);
-    mean_by_frame = smooth(mean_by_frame ./ max(abs(mean_by_frame)), smooth_order);
+    for s = 1:length(stats)
+        proj_by_stat_frame(s,:) = proj_by_stat_frame(s,:) ./ max(abs(proj_by_stat_frame(s,:)));
+        proj_by_stat_frame(s,:) = smooth(proj_by_stat_frame(s,:), smooth_order);
+    end
     
-    % plot image statistics
+    % plot image statistics    
+    hold(projAx, 'off');
+    for s=1:length(stats)
+        plot(projAx, proj_by_stat_frame(s,:), 'LineWidth', 1);
+        hold(projAx, 'on');
+    end
+    
     
     ylabel('ChAT flourescence');
     xlabel('z-position (frame)')
     
     % display detected peaks
     % find peaks in profile
-    [peakHeight, peakLoc] = findpeaks(curProj);
+%     [peakHeight, peakLoc] = findpeaks(curProj);
     
     % find local minima of derivative 2
-    [peakHeight1, peakLoc1] = findpeaks(-1*curProj_d2);
-    peakHeight1 = -1 * peakHeight1;
-    for p=1:length(peakHeight1)
-        if peakHeight1(p) < 0
-            peakHeight = [peakHeight; curProj(peakLoc1(p))];
-            peakLoc = [peakLoc; peakLoc1(p)+1];
-        end
-    end
-    
-    plot(projAx, curProj, 'LineWidth',1);
-    hold(projAx, 'on');    
-    plot(projAx, empty_fraction_by_frame, 'LineWidth',1);
-    plot(projAx, variance_by_frame, 'LineWidth',1);
-    plot(projAx, max_by_frame, 'LineWidth',1);
-    plot(projAx, mean_by_frame, 'LineWidth',1);
-    
+%     [peakHeight1, peakLoc1] = findpeaks(-1*curProj_d2);
+%     peakHeight1 = -1 * peakHeight1;
+%     for p=1:length(peakHeight1)
+%         if peakHeight1(p) < 0
+%             peakHeight = [peakHeight; curProj(peakLoc1(p))];
+%             peakLoc = [peakLoc; peakLoc1(p)+1];
+%         end
+%     end
+        
     line([0,Nframes],[0,0], 'Parent',projAx)
 
     
@@ -199,7 +199,7 @@ while 1
         
         for p = 1:size(peakLoc,1)
             % vertical line on main plot
-            line([peakLoc(p), peakLoc(p)], [0, peakHeight(p)], 'Parent', projAx)
+%             line([peakLoc(p), peakLoc(p)], [0, 1], 'Parent', projAx)
             
             % if about 5um from the last peak, add a marker line
 %             if p > 1
