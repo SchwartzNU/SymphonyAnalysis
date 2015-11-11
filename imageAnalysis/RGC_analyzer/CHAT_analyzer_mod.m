@@ -4,7 +4,7 @@
 
 
 pixelRes_Z = 0.2;
-resampleSquares = 16;
+resampleSquares = 8;
 
 Nframes = length(CHATsequence_raw);
 [pixX, pixY] = size(CHATsequence_raw{1});
@@ -21,11 +21,12 @@ end
 
 
 % full projection figure
-% CHAT_proj_full = squeeze(max(CHATsequence_raw_mat, [], 3));
-% figure(11);
-% imagesc(CHAT_proj_full);
-% projImageAx = gca;
-%
+CHAT_proj_full = squeeze(max(CHATsequence_raw_mat, [], 3));
+figure(11);
+imagesc(CHAT_proj_full);
+projImageAx = gca;
+r = [];
+
 
 % clear('CHATsequence_raw_mat', 'CHATsequence_raw');
 
@@ -56,6 +57,10 @@ clf;
 projAx = gca;
 pixStepX = pixX / voxelsX;
 pixStepY = pixY / voxelsY;
+% 
+% figure(15);
+% clf;
+% interestAx = gca;
 
 while 1
     i = randi(voxelsX);
@@ -63,7 +68,8 @@ while 1
     
     
     % display current square on projection image
-    %         r = rectangle('Parent', projImageAx, 'Position', [(i-1)*pixStepX, (j-1)*pixStepY, pixStepX, pixStepY], 'EdgeColor', 'r');
+    set(r, 'EdgeColor', 'k');
+    r = rectangle('Parent', projImageAx, 'Position', [(i-1)*pixStepX, (j-1)*pixStepY, pixStepX, pixStepY], 'EdgeColor', 'r');
     
     %whichRect = whichRectangle(i, j, x, y, w, h, resampleFactor, pixelRes_XY);
     
@@ -92,38 +98,89 @@ while 1
     i_ = (i-1) * resampleFactor;
     j_ = (j-1) * resampleFactor;
     
-    stats = {'projection','empty fraction','variance','maximum','mean'};
+    stats = {'variance','maximum','mean','median','far cov','near cov'};
     proj_by_stat_frame = zeros(length(stats), Nframes);
     
-    proj_by_stat_frame(1,:) = squeeze(CHATsequence(i,j,:));
+%     proj_by_stat_frame(1,:) = squeeze(CHATsequence(i,j,:));
     
+    
+    stack = mean(CHATsequence_raw_mat(i_+(1:resampleFactor),j_+(1:resampleFactor),:));
+    stackMean = mean(stack(:));
+    filledFraction = [];
     for z = 1:Nframes
-        sliceArea = squeeze(CHATsequence_raw_mat(i_+(1:resampleFactor),j_+(1:resampleFactor),z));                
-        proj_by_stat_frame(2,z) = sum(sliceArea(:) < 0.1 * max(sliceArea(:))) / length(sliceArea(:));
-        proj_by_stat_frame(3,z) = var(sliceArea(:))./length(sliceArea(:));
-        proj_by_stat_frame(4,z) = max(sliceArea(:));
-        proj_by_stat_frame(5,z) = mean(sliceArea(:));
-    end
-    smooth_order = 7;
-    for s = 1:length(stats)
-        proj_by_stat_frame(s,:) = proj_by_stat_frame(s,:) ./ max(abs(proj_by_stat_frame(s,:)));
-        proj_by_stat_frame(s,:) = smooth(proj_by_stat_frame(s,:), smooth_order);
+        sliceArea = squeeze(CHATsequence_raw_mat(i_+(1:resampleFactor),j_+(1:resampleFactor),z));
+        sliceArea = sliceArea(:) ./ stackMean;
+        filledFraction(z) = sum(sliceArea(:) > 0.1 * max(sliceArea(:))) / length(sliceArea(:));
+        proj_by_stat_frame(1,z) = var(sliceArea(:))./length(sliceArea(:));
+        proj_by_stat_frame(2,z) = max(sliceArea(:));
+        proj_by_stat_frame(3,z) = mean(sliceArea(:));
+        proj_by_stat_frame(4,z) = median(sliceArea(:));
+        
+        nearCovDist = 10;
+        if z > nearCovDist && z < (Nframes - nearCovDist)
+            lowerSlice = squeeze(CHATsequence_raw_mat(i_+(1:resampleFactor),j_+(1:resampleFactor), z-nearCovDist));
+            upperSlice = squeeze(CHATsequence_raw_mat(i_+(1:resampleFactor),j_+(1:resampleFactor), z+nearCovDist));
+            coLower = cov(sliceArea(:), lowerSlice(:));
+            coUpper = cov(sliceArea(:), upperSlice(:));
+            proj_by_stat_frame(5,z) = coLower(1,2) + coUpper(1,2);
+        end
+        
+        nearCovDist = 3;
+        if z > nearCovDist && z < (Nframes - nearCovDist)
+            lowerSlice = squeeze(CHATsequence_raw_mat(i_+(1:resampleFactor),j_+(1:resampleFactor), z-nearCovDist));
+            upperSlice = squeeze(CHATsequence_raw_mat(i_+(1:resampleFactor),j_+(1:resampleFactor), z+nearCovDist));
+            coLower = cov(sliceArea(:), lowerSlice(:));
+            coUpper = cov(sliceArea(:), upperSlice(:));
+            proj_by_stat_frame(6,z) = coLower(1,2) + coUpper(1,2);
+        end        
     end
     
+    % smooth and normalize the stats
+    smooth_order = 13;
+    for s = 1:length(stats)
+        proj_by_stat_frame(s,:) = smooth(proj_by_stat_frame(s,:), smooth_order);
+        proj_by_stat_frame(s,:) = proj_by_stat_frame(s,:) ./ max(abs(proj_by_stat_frame(s,:)));
+    end
+    
+   
     % plot image statistics    
     hold(projAx, 'off');
     for s=1:length(stats)
         plot(projAx, proj_by_stat_frame(s,:), 'LineWidth', 1);
         hold(projAx, 'on');
     end
+%     plot(projAx, filledFraction, 'LineWidth',3);
+    ylabel(projAx,'ChAT flourescence');
+    xlabel(projAx,'z-position (frame)')
     
+
+    % find interesting features of the stats
+    interest_by_stat_frame = zeros(size(proj_by_stat_frame));
+    for s = 1:length(stats)
+        interest_by_stat_frame(s,:) = find_projection_interest(proj_by_stat_frame(s,:));
+    end
+%     hold(interestAx, 'off');
+%     for s=1:length(stats)
+%         plot(interestAx, interest_by_stat_frame(s,:), 'LineWidth', 0.5);
+%         hold(interestAx, 'on');
+%     end
+    overallInterest = nanmean(interest_by_stat_frame, 1) .* filledFraction .* (filledFraction > 0.3);
+    overallInterest = overallInterest ./ max(overallInterest);
+    plot(projAx, overallInterest, 'LineWidth', 5);
     
-    ylabel('ChAT flourescence');
-    xlabel('z-position (frame)')
+    % look for peaks 4.8 um apart
+%     thickDetector = zeros(size(overallInterest));
+%     thickDetector(1:12) = gausswin(12);
+%     thickDetector(round(4.8 / pixelRes_Z)+6 + (-5:6)) = gausswin(12);
+%     detection = fliplr(conv(thickDetector, overallInterest, 'same'));
+%     plot(interestAx, detection./max(detection), 'LineWidth', 3);
+
     
     % display detected peaks
     % find peaks in profile
-%     [peakHeight, peakLoc] = findpeaks(curProj);
+    [peakHeight, peakLoc] = findpeaks(overallInterest);
+    peakLoc(peakHeight < 0.1) = [];
+    peakHeight(peakHeight < 0.1) = [];
     
     % find local minima of derivative 2
 %     [peakHeight1, peakLoc1] = findpeaks(-1*curProj_d2);
@@ -138,30 +195,30 @@ while 1
     line([0,Nframes],[0,0], 'Parent',projAx)
 
     
-    legend(projAx,'projection','empty fraction','variance','maximum','mean','Location','best');
+    legend(projAx,stats,'Location','best');
 
     %'1st derivative','2nd derivative',
     % select possible options as "peaks"
     
     % prune out peaks with low intensity
-    peaks = sortrows([peakHeight, peakLoc], 2);
-    peaks = peaks(peaks(:,1) > 0.3,:);
+%     peaks = sortrows([peakHeight, peakLoc], 2);
+%     peaks = peaks(peaks(:,1) > 0.3,:);
     
     % combine similar peaks
-    minDiff = 0;
-    while length(peaks) > 2
-        [minDiff, minDiffInd] = min(diff(peaks(:,2)));
-        if minDiff < 4
-            if peaks(minDiffInd,1) > peaks(minDiffInd+1,1)
-                peaks(minDiffInd+1,:) = [];
-            else
-                peaks(minDiffInd,:) = [];
-            end
-        else
-            break
-        end
-        
-    end
+%     minDiff = 0;
+%     while length(peaks) > 2
+%         [minDiff, minDiffInd] = min(diff(peaks(:,2)));
+%         if minDiff < 4
+%             if peaks(minDiffInd,1) > peaks(minDiffInd+1,1)
+%                 peaks(minDiffInd+1,:) = [];
+%             else
+%                 peaks(minDiffInd,:) = [];
+%             end
+%         else
+%             break
+%         end
+%         
+%     end
     
     
     % ignore those with Somas primarily
@@ -187,57 +244,55 @@ while 1
 %     peaks(ignoreList,:) = [];
     
     
-    peakHeight = peaks(:,1);
-    peakLoc = peaks(:,2);
+%     peakHeight = peaks(:,1);
+%     peakLoc = peaks(:,2);
     
     %             peaks = [peakHeight,peakLoc;peakHeight1,peakLoc1]
     
-    
-    if ~isempty(peakLoc)
+    numPeaks = length(peakLoc);
+    distances = zeros(numPeaks);
+    if numPeaks > 0
         figure(13); clf;
         peaksAx = gca;
         
-        for p = 1:size(peakLoc,1)
+        
+        % distances between peaks
+        for p = 1:numPeaks
+            for q = 1:numPeaks
+                distances(p,q) = peakLoc(p) - peakLoc(q);
+                if abs((distances(p,q) * pixelRes_Z) - 4.1) < 1.3
+                    line([peakLoc(p), peakLoc(q)], [.5,.5]*mean(peakHeight([p,q])), 'Color','g','LineWidth', 3, 'Parent', projAx)
+                end
+            end
+        end
+        distances = distances * pixelRes_Z;                
+        
+        for p = 1:numPeaks
             % vertical line on main plot
-%             line([peakLoc(p), peakLoc(p)], [0, 1], 'Parent', projAx)
+            line([peakLoc(p), peakLoc(p)], [0, 1], 'Parent', projAx)
             
-            % if about 5um from the last peak, add a marker line
+%             if about 5um from the last peak, add a marker line
 %             if p > 1
 %                 distanceFromPrev = abs((peakLoc(p) - peakLoc(p-1)) * pixelRes_Z - 5);
-%                 if distanceFromPrev < 2.0
+%                 if distanceFromPrev < 1.0
 %                     line([peakLoc(p-1), peakLoc(p)], [.5,.5]*mean(peakHeight(p+(-1:0))), 'Color','g','LineWidth', 3, 'Parent', projAx)
 %                 end
 %             end
             
             % projection in subplot
-            subplot(1, size(peakLoc,1),p)
+            subplot(1, numPeaks,p)
             i_ = (i-1) * resampleFactor;
             j_ = (j-1) * resampleFactor;
             
             sliceArea = squeeze(CHATsequence_raw_mat(i_+(1:resampleFactor),j_+(1:resampleFactor),peakLoc(p)));
             imagesc(sliceArea);
-%             colorbar;
-            
-%             title([max(sliceArea(:)), sum(sliceArea(:) < 0.1 * max(sliceArea(:))) / length(sliceArea(:)), var(sliceArea(:))./length(sliceArea(:))])
-%             maxim = max(sliceArea(:));
-%             emptySpaceRatio = sum(sliceArea(:) < 0.1 * maxim) / length(sliceArea(:));
-%             vari = var(sliceArea(:))./length(sliceArea(:));
-            
-%             if maxim < 100
-%                 title('noise')
-%             elseif emptySpaceRatio > 0.7
-%                 title('soma')
-%             else
-%                 title(vari);
-%             end
             
         end
     end
     
     
     % show peaks from nearby regions
-    
-    
+
     
     pause()
     %
