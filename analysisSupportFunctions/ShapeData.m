@@ -3,6 +3,7 @@ classdef ShapeData < handle
     properties
         ampMode
         sampleRate
+        preTime
         
         spikes       
         spikeRate
@@ -21,7 +22,8 @@ classdef ShapeData < handle
     methods
         function obj = ShapeData(epoch, runmode)
             
-            obj.sampleRate = 1000;
+            obj.sampleRate = 1000; %desired rate
+            obj.preTime = 0.250;
             
             % standard parameters in epoch
             if strcmp(runmode, 'offline')

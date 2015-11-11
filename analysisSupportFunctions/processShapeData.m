@@ -30,23 +30,39 @@ for p = 1:num_epochs
     
 
     %% find the time offset from light to spikes, assuming On semi-transient cell
-    lightValue = 1.0 * (mod(e.t, e.spotTotalTime) < e.spotOnTime);
+    lightValue = 1.0 * (mod(e.t, e.spotTotalTime) < e.spotOnTime * 1.2);
     
     [c,lags] = xcorr(e.spikeRate, lightValue);
     lags = lags ./ e.sampleRate;
     c = c .* (1 - abs(lags' / e.spotTotalTime) * .1); % bias toward low values
     [~,I] = max(c);
-    t_offset = lags(I) - defaultOffset + e.spotTotalTime;
-    t_basis = e.t - t_offset;
+    t_offset = lags(I); % - defaultOffset
+%     t_offset = 0.1;
+    
+    figure(95)
+    clf;
+    hold on
+    plot(lags, c)
+%     t_offset = 0.25;
+%     t_basis = e.t + t_offset;
+    
+    figure(96)
+    clf;
+    hold on
+    plot(e.t, e.spikeRate./max(e.spikeRate)*10)
+    plot(e.t, lightValue)
+    plot(e.t+t_offset, lightValue * .5)
 
     sampleCount = round(e.spotTotalTime * e.sampleRate);
-    displayTime = t_basis(1:sampleCount) + e.spotTotalTime;
+    displayTime = e.t(1:sampleCount) + t_offset;
+    
     spikeRate_by_spot = zeros(e.numSpots, sampleCount);
+    
     for si = 1:e.totalNumSpots
         spot_position = epoch_positions(si,:);
         spot_intensity = epoch_intensities(si);
         
-        segmentStartIndex = find(t_basis > e.spotTotalTime * (si - 1), 1);
+        segmentStartIndex = find(e.t > e.spotTotalTime * (si - 1) + t_offset, 1);
         if isempty(segmentStartIndex)
             continue
         end
@@ -82,13 +98,19 @@ highestIntensity = -Inf;
 % find highest intensity
 for p = 1:length(responseData)
     r = responseData{p,1};
-    highestIntensity = max(max(r(:,1)), highestIntensity);
+    if ~isempty(r)
+        highestIntensity = max(max(r(:,1)), highestIntensity);
+    end
 end
 
 % get the responses at that intensity for simple mapping
 for p = 1:length(responseData)
     r = responseData{p,1};
-    spikes = mean(r(r(:,1) == highestIntensity, 2)); % just get the intensity 1.0 ones
+    if ~isempty(r)
+        spikes = mean(r(r(:,1) == highestIntensity, 2)); % just get the intensity 1.0 ones
+    else
+        spikes = 0;
+    end
     maxIntensityResponses(p,1) = spikes;
 end
 
