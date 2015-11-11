@@ -43,7 +43,7 @@ classdef ShapeData < handle
             % process shape data from epoch
             
             obj.shapeDataColumns = containers.Map;
-            if isa(sdc,'System.String')
+            if isa(sdc,'System.String') || isa(sdc,'char')
                 txt = strsplit(char(sdc), ',');
                 obj.shapeDataColumns('intensity') = find(not(cellfun('isempty', strfind(txt, 'intensity'))));
                 obj.shapeDataColumns('X') = find(not(cellfun('isempty', strfind(txt, 'X'))));
@@ -56,7 +56,7 @@ classdef ShapeData < handle
                 obj.shapeDataColumns('Y') = 2;
                 obj.shapeDataColumns('intensity') = 3;
                 shapeData = reshape(str2num(char(epoch.get('positions'))), [], 2);
-                shapeData = horzcat(shapeData, ones(length(shapeData),1));
+                shapeData = horzcat(shapeData, ones(length(shapeData),1)); % add assumed intensity
             end
             obj.shapeDataMatrix = shapeData;
             obj.totalNumSpots = size(obj.shapeDataMatrix,1);
