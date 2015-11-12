@@ -5,8 +5,6 @@ od = struct();
 
 num_epochs = size(epochData, 1);
 
-defaultOffset = 0.1; % feedforward network has a delay
-
 %% create full positions list
 col_x = epochData{1}.shapeDataColumns('X');
 col_y = epochData{1}.shapeDataColumns('Y');
@@ -30,28 +28,33 @@ for p = 1:num_epochs
     
 
     %% find the time offset from light to spikes, assuming On semi-transient cell
-    lightValue = 1.0 * (mod(e.t, e.spotTotalTime) < e.spotOnTime * 1.2);
+    lightValue = 1.0 * (mod(e.t - e.preTime, e.spotTotalTime) < e.spotOnTime * 1.2);
     
     [c,lags] = xcorr(e.spikeRate, lightValue);
     lags = lags ./ e.sampleRate;
-    c = c .* (1 - abs(lags' / e.spotTotalTime) * .1); % bias toward low values
+%     c = c .* (1 - abs(lags' / e.spotTotalTime) * .1); % bias toward low
+%     values (just use mod later)
     [~,I] = max(c);
-    t_offset = lags(I); % - defaultOffset
+    
+    % here be dragons
+    % the .05 is to give it a bit of slack early in case some strong
+    % responses are making it delay too much
+    t_offset = mod(lags(I), e.spotTotalTime) - .05; % - defaultOffset
 %     t_offset = 0.1;
     
-    figure(95)
-    clf;
-    hold on
-    plot(lags, c)
-%     t_offset = 0.25;
-%     t_basis = e.t + t_offset;
-    
-    figure(96)
-    clf;
-    hold on
-    plot(e.t, e.spikeRate./max(e.spikeRate)*10)
-    plot(e.t, lightValue)
-    plot(e.t+t_offset, lightValue * .5)
+%     figure(95)
+%     clf;
+%     hold on
+%     plot(lags, c)
+% %     t_offset = 0.25;
+% %     t_basis = e.t + t_offset;
+%     
+%     figure(96)
+%     clf;
+%     hold on
+%     plot(e.t, e.spikeRate./max(e.spikeRate)*10)
+%     plot(e.t, lightValue)
+%     plot(e.t+t_offset, lightValue * .5)
 
     sampleCount = round(e.spotTotalTime * e.sampleRate);
     displayTime = e.t(1:sampleCount) + t_offset;
