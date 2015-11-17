@@ -1,6 +1,7 @@
 classdef ShapeData < handle
     
     properties
+        epochMode
         ampMode
         sampleRate
         preTime
@@ -28,14 +29,23 @@ classdef ShapeData < handle
             % standard parameters in epoch
             if strcmp(runmode, 'offline')
                 sdc = epoch.get('shapeDataColumns');
-                sd = epoch.get('shapeData');
+                sdm = epoch.get('shapeDataMatrix');
+                if ~(isa(sdm,'System.String') || isa(sdm,'char'))
+                    sdm = epoch.get('shapeData');
+                end
+                em = epoch.get('epochMode');
                 obj.spotTotalTime = epoch.get('spotTotalTime');
                 obj.spotOnTime = epoch.get('spotOnTime');
                 obj.numSpots = epoch.get('numSpots');
                 obj.ampMode = epoch.get('ampMode');
+                
             else
                 sdc = epoch.getParameter('shapeDataColumns');
-                sd = epoch.getParameter('shapeData');
+                sdm = epoch.getParameter('shapeDataMatrix');
+                if ~(isa(sdm,'System.String') || isa(sdm,'char'))
+                    sdm = epoch.getParameter('shapeData');
+                end
+                em = epoch.getParameter('epochMode');
                 obj.spotTotalTime = epoch.getParameter('spotTotalTime');
                 obj.spotOnTime = epoch.getParameter('spotOnTime');
                 obj.numSpots = epoch.getParameter('numSpots');
@@ -45,24 +55,38 @@ classdef ShapeData < handle
             % process shape data from epoch
             
             obj.shapeDataColumns = containers.Map;
+            
+            % positions vs shapedata
             if isa(sdc,'System.String') || isa(sdc,'char')
                 txt = strsplit(char(sdc), ',');
                 obj.shapeDataColumns('intensity') = find(not(cellfun('isempty', strfind(txt, 'intensity'))));
                 obj.shapeDataColumns('X') = find(not(cellfun('isempty', strfind(txt, 'X'))));
                 obj.shapeDataColumns('Y') = find(not(cellfun('isempty', strfind(txt, 'Y'))));
                 num_cols = length(obj.shapeDataColumns);
-                shapeData = reshape(str2num(char(sd)), [], num_cols);
+                obj.shapeDataMatrix = reshape(str2num(char(sdm)), [], num_cols);
             else
                 % handle old-style epochs with positions
                 obj.shapeDataColumns('X') = 1;
                 obj.shapeDataColumns('Y') = 2;
                 obj.shapeDataColumns('intensity') = 3;
-                shapeData = reshape(str2num(char(epoch.get('positions'))), [], 2);
-                shapeData = horzcat(shapeData, ones(length(shapeData),1)); % add assumed intensity
+                obj.shapeDataMatrix = reshape(str2num(char(epoch.get('positions'))), [], 2);
+                obj.shapeDataMatrix = horzcat(obj.shapeDataMatrix, ones(length(obj.shapeDataMatrix),1)); % add assumed intensity
             end
-            obj.shapeDataMatrix = shapeData;
             obj.totalNumSpots = size(obj.shapeDataMatrix,1);
             
+            
+            % convert old style spot on/total stuff to new style time stuff
+            if ~(isa(em,'System.String') || isa(em,'char'))
+                obj.epochMode = 'flashingSpots';
+                si = 1:obj.numSpots;
+                startTime = (si - 1) * obj.spotTotalTime;
+                endTime = startTime + obj.spotOnTime;
+                obj.shapeDataColumns('startTime') = size(obj.shapeDataMatrix, 2) + 1;
+                obj.shapeDataColumns('endTime') = size(obj.shapeDataMatrix, 2) + 2;       
+                obj.shapeDataMatrix = horzcat(obj.shapeDataMatrix, startTime, endTime);
+            else
+                obj.epochMode = char(em);
+            end
             
             % process actual response or spikes from epoch
             if strcmp(runmode, 'offline')
@@ -77,7 +101,7 @@ classdef ShapeData < handle
                 end
             else
                 obj.spikes = [];
-                obj.response = [];                
+                obj.response = [];
             end
         end
         

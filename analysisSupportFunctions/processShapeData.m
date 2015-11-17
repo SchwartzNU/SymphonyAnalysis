@@ -5,6 +5,8 @@ od = struct();
 
 num_epochs = size(epochData, 1);
 
+alignmentTemporalOffset = NaN;
+
 %% create full positions list
 col_x = epochData{1}.shapeDataColumns('X');
 col_y = epochData{1}.shapeDataColumns('Y');
@@ -28,9 +30,15 @@ for p = 1:num_epochs
     
 
     %% find the time offset from light to spikes, assuming On semi-transient cell
-    lightValue = 1.0 * (mod(e.t - e.preTime, e.spotTotalTime) < e.spotOnTime * 1.2);
+%     lightOnValue = 1.0 * (mod(e.t - e.preTime, e.spotTotalTime) < e.spotOnTime * 1.2);
+    t = (e.t - e.preTime);
+    lightOnTime = t > startTime & t < endTime;
     
-    [c,lags] = xcorr(e.spikeRate, lightValue);
+    % 
+    disp(e.epochMode)
+
+    
+    [c,lags] = xcorr(e.spikeRate, lightOnTime);
     lags = lags ./ e.sampleRate;
 %     c = c .* (1 - abs(lags' / e.spotTotalTime) * .1); % bias toward low
 %     values (just use mod later)
@@ -40,6 +48,16 @@ for p = 1:num_epochs
     % the .05 is to give it a bit of slack early in case some strong
     % responses are making it delay too much
     t_offset = mod(lags(I), e.spotTotalTime) - .05; % - defaultOffset
+    
+    % pull temporal alignment from temporal alignment epoch if available,
+    % or store it now if generated
+    if strcmp(e.epochMode, 'temporalAlignment')
+        alignmentTemporalOffset = t_offset;
+    elseif ~isnan(alignmentTemporalOffset)
+        t_offset = alignmentTemporalOffset;
+    end
+    
+    
 %     t_offset = 0.1;
     
 %     figure(95)
