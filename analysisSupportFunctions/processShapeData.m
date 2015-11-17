@@ -16,8 +16,8 @@ for p = 1:num_epochs
     col_y = epochData{p}.shapeDataColumns('Y');
     all_positions = vertcat(all_positions, epochData{p}.shapeDataMatrix(:,[col_x col_y])); %#ok<AGROW>
 end
-all_positions = unique(all_positions, 'rows')
-responseData = cell(length(all_positions), 1);
+all_positions = unique(all_positions, 'rows');
+responseData = cell(size(all_positions, 1), 1);
 
 for p = 1:num_epochs
     e = epochData{p};
@@ -25,11 +25,11 @@ for p = 1:num_epochs
     od.spotOnTime = e.spotOnTime;
     od.numSpots = e.numSpots;
         
-    col_x = epochData{p}.shapeDataColumns('X');
-    col_y = epochData{p}.shapeDataColumns('Y');
-    col_intensity = epochData{p}.shapeDataColumns('intensity');
-    col_startTime = epochData{p}.shapeDataColumns('startTime');
-    col_endTime = epochData{p}.shapeDataColumns('endTime');
+    col_x = e.shapeDataColumns('X');
+    col_y = e.shapeDataColumns('Y');
+    col_intensity = e.shapeDataColumns('intensity');
+    col_startTime = e.shapeDataColumns('startTime');
+    col_endTime = e.shapeDataColumns('endTime');
 
     epoch_positions = e.shapeDataMatrix(:,[col_x col_y]);
     epoch_intensities = e.shapeDataMatrix(:,col_intensity);
@@ -41,7 +41,7 @@ for p = 1:num_epochs
 %     lightOnValue = 1.0 * (mod(e.t - e.preTime, e.spotTotalTime) < e.spotOnTime * 1.2);
     t = (e.t - e.preTime);
     lightOnTime = zeros(size(t));
-    for si = 1:od.numSpots
+    for si = 1:e.totalNumSpots
         lightOnTime(t > startTime(si) & t < endTime(si)) = epoch_intensities(si);
     end
     % 
@@ -121,8 +121,14 @@ for p = 1:num_epochs
     
 end
 
+
 %% overall analysis
 validSearchResult = 1;
+
+if size(all_positions, 1) < 3 % can't triangulate
+    validSearchResult = 0;
+end
+
 maxIntensityResponses = zeros(length(responseData), 1);
 
 highestIntensity = -Inf;
@@ -177,7 +183,6 @@ od.timeOffset = t_offset;
 od.centerOfMassXY = centerOfMassXY;
 od.farthestResponseDistance = farthestResponseDistance;
 od.validSearchResult = validSearchResult;
-validSearchResult
 
 
 end

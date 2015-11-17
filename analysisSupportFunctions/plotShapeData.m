@@ -2,38 +2,43 @@ function [] = plotShapeData(od, mode)
 
 if strcmp(mode,'spatial')
     %% Plot spatial receptive field using responses from highest intensity spots
-    positions = od.positions;
+    if od.validSearchResult == 1
 
-    xlist = positions(:,1);
-    ylist = positions(:,2);
-    zlist = od.maxIntensityResponses;
+        positions = od.positions;
 
+        xlist = positions(:,1);
+        ylist = positions(:,2);
+        zlist = od.maxIntensityResponses;
 
-    largestDistanceOffset = max(max(abs(xlist)), max(abs(ylist)));
-    X = linspace(-1*largestDistanceOffset, largestDistanceOffset, 100);
-    Y = X;
-    %                 X = linspace(min(xlist), max(xlist), 40);
-    %                 Y = linspace(min(ylist), max(ylist), 40);
+        largestDistanceOffset = max(max(abs(xlist)), max(abs(ylist)));
+        X = linspace(-1*largestDistanceOffset, largestDistanceOffset, 100);
+        Y = X;
+        %                 X = linspace(min(xlist), max(xlist), 40);
+        %                 Y = linspace(min(ylist), max(ylist), 40);
 
-    %                 ax = gca;
-    subplot(2,1,1)
-    [xq,yq] = meshgrid(X, Y);
-    vq = griddata(xlist, ylist, zlist, xq, yq);
-    %                 surf(xq, yq, vq, 'EdgeColor', 'none', 'FaceColor', 'interp');
-    pcolor(xq, yq, vq)
-    grid off
-    shading interp
-    hold on
-    plot3(xlist,ylist,zlist,'.w','MarkerSize',5);
-    plot(od.centerOfMassXY(1), od.centerOfMassXY(2),'+r','MarkerSize',30)
-    hold off
-    view(0, 90)
-    xlabel('X (um)');
-    ylabel('Y (um)');
-    axis equal
-    axis square
-    %                 colorbar;
-    title(od.centerOfMassXY);
+        %                 ax = gca;
+        subplot(2,1,1)
+        [xq,yq] = meshgrid(X, Y);
+        vq = griddata(xlist, ylist, zlist, xq, yq);
+        %                 surf(xq, yq, vq, 'EdgeColor', 'none', 'FaceColor', 'interp');
+        pcolor(xq, yq, vq)
+        grid off
+        shading interp
+        hold on
+        plot3(xlist,ylist,zlist,'.w','MarkerSize',5);
+        plot(od.centerOfMassXY(1), od.centerOfMassXY(2),'+r','MarkerSize',30)
+        hold off
+        view(0, 90)
+        xlabel('X (um)');
+        ylabel('Y (um)');
+        axis equal
+        axis square
+        %                 colorbar;
+        title(od.centerOfMassXY);
+    else
+        subplot(2,1,1)
+        title('No valid search epoch result')
+    end
 
 
     %% plot time graph
