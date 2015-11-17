@@ -8,15 +8,15 @@ num_epochs = size(epochData, 1);
 alignmentTemporalOffset = NaN;
 
 %% create full positions list
-col_x = epochData{1}.shapeDataColumns('X');
-col_y = epochData{1}.shapeDataColumns('Y');
-col_intensity = epochData{1}.shapeDataColumns('intensity');
+
 
 all_positions = [];
 for p = 1:num_epochs
-    all_positions = vertcat(all_positions, epochData{p}.shapeDataMatrix(:,[col_x col_y]));
+    col_x = epochData{p}.shapeDataColumns('X');
+    col_y = epochData{p}.shapeDataColumns('Y');
+    all_positions = vertcat(all_positions, epochData{p}.shapeDataMatrix(:,[col_x col_y])); %#ok<AGROW>
 end
-all_positions = unique(all_positions, 'rows');
+all_positions = unique(all_positions, 'rows')
 responseData = cell(length(all_positions), 1);
 
 for p = 1:num_epochs
@@ -24,19 +24,28 @@ for p = 1:num_epochs
     od.spotTotalTime = e.spotTotalTime;
     od.spotOnTime = e.spotOnTime;
     od.numSpots = e.numSpots;
+        
+    col_x = epochData{p}.shapeDataColumns('X');
+    col_y = epochData{p}.shapeDataColumns('Y');
+    col_intensity = epochData{p}.shapeDataColumns('intensity');
+    col_startTime = epochData{p}.shapeDataColumns('startTime');
+    col_endTime = epochData{p}.shapeDataColumns('endTime');
 
     epoch_positions = e.shapeDataMatrix(:,[col_x col_y]);
     epoch_intensities = e.shapeDataMatrix(:,col_intensity);
+    startTime = e.shapeDataMatrix(:,col_startTime);
+    endTime = e.shapeDataMatrix(:,col_endTime);
     
 
     %% find the time offset from light to spikes, assuming On semi-transient cell
 %     lightOnValue = 1.0 * (mod(e.t - e.preTime, e.spotTotalTime) < e.spotOnTime * 1.2);
     t = (e.t - e.preTime);
-    lightOnTime = t > startTime & t < endTime;
-    
+    lightOnTime = zeros(size(t));
+    for si = 1:od.numSpots
+        lightOnTime(t > startTime(si) & t < endTime(si)) = epoch_intensities(si);
+    end
     % 
-    disp(e.epochMode)
-
+%     disp(e.epochMode)
     
     [c,lags] = xcorr(e.spikeRate, lightOnTime);
     lags = lags ./ e.sampleRate;
@@ -113,6 +122,7 @@ for p = 1:num_epochs
 end
 
 %% overall analysis
+validSearchResult = 1;
 maxIntensityResponses = zeros(length(responseData), 1);
 
 highestIntensity = -Inf;
@@ -137,6 +147,9 @@ end
 
 centerOfMassXY = [sum(all_positions(:,1) .* maxIntensityResponses)/sum(maxIntensityResponses), ...
                     sum(all_positions(:,2) .* maxIntensityResponses)/sum(maxIntensityResponses)];
+if any(isnan(centerOfMassXY(:)))
+    validSearchResult = 0;
+end
 
 % find the farthest point above a threshold level for autocenter refinement
 positions_rel = bsxfun(@plus, all_positions, -1*centerOfMassXY);
@@ -147,6 +160,9 @@ pos_dist_intensity = sortrows(pos_dist_intensity, 3); % sort on distances
 %TODO: figure out the right threshold for the distance refinement
 % max_response = max(simpleResponses);
 farthestResponseDistance = pos_dist_intensity(find(pos_dist_intensity(:,4) > 0, 1, 'last'), 3);
+if isempty(farthestResponseDistance)
+    validSearchResult = 0;
+end
 % figure(12)
 % plot(prz(:,3), prz(:,4))
 
@@ -160,6 +176,8 @@ od.displayTime = displayTime;
 od.timeOffset = t_offset;
 od.centerOfMassXY = centerOfMassXY;
 od.farthestResponseDistance = farthestResponseDistance;
+od.validSearchResult = validSearchResult;
+validSearchResult
 
 
 end

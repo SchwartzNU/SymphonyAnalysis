@@ -55,15 +55,19 @@ classdef ShapeData < handle
             % process shape data from epoch
             
             obj.shapeDataColumns = containers.Map;
-            
             % positions vs shapedata
             if isa(sdc,'System.String') || isa(sdc,'char')
                 txt = strsplit(char(sdc), ',');
+%                 for ci = 1:length(txt) TODO: make generic
                 obj.shapeDataColumns('intensity') = find(not(cellfun('isempty', strfind(txt, 'intensity'))));
                 obj.shapeDataColumns('X') = find(not(cellfun('isempty', strfind(txt, 'X'))));
                 obj.shapeDataColumns('Y') = find(not(cellfun('isempty', strfind(txt, 'Y'))));
+                obj.shapeDataColumns('diameter') = find(not(cellfun('isempty', strfind(txt, 'diameter'))));
+                obj.shapeDataColumns('startTime') = find(not(cellfun('isempty', strfind(txt, 'startTime'))));
+                obj.shapeDataColumns('endTime') = find(not(cellfun('isempty', strfind(txt, 'endTime'))));
+
                 num_cols = length(obj.shapeDataColumns);
-                obj.shapeDataMatrix = reshape(str2num(char(sdm)), [], num_cols);
+                obj.shapeDataMatrix = reshape(str2num(char(sdm)), [], num_cols); %#ok<*ST2NM>
             else
                 % handle old-style epochs with positions
                 obj.shapeDataColumns('X') = 1;
@@ -74,8 +78,8 @@ classdef ShapeData < handle
             end
             obj.totalNumSpots = size(obj.shapeDataMatrix,1);
             
-            
             % convert old style spot on/total stuff to new style time stuff
+            % by generating start and end times
             if ~(isa(em,'System.String') || isa(em,'char'))
                 obj.epochMode = 'flashingSpots';
                 si = 1:obj.numSpots;
@@ -87,7 +91,7 @@ classdef ShapeData < handle
             else
                 obj.epochMode = char(em);
             end
-            
+
             % process actual response or spikes from epoch
             if strcmp(runmode, 'offline')
                 if strcmp(obj.ampMode, 'Cell attached')
