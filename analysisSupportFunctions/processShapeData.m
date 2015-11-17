@@ -73,15 +73,16 @@ for p = 1:num_epochs
 %     clf;
 %     hold on
 %     plot(lags, c)
+%     title('lags')
 % %     t_offset = 0.25;
 % %     t_basis = e.t + t_offset;
 %     
 %     figure(96)
 %     clf;
 %     hold on
-%     plot(e.t, e.spikeRate./max(e.spikeRate)*10)
-%     plot(e.t, lightValue)
-%     plot(e.t+t_offset, lightValue * .5)
+%     plot(e.t, e.spikeRate./max(e.spikeRate)*5)
+%     plot(e.t, lightOnTime)
+%     plot(e.t+t_offset, lightOnTime * .5)
 
     sampleCount = round(e.spotTotalTime * e.sampleRate);
     displayTime = e.t(1:sampleCount) + t_offset;
