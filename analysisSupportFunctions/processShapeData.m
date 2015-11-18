@@ -35,28 +35,31 @@ for p = 1:num_epochs
     epoch_intensities = e.shapeDataMatrix(:,col_intensity);
     startTime = e.shapeDataMatrix(:,col_startTime);
     endTime = e.shapeDataMatrix(:,col_endTime);
-    
+
 
     %% find the time offset from light to spikes, assuming On semi-transient cell
 %     lightOnValue = 1.0 * (mod(e.t - e.preTime, e.spotTotalTime) < e.spotOnTime * 1.2);
-    t = (e.t - e.preTime);
-    lightOnTime = zeros(size(t));
+    lightOnTime = zeros(size(e.t));
     for si = 1:e.totalNumSpots
-        lightOnTime(t > startTime(si) & t < endTime(si)) = epoch_intensities(si);
+        lightOnTime(e.t > startTime(si) & e.t < endTime(si)) = epoch_intensities(si);
     end
     % 
-%     disp(e.epochMode)
-    
+
     [c,lags] = xcorr(e.spikeRate, lightOnTime);
-    lags = lags ./ e.sampleRate;
-%     c = c .* (1 - abs(lags' / e.spotTotalTime) * .1); % bias toward low
-%     values (just use mod later)
     [~,I] = max(c);
+    t_offset = lags(I) ./ e.sampleRate;
     
-    % here be dragons
-    % the .05 is to give it a bit of slack early in case some strong
+    if strcmp(e.epochMode, 'flashingSpots')
+        t_offset = mod(t_offset, e.spotTotalTime);
+        
+        if t_offset < 0.1 % might go too low if the responses are actually more than one time unit late
+            t_offset = t_offset + e.spotTotalTime;
+        end
+    end
+    
+    % this is to give it a bit of slack early in case some strong
     % responses are making it delay too much
-    t_offset = lags(I) - .08; % - defaultOffset
+    t_offset = t_offset - .05;
     
     % pull temporal alignment from temporal alignment epoch if available,
     % or store it now if generated
@@ -76,25 +79,22 @@ for p = 1:num_epochs
     
 %     t_offset = 0.1;
     
-%     figure(95)
-%     clf;
-%     hold on
-%     plot(lags, c)
-%     title('lags')
-%     t_offset = 0.25;
-%     t_basis = e.t + t_offset;
+    figure(95)
+    clf;
+    hold on
+    plot(lags, c)
+    title('lags')
     
-%     figure(96)
-%     clf;
-%     hold on
-%     plot(e.t, e.spikeRate./max(e.spikeRate)*2,'g')
-%     plot(e.t, lightOnTime,'b')
-%     plot(e.t+t_offset, lightOnTime * .5,'r')
-%     
-%     figure(97);
+    figure(96)
+    clf;
+    hold on
+    plot(e.t, e.spikeRate./max(e.spikeRate)*2,'g')
+    plot(e.t, lightOnTime,'b')
+    plot(e.t+t_offset, lightOnTime * .5,'r')
+
 
     sampleCount = round(e.spotTotalTime * e.sampleRate);
-    displayTime = e.t(1:sampleCount) + t_offset;
+    displayTime = (1:sampleCount) ./ e.sampleRate + t_offset;
     
     spikeRate_by_spot = zeros(e.numSpots, sampleCount);
     
@@ -102,11 +102,14 @@ for p = 1:num_epochs
         continue
     end
     
+    figure(12)
+    
     for si = 1:e.totalNumSpots
         spot_position = epoch_positions(si,:);
         spot_intensity = epoch_intensities(si);
         
-        segmentStartIndex = find(e.t > e.spotTotalTime * (si - 1) + t_offset, 1);
+        segmentStartTime = e.spotTotalTime * (si - 1) + t_offset;
+        segmentStartIndex = find(e.t > segmentStartTime, 1);
         if isempty(segmentStartIndex)
             continue
         end
@@ -123,10 +126,15 @@ for p = 1:num_epochs
 %         current_data = responseData{all_position_index, 1}
         responseData{all_position_index,1} = vertcat(responseData{all_position_index,1}, [spot_intensity, response]);
         
+
 %         title(si)
-%         plot(t_basis(segmentIndices), spikeRate_by_spot(si,:), t_basis(segmentIndices), lightValue(segmentIndices))
-%         drawnow
-%         pause
+%         if max(spikeRate_by_spot(si,:)) > 0
+%             plot(e.t(segmentIndices), spikeRate_by_spot(si,:))
+%             drawnow
+%             pause
+%         end
+
+        
 %         spikes = spikeTimes > t_range(1) & spikeTimes < t_range(2);
 %         spikeRate_by_spot(end+1,:) = spikeRateSegment;
 %         responseValues(end+1,1) = sum(spikes);

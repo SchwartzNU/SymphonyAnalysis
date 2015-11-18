@@ -15,6 +15,7 @@ classdef ShapeData < handle
         spotOnTime
         numSpots
         totalNumSpots % including values and repeats
+        spotDiameter
         
         shapeDataMatrix
         shapeDataColumns
@@ -36,6 +37,7 @@ classdef ShapeData < handle
                 em = epoch.get('epochMode');
                 obj.spotTotalTime = epoch.get('spotTotalTime');
                 obj.spotOnTime = epoch.get('spotOnTime');
+                obj.spotDiameter = epoch.get('spotDiameter');
                 obj.numSpots = epoch.get('numSpots');
                 obj.ampMode = epoch.get('ampMode');
                 
@@ -48,48 +50,72 @@ classdef ShapeData < handle
                 em = epoch.getParameter('epochMode');
                 obj.spotTotalTime = epoch.getParameter('spotTotalTime');
                 obj.spotOnTime = epoch.getParameter('spotOnTime');
+                obj.spotDiameter = epoch.getParameter('spotDiameter');
                 obj.numSpots = epoch.getParameter('numSpots');
                 obj.ampMode = epoch.getParameter('ampMode');
             end
             
             % process shape data from epoch
-            
             obj.shapeDataColumns = containers.Map;
-            % positions vs shapedata
-            if isa(sdc,'System.String') || isa(sdc,'char')
-                txt = strsplit(char(sdc), ',');
-%                 for ci = 1:length(txt) TODO: make generic
-                obj.shapeDataColumns('intensity') = find(not(cellfun('isempty', strfind(txt, 'intensity'))));
-                obj.shapeDataColumns('X') = find(not(cellfun('isempty', strfind(txt, 'X'))));
-                obj.shapeDataColumns('Y') = find(not(cellfun('isempty', strfind(txt, 'Y'))));
-                obj.shapeDataColumns('diameter') = find(not(cellfun('isempty', strfind(txt, 'diameter'))));
-                obj.shapeDataColumns('startTime') = find(not(cellfun('isempty', strfind(txt, 'startTime'))));
-                obj.shapeDataColumns('endTime') = find(not(cellfun('isempty', strfind(txt, 'endTime'))));
-
-                num_cols = length(obj.shapeDataColumns);
-                obj.shapeDataMatrix = reshape(str2num(char(sdm)), [], num_cols); %#ok<*ST2NM>
-            else
-                % handle old-style epochs with positions
+            newColumnsNames = {};
+            newColumnsData = [];
+            % collect what data we have to make the ShapeDataMatrix
+            
+            % positions w/ X,Y
+            if ~(isa(sdc,'System.String') || isa(sdc,'char'))
                 obj.shapeDataColumns('X') = 1;
                 obj.shapeDataColumns('Y') = 2;
-                obj.shapeDataColumns('intensity') = 3;
                 obj.shapeDataMatrix = reshape(str2num(char(epoch.get('positions'))), [], 2);
-                obj.shapeDataMatrix = horzcat(obj.shapeDataMatrix, ones(length(obj.shapeDataMatrix),1)); % add assumed intensity
+            else
+                % shapedata w/ X,Y,intensity...
+                colsTxt = strsplit(char(sdc), ',');
+                obj.shapeDataColumns('intensity') = find(not(cellfun('isempty', strfind(colsTxt, 'intensity'))));
+                obj.shapeDataColumns('X') = find(not(cellfun('isempty', strfind(colsTxt, 'X'))));
+                obj.shapeDataColumns('Y') = find(not(cellfun('isempty', strfind(colsTxt, 'Y'))));
+                
+                % ... startTime,endTime,diameter (also)
+                if isa(em,'System.String') || isa(em,'char')
+                    obj.epochMode = char(em);
+                    obj.shapeDataColumns('diameter') = find(not(cellfun('isempty', strfind(colsTxt, 'diameter'))));
+                    obj.shapeDataColumns('startTime') = find(not(cellfun('isempty', strfind(colsTxt, 'startTime'))));
+                    obj.shapeDataColumns('endTime') = find(not(cellfun('isempty', strfind(colsTxt, 'endTime'))));
+                else
+                    % or need to generate those later
+                    obj.epochMode = 'flashingSpots';
+                end
+            
+                num_cols = length(obj.shapeDataColumns);
+                obj.shapeDataMatrix = reshape(str2num(char(sdm)), [], num_cols); %#ok<*ST2NM>
+%                 disp(obj.shapeDataMatrix)
             end
+            
             obj.totalNumSpots = size(obj.shapeDataMatrix,1);
             
-            % convert old style spot on/total stuff to new style time stuff
-            % by generating start and end times
-            if ~(isa(em,'System.String') || isa(em,'char'))
-                obj.epochMode = 'flashingSpots';
-                si = 1:obj.numSpots;
+            % add columns that we don't have
+            if ~isKey(obj.shapeDataColumns, 'intensity')
+                newColumnsNames{end+1} = 'intensity';
+                newColumnsData = horzcat(newColumnsData, ones(length(obj.shapeDataMatrix),1));
+            end
+            
+            if ~isKey(obj.shapeDataColumns, 'startTime')
+                si = (1:obj.numSpots)';
                 startTime = (si - 1) * obj.spotTotalTime;
                 endTime = startTime + obj.spotOnTime;
-                obj.shapeDataColumns('startTime') = size(obj.shapeDataMatrix, 2) + 1;
-                obj.shapeDataColumns('endTime') = size(obj.shapeDataMatrix, 2) + 2;       
-                obj.shapeDataMatrix = horzcat(obj.shapeDataMatrix, startTime, endTime);
-            else
-                obj.epochMode = char(em);
+                newColumnsNames{end+1} = 'startTime';
+                newColumnsNames{end+1} = 'endTime';
+                newColumnsData = horzcat(newColumnsData, startTime, endTime);
+            end
+                                
+            if ~isKey(obj.shapeDataColumns, 'diameter')
+                newColumnsData = horzcat(newColumnsData, obj.spotDiameter * ones(obj.numSpots, 1));
+                newColumnsNames{end+1} = 'diameter';
+            end
+
+            % add new columns
+            for ci = 1:length(newColumnsNames)
+                name = newColumnsNames{ci};
+                obj.shapeDataMatrix = horzcat(obj.shapeDataMatrix, newColumnsData(:,ci));
+                obj.shapeDataColumns(name) = size(obj.shapeDataMatrix, 2);
             end
 
             % process actual response or spikes from epoch
@@ -124,6 +150,7 @@ classdef ShapeData < handle
             spikeRate_f = filtfilt(hann(obj.sampleRate / 10), 1, spikeRate_orig); % 10 ms (100 samples) window filter
             obj.spikeRate = resample(spikeRate_f, obj.sampleRate, 10000);
             obj.t = (0:(length(obj.spikeRate)-1)) / obj.sampleRate;
+            obj.t = obj.t - obj.preTime;
         end
     end
 end

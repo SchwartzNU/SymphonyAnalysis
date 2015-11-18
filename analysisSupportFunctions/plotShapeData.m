@@ -1,5 +1,6 @@
 function [] = plotShapeData(od, mode)
 
+
 if strcmp(mode,'spatial')
     %% Plot spatial receptive field using responses from highest intensity spots
     if od.validSearchResult == 1
@@ -25,7 +26,7 @@ if strcmp(mode,'spatial')
         grid off
         shading interp
         hold on
-        plot3(xlist,ylist,zlist,'.w','MarkerSize',5);
+        plot3(xlist,ylist,zlist,'.','MarkerSize',5,'MarkerEdgeColor',[.7 .7 .7]);
         plot(od.centerOfMassXY(1), od.centerOfMassXY(2),'+r','MarkerSize',30)
         hold off
         view(0, 90)
@@ -34,7 +35,7 @@ if strcmp(mode,'spatial')
         axis equal
         axis square
         %                 colorbar;
-        title(od.centerOfMassXY);
+        title(['center of mass: ' num2str(od.centerOfMassXY) ' um']);
     else
         subplot(2,1,1)
         title('No valid search epoch result')
@@ -57,7 +58,7 @@ if strcmp(mode,'spatial')
 
     title('Temporal offset calculation')
 
-    top = max(spotBinDisplay);
+    top = max(spotBinDisplay)*1.1;
 
     % two light spot patches
     p = patch([0 spotOnTime spotOnTime 0],[0 0 top top],'y');
@@ -68,11 +69,12 @@ if strcmp(mode,'spatial')
     set(p,'EdgeColor','none');
 
     % analysis spot patch
-    p = patch(min(displayTime)+[0 spotTotalTime spotTotalTime 0],[0 0 .1*top .1*top],'g');
+    p = patch(od.timeOffset+[0 spotTotalTime spotTotalTime 0],[0 0 -.1*top -.1*top],'g');
     set(p,'FaceAlpha',0.3);
     set(p,'EdgeColor','none');
 
-    title(timeOffset)
+    title(['temporal offset of collection bins: ' num2str(timeOffset) ' sec'])
+    
 elseif strcmp(mode, 'subunit')
 
     %% Plot figure with subunit models

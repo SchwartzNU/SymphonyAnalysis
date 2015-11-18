@@ -50,14 +50,16 @@ classdef AutoCenterAnalysis < AnalysisTree
         function plotSpatial(node, ~)
             
             nodeData = node.get(1);
-                        
-            if isfield(nodeData.outputData, 'value')
-                figure(11);
-                
-                outputData = nodeData.outputData.value;
-                
-                plotShapeData(outputData, 'spatial');
 
+            if isfield(nodeData, 'splitParam')
+                if strcmp(nodeData.splitParam, 'sessionId')
+                    if isfield(nodeData.outputData, 'value')
+                        figure(11);
+                        outputData = nodeData.outputData.value;
+                        plotShapeData(outputData, 'spatial');
+
+                    end
+                end
             end
         end
         
@@ -65,13 +67,16 @@ classdef AutoCenterAnalysis < AnalysisTree
             
             nodeData = node.get(1);
                         
-            if isfield(nodeData.outputData, 'value')
-                figure(12);
-                
-                outputData = nodeData.outputData.value;
-                
-                plotShapeData(outputData, 'subunit');
+            if isfield(nodeData, 'splitParam')
+                if strcmp(nodeData.splitParam, 'sessionId')
+                    if isfield(nodeData.outputData, 'value')
+                        figure(12);
 
+                        outputData = nodeData.outputData.value;
+
+                        plotShapeData(outputData, 'subunit');
+                    end
+                end
             end
         end        
     end
