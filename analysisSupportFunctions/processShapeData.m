@@ -79,18 +79,18 @@ for p = 1:num_epochs
     
 %     t_offset = 0.1;
     
-    figure(95)
-    clf;
-    hold on
-    plot(lags, c)
-    title('lags')
-    
-    figure(96)
-    clf;
-    hold on
-    plot(e.t, e.spikeRate./max(e.spikeRate)*2,'g')
-    plot(e.t, lightOnTime,'b')
-    plot(e.t+t_offset, lightOnTime * .5,'r')
+%     figure(95)
+%     clf;
+%     hold on
+%     plot(lags, c)
+%     title('lags')
+%     
+%     figure(96)
+%     clf;
+%     hold on
+%     plot(e.t, e.spikeRate./max(e.spikeRate)*2,'g')
+%     plot(e.t, lightOnTime,'b')
+%     plot(e.t+t_offset, lightOnTime * .5,'r')
 
 
     sampleCount = round(e.spotTotalTime * e.sampleRate);
@@ -102,7 +102,7 @@ for p = 1:num_epochs
         continue
     end
     
-    figure(12)
+%     figure(12)
     
     for si = 1:e.totalNumSpots
         spot_position = epoch_positions(si,:);
