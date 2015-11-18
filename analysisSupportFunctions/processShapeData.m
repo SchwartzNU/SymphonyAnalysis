@@ -56,14 +56,21 @@ for p = 1:num_epochs
     % here be dragons
     % the .05 is to give it a bit of slack early in case some strong
     % responses are making it delay too much
-    t_offset = mod(lags(I), e.spotTotalTime) - .05; % - defaultOffset
+    t_offset = lags(I) - .08; % - defaultOffset
     
     % pull temporal alignment from temporal alignment epoch if available,
     % or store it now if generated
+%     disp(e.epochMode)
+    skipResponses = 0;
     if strcmp(e.epochMode, 'temporalAlignment')
         alignmentTemporalOffset = t_offset;
+%         disp('temporal alignment gave offset of ')
+%         disp(t_offset)
+        skipResponses = 1;
     elseif ~isnan(alignmentTemporalOffset)
         t_offset = alignmentTemporalOffset;
+%         disp('using t_offset from alignment epoch')
+%         disp(t_offset)
     end
     
     
@@ -74,20 +81,26 @@ for p = 1:num_epochs
 %     hold on
 %     plot(lags, c)
 %     title('lags')
-% %     t_offset = 0.25;
-% %     t_basis = e.t + t_offset;
-%     
+%     t_offset = 0.25;
+%     t_basis = e.t + t_offset;
+    
 %     figure(96)
 %     clf;
 %     hold on
-%     plot(e.t, e.spikeRate./max(e.spikeRate)*5)
-%     plot(e.t, lightOnTime)
-%     plot(e.t+t_offset, lightOnTime * .5)
+%     plot(e.t, e.spikeRate./max(e.spikeRate)*2,'g')
+%     plot(e.t, lightOnTime,'b')
+%     plot(e.t+t_offset, lightOnTime * .5,'r')
+%     
+%     figure(97);
 
     sampleCount = round(e.spotTotalTime * e.sampleRate);
     displayTime = e.t(1:sampleCount) + t_offset;
     
     spikeRate_by_spot = zeros(e.numSpots, sampleCount);
+    
+    if skipResponses == 1
+        continue
+    end
     
     for si = 1:e.totalNumSpots
         spot_position = epoch_positions(si,:);
