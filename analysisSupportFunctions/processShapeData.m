@@ -3,7 +3,7 @@ function od = processShapeData(epochData)
 
 od = struct();
 
-num_epochs = size(epochData, 1);
+num_epochs = length(epochData);
 
 alignmentTemporalOffset = NaN;
 

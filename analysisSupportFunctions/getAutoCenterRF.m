@@ -3,8 +3,7 @@ function outputStruct = getAutoCenterRF(cellData, epochInd)
 %% create epoch cell array
 shapeData = {};
 for p = 1:length(epochInd)
-    sd = ShapeData(cellData.epochs(epochInd(p)), 'offline');
-    shapeData{p} = sd;
+    shapeData{p} = ShapeData(cellData.epochs(epochInd(p)), 'offline');
 end
 
 
