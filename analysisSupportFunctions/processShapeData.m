@@ -160,14 +160,14 @@ for p = 1:length(responseData)
     r = responseData{p,1};
     if ~isempty(r)
         highestIntensity = max(max(r(:,1)), highestIntensity);
-        numValues = max(numValues, size(r,1))
+        numValues = max(numValues, size(r,1));
     end
 end
 
 % get the responses at that intensity for simple mapping
 for p = 1:length(responseData)
     r = responseData{p,1};
-    if ~isempty(r)
+    if ~isempty(r) && any(r(:,1) == highestIntensity)
         spikes = mean(r(r(:,1) == highestIntensity, 2)); % just get the intensity 1.0 ones
     else
         spikes = 0;
@@ -194,9 +194,13 @@ function F = gauss_2d(x,xdata)
  F = x(1)*exp(   -((xdatarot(:,1)-x0rot).^2/(2*x(3)^2) + (xdatarot(:,2)-y0rot).^2/(2*x(5)^2) )    );
 end
 
+% maxIntensityResponses
+
 if validSearchResult == 1
     x0 = [1,0,50,0,50,pi/4];
 
+%     gauss_2d(x0,all_positions)
+    
     opts = optimset('Display','off');
     MdataSize = length(all_positions);
     lb = [0,-MdataSize/2,0,-MdataSize/2,0,0];

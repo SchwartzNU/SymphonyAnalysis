@@ -3,6 +3,8 @@ function [] = plotShapeData(od, mode)
 
 if strcmp(mode,'spatial')
     %% Plot spatial receptive field using responses from highest intensity spots
+    clf;
+    ha = tight_subplot(2,1,.05);    
     if od.validSearchResult == 1
 
         positions = od.positions;
@@ -18,7 +20,7 @@ if strcmp(mode,'spatial')
         %                 Y = linspace(min(ylist), max(ylist), 40);
 
         %                 ax = gca;
-        subplot(2,1,1)
+        axes(ha(1))
         [xq,yq] = meshgrid(X, Y);
         vq = griddata(xlist, ylist, zlist, xq, yq);
         %                 surf(xq, yq, vq, 'EdgeColor', 'none', 'FaceColor', 'interp');
@@ -61,7 +63,8 @@ if strcmp(mode,'spatial')
     displayTime = od.displayTime;
     timeOffset = od.timeOffset;
 
-    subplot(2,1,2)
+
+    axes(ha(2))
     plot(displayTime, spotBinDisplay)
     %                 plot(spikeBins(1:end-1), spikeBinsValues);
     %                 xlim([0,spikeBins(end-1)])
@@ -90,7 +93,8 @@ elseif strcmp(mode, 'subunit')
     if od.numValues > 1
     
         %% Plot figure with subunit models
-    %     figure(12);clf;
+    %     figure(12);
+        clf;
         num_positions = size(od.responseData,1);
         dim1 = floor(sqrt(num_positions));
         dim2 = ceil(num_positions / dim1);
@@ -101,15 +105,26 @@ elseif strcmp(mode, 'subunit')
         end
         sorted_positions = sortrows([distance_to_center, (1:num_positions)'], 1);
 
+        ha = tight_subplot(dim1,dim2);
+        
         for p = 1:num_positions
-            subplot(dim1,dim2,p)
+%             tight_subplot(dim1,dim2,p)
+            axes(ha(p))
             resp_index = sorted_positions(p,2);
             responses = od.responseData{resp_index,1};
             responses = sortrows(responses, 1); % order by intensity values for plot
             intensity = responses(:,1);
-            rate = responses(:,2);
+            rate = responses(:,2);          
             plot(intensity, rate)
+            hold on
+            pfit = polyfit(intensity, rate, 1);
+            plot(intensity, polyval(pfit,intensity))
+            ylim([0,max(rate)+.1])
+            hold off
         end
+        
+        set(ha(1:end-dim2),'XTickLabel','');
+        set(ha,'YTickLabel','')
     else
         disp('No multiple value subunits measured');
     end
