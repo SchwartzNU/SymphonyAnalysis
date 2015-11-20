@@ -16,6 +16,7 @@ classdef ShapeData < handle
         numSpots
         totalNumSpots % including values and repeats
         spotDiameter
+        numValues
         
         shapeDataMatrix
         shapeDataColumns
@@ -40,7 +41,7 @@ classdef ShapeData < handle
                 obj.spotDiameter = epoch.get('spotDiameter');
                 obj.numSpots = epoch.get('numSpots');
                 obj.ampMode = epoch.get('ampMode');
-                
+                obj.numValues = epoch.get('numValues');
             else
                 sdc = epoch.getParameter('shapeDataColumns');
                 sdm = epoch.getParameter('shapeDataMatrix');
@@ -53,6 +54,7 @@ classdef ShapeData < handle
                 obj.spotDiameter = epoch.getParameter('spotDiameter');
                 obj.numSpots = epoch.getParameter('numSpots');
                 obj.ampMode = epoch.getParameter('ampMode');
+                obj.numValues = epoch.getParameter('numValues');
             end
             
             % process shape data from epoch
@@ -98,7 +100,7 @@ classdef ShapeData < handle
             end
             
             if ~isKey(obj.shapeDataColumns, 'startTime')
-                si = (1:obj.numSpots)';
+                si = (1:obj.totalNumSpots)';
                 startTime = (si - 1) * obj.spotTotalTime;
                 endTime = startTime + obj.spotOnTime;
                 newColumnsNames{end+1} = 'startTime';
@@ -107,7 +109,7 @@ classdef ShapeData < handle
             end
                                 
             if ~isKey(obj.shapeDataColumns, 'diameter')
-                newColumnsData = horzcat(newColumnsData, obj.spotDiameter * ones(obj.numSpots, 1));
+                newColumnsData = horzcat(newColumnsData, obj.spotDiameter * ones(length(obj.shapeDataMatrix),1));
                 newColumnsNames{end+1} = 'diameter';
             end
 

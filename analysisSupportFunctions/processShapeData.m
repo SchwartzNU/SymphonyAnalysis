@@ -154,11 +154,13 @@ end
 maxIntensityResponses = zeros(length(responseData), 1);
 
 highestIntensity = -Inf;
+numValues = 0;
 % find highest intensity
 for p = 1:length(responseData)
     r = responseData{p,1};
     if ~isempty(r)
         highestIntensity = max(max(r(:,1)), highestIntensity);
+        numValues = max(numValues, size(r,1))
     end
 end
 
@@ -173,27 +175,42 @@ for p = 1:length(responseData)
     maxIntensityResponses(p,1) = spikes;
 end
 
-centerOfMassXY = [sum(all_positions(:,1) .* maxIntensityResponses)/sum(maxIntensityResponses), ...
-                    sum(all_positions(:,2) .* maxIntensityResponses)/sum(maxIntensityResponses)];
-if any(isnan(centerOfMassXY(:)))
-    validSearchResult = 0;
+% centerOfMassXY = [sum(all_positions(:,1) .* maxIntensityResponses)/sum(maxIntensityResponses), ...
+%                     sum(all_positions(:,2) .* maxIntensityResponses)/sum(maxIntensityResponses)];
+% if any(isnan(centerOfMassXY(:)))
+%     validSearchResult = 0;
+% end
+
+% save('fitData','all_positions','maxIntensityResponses')
+
+%% Fit a 2d gaussian to the data
+function F = gauss_2d(x,xdata)
+%  F = x(1)*exp(   -((xdata(:,1)-x(2)).^2/(2*x(3)^2) + (xdata(:,2)-x(4)).^2/(2*x(5)^2) )    );
+ xdatarot(:,1)= xdata(:,1)*cos(x(6)) - xdata(:,2)*sin(x(6));
+ xdatarot(:,2)= xdata(:,1)*sin(x(6)) + xdata(:,2)*cos(x(6));
+ x0rot = x(2)*cos(x(6)) - x(4)*sin(x(6));
+ y0rot = x(2)*sin(x(6)) + x(4)*cos(x(6));
+
+ F = x(1)*exp(   -((xdatarot(:,1)-x0rot).^2/(2*x(3)^2) + (xdatarot(:,2)-y0rot).^2/(2*x(5)^2) )    );
 end
 
-% find the farthest point above a threshold level for autocenter refinement
-positions_rel = bsxfun(@plus, all_positions, -1*centerOfMassXY);
-distances = sqrt(sum(positions_rel .^ 2, 2));
-pos_dist_intensity = [positions_rel, distances, maxIntensityResponses];
-pos_dist_intensity = sortrows(pos_dist_intensity, 3); % sort on distances
+if validSearchResult == 1
+    x0 = [1,0,50,0,50,pi/4];
 
-%TODO: figure out the right threshold for the distance refinement
-% max_response = max(simpleResponses);
-farthestResponseDistance = pos_dist_intensity(find(pos_dist_intensity(:,4) > 0, 1, 'last'), 3);
-if isempty(farthestResponseDistance)
-    validSearchResult = 0;
+    opts = optimset('Display','off');
+    MdataSize = length(all_positions);
+    lb = [0,-MdataSize/2,0,-MdataSize/2,0,0];
+    ub = [realmax('double'),MdataSize/2,(MdataSize/2)^2,MdataSize/2,(MdataSize/2)^2,pi/2];
+    [gaussianFitParams,~,~,~] = lsqcurvefit(@gauss_2d,x0,all_positions,maxIntensityResponses,lb,ub,opts);
+
+    keys = {'amplitude','centerX','sigma2X','centerY','sigma2Y','angle'};
+    gaussianFitParams = containers.Map(keys, gaussianFitParams);
+
+    % [Amplitude, x0, sigmax, y0, sigmay] = x;
+else
+    keys = {'amplitude','centerX','sigma2X','centerY','sigma2Y','angle'};
+    gaussianFitParams = containers.Map(keys, zeros(length(keys),1));
 end
-% figure(12)
-% plot(prz(:,3), prz(:,4))
-
 
 %% store data for the next stages of processing/output
 od.positions = all_positions;
@@ -202,9 +219,11 @@ od.maxIntensityResponses = maxIntensityResponses;
 od.spikeRate_by_spot = spikeRate_by_spot;
 od.displayTime = displayTime; 
 od.timeOffset = t_offset;
-od.centerOfMassXY = centerOfMassXY;
-od.farthestResponseDistance = farthestResponseDistance;
+% od.centerOfMassXY = centerOfMassXY;
+od.gaussianFitParams = gaussianFitParams;
+% od.farthestResponseDistance = farthestResponseDistance;
 od.validSearchResult = validSearchResult;
+od.numValues = numValues;
 
 
 end

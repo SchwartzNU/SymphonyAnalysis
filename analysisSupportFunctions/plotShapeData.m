@@ -26,16 +26,26 @@ if strcmp(mode,'spatial')
         grid off
         shading interp
         hold on
+        
+        % plot measured points
         plot3(xlist,ylist,zlist,'.','MarkerSize',5,'MarkerEdgeColor',[.7 .7 .7]);
-        plot(od.centerOfMassXY(1), od.centerOfMassXY(2),'+r','MarkerSize',30)
-        hold off
+        
+        % plot gaussian ellipse
+        % [Amplitude, x0, sigmax, y0, sigmay] = x;
+        gfp = od.gaussianFitParams;
+        plot(gfp('centerX'), gfp('centerY'),'+r','MarkerSize',20)
+        
+        ellipse(gfp('sigma2X'), gfp('sigma2Y'), -gfp('angle'), gfp('centerX'), gfp('centerY'), 'g');
+        
         view(0, 90)
         xlabel('X (um)');
         ylabel('Y (um)');
-        axis equal
+        axis([-largestDistanceOffset,largestDistanceOffset,-largestDistanceOffset,largestDistanceOffset])
+%         axis equal
         axis square
         %                 colorbar;
-        title(['center of mass: ' num2str(od.centerOfMassXY) ' um']);
+        title(['center of gaussian fit: ' num2str([gfp('centerX'), gfp('centerY')]) ' um']);
+        hold off
     else
         subplot(2,1,1)
         title('No valid search epoch result')
@@ -77,26 +87,31 @@ if strcmp(mode,'spatial')
     
 elseif strcmp(mode, 'subunit')
 
-    %% Plot figure with subunit models
-%     figure(12);clf;
-    num_positions = size(od.responseData,1);
-    dim1 = floor(sqrt(num_positions));
-    dim2 = ceil(num_positions / dim1);
+    if od.numValues > 1
+    
+        %% Plot figure with subunit models
+    %     figure(12);clf;
+        num_positions = size(od.responseData,1);
+        dim1 = floor(sqrt(num_positions));
+        dim2 = ceil(num_positions / dim1);
 
-    distance_to_center = zeros(num_positions, 1);
-    for p = 1:num_positions
-        distance_to_center(p,1) = sqrt(sum((od.positions(p,:) - od.centerOfMassXY).^2));
-    end
-    sorted_positions = sortrows([distance_to_center, (1:num_positions)'], 1);
+        distance_to_center = zeros(num_positions, 1);
+        for p = 1:num_positions
+            distance_to_center(p,1) = sqrt(sum((od.positions(p,:) - [od.gaussianFitParams('centerX'),od.gaussianFitParams('centerY')]).^2));
+        end
+        sorted_positions = sortrows([distance_to_center, (1:num_positions)'], 1);
 
-    for p = 1:num_positions
-        subplot(dim1,dim2,p)
-        resp_index = sorted_positions(p,2);
-        responses = od.responseData{resp_index,1};
-        responses = sortrows(responses, 1); % order by intensity values for plot
-        intensity = responses(:,1);
-        rate = responses(:,2);
-        plot(intensity, rate)
+        for p = 1:num_positions
+            subplot(dim1,dim2,p)
+            resp_index = sorted_positions(p,2);
+            responses = od.responseData{resp_index,1};
+            responses = sortrows(responses, 1); % order by intensity values for plot
+            intensity = responses(:,1);
+            rate = responses(:,2);
+            plot(intensity, rate)
+        end
+    else
+        disp('No multiple value subunits measured');
     end
 else
     disp('incorrect plot type')
