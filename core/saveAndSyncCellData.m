@@ -60,9 +60,9 @@ if do_sync && SYNC_TO_SERVER
     if isempty(ind) %new file to add to database
         curStatus = 0;
         ind = length(fnames)+1; %add new entry
-        disp('adding new entry');
+        disp([cellData.savedFileName ': Adding new local cellData to database']);
     else %check status
-        disp('found existing entry');
+        disp([cellData.savedFileName ': Found local cellData']);
         curStatus = status(ind);
     end
     
@@ -86,7 +86,7 @@ if do_sync && SYNC_TO_SERVER
                 ind = length(fnames)+1; %add new entry
                 disp('adding new entry');
             else %check status
-                disp('found existing entry');
+                disp([cellData.savedFileName ': Found local cellData']);
                 curStatus = status(ind);
             end
             time_elapsed = toc;
