@@ -7,9 +7,14 @@ num_epochs = length(epochData);
 
 alignmentTemporalOffset = NaN;
 
+%% Reorder epochs by presentationId, just in case
+pId = [];
+for p = 1:num_epochs
+    pId(p) = epochData{p}.presentationId;
+end
+[~,epochOrder] = sort(pId);
+
 %% create full positions list
-
-
 all_positions = [];
 for p = 1:num_epochs
     col_x = epochData{p}.shapeDataColumns('X');
@@ -20,7 +25,7 @@ all_positions = unique(all_positions, 'rows');
 responseData = cell(size(all_positions, 1), 1);
 
 for p = 1:num_epochs
-    e = epochData{p};
+    e = epochData{epochOrder(p)};
     od.spotTotalTime = e.spotTotalTime;
     od.spotOnTime = e.spotOnTime;
     od.numSpots = e.numSpots;
@@ -44,8 +49,7 @@ for p = 1:num_epochs
         lightOnTime(e.t > startTime(si) & e.t < endTime(si)) = epoch_intensities(si);
     end
     % 
-
-    [c,lags] = xcorr(e.spikeRate, lightOnTime);
+    [c,lags] = xcorr(e.response, lightOnTime);
     [~,I] = max(c);
     t_offset = lags(I) ./ e.sampleRate;
     
@@ -88,7 +92,7 @@ for p = 1:num_epochs
 %     figure(96)
 %     clf;
 %     hold on
-%     plot(e.t, e.spikeRate./max(e.spikeRate)*2,'g')
+%     plot(e.t, e.response./max(e.response)*2,'g')
 %     plot(e.t, lightOnTime,'b')
 %     plot(e.t+t_offset, lightOnTime * .5,'r')
 
@@ -115,14 +119,14 @@ for p = 1:num_epochs
         end
 %         t_range = (t - t_offset) > spotTotalTime * (si - 1) & (t - t_offset) < spotTotalTime * si;
         segmentIndices = segmentStartIndex + (0:(sampleCount-1))';
-        if size(e.spikeRate, 1) < max(segmentIndices)
+        if size(e.response, 1) < max(segmentIndices)
             continue
         end
-        spikeRate_by_spot(si,:) = e.spikeRate(segmentIndices);
+        spikeRate_by_spot(si,:) = e.response(segmentIndices);
         
         all_position_index = all_positions(:,1) == spot_position(1) & all_positions(:,2) == spot_position(2);
 %         all_pos_in = find(all_position_index)
-        response = mean(e.spikeRate(segmentIndices)); % average of spike rate over time chunk
+        response = mean(e.response(segmentIndices)); % average of spike rate over time chunk
 %         current_data = responseData{all_position_index, 1}
         responseData{all_position_index,1} = vertcat(responseData{all_position_index,1}, [spot_intensity, response]);
         

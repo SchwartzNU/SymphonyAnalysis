@@ -1,6 +1,9 @@
 classdef ShapeData < handle
     
     properties
+        sessionId
+        presentationId
+        
         epochMode
         ampMode
         sampleRate
@@ -26,10 +29,11 @@ classdef ShapeData < handle
         function obj = ShapeData(epoch, runmode)
             
             obj.sampleRate = 1000; %desired rate
-            obj.preTime = 0.250;
             
             % standard parameters in epoch
             if strcmp(runmode, 'offline')
+                obj.sessionId = epoch.get('sessionId');
+                obj.presentationId = epoch.get('presentationId');
                 sdc = epoch.get('shapeDataColumns');
                 sdm = epoch.get('shapeDataMatrix');
                 if ~(isa(sdm,'System.String') || isa(sdm,'char'))
@@ -42,7 +46,10 @@ classdef ShapeData < handle
                 obj.numSpots = epoch.get('numSpots');
                 obj.ampMode = epoch.get('ampMode');
                 obj.numValues = epoch.get('numValues');
+                obj.preTime = epoch.get('preTime')/1000;
             else
+                obj.sessionId = epoch.getParameter('sessionId');
+                obj.presentationId = epoch.getParameter('presentationId');                
                 sdc = epoch.getParameter('shapeDataColumns');
                 sdm = epoch.getParameter('shapeDataMatrix');
                 if ~(isa(sdm,'System.String') || isa(sdm,'char'))
@@ -55,6 +62,11 @@ classdef ShapeData < handle
                 obj.numSpots = epoch.getParameter('numSpots');
                 obj.ampMode = epoch.getParameter('ampMode');
                 obj.numValues = epoch.getParameter('numValues');
+                obj.preTime = epoch.getParameter('preTime')/1000;
+            end
+            
+            if isnan(obj.preTime)
+                obj.preTime = 0.250;
             end
             
             % process shape data from epoch
@@ -123,13 +135,11 @@ classdef ShapeData < handle
             % process actual response or spikes from epoch
             if strcmp(runmode, 'offline')
                 if strcmp(obj.ampMode, 'Cell attached')
-                    obj.spikes = epoch.getSpikes();
-                    obj.processSpikes();
-                    obj.response = [];
+                    obj.setSpikes(epoch.getSpikes());
                 else
-                    disp('not handling whole cell offline response')
                     obj.spikes = [];
-                    obj.response = [];
+                    obj.setResponse(epoch.getData('Amplifier_Ch1'));
+                    obj.processExcitation()
                 end
             else
                 obj.spikes = [];
@@ -138,21 +148,45 @@ classdef ShapeData < handle
         end
         
         function setResponse(obj, response)
+            % downsample and generate time vector
+            response = resample(response, obj.sampleRate, 10000);
             obj.response = response;
+            obj.t = (0:(length(obj.response)-1)) / obj.sampleRate;
+            obj.t = obj.t - obj.preTime;            
         end
         
         function setSpikes(obj, spikes)
-            obj.spikes = spikes;
-            obj.processSpikes()
+            if isnan(spikes)
+                disp('No spikes found (detect them maybe?)')
+            else
+                obj.spikes = spikes;
+                obj.processSpikes()
+            end
         end
     
         function processSpikes(obj)
-            spikeRate_orig = zeros(round((obj.numSpots + 1) * obj.spotTotalTime * 10000), 1);
+            % convert spike times to raw response
+            spikeRate_orig = zeros(max(obj.spikes) + 100, 1);
             spikeRate_orig(obj.spikes) = 1.0;
-            spikeRate_f = filtfilt(hann(obj.sampleRate / 10), 1, spikeRate_orig); % 10 ms (100 samples) window filter
-            obj.spikeRate = resample(spikeRate_f, obj.sampleRate, 10000);
-            obj.t = (0:(length(obj.spikeRate)-1)) / obj.sampleRate;
-            obj.t = obj.t - obj.preTime;
+            obj.spikeRate = filtfilt(hann(obj.sampleRate / 10), 1, spikeRate_orig); % 10 ms (100 samples) window filter
+            obj.setResponse(obj.spikeRate)
+        end
+        
+        function processExcitation(obj)
+            % call after setResponse to make excitation like spikeRate
+            r = -obj.response;
+            r = r - mean(r(1:round(obj.sampleRate*obj.preTime)));
+            Fstop = .05;
+            Fpass = .1;
+            Astop = 20;
+            Apass = 0.5;
+%             wc_filter = designfilt('highpassiir','StopbandFrequency',Fstop, ...
+%                 'PassbandFrequency',Fpass,'StopbandAttenuation',Astop, ...
+%                 'PassbandRipple',Apass,'SampleRate',obj.sampleRate,'DesignMethod','butter');
+%             
+%             r = filtfilt(wc_filter, r);
+            
+            obj.response = r;
         end
     end
 end
