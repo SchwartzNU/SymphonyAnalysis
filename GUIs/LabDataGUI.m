@@ -576,6 +576,7 @@ classdef LabDataGUI < handle
             for i=1:length(obj.curDataSets)
                 %curName =[cellDataFolder obj.curDataSets{i} '.mat'];
                 %load(curName);
+                fprintf('LabDataGUI select cell: ');
                 cellData = loadAndSyncCellData(obj.curDataSets{i});
                 dataSetsList = [dataSetsList, cellData.savedDataSets.keys];
             end
@@ -792,6 +793,7 @@ classdef LabDataGUI < handle
                 drawnow;
                 %curName_fixed = [cellDataFolder curName '.mat'];
                 %load(curName_fixed);
+                fprintf('LabDataGUI load cell: ');
                 cellData = loadAndSyncCellData(curName);
                 obj.curCellData = cellData;
                 set(obj.fig, 'Name', ['LabDataGUI: ' obj.projName]);
@@ -877,6 +879,7 @@ classdef LabDataGUI < handle
                     %figure out cellType and add cell to labData
                     %curName = [cellDataFolder cellDataNames{j}];
                     %load(curName); %loads cellData
+                    fprintf('LabDataGUI load names: ');
                     cellData = loadAndSyncCellData(cellDataNames{j});
                     if cellData.get('Nepochs') > 0
                         if  ~isnan(cellData.epochs(1).get('amp2')) %if 2 amps
@@ -941,6 +944,7 @@ classdef LabDataGUI < handle
                         obj.fullCellDataList = [obj.fullCellDataList cellDataNames{j}];
                         %curName = [cellDataFolder cellDataNames{j}];
                         %load(curName); %loads cellData
+                        fprintf('LabDataGUI load epoch & cell keys: ');
                         cellData = loadAndSyncCellData(cellDataNames{j});
                         
                         %                     %automatically fix cellData save locations here
@@ -1053,6 +1057,7 @@ classdef LabDataGUI < handle
                         for i=1:length(cellDataNames)
                             %curName = [cellDataFolder cellDataNames{i} '.mat'];
                             %load(curName);
+                            fprintf('LabDataGUI change cell type: ');
                             cellData = loadAndSyncCellData(cellDataNames{i});
                             %keyboard;
                             if ~isnan(cellData.epochs(1).get('amp2')) %if 2 amps
