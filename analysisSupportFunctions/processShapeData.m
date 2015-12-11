@@ -5,7 +5,7 @@ od = struct();
 
 num_epochs = length(epochData);
 
-alignmentTemporalOffset = NaN;
+alignmentTemporalOffset = [NaN, NaN];
 
 %% Reorder epochs by presentationId, just in case
 pId = [];
@@ -22,13 +22,16 @@ for p = 1:num_epochs
     all_positions = vertcat(all_positions, epochData{p}.shapeDataMatrix(:,[col_x col_y])); %#ok<AGROW>
 end
 all_positions = unique(all_positions, 'rows');
-responseData = cell(size(all_positions, 1), 1);
+num_positions = length(all_positions);
+responseData = cell(num_positions, 2);
+
 
 for p = 1:num_epochs
     e = epochData{epochOrder(p)};
     od.spotTotalTime = e.spotTotalTime;
     od.spotOnTime = e.spotOnTime;
     od.numSpots = e.numSpots;
+    od.sampleRate = e.sampleRate;
         
     col_x = e.shapeDataColumns('X');
     col_y = e.shapeDataColumns('Y');
@@ -48,17 +51,31 @@ for p = 1:num_epochs
     for si = 1:e.totalNumSpots
         lightOnTime(e.t > startTime(si) & e.t < endTime(si)) = epoch_intensities(si);
     end
+    lightOffTime = ~lightOnTime * 1.0;
     % 
-    [c,lags] = xcorr(e.response, lightOnTime);
-    [~,I] = max(c);
-    t_offset = lags(I) ./ e.sampleRate;
+    [c_on,lags_on] = xcorr(e.response, lightOnTime);
+    [~,I] = max(c_on);
+    t_offset_on = lags_on(I) ./ e.sampleRate;
+    
+    [c_off,lags_off] = xcorr(e.response, lightOffTime);
+    [~,I] = max(c_off);
+    t_offset_off = lags_off(I) ./ e.sampleRate;
+    
+    if t_offset_on < t_offset_off
+        disp('On cell')
+    else
+        disp('Off cell')
+%         t_offset = t_offset_off;
+    end
+    
+    t_offset = [t_offset_on, t_offset_off];
     
     if strcmp(e.epochMode, 'flashingSpots')
         t_offset = mod(t_offset, e.spotTotalTime);
         
-        if t_offset < 0.1 % might go too low if the responses are actually more than one time unit late
-            t_offset = t_offset + e.spotTotalTime;
-        end
+        % might go too low if the responses are actually more than one time
+        % unit late:
+        t_offset(t_offset < 0.1) = t_offset(t_offset < 0.1) + e.spotTotalTime; 
     end
     
     % this is to give it a bit of slack early in case some strong
@@ -74,7 +91,7 @@ for p = 1:num_epochs
 %         disp('temporal alignment gave offset of ')
 %         disp(t_offset)
         skipResponses = 1;
-    elseif ~isnan(alignmentTemporalOffset)
+    elseif ~isnan(alignmentTemporalOffset(1))
         t_offset = alignmentTemporalOffset;
 %         disp('using t_offset from alignment epoch')
 %         disp(t_offset)
@@ -97,10 +114,16 @@ for p = 1:num_epochs
 %     plot(e.t+t_offset, lightOnTime * .5,'r')
 
 
-    sampleCount = round(e.spotTotalTime * e.sampleRate);
-    displayTime = (1:sampleCount) ./ e.sampleRate + t_offset;
+    sampleCount_total = round(e.spotTotalTime * e.sampleRate);
+    sampleCount_on = round(e.spotOnTime * e.sampleRate);
+    sampleCount_off = sampleCount_total - sampleCount_on;
     
-    spikeRate_by_spot = zeros(e.numSpots, sampleCount);
+    sampleSet_ooi = {};
+    sampleSet_ooi{1} = (0:(sampleCount_on-1))'; % ON
+    sampleSet_ooi{2} = sampleCount_on + (0:(sampleCount_off-1))'; % OFF
+    sampleSet_ooi{3} = (0:(sampleCount_total-1))'; % total
+    
+    spikeRate_by_spot = zeros(e.numSpots, sampleCount_total);
     
     if skipResponses == 1
         continue
@@ -112,25 +135,32 @@ for p = 1:num_epochs
         spot_position = epoch_positions(si,:);
         spot_intensity = epoch_intensities(si);
         
-        segmentStartTime = e.spotTotalTime * (si - 1) + t_offset;
-        segmentStartIndex = find(e.t > segmentStartTime, 1);
-        if isempty(segmentStartIndex)
-            continue
-        end
-%         t_range = (t - t_offset) > spotTotalTime * (si - 1) & (t - t_offset) < spotTotalTime * si;
-        segmentIndices = segmentStartIndex + (0:(sampleCount-1))';
-        if size(e.response, 1) < max(segmentIndices)
-            continue
-        end
-        spikeRate_by_spot(si,:) = e.response(segmentIndices);
-        
-        all_position_index = all_positions(:,1) == spot_position(1) & all_positions(:,2) == spot_position(2);
-%         all_pos_in = find(all_position_index)
-        response = mean(e.response(segmentIndices)); % average of spike rate over time chunk
-%         current_data = responseData{all_position_index, 1}
-        responseData{all_position_index,1} = vertcat(responseData{all_position_index,1}, [spot_intensity, response]);
-        
+        for ooi = 1:2 % on (1) off (2) index
 
+            segmentStartTime = e.spotTotalTime * (si - 1) + t_offset(1);
+            segmentStartIndex = find(e.t > segmentStartTime, 1);
+            if isempty(segmentStartIndex)
+                continue
+            end
+    %         t_range = (t - t_offset) > spotTotalTime * (si - 1) & (t - t_offset) < spotTotalTime * si;
+    
+    
+            segmentIndices = segmentStartIndex + sampleSet_ooi{ooi};
+            
+            if size(e.response, 1) < segmentStartIndex + sampleCount_total % off the end of the recording
+                continue
+            end
+            spikeRate_by_spot(si,:) = e.response(segmentStartIndex + sampleSet_ooi{3}); % grab the whole thing to display later (2x)
+
+            all_position_index = all_positions(:,1) == spot_position(1) & all_positions(:,2) == spot_position(2);
+            response = mean(e.response(segmentIndices)); % average of spike rate over time chunk
+            
+            responseData{all_position_index, ooi} = vertcat(responseData{all_position_index,ooi}, [spot_intensity, response]);
+        end
+        
+%         responseData{all_position_index, :}
+
+        
 %         title(si)
 %         if max(spikeRate_by_spot(si,:)) > 0
 %             plot(e.t(segmentIndices), spikeRate_by_spot(si,:))
@@ -144,23 +174,21 @@ for p = 1:num_epochs
 %         responseValues(end+1,1) = sum(spikes);
     end
 
-    
 end
-
 
 %% overall analysis
 validSearchResult = 1;
 
-if size(all_positions, 1) < 3 % can't triangulate
+if num_positions < 3 % can't triangulate
     validSearchResult = 0;
 end
 
-maxIntensityResponses = zeros(length(responseData), 1);
+maxIntensityResponses = zeros(num_positions, 2);
 
 highestIntensity = -Inf;
 numValues = 0;
 % find highest intensity
-for p = 1:length(responseData)
+for p = 1:num_positions
     r = responseData{p,1};
     if ~isempty(r)
         highestIntensity = max(max(r(:,1)), highestIntensity);
@@ -169,14 +197,16 @@ for p = 1:length(responseData)
 end
 
 % get the responses at that intensity for simple mapping
-for p = 1:length(responseData)
-    r = responseData{p,1};
-    if ~isempty(r) && any(r(:,1) == highestIntensity)
-        spikes = mean(r(r(:,1) == highestIntensity, 2)); % just get the intensity 1.0 ones
-    else
-        spikes = 0;
+for ooi = 1:2
+    for p = 1:num_positions
+        r = responseData{p,ooi}; %on data
+        if ~isempty(r) && any(r(:,1) == highestIntensity)
+            spikes = mean(r(r(:,1) == highestIntensity, 2)); % just get the high intensity ones
+        else
+            spikes = 0;
+        end
+        maxIntensityResponses(p,ooi) = spikes;
     end
-    maxIntensityResponses(p,1) = spikes;
 end
 
 % centerOfMassXY = [sum(all_positions(:,1) .* maxIntensityResponses)/sum(maxIntensityResponses), ...
@@ -209,7 +239,7 @@ if validSearchResult == 1
     MdataSize = length(all_positions);
     lb = [0,-MdataSize/2,0,-MdataSize/2,0,0];
     ub = [realmax('double'),MdataSize/2,(MdataSize/2)^2,MdataSize/2,(MdataSize/2)^2,pi/2];
-    [gaussianFitParams,~,~,~] = lsqcurvefit(@gauss_2d,x0,all_positions,maxIntensityResponses,lb,ub,opts);
+    [gaussianFitParams,~,~,~] = lsqcurvefit(@gauss_2d,x0,all_positions,maxIntensityResponses(:,1),lb,ub,opts);
 
     keys = {'amplitude','centerX','sigma2X','centerY','sigma2Y','angle'};
     gaussianFitParams = containers.Map(keys, gaussianFitParams);
@@ -225,7 +255,7 @@ od.positions = all_positions;
 od.responseData = responseData;
 od.maxIntensityResponses = maxIntensityResponses;
 od.spikeRate_by_spot = spikeRate_by_spot;
-od.displayTime = displayTime; 
+% od.displayTime = displayTime_on; 
 od.timeOffset = t_offset;
 % od.centerOfMassXY = centerOfMassXY;
 od.gaussianFitParams = gaussianFitParams;

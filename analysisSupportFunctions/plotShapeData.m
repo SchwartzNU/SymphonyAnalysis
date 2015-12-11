@@ -4,50 +4,59 @@ function [] = plotShapeData(od, mode)
 if strcmp(mode,'spatial')
     %% Plot spatial receptive field using responses from highest intensity spots
     clf;
-    ha = tight_subplot(2,1,.05);    
+    set(gcf, 'Name','Spatial RF','NumberTitle','off');
+
+    ha = tight_subplot(2,2,.08);
     if od.validSearchResult == 1
 
+        
+        titles = {'On RF', 'Off RF'};
         positions = od.positions;
 
         xlist = positions(:,1);
         ylist = positions(:,2);
-        zlist = od.maxIntensityResponses;
-
         largestDistanceOffset = max(max(abs(xlist)), max(abs(ylist)));
-        X = linspace(-1*largestDistanceOffset, largestDistanceOffset, 100);
-        Y = X;
-        %                 X = linspace(min(xlist), max(xlist), 40);
-        %                 Y = linspace(min(ylist), max(ylist), 40);
+        
+        
+        for ooi = 1:2
+            zlist = od.maxIntensityResponses(:,ooi);
 
-        %                 ax = gca;
-        axes(ha(1))
-        [xq,yq] = meshgrid(X, Y);
-        vq = griddata(xlist, ylist, zlist, xq, yq);
-        %                 surf(xq, yq, vq, 'EdgeColor', 'none', 'FaceColor', 'interp');
-        pcolor(xq, yq, vq)
-        grid off
-        shading interp
-        hold on
-        
-        % plot measured points
-        plot3(xlist,ylist,zlist,'.','MarkerSize',5,'MarkerEdgeColor',[.7 .7 .7]);
-        
-        % plot gaussian ellipse
-        % [Amplitude, x0, sigmax, y0, sigmay] = x;
-        gfp = od.gaussianFitParams;
-        plot(gfp('centerX'), gfp('centerY'),'+r','MarkerSize',20)
-        
-        ellipse(gfp('sigma2X'), gfp('sigma2Y'), -gfp('angle'), gfp('centerX'), gfp('centerY'), 'g');
-        
-        view(0, 90)
-        xlabel('X (um)');
-        ylabel('Y (um)');
-        axis([-largestDistanceOffset,largestDistanceOffset,-largestDistanceOffset,largestDistanceOffset])
-%         axis equal
-        axis square
-        %                 colorbar;
-        title(['center of gaussian fit: ' num2str([gfp('centerX'), gfp('centerY')]) ' um']);
-        hold off
+            X = linspace(-1*largestDistanceOffset, largestDistanceOffset, 100);
+            Y = X;
+            %                 X = linspace(min(xlist), max(xlist), 40);
+            %                 Y = linspace(min(ylist), max(ylist), 40);
+
+            %                 ax = gca;
+            axes(ha(ooi))
+            [xq,yq] = meshgrid(X, Y);
+            vq = griddata(xlist, ylist, zlist, xq, yq);
+            %                 surf(xq, yq, vq, 'EdgeColor', 'none', 'FaceColor', 'interp');
+            pcolor(xq, yq, vq)
+            grid off
+            shading interp
+            hold on
+
+            % plot measured points
+            plot3(xlist,ylist,zlist,'.','MarkerSize',5,'MarkerEdgeColor',[.7 .7 .7]);
+
+            % plot gaussian ellipse
+            % [Amplitude, x0, sigmax, y0, sigmay] = x;
+            gfp = od.gaussianFitParams;
+            plot(gfp('centerX'), gfp('centerY'),'+r','MarkerSize',20)
+
+            ellipse(gfp('sigma2X'), gfp('sigma2Y'), -gfp('angle'), gfp('centerX'), gfp('centerY'), 'g');
+
+            view(0, 90)
+    %         xlabel('X (um)');
+    %         ylabel('Y (um)');
+            axis([-largestDistanceOffset,largestDistanceOffset,-largestDistanceOffset,largestDistanceOffset])
+    %         axis equal
+            axis square
+            %                 colorbar;
+            title([titles{ooi} ' center of gaussian fit: ' num2str([gfp('centerX'), gfp('centerY')]) ' um']);
+            hold off
+            
+        end
     else
         subplot(2,1,1)
         title('No valid search epoch result')
@@ -59,12 +68,13 @@ if strcmp(mode,'spatial')
     spotTotalTime = od.spotTotalTime;
 
     %                 spikeBins = nodeData.spikeBins.value;
+    
     spotBinDisplay = mean(od.spikeRate_by_spot, 1);
-    displayTime = od.displayTime;
     timeOffset = od.timeOffset;
+    
+    displayTime = (1:(od.sampleRate * spotTotalTime)) ./ od.sampleRate + timeOffset(1);
 
-
-    axes(ha(2))
+    axes(ha(3))
     plot(displayTime, spotBinDisplay)
     %                 plot(spikeBins(1:end-1), spikeBinsValues);
     %                 xlim([0,spikeBins(end-1)])
@@ -82,11 +92,14 @@ if strcmp(mode,'spatial')
     set(p,'EdgeColor','none');
 
     % analysis spot patch
-    p = patch(od.timeOffset+[0 spotTotalTime spotTotalTime 0],[0 0 -.1*top -.1*top],'g');
+    p = patch(od.timeOffset(1)+[0 spotOnTime spotOnTime 0],[0 0 -.1*top -.1*top],'g');
     set(p,'FaceAlpha',0.3);
     set(p,'EdgeColor','none');
+    p = patch(od.timeOffset(1)+[spotOnTime spotTotalTime spotTotalTime spotOnTime],[0 0 -.1*top -.1*top],'r');
+    set(p,'FaceAlpha',0.3);
+    set(p,'EdgeColor','none');    
 
-    title(['temporal offset of collection bins: ' num2str(timeOffset) ' sec'])
+    title(['temporal offset of collection bins (on, off): ' num2str(timeOffset) ' sec'])
     
 elseif strcmp(mode, 'subunit')
 
