@@ -152,7 +152,7 @@ classdef ShapeData < handle
             response = resample(response, obj.sampleRate, 10000);
             obj.response = response;
             obj.t = (0:(length(obj.response)-1)) / obj.sampleRate;
-            obj.t = obj.t - obj.preTime;            
+            obj.t = obj.t - obj.preTime;
         end
         
         function setSpikes(obj, spikes)

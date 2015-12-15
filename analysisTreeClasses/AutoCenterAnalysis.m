@@ -53,10 +53,10 @@ classdef AutoCenterAnalysis < AnalysisTree
 
             if isfield(nodeData, 'splitParam')
                 if strcmp(nodeData.splitParam, 'sessionId')
-                    if isfield(nodeData.outputData, 'value')
+                    if isfield(nodeData.analysisData, 'value')
                         figure(11);
-                        outputData = nodeData.outputData.value;
-                        plotShapeData(outputData, 'spatial');
+                        analysisData = nodeData.analysisData.value;
+                        plotShapeData(analysisData, 'spatial');
 
                     end
                 end
@@ -69,12 +69,10 @@ classdef AutoCenterAnalysis < AnalysisTree
                         
             if isfield(nodeData, 'splitParam')
                 if strcmp(nodeData.splitParam, 'sessionId')
-                    if isfield(nodeData.outputData, 'value')
+                    if isfield(nodeData.analysisData, 'value')
                         figure(12);
-
-                        outputData = nodeData.outputData.value;
-
-                        plotShapeData(outputData, 'subunit');
+                        analysisData = nodeData.analysisData.value;
+                        plotShapeData(analysisData, 'subunit');
                     end
                 end
             end

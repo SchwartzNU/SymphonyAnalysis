@@ -8,14 +8,14 @@ end
 
 
 %% Process it using standard function
-outputData = processShapeData(shapeData);
+analysisData = processShapeData(shapeData);
 
 
 %% Return output to tree
 outputStruct = struct;
 
-outputStruct.outputData.units = '';
-outputStruct.outputData.type = 'combinedAcrossEpochs';
-outputStruct.outputData.value = outputData;
+outputStruct.analysisData.units = '';
+outputStruct.analysisData.type = 'combinedAcrossEpochs';
+outputStruct.analysisData.value = analysisData;
 
 end

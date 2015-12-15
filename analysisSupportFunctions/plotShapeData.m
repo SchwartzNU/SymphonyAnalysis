@@ -1,4 +1,4 @@
-function [] = plotShapeData(od, mode)
+function [] = plotShapeData(ad, mode)
 
 
 if strcmp(mode,'spatial')
@@ -7,19 +7,22 @@ if strcmp(mode,'spatial')
     set(gcf, 'Name','Spatial RF','NumberTitle','off');
 
     ha = tight_subplot(2,2,.08);
-    if od.validSearchResult == 1
+    if ad.validSearchResult == 1
 
-        
-        titles = {'On RF', 'Off RF'};
-        positions = od.positions;
+        dataNames = {'On','Off','Total'};
+        titles = {'', 'On Off RF', 'Total RF'};
+        positions = ad.positions;
 
         xlist = positions(:,1);
         ylist = positions(:,2);
         largestDistanceOffset = max(max(abs(xlist)), max(abs(ylist)));
         
         
-        for ooi = 1:2
-            zlist = od.maxIntensityResponses(:,ooi);
+        axes_by_ooi = [ha(1), ha(1), ha(2)];
+        on_data_stored = [];
+        
+        for ooi = 1:3
+            zlist = ad.maxIntensityResponses(:,ooi);
 
             X = linspace(-1*largestDistanceOffset, largestDistanceOffset, 100);
             Y = X;
@@ -27,11 +30,24 @@ if strcmp(mode,'spatial')
             %                 Y = linspace(min(ylist), max(ylist), 40);
 
             %                 ax = gca;
-            axes(ha(ooi))
+            axes(axes_by_ooi(ooi));
             [xq,yq] = meshgrid(X, Y);
             vq = griddata(xlist, ylist, zlist, xq, yq);
-            %                 surf(xq, yq, vq, 'EdgeColor', 'none', 'FaceColor', 'interp');
-            pcolor(xq, yq, vq)
+            
+            if ooi == 1
+                on_data_stored = vq;
+            else
+                if ooi == 2 % use On as Green, Off as Red
+                    c = vq;
+                    c(:,:,2) = on_data_stored;
+                    c(:,:,3) = 0;
+%                     c(isnan(c)) = 0;
+                    c = c ./ nanmax(c(:));
+                else
+                    c = vq;
+                end
+                surface(xq, yq, zeros(size(xq)), c)
+            end
             grid off
             shading interp
             hold on
@@ -41,7 +57,8 @@ if strcmp(mode,'spatial')
 
             % plot gaussian ellipse
             % [Amplitude, x0, sigmax, y0, sigmay] = x;
-            gfp = od.gaussianFitParams;
+            gfp = ad.gaussianFitParams_ooi{ooi};
+            disp([dataNames{ooi}, ' center of gaussian fit: ' num2str([gfp('centerX'), gfp('centerY')]) ' um'])
             plot(gfp('centerX'), gfp('centerY'),'+r','MarkerSize',20)
 
             ellipse(gfp('sigma2X'), gfp('sigma2Y'), -gfp('angle'), gfp('centerX'), gfp('centerY'), 'g');
@@ -53,8 +70,7 @@ if strcmp(mode,'spatial')
     %         axis equal
             axis square
             %                 colorbar;
-            title([titles{ooi} ' center of gaussian fit: ' num2str([gfp('centerX'), gfp('centerY')]) ' um']);
-            hold off
+            title(titles{ooi});
             
         end
     else
@@ -64,15 +80,15 @@ if strcmp(mode,'spatial')
 
 
     %% plot time graph
-    spotOnTime = od.spotOnTime;
-    spotTotalTime = od.spotTotalTime;
+    spotOnTime = ad.spotOnTime;
+    spotTotalTime = ad.spotTotalTime;
 
     %                 spikeBins = nodeData.spikeBins.value;
     
-    spotBinDisplay = mean(od.spikeRate_by_spot, 1);
-    timeOffset = od.timeOffset;
+    spotBinDisplay = mean(ad.spikeRate_by_spot, 1);
+    timeOffset = ad.timeOffset;
     
-    displayTime = (1:(od.sampleRate * spotTotalTime)) ./ od.sampleRate + timeOffset(1);
+    displayTime = (1:(ad.sampleRate * spotTotalTime)) ./ ad.sampleRate + timeOffset(1);
 
     axes(ha(3))
     plot(displayTime, spotBinDisplay)
@@ -92,10 +108,10 @@ if strcmp(mode,'spatial')
     set(p,'EdgeColor','none');
 
     % analysis spot patch
-    p = patch(od.timeOffset(1)+[0 spotOnTime spotOnTime 0],[0 0 -.1*top -.1*top],'g');
+    p = patch(ad.timeOffset(1)+[0 spotOnTime spotOnTime 0],[0 0 -.1*top -.1*top],'g');
     set(p,'FaceAlpha',0.3);
     set(p,'EdgeColor','none');
-    p = patch(od.timeOffset(1)+[spotOnTime spotTotalTime spotTotalTime spotOnTime],[0 0 -.1*top -.1*top],'r');
+    p = patch(ad.timeOffset(1)+[spotOnTime spotTotalTime spotTotalTime spotOnTime],[0 0 -.1*top -.1*top],'r');
     set(p,'FaceAlpha',0.3);
     set(p,'EdgeColor','none');    
 
@@ -103,18 +119,19 @@ if strcmp(mode,'spatial')
     
 elseif strcmp(mode, 'subunit')
 
-    if od.numValues > 1
+    if ad.numValues > 1
     
         %% Plot figure with subunit models
     %     figure(12);
         clf;
-        num_positions = size(od.responseData,1);
+        num_positions = size(ad.responseData,1);
         dim1 = floor(sqrt(num_positions));
         dim2 = ceil(num_positions / dim1);
 
         distance_to_center = zeros(num_positions, 1);
         for p = 1:num_positions
-            distance_to_center(p,1) = sqrt(sum((od.positions(p,:) - [od.gaussianFitParams('centerX'),od.gaussianFitParams('centerY')]).^2));
+            gfp = ad.gaussianFitParams_ooi{3};
+            distance_to_center(p,1) = sqrt(sum((ad.positions(p,:) - [gfp('centerX'),gfp('centerY')]).^2));
         end
         sorted_positions = sortrows([distance_to_center, (1:num_positions)'], 1);
 
@@ -124,20 +141,22 @@ elseif strcmp(mode, 'subunit')
 %             tight_subplot(dim1,dim2,p)
             axes(ha(p))
             resp_index = sorted_positions(p,2);
-            responses = od.responseData{resp_index,1};
+            responses = ad.responseData{resp_index,3};
             responses = sortrows(responses, 1); % order by intensity values for plot
             intensity = responses(:,1);
             rate = responses(:,2);          
             plot(intensity, rate)
             hold on
-            pfit = polyfit(intensity, rate, 1);
-            plot(intensity, polyval(pfit,intensity))
+            if length(unique(intensity)) > 1
+                pfit = polyfit(intensity, rate, 1);
+                plot(intensity, polyval(pfit,intensity))
+            end
             ylim([0,max(rate)+.1])
             hold off
         end
         
         set(ha(1:end-dim2),'XTickLabel','');
-        set(ha,'YTickLabel','')
+%         set(ha,'YTickLabel','')
     else
         disp('No multiple value subunits measured');
     end

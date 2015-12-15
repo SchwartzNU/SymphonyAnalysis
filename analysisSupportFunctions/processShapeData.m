@@ -1,9 +1,10 @@
-function od = processShapeData(epochData)
+function ad = processShapeData(epochData)
 % epochData: cell array of ShapeData
 
-od = struct();
+ad = struct();
 
 num_epochs = length(epochData);
+ad.numEpochs = num_epochs;
 
 alignmentTemporalOffset = [NaN, NaN];
 
@@ -12,7 +13,11 @@ pId = [];
 for p = 1:num_epochs
     pId(p) = epochData{p}.presentationId;
 end
+
 [~,epochOrder] = sort(pId);
+epochData = epochData(epochOrder);
+ad.epochData = epochData;
+
 
 %% create full positions list
 all_positions = [];
@@ -23,15 +28,15 @@ for p = 1:num_epochs
 end
 all_positions = unique(all_positions, 'rows');
 num_positions = length(all_positions);
-responseData = cell(num_positions, 2);
+responseData = cell(num_positions, 3); % On, Off, Total
 
 
 for p = 1:num_epochs
     e = epochData{epochOrder(p)};
-    od.spotTotalTime = e.spotTotalTime;
-    od.spotOnTime = e.spotOnTime;
-    od.numSpots = e.numSpots;
-    od.sampleRate = e.sampleRate;
+    ad.spotTotalTime = e.spotTotalTime;
+    ad.spotOnTime = e.spotOnTime;
+    ad.numSpots = e.numSpots;
+    ad.sampleRate = e.sampleRate;
         
     col_x = e.shapeDataColumns('X');
     col_y = e.shapeDataColumns('Y');
@@ -48,6 +53,7 @@ for p = 1:num_epochs
     %% find the time offset from light to spikes, assuming On semi-transient cell
 %     lightOnValue = 1.0 * (mod(e.t - e.preTime, e.spotTotalTime) < e.spotOnTime * 1.2);
     lightOnTime = zeros(size(e.t));
+
     for si = 1:e.totalNumSpots
         lightOnTime(e.t > startTime(si) & e.t < endTime(si)) = epoch_intensities(si);
     end
@@ -56,6 +62,22 @@ for p = 1:num_epochs
     [c_on,lags_on] = xcorr(e.response, lightOnTime);
     [~,I] = max(c_on);
     t_offset_on = lags_on(I) ./ e.sampleRate;
+    
+%     if strcmp(e.epochMode, 'temporalAlignment')
+%         figure(67)
+%         clf;
+%         subplot(2,1,1)
+%         hold on
+%         plot(lags_on, c_on)
+%         plot(lags_on(I), c_on(I), 'o')
+%         title('lags')
+%         
+%         subplot(2,1,2)
+%         plot(e.t, lightOnTime)
+%         hold on
+%         plot(e.t, e.response./max(e.response))
+%         plot(e.t-t_offset_on, e.response./max(e.response))
+%     end
     
     [c_off,lags_off] = xcorr(e.response, lightOffTime);
     [~,I] = max(c_off);
@@ -80,7 +102,7 @@ for p = 1:num_epochs
     
     % this is to give it a bit of slack early in case some strong
     % responses are making it delay too much
-    t_offset = t_offset - .05;
+%     t_offset = t_offset - .02;
     
     % pull temporal alignment from temporal alignment epoch if available,
     % or store it now if generated
@@ -100,11 +122,7 @@ for p = 1:num_epochs
     
 %     t_offset = 0.1;
     
-%     figure(95)
-%     clf;
-%     hold on
-%     plot(lags, c)
-%     title('lags')
+
 %     
 %     figure(96)
 %     clf;
@@ -115,7 +133,7 @@ for p = 1:num_epochs
 
 
     sampleCount_total = round(e.spotTotalTime * e.sampleRate);
-    sampleCount_on = round(e.spotOnTime * e.sampleRate);
+    sampleCount_on = round(e.spotOnTime * 1.2 * e.sampleRate); % extend the On a bit
     sampleCount_off = sampleCount_total - sampleCount_on;
     
     sampleSet_ooi = {};
@@ -135,7 +153,7 @@ for p = 1:num_epochs
         spot_position = epoch_positions(si,:);
         spot_intensity = epoch_intensities(si);
         
-        for ooi = 1:2 % on (1) off (2) index
+        for ooi = 1:3 % on (1) off (2) index
 
             segmentStartTime = e.spotTotalTime * (si - 1) + t_offset(1);
             segmentStartIndex = find(e.t > segmentStartTime, 1);
@@ -150,7 +168,7 @@ for p = 1:num_epochs
             if size(e.response, 1) < segmentStartIndex + sampleCount_total % off the end of the recording
                 continue
             end
-            spikeRate_by_spot(si,:) = e.response(segmentStartIndex + sampleSet_ooi{3}); % grab the whole thing to display later (2x)
+            spikeRate_by_spot(si,:) = e.response(segmentStartIndex + sampleSet_ooi{3}); % grab the whole thing to display later (3x)
 
             all_position_index = all_positions(:,1) == spot_position(1) & all_positions(:,2) == spot_position(2);
             response = mean(e.response(segmentIndices)); % average of spike rate over time chunk
@@ -186,18 +204,18 @@ end
 maxIntensityResponses = zeros(num_positions, 2);
 
 highestIntensity = -Inf;
-numValues = 0;
+% numValues = 0;
 % find highest intensity
 for p = 1:num_positions
     r = responseData{p,1};
     if ~isempty(r)
         highestIntensity = max(max(r(:,1)), highestIntensity);
-        numValues = max(numValues, size(r,1));
+%         numValues = max(numValues, size(r,1));
     end
 end
 
 % get the responses at that intensity for simple mapping
-for ooi = 1:2
+for ooi = 1:3
     for p = 1:num_positions
         r = responseData{p,ooi}; %on data
         if ~isempty(r) && any(r(:,1) == highestIntensity)
@@ -232,36 +250,37 @@ end
 
 if validSearchResult == 1
     x0 = [1,0,50,0,50,pi/4];
-
-%     gauss_2d(x0,all_positions)
-    
+   
     opts = optimset('Display','off');
-    MdataSize = length(all_positions);
-    lb = [0,-MdataSize/2,0,-MdataSize/2,0,0];
-    ub = [realmax('double'),MdataSize/2,(MdataSize/2)^2,MdataSize/2,(MdataSize/2)^2,pi/2];
-    [gaussianFitParams,~,~,~] = lsqcurvefit(@gauss_2d,x0,all_positions,maxIntensityResponses(:,1),lb,ub,opts);
+    lb = [0,-num_positions/2,0,-num_positions/2,0,0];
+    ub = [realmax('double'),num_positions/2,(num_positions/2)^2,num_positions/2,(num_positions/2)^2,pi/2];
+    
+    gaussianFitParams_ooi = cell(3,1);
+    for ooi = 1:3
+        [gaussianFitParams,~,~,~] = lsqcurvefit(@gauss_2d,x0,all_positions,maxIntensityResponses(:,ooi),lb,ub,opts);
 
-    keys = {'amplitude','centerX','sigma2X','centerY','sigma2Y','angle'};
-    gaussianFitParams = containers.Map(keys, gaussianFitParams);
-
+        keys = {'amplitude','centerX','sigma2X','centerY','sigma2Y','angle'};
+        gaussianFitParams_ooi{ooi} = containers.Map(keys, gaussianFitParams);
+    end
     % [Amplitude, x0, sigmax, y0, sigmay] = x;
 else
-    keys = {'amplitude','centerX','sigma2X','centerY','sigma2Y','angle'};
-    gaussianFitParams = containers.Map(keys, zeros(length(keys),1));
+%     keys = {'amplitude','centerX','sigma2X','centerY','sigma2Y','angle'};
+%     gaussianFitParams = containers.Map(keys, zeros(length(keys),1));
+    gaussianFitParams_ooi = [];
 end
 
 %% store data for the next stages of processing/output
-od.positions = all_positions;
-od.responseData = responseData;
-od.maxIntensityResponses = maxIntensityResponses;
-od.spikeRate_by_spot = spikeRate_by_spot;
+ad.positions = all_positions;
+ad.responseData = responseData;
+ad.maxIntensityResponses = maxIntensityResponses;
+ad.spikeRate_by_spot = spikeRate_by_spot;
 % od.displayTime = displayTime_on; 
-od.timeOffset = t_offset;
+ad.timeOffset = t_offset;
 % od.centerOfMassXY = centerOfMassXY;
-od.gaussianFitParams = gaussianFitParams;
+ad.gaussianFitParams_ooi = gaussianFitParams_ooi;
 % od.farthestResponseDistance = farthestResponseDistance;
-od.validSearchResult = validSearchResult;
-od.numValues = numValues;
+ad.validSearchResult = validSearchResult;
+ad.numValues = numValues;
 
 
 end
