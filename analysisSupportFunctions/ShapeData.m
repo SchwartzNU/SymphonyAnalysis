@@ -8,6 +8,7 @@ classdef ShapeData < handle
         ampMode
         sampleRate
         preTime
+        stimTime
         
         spikes       
         spikeRate

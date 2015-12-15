@@ -1,10 +1,11 @@
 function runConfig = generateShapeStimulus(mode, parameters, analysisData)
 
-parameters = struct();
-
+runConfig = struct();
+runConfig.autoContinueRun = true;
 
 if isempty(analysisData)
     firstEpoch = true;
+    analysisData = struct();
 else
     firstEpoch = false;
 end
