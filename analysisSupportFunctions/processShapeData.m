@@ -204,13 +204,13 @@ end
 maxIntensityResponses = zeros(num_positions, 2);
 
 highestIntensity = -Inf;
-% numValues = 0;
+numValues = 0;
 % find highest intensity
 for p = 1:num_positions
     r = responseData{p,1};
     if ~isempty(r)
         highestIntensity = max(max(r(:,1)), highestIntensity);
-%         numValues = max(numValues, size(r,1));
+        numValues = max(numValues, size(r,1));
     end
 end
 

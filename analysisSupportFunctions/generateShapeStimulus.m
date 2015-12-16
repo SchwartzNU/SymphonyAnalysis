@@ -55,18 +55,18 @@ if strcmp(mode, 'autoReceptiveField')
         positions = bsxfun(@plus, positions, center);
         
         % generate intensity values and repeats
-        parameters.numSpots = size(positions,1); % in case the generatePositions function is imprecise
+        numSpots = size(positions,1); % in case the generatePositions function is imprecise
         values = linspace(parameters.valueMin, parameters.valueMax, parameters.numValues);
-        positionList = zeros(parameters.numValues * parameters.numSpots, 3);
+        positionList = zeros(parameters.numValues * numSpots, 3);
         starts = zeros(parameters.numSpots, 1);
         stream = RandStream('mt19937ar');
         
         si = 1; %spot index
         for repeat = 1:parameters.numValueRepeats
-            usedValues = zeros(parameters.numSpots, parameters.numValues);
+            usedValues = zeros(numSpots, parameters.numValues);
             for l = 1:parameters.numValues
-                positionIndexList = randperm(stream, parameters.numSpots);
-                for i = 1:parameters.numSpots
+                positionIndexList = randperm(stream, numSpots);
+                for i = 1:numSpots
                     curPosition = positionIndexList(i);
                     possibleNextValueIndices = find(usedValues(curPosition,:) == 0);
                     nextValueIndex = possibleNextValueIndices(randi(stream, length(possibleNextValueIndices)));
@@ -90,6 +90,71 @@ if strcmp(mode, 'autoReceptiveField')
         runConfig.stimTime = round(1e3 * (1 + ends(end)));
     end
     
+end
+
+if strcmp(mode, 'isoresponse')
+    runConfig.epochMode = 'flashingSpots';
+    
+    % find active spots
+    num_positions = size(analysisData.responseData,1);
+    validPositionIndices = [];
+    values = [];
+    for p = 1:num_positions
+        responses = analysisData.responseData{p,3};
+        valid = any(responses(:,2) > 0);
+        if valid
+            validPositionIndices = vertcat(validPositionIndices, p);
+            values = vertcat(values, responses(:,2));
+        end
+    end
+    
+    num_positions = length(validPositionIndices);
+    positions = analysisData.positions(validPositionIndices, :);
+
+%         histogram(values, 20);
+        
+        % find target response value from distribution of response values
+    if isfield(analysisData, 'targetIsoValue')
+        runConfig.targetIsoValue = analysisData.targetIsoValue;
+    else        
+        runConfig.targetIsoValue = median(values);
+    end
+    
+    % fit lines to response curves at each spot,
+    % find target light intensity
+    intensities = [];
+    for p = 1:num_positions
+        responses = analysisData.responseData{validPositionIndices(p),3};
+        responses = sortrows(responses, 1); % order by intensity values for plot
+        intensity = responses(:,1);
+        value = responses(:,2);
+        pfit = polyfit(intensity, value, 1);
+        
+        targetIntensity = (runConfig.targetIsoValue - pfit(2)) / pfit(1);
+        realIntensity = min(max(targetIntensity, .001), 1);
+        intensities(p,1) = realIntensity;
+    end
+    % create shapeMatrix for those intensities
+    
+    starts = (0:(num_positions-1))' * parameters.spotTotalTime;
+    ends = starts + parameters.spotOnTime;
+    diams = parameters.spotDiameter * ones(length(starts), 1);
+    
+    sdm = horzcat(positions, intensities, starts, ends, diams);
+    
+    runConfig.shapeDataMatrix = [];
+    numRepeatsIso = 2; % use averaging in isoresponse 
+    for i = 1:numRepeatsIso
+        runConfig.shapeDataMatrix = vertcat(runConfig.shapeDataMatrix, sdm);
+    end
+    
+    % shuffle ordering
+    ordering = [0;0];
+    while any(diff(ordering) == 0) % make sure no repeats
+        ordering = randperm(size(runConfig.shapeDataMatrix,1))';
+    end
+    runConfig.shapeDataMatrix = runConfig.shapeDataMatrix(ordering,:);
+    runConfig.shapeDataColumns = {'X','Y','intensity','startTime','endTime','diameter'};
 end
 
 end
