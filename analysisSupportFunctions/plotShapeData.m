@@ -3,14 +3,15 @@ function [] = plotShapeData(ad, mode)
 
 if strcmp(mode,'spatial')
     %% Plot spatial receptive field using responses from highest intensity spots
-    clf;
-    set(gcf, 'Name','Spatial RF','NumberTitle','off');
+%     clf;
+%     set(gcf, 'Name','Spatial RF','NumberTitle','off');
 
     ha = tight_subplot(2,2,.08);
     if ad.validSearchResult == 1
 
         dataNames = {'On','Off','Total'};
         titles = {'', 'On Off RF', 'Total RF'};
+        colors = {'g';'r';'m'};
         positions = ad.positions;
 
         xlist = positions(:,1);
@@ -59,9 +60,9 @@ if strcmp(mode,'spatial')
             % [Amplitude, x0, sigmax, y0, sigmay] = x;
             gfp = ad.gaussianFitParams_ooi{ooi};
             disp([dataNames{ooi}, ' center of gaussian fit: ' num2str([gfp('centerX'), gfp('centerY')]) ' um'])
-            plot(gfp('centerX'), gfp('centerY'),'+r','MarkerSize',20)
 
-            ellipse(gfp('sigma2X'), gfp('sigma2Y'), -gfp('angle'), gfp('centerX'), gfp('centerY'), 'g');
+            plot(gfp('centerX'), gfp('centerY'),colors{ooi},'MarkerSize',20, 'Marker','+')
+            ellipse(gfp('sigma2X'), gfp('sigma2Y'), -gfp('angle'), gfp('centerX'), gfp('centerY'), colors{ooi});
 
             view(0, 90)
     %         xlabel('X (um)');

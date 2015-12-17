@@ -1,5 +1,5 @@
 function ad = processShapeData(epochData)
-% epochData: cell array of ShapeData
+% epochData: cell array of ShapeData, one for each epoch
 
 ad = struct();
 
@@ -83,12 +83,12 @@ for p = 1:num_epochs
     [~,I] = max(c_off);
     t_offset_off = lags_off(I) ./ e.sampleRate;
     
-    if t_offset_on < t_offset_off
-        disp('On cell')
-    else
-        disp('Off cell')
-%         t_offset = t_offset_off;
-    end
+%     if t_offset_on < t_offset_off
+%         disp('On cell')
+%     else
+%         disp('Off cell')
+% %         t_offset = t_offset_off;
+%     end
     
     t_offset = [t_offset_on, t_offset_off];
     
@@ -102,7 +102,7 @@ for p = 1:num_epochs
     
     % this is to give it a bit of slack early in case some strong
     % responses are making it delay too much
-%     t_offset = t_offset - .02;
+    t_offset = t_offset - .01;
     
     % pull temporal alignment from temporal alignment epoch if available,
     % or store it now if generated
@@ -120,7 +120,7 @@ for p = 1:num_epochs
     end
     
     
-%     t_offset = 0.1;
+%     t_offset = 0.3;
     
 
 %     
@@ -249,15 +249,21 @@ end
 % maxIntensityResponses
 
 if validSearchResult == 1
+    
+    % add zero positions far away to keep gaussian fit reasonable
+    g_num_positions = num_positions + 4;
+    g_all_positions = vertcat(all_positions, 1000*[-1, -1; -1, 1; 1, 1; 1, -1]);
+    g_responses = vertcat(maxIntensityResponses(:,ooi), zeros(4,1));
+    
     x0 = [1,0,50,0,50,pi/4];
    
     opts = optimset('Display','off');
-    lb = [0,-num_positions/2,0,-num_positions/2,0,0];
-    ub = [realmax('double'),num_positions/2,(num_positions/2)^2,num_positions/2,(num_positions/2)^2,pi/2];
+    lb = [0,-g_num_positions/2,0,-g_num_positions/2,0,0];
+    ub = [realmax('double'),g_num_positions/2,(g_num_positions/2)^2,g_num_positions/2,(g_num_positions/2)^2,pi/2];
     
     gaussianFitParams_ooi = cell(3,1);
     for ooi = 1:3
-        [gaussianFitParams,~,~,~] = lsqcurvefit(@gauss_2d,x0,all_positions,maxIntensityResponses(:,ooi),lb,ub,opts);
+        [gaussianFitParams,~,~,~] = lsqcurvefit(@gauss_2d,x0,g_all_positions,g_responses,lb,ub,opts);
 
         keys = {'amplitude','centerX','sigma2X','centerY','sigma2Y','angle'};
         gaussianFitParams_ooi{ooi} = containers.Map(keys, gaussianFitParams);

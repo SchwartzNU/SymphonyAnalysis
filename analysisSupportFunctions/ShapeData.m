@@ -30,6 +30,7 @@ classdef ShapeData < handle
         function obj = ShapeData(epoch, runmode)
             
             obj.sampleRate = 1000; %desired rate
+            obj.preTime = .250; % fixed always anyway
             
             % standard parameters in epoch
             if strcmp(runmode, 'offline')
@@ -47,7 +48,6 @@ classdef ShapeData < handle
                 obj.numSpots = epoch.get('numSpots');
                 obj.ampMode = epoch.get('ampMode');
                 obj.numValues = epoch.get('numValues');
-                obj.preTime = epoch.get('preTime')/1000;
             else
                 obj.sessionId = epoch.getParameter('sessionId');
                 obj.presentationId = epoch.getParameter('presentationId');                
@@ -63,11 +63,6 @@ classdef ShapeData < handle
                 obj.numSpots = epoch.getParameter('numSpots');
                 obj.ampMode = epoch.getParameter('ampMode');
                 obj.numValues = epoch.getParameter('numValues');
-                obj.preTime = epoch.getParameter('preTime')/1000;
-            end
-            
-            if isnan(obj.preTime)
-                obj.preTime = 0.250;
             end
             
             % process shape data from epoch
@@ -188,6 +183,11 @@ classdef ShapeData < handle
 %             r = filtfilt(wc_filter, r);
             
             obj.response = r;
+        end
+        
+        function simulateSpikes(obj)
+            sp = simulateSpikeTrain(obj);
+            obj.setSpikes(sp);
         end
     end
 end
