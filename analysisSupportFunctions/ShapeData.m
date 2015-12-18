@@ -48,7 +48,9 @@ classdef ShapeData < handle
                 obj.numSpots = epoch.get('numSpots');
                 obj.ampMode = epoch.get('ampMode');
                 obj.numValues = epoch.get('numValues');
-            else
+                obj.stimTime = epoch.get('stimTime');
+                
+            elseif strcmp(runmode, 'online')
                 obj.sessionId = epoch.getParameter('sessionId');
                 obj.presentationId = epoch.getParameter('presentationId');                
                 sdc = epoch.getParameter('shapeDataColumns');
@@ -63,6 +65,7 @@ classdef ShapeData < handle
                 obj.numSpots = epoch.getParameter('numSpots');
                 obj.ampMode = epoch.getParameter('ampMode');
                 obj.numValues = epoch.getParameter('numValues');
+                obj.stimTime = epoch.getParameter('stimTime');
             end
             
             % process shape data from epoch
@@ -132,7 +135,9 @@ classdef ShapeData < handle
             if strcmp(runmode, 'offline')
                 if strcmp(obj.ampMode, 'Cell attached')
                     obj.setSpikes(epoch.getSpikes());
-                else
+                elseif strcmp(obj.ampMode, 'emulated')
+                    obj.spikes = [];
+                else % whole cell
                     obj.spikes = [];
                     obj.setResponse(epoch.getData('Amplifier_Ch1'));
                     obj.processExcitation()

@@ -3,8 +3,6 @@ function spikes = simulateSpikeTrain(sd)
 % shapeDataMatrix
 % shapeDataColumns
 
-spikes = [];
-
 center = [0,0];
 width = 70;
 baseFiringRate = 80; % Hz
@@ -38,8 +36,9 @@ for si = 1:sd.totalNumSpots
     lightIntensity(t > startTime(si) & t < endTime(si)) = real_intensities(si);
 end
 
+ha=[];
 figure(100)
-subplot(3,1,1);
+ha(1) = subplot(3,1,1);
 area(t, lightIntensity)
 
 % convolve with temporal filter
@@ -51,7 +50,7 @@ lightIntensityFiltered = lightIntensity;%abs(filter(b, a, lightIntensity)) * 10;
 shiftFrames = round(0.3 * sd.sampleRate);
 lightIntensityFiltered = [zeros(1, shiftFrames) lightIntensityFiltered(1:(end-shiftFrames))];
 
-subplot(3,1,2);
+ha(2) = subplot(3,1,2);
 area(t, lightIntensityFiltered)
 
 % time bin to rate
@@ -60,8 +59,9 @@ chance = rand(size(t));
 rate = lightIntensityFiltered * baseFiringRate / sd.sampleRate;
 spikeBins = rate > chance;
 
-subplot(3,1,3);
+ha(3) = subplot(3,1,3);
 area(t, spikeBins)
+linkaxes(ha)
 
 % poisson generator and collect spikes
 spikes = 10 * find(spikeBins); % 10 multiplier to match hardware sampling rate
