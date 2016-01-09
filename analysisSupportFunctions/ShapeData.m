@@ -6,6 +6,7 @@ classdef ShapeData < handle
         
         epochMode
         ampMode
+        ampVoltage
         sampleRate
         preTime
         stimTime
@@ -21,6 +22,7 @@ classdef ShapeData < handle
         totalNumSpots % including values and repeats
         spotDiameter
         numValues
+        numValueRepeats
         
         shapeDataMatrix
         shapeDataColumns
@@ -47,7 +49,9 @@ classdef ShapeData < handle
                 obj.spotDiameter = epoch.get('spotDiameter');
                 obj.numSpots = epoch.get('numSpots');
                 obj.ampMode = epoch.get('ampMode');
+                obj.ampVoltage = epoch.get('ampHoldSignal');
                 obj.numValues = epoch.get('numValues');
+                obj.numValueRepeats = epoch.get('numValueRepeats');
                 obj.stimTime = epoch.get('stimTime');
                 
             elseif strcmp(runmode, 'online')
@@ -64,7 +68,9 @@ classdef ShapeData < handle
                 obj.spotDiameter = epoch.getParameter('spotDiameter');
                 obj.numSpots = epoch.getParameter('numSpots');
                 obj.ampMode = epoch.getParameter('ampMode');
+                obj.ampVoltage = epoch.getParameter('ampHoldSignal');                
                 obj.numValues = epoch.getParameter('numValues');
+                obj.numValueRepeats = epoch.getParameter('numValueRepeats');
                 obj.stimTime = epoch.getParameter('stimTime');
             end
             
@@ -140,7 +146,7 @@ classdef ShapeData < handle
                 else % whole cell
                     obj.spikes = [];
                     obj.setResponse(epoch.getData('Amplifier_Ch1'));
-                    obj.processExcitation()
+                    obj.processWholeCell()
                 end
             else
                 obj.spikes = [];
@@ -167,15 +173,19 @@ classdef ShapeData < handle
     
         function processSpikes(obj)
             % convert spike times to raw response
-            spikeRate_orig = zeros(max(obj.spikes) + 100, 1);
-            spikeRate_orig(obj.spikes) = 1.0;
-            obj.spikeRate = filtfilt(hann(obj.sampleRate / 10), 1, spikeRate_orig); % 10 ms (100 samples) window filter
+            if ~isempty(obj.spikes)
+                spikeRate_orig = zeros(max(obj.spikes) + 100, 1);
+                spikeRate_orig(obj.spikes) = 1.0;
+                obj.spikeRate = filtfilt(hann(obj.sampleRate / 10), 1, spikeRate_orig); % 10 ms (100 samples) window filter
+            else
+                obj.spikeRate = 0;
+            end
             obj.setResponse(obj.spikeRate)
         end
         
-        function processExcitation(obj)
-            % call after setResponse to make excitation like spikeRate
-            r = -obj.response;
+        function processWholeCell(obj)
+            % call after setResponse to make current like spikeRate
+            r = sign(obj.ampVoltage) * obj.response;
             r = r - mean(r(1:round(obj.sampleRate*obj.preTime)));
             Fstop = .05;
             Fpass = .1;

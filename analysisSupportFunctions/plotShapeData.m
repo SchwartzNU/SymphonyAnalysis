@@ -1,7 +1,17 @@
 function [] = plotShapeData(ad, mode)
 
 
+function [] = printPresentationParams(ad)
+    firstEpoch = ad.epochData{1};
+    fprintf('num positions: %d\n', length(ad.positions));
+    fprintf('num values: %d\n', firstEpoch.numValues);
+    fprintf('num repeats: %d\n',firstEpoch.numValueRepeats);
+end
+
 if strcmp(mode,'spatial')
+    
+    printPresentationParams(ad)
+    
     %% Plot spatial receptive field using responses from highest intensity spots
 %     clf;
 %     set(gcf, 'Name','Spatial RF','NumberTitle','off');
@@ -65,6 +75,8 @@ if strcmp(mode,'spatial')
             ellipse(gfp('sigma2X'), gfp('sigma2Y'), -gfp('angle'), gfp('centerX'), gfp('centerY'), colors{ooi});
 
             view(0, 90)
+            set(gca,'XTickLabelMode','auto')
+            set(gca,'YTickLabelMode','auto')
     %         xlabel('X (um)');
     %         ylabel('Y (um)');
             axis([-largestDistanceOffset,largestDistanceOffset,-largestDistanceOffset,largestDistanceOffset])
@@ -124,7 +136,6 @@ elseif strcmp(mode, 'subunit')
     
         %% Plot figure with subunit models
     %     figure(12);
-        clf;
         num_positions = size(ad.responseData,1);
         dim1 = floor(sqrt(num_positions));
         dim2 = ceil(num_positions / dim1);
@@ -160,6 +171,17 @@ elseif strcmp(mode, 'subunit')
 %         set(ha,'YTickLabel','')
     else
         disp('No multiple value subunits measured');
+    end
+elseif strcmp(mode, 'temporalAlignment')    
+    ei = ad.alignmentEpochIndex;
+    if ~isnan(ei)
+        t = ad.epochData{ei}.t;
+        hold on
+        plot(t, ad.alignmentRate ./ max(ad.alignmentRate));
+        plot(t, ad.alignmentLightOn)
+        plot(t + ad.timeOffset(1), ad.alignmentLightOn * .8)
+        legend('rate','light','shifted')
+        hold off
     end
 else
     disp('incorrect plot type')

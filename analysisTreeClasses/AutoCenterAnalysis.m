@@ -54,7 +54,7 @@ classdef AutoCenterAnalysis < AnalysisTree
             if isfield(nodeData, 'splitParam')
                 if strcmp(nodeData.splitParam, 'sessionId')
                     if isfield(nodeData.analysisData, 'value')
-                        figure(11);
+                        figure(11);clf;
                         analysisData = nodeData.analysisData.value;
                         plotShapeData(analysisData, 'spatial');
 
@@ -70,9 +70,24 @@ classdef AutoCenterAnalysis < AnalysisTree
             if isfield(nodeData, 'splitParam')
                 if strcmp(nodeData.splitParam, 'sessionId')
                     if isfield(nodeData.analysisData, 'value')
-                        figure(12);
+                        figure(12);clf;
                         analysisData = nodeData.analysisData.value;
                         plotShapeData(analysisData, 'subunit');
+                    end
+                end
+            end
+        end
+        
+        function plotTemporalAlignment(node, ~)
+            
+            nodeData = node.get(1);
+                        
+            if isfield(nodeData, 'splitParam')
+                if strcmp(nodeData.splitParam, 'sessionId')
+                    if isfield(nodeData.analysisData, 'value')
+                        figure(13);clf;
+                        analysisData = nodeData.analysisData.value;
+                        plotShapeData(analysisData, 'temporalAlignment');
                     end
                 end
             end

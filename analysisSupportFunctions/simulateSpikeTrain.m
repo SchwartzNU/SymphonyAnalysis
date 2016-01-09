@@ -37,7 +37,7 @@ for si = 1:sd.totalNumSpots
 end
 
 ha=[];
-figure(100)
+figure(15)
 ha(1) = subplot(3,1,1);
 area(t, lightIntensity)
 

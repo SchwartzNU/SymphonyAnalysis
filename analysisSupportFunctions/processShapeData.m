@@ -5,7 +5,7 @@ ad = struct();
 
 num_epochs = length(epochData);
 ad.numEpochs = num_epochs;
-
+ad.alignmentEpochIndex = NaN;
 alignmentTemporalOffset = [NaN, NaN];
 
 %% Reorder epochs by presentationId, just in case
@@ -32,7 +32,8 @@ responseData = cell(num_positions, 3); % On, Off, Total
 
 
 for p = 1:num_epochs
-    e = epochData{epochOrder(p)};
+    ei = epochOrder(p);
+    e = epochData{ei};
     ad.spotTotalTime = e.spotTotalTime;
     ad.spotOnTime = e.spotOnTime;
     ad.numSpots = e.numSpots;
@@ -102,13 +103,17 @@ for p = 1:num_epochs
     
     % this is to give it a bit of slack early in case some strong
     % responses are making it delay too much
-    t_offset = t_offset - .01;
+%     t_offset = t_offset - .01;
     
     % pull temporal alignment from temporal alignment epoch if available,
     % or store it now if generated
 %     disp(e.epochMode)
     skipResponses = 0;
     if strcmp(e.epochMode, 'temporalAlignment')
+        ad.alignmentEpochIndex = ei;
+        ad.alignmentLightOn = lightOnTime;
+        ad.alignmentRate = e.response;
+
         alignmentTemporalOffset = t_offset;
 %         disp('temporal alignment gave offset of ')
 %         disp(t_offset)
@@ -172,7 +177,7 @@ for p = 1:num_epochs
 
             all_position_index = all_positions(:,1) == spot_position(1) & all_positions(:,2) == spot_position(2);
             response = mean(e.response(segmentIndices)); % average of spike rate over time chunk
-            
+                       
             responseData{all_position_index, ooi} = vertcat(responseData{all_position_index,ooi}, [spot_intensity, response]);
         end
         
@@ -246,23 +251,24 @@ function F = gauss_2d(x,xdata)
  F = x(1)*exp(   -((xdatarot(:,1)-x0rot).^2/(2*x(3)^2) + (xdatarot(:,2)-y0rot).^2/(2*x(5)^2) )    );
 end
 
-% maxIntensityResponses
-
 if validSearchResult == 1
     
-    % add zero positions far away to keep gaussian fit reasonable
-    g_num_positions = num_positions + 4;
-    g_all_positions = vertcat(all_positions, 1000*[-1, -1; -1, 1; 1, 1; 1, -1]);
-    g_responses = vertcat(maxIntensityResponses(:,ooi), zeros(4,1));
-    
-    x0 = [1,0,50,0,50,pi/4];
-   
-    opts = optimset('Display','off');
-    lb = [0,-g_num_positions/2,0,-g_num_positions/2,0,0];
-    ub = [realmax('double'),g_num_positions/2,(g_num_positions/2)^2,g_num_positions/2,(g_num_positions/2)^2,pi/2];
     
     gaussianFitParams_ooi = cell(3,1);
     for ooi = 1:3
+
+        % add zero positions far away to keep gaussian fit reasonable
+        g_num_positions = num_positions + 4;
+        g_all_positions = vertcat(all_positions, 1000*[-1, -1; -1, 1; 1, 1; 1, -1]);
+        g_responses = vertcat(maxIntensityResponses(:,ooi), zeros(4,1));
+        
+        x0 = [1,0,50,0,50,pi/4];
+
+        opts = optimset('Display','off');
+        lb = [0,-g_num_positions/2,0,-g_num_positions/2,0,0];
+        ub = [realmax('double'),g_num_positions/2,(g_num_positions/2)^2,g_num_positions/2,(g_num_positions/2)^2,pi/2];
+    
+
         [gaussianFitParams,~,~,~] = lsqcurvefit(@gauss_2d,x0,g_all_positions,g_responses,lb,ub,opts);
 
         keys = {'amplitude','centerX','sigma2X','centerY','sigma2Y','angle'};
