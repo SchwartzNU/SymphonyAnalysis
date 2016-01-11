@@ -6,6 +6,7 @@ function [] = printPresentationParams(ad)
     fprintf('num positions: %d\n', length(ad.positions));
     fprintf('num values: %d\n', firstEpoch.numValues);
     fprintf('num repeats: %d\n',firstEpoch.numValueRepeats);
+    fprintf('holding voltage: %d\n', firstEpoch.ampVoltage);
 end
 
 if strcmp(mode,'spatial')
