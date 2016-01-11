@@ -36,10 +36,10 @@ for si = 1:sd.totalNumSpots
     lightIntensity(t > startTime(si) & t < endTime(si)) = real_intensities(si);
 end
 
-ha=[];
-figure(15)
-ha(1) = subplot(3,1,1);
-area(t, lightIntensity)
+% ha=[];
+% figure(15)
+% ha(1) = subplot(3,1,1);
+% area(t, lightIntensity)
 
 % convolve with temporal filter
 
@@ -47,11 +47,12 @@ area(t, lightIntensity)
 % save('li.mat','lightIntensity')
 % [b,a] = butter(40, .7, 'high');
 lightIntensityFiltered = lightIntensity;%abs(filter(b, a, lightIntensity)) * 10;
-shiftFrames = round(0.3 * sd.sampleRate);
+delay = .250 + .28;%+ .1 + rand() * .5;
+shiftFrames = round(delay * sd.sampleRate);
 lightIntensityFiltered = [zeros(1, shiftFrames) lightIntensityFiltered(1:(end-shiftFrames))];
 
-ha(2) = subplot(3,1,2);
-area(t, lightIntensityFiltered)
+% ha(2) = subplot(3,1,2);
+% area(t, lightIntensityFiltered)
 
 % time bin to rate
 % pd = makedist('Poisson');
@@ -59,9 +60,9 @@ chance = rand(size(t));
 rate = lightIntensityFiltered * baseFiringRate / sd.sampleRate;
 spikeBins = rate > chance;
 
-ha(3) = subplot(3,1,3);
-area(t, spikeBins)
-linkaxes(ha)
+% ha(3) = subplot(3,1,3);
+% area(t, spikeBins)
+% linkaxes(ha)
 
 % poisson generator and collect spikes
 spikes = 10 * find(spikeBins); % 10 multiplier to match hardware sampling rate

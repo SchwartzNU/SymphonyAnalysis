@@ -173,15 +173,17 @@ elseif strcmp(mode, 'subunit')
     else
         disp('No multiple value subunits measured');
     end
+    
 elseif strcmp(mode, 'temporalAlignment')    
     ei = ad.alignmentEpochIndex;
     if ~isnan(ei)
         t = ad.epochData{ei}.t;
         hold on
-        plot(t, ad.alignmentRate ./ max(ad.alignmentRate));
+        plot(t, ad.alignmentRate ./ max(ad.alignmentRate),'r');
         plot(t, ad.alignmentLightOn)
-        plot(t + ad.timeOffset(1), ad.alignmentLightOn * .8)
+        plot(t + ad.timeOffset(1), ad.alignmentLightOn * .8,'g')
         legend('rate','light','shifted')
+        title(ad.timeOffset(1))
         hold off
     end
 else

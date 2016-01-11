@@ -108,8 +108,7 @@ function runConfig = generateStandardSearch(parameters, analysisData, runConfig)
     center = [0,0];
     searchDiameterUpdated = parameters.searchDiameter;
 
-    refineCenter = 1;
-    if refineCenter && analysisData.validSearchResult == 1
+    if parameters.refineCenter && analysisData.validSearchResult == 1
         gfp = analysisData.gaussianFitParams_ooi{3};
 
         center = [gfp('centerX'), gfp('centerY')];
