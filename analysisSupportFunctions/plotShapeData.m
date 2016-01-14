@@ -180,7 +180,7 @@ elseif strcmp(mode, 'temporalAlignment')
         t = ad.epochData{ei}.t;
         hold on
         plot(t, ad.alignmentRate ./ max(ad.alignmentRate),'r');
-        plot(t, ad.alignmentLightOn)
+        plot(t, ad.alignmentLightOn,'b')
         plot(t + ad.timeOffset(1), ad.alignmentLightOn * .8,'g')
         legend('rate','light','shifted')
         title(ad.timeOffset(1))

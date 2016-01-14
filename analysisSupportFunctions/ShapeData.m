@@ -48,7 +48,7 @@ classdef ShapeData < handle
                 obj.spotOnTime = epoch.get('spotOnTime');
                 obj.spotDiameter = epoch.get('spotDiameter');
                 obj.numSpots = epoch.get('numSpots');
-                obj.ampMode = epoch.get('ampMode');
+                obj.ampMode = char(epoch.get('ampMode'));
                 obj.ampVoltage = epoch.get('ampHoldSignal');
                 obj.numValues = epoch.get('numValues');
                 obj.numValueRepeats = epoch.get('numValueRepeats');
@@ -67,7 +67,7 @@ classdef ShapeData < handle
                 obj.spotOnTime = epoch.getParameter('spotOnTime');
                 obj.spotDiameter = epoch.getParameter('spotDiameter');
                 obj.numSpots = epoch.getParameter('numSpots');
-                obj.ampMode = epoch.getParameter('ampMode');
+                obj.ampMode = char(epoch.getParameter('ampMode'));
                 obj.ampVoltage = epoch.getParameter('ampHoldSignal');                
                 obj.numValues = epoch.getParameter('numValues');
                 obj.numValueRepeats = epoch.getParameter('numValueRepeats');
@@ -173,6 +173,7 @@ classdef ShapeData < handle
     
         function processSpikes(obj)
             % convert spike times to raw response
+            
             if ~isempty(obj.spikes)
                 spikeRate_orig = zeros(max(obj.spikes) + 100, 1);
                 spikeRate_orig(obj.spikes) = 1.0;
