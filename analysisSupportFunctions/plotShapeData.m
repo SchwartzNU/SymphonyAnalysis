@@ -6,7 +6,11 @@ function [] = printPresentationParams(ad)
     fprintf('num positions: %d\n', length(ad.positions));
     fprintf('num values: %d\n', firstEpoch.numValues);
     fprintf('num repeats: %d\n',firstEpoch.numValueRepeats);
-    fprintf('holding voltage: %d\n', firstEpoch.ampVoltage);
+    voltages = [];
+    for i = 1:length(ad.epochData)
+        voltages(i) = ad.epochData{i}.ampVoltage;
+    end
+    fprintf('holding voltages: %d\n', voltages');
 end
 
 if strcmp(mode,'spatial')
@@ -27,7 +31,8 @@ if strcmp(mode,'spatial')
 
         xlist = positions(:,1);
         ylist = positions(:,2);
-        largestDistanceOffset = max(max(abs(xlist)), max(abs(ylist)));
+%         largestDistanceOffset = max(max(abs(xlist)), max(abs(ylist)));
+        largestDistanceOffset = 150;
         
         
         axes_by_ooi = [ha(1), ha(1), ha(2)];
@@ -85,6 +90,10 @@ if strcmp(mode,'spatial')
             axis square
             %                 colorbar;
             title(titles{ooi});
+%             
+%             if ooi == 3
+%                 save('rf.mat', 'xq','yq','vq')
+%             end
             
         end
     else
@@ -164,7 +173,7 @@ elseif strcmp(mode, 'subunit')
                 pfit = polyfit(intensity, rate, 1);
                 plot(intensity, polyval(pfit,intensity))
             end
-            ylim([0,max(rate)+.1])
+%             ylim([0,max(rate)+.1])
             hold off
         end
         

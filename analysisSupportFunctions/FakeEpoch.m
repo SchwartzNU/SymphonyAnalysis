@@ -12,7 +12,9 @@ classdef FakeEpoch < matlab.mixin.SetGet
         spotDiameter
         numSpots
         ampMode
+        ampHoldSignal
         numValues
+        numValueRepeats
         epochMode
         stimTime
     end
@@ -31,7 +33,9 @@ classdef FakeEpoch < matlab.mixin.SetGet
             obj.numSpots = params.numSpots;
             obj.ampMode = 'emulated';
             obj.numValues = params.numValues;
+            obj.numValueRepeats = params.numValueRepeats;
             obj.stimTime = runConfig.stimTime;
+            obj.ampHoldSignal = 0;
             
         end
     end

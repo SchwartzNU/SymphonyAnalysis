@@ -188,17 +188,21 @@ classdef ShapeData < handle
             % call after setResponse to make current like spikeRate
             r = sign(obj.ampVoltage) * obj.response;
             r = r - mean(r(1:round(obj.sampleRate*obj.preTime)));
-            Fstop = .05;
-            Fpass = .1;
-            Astop = 20;
-            Apass = 0.5;
+%             Fstop = .05;
+%             Fpass = .1;
+%             Astop = 20;
+%             Apass = 0.5;
 %             wc_filter = designfilt('highpassiir','StopbandFrequency',Fstop, ...
 %                 'PassbandFrequency',Fpass,'StopbandAttenuation',Astop, ...
 %                 'PassbandRipple',Apass,'SampleRate',obj.sampleRate,'DesignMethod','butter');
 %             
 %             r = filtfilt(wc_filter, r);
             
+            fprintf('%d %d ', obj.sessionId, obj.presentationId)
+            fprintf('processing wc %d %2f %2f\n', obj.ampVoltage, mean(r), mean(obj.response));
             obj.response = r;
+            
+
         end
         
         function simulateSpikes(obj)

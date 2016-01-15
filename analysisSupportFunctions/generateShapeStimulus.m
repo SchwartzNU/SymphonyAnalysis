@@ -12,11 +12,16 @@ function runConfig = generateShapeStimulus(mode, parameters, analysisData)
 
     % select the type of epoch to run based on params & results
     if firstEpoch
-        runConfig = generateTemporalAlignment(parameters, analysisData, runConfig);
+        runConfig = generateTemporalAlignment(parameters, runConfig);
         mode = 'temporalAlignment';
     else
         if strcmp(mode, 'autoReceptiveField')
-            runConfig = generateStandardSearch(parameters, analysisData, runConfig);
+            if parameters.refineEdges && analysisData.validSearchResult
+                runConfig = generateSpatialRefineEdges(parameters, analysisData, runConfig);
+            else
+                runConfig = generateStandardSearch(parameters, analysisData, runConfig);
+            end
+            
         elseif strcmp(mode, 'isoResponse')
             if ~analysisData.validSearchResult
                 runConfig = generateStandardSearch(parameters, analysisData, runConfig);
@@ -102,7 +107,7 @@ end
 
 
 function runConfig = generateStandardSearch(parameters, analysisData, runConfig)
-    runConfig.epochMode = 'flashingSpots';
+    
 
     % choose center position and search width
     center = [0,0];
@@ -124,6 +129,15 @@ function runConfig = generateStandardSearch(parameters, analysisData, runConfig)
     positions = bsxfun(@plus, positions, center);
 
     % generate intensity values and repeats
+
+    runConfig = makeFlashedSpotsMatrix(parameters, runConfig, positions);
+    
+end
+
+
+function runConfig = makeFlashedSpotsMatrix(parameters, runConfig, positions)
+    runConfig.epochMode = 'flashingSpots';
+    
     numSpots = size(positions,1); % in case the generatePositions function is imprecise
     values = linspace(parameters.valueMin, parameters.valueMax, parameters.numValues);
     positionList = zeros(parameters.numValues * numSpots, 3);
@@ -160,7 +174,7 @@ function runConfig = generateStandardSearch(parameters, analysisData, runConfig)
 end
 
 
-function runConfig = generateTemporalAlignment(parameters, analysisData, runConfig)
+function runConfig = generateTemporalAlignment(parameters, runConfig)
 
     runConfig.epochMode = 'temporalAlignment';
     durations = [1, 0.6, 0.4, 0.2];
@@ -182,4 +196,44 @@ function runConfig = generateTemporalAlignment(parameters, analysisData, runConf
     runConfig.stimTime = round(1e3 * (1 + tim));
     %                 disp(obj.shapeDataMatrix)
     
+end
+
+function runConfig = generateSpatialRefineEdges(parameters, analysisData, runConfig)
+
+    % TODO: this should really repeat the points used as slope endpoints to
+    % improve the stability of the refinement, so we don't end up with
+    % compacting noise patterns
+
+    runConfig.shapeDataMatrix = [];
+    rData = analysisData.maxIntensityResponses(:,3);
+    num_positions = size(rData,1);
+    
+    % distances between points
+    distances = squareform(pdist(analysisData.positions, 'euclidean'));
+
+    slopes = zeros(num_positions .^ 2, 3); % p1, p2, slope
+    
+    % find points pairs with highest slope TODO: find points with high variance in response
+    for p1 = 1:num_positions
+        r1 = rData(p1);
+        for p2 = 1:(p1-1)
+            r2 = rData(p2);
+            d = distances(p1, p2);
+            slope = abs(r2 - r1) / d;
+            slopes((p1 - 1) * num_positions + p2, :) = [p1, p2, slope];
+        end
+    end
+    slopes(slopes(:,1) == 0, :) = [];
+    
+    % using slopes, find points between
+    slopes = sortrows(slopes, 3);
+    positions = zeros(parameters.numSpots, 2);
+    for p = 1:parameters.numSpots
+        pos1 = analysisData.positions(slopes(p,1), :);
+        pos2 = analysisData.positions(slopes(p,2), :);
+        midpos = mean([pos1;pos2], 2);
+        positions(p,:) = midpos;
+    end
+    
+    runConfig = makeFlashedSpotsMatrix(parameters, runConfig, positions);
 end

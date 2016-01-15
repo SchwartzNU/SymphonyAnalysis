@@ -25,9 +25,11 @@ while continueRun
     p.valueMin = .1;
     p.valueMax = 1;
     p.numValues = 1;
-    p.numValueRepeats = 10;
+    p.numValueRepeats = 1;
     p.epochNum = epoch_num;
     ISOResponse = false;
+    p.refineCenter = false;
+    p.refineEdges = true;
 
 
     timeElapsed = currentTime - startTime;
@@ -57,16 +59,17 @@ while continueRun
     epochData{epoch_num, 1} = sd;
 
     %% analyze shapedata
-    shapePlotMode = 'spatial';
     analysisData = processShapeData(epochData);
 
     figure(8);clf;
-    plotShapeData(analysisData, shapePlotMode);
+    plotShapeData(analysisData, 'spatial');
 
+    figure(9);clf;
+    plotShapeData(analysisData, 'temporalAlignment');    
 
     %% pause and repeat
 
     currentTime = currentTime + 1.0 + sd.stimTime / 1000
-    pause
+    pause(3)
 end
 
