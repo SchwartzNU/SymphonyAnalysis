@@ -188,6 +188,7 @@ classdef ShapeData < handle
             % call after setResponse to make current like spikeRate
             r = sign(obj.ampVoltage) * obj.response;
             r = r - mean(r(1:round(obj.sampleRate*obj.preTime)));
+            r = r - prctile(r,10); % set the bottom 10 % of samples to be negative, to keep things generally positive
 %             Fstop = .05;
 %             Fpass = .1;
 %             Astop = 20;

@@ -29,7 +29,9 @@ end
 all_positions = unique(all_positions, 'rows');
 num_positions = length(all_positions);
 responseData = cell(num_positions, 3); % On, Off, Total
-
+observations = [];
+observationColumns = {'X','Y','intensity','voltage','respMean','respPeak'}; %,'distFromPrev'
+oi = 0;
 
 for p = 1:num_epochs
     ei = epochOrder(p);
@@ -158,7 +160,7 @@ for p = 1:num_epochs
         spot_position = epoch_positions(si,:);
         spot_intensity = epoch_intensities(si);
         
-        for ooi = 1:3 % on (1) off (2) index
+        for ooi = 1:3 % on (1) off (2) total (3) index
 
             segmentStartTime = e.spotTotalTime * (si - 1) + t_offset(1);
             segmentStartIndex = find(e.t > segmentStartTime, 1);
@@ -179,6 +181,16 @@ for p = 1:num_epochs
             response = mean(e.response(segmentIndices)); % average of spike rate over time chunk
                        
             responseData{all_position_index, ooi} = vertcat(responseData{all_position_index,ooi}, [spot_intensity, response]);
+
+            if ooi == 3
+            % using ooi = 3 -> complete
+        %       {'X','Y','intensity','voltage','respMean','respPeak'}
+                oi = oi + 1;
+                mn = mean(e.response(segmentIndices));
+                pk = max(e.response(segmentIndices));
+                obs = [spot_position, spot_intensity, e.ampVoltage, mn, pk];
+                observations(oi,:) = obs;            
+            end
         end
         
 %         responseData{all_position_index, :}
@@ -284,6 +296,7 @@ end
 %% store data for the next stages of processing/output
 ad.positions = all_positions;
 ad.responseData = responseData;
+ad.observations = observations;
 ad.maxIntensityResponses = maxIntensityResponses;
 ad.spikeRate_by_spot = spikeRate_by_spot;
 % od.displayTime = displayTime_on; 

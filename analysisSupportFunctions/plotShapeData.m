@@ -96,6 +96,7 @@ if strcmp(mode,'spatial')
 %             end
             
         end
+        
     else
         subplot(2,1,1)
         title('No valid search epoch result')
@@ -166,8 +167,8 @@ elseif strcmp(mode, 'subunit')
             responses = ad.responseData{resp_index,3};
             responses = sortrows(responses, 1); % order by intensity values for plot
             intensity = responses(:,1);
-            rate = responses(:,2);          
-            plot(intensity, rate)
+            rate = responses(:,2);
+            plot(intensity, rate, 'o')
             hold on
             if length(unique(intensity)) > 1
                 pfit = polyfit(intensity, rate, 1);
@@ -195,6 +196,50 @@ elseif strcmp(mode, 'temporalAlignment')
         title(ad.timeOffset(1))
         hold off
     end
+elseif strcmp(mode, 'wholeCell')
+    obs = ad.observations;
+   
+    maxIntensity = max(obs(:,3));
+    v_in = max(obs(:,4));
+    v_ex = min(obs(:,4));
+    
+    positions = [];
+    r_ex = [];
+    r_in = [];
+    
+    for poi = 1:length(ad.positions)
+        pos = ad.positions(poi,:);
+        obs_sel = ismember(obs(:,1:2), pos, 'rows');
+        obs_sel = obs_sel & obs(:,3) == maxIntensity;
+        obs_sel_ex = obs_sel & obs(:,4) == v_ex;
+        obs_sel_in = obs_sel & obs(:,4) == v_in;
+        r_ex(poi,1) = mean(obs(obs_sel_ex,5),1);
+        r_in(poi,1) = mean(obs(obs_sel_in,5),1);
+        positions(poi,:) = pos;
+    end
+    h = max(abs(vertcat(r_ex,r_in)));
+%     r_ex = r_ex - min(r_ex);
+    r_ex = r_ex / h;
+    
+%     r_in = r_in - min(r_in);
+    r_in = r_in / h;
+    
+    
+    largestDistanceOffset = max(abs(obs(:,1)));
+    X = linspace(-1*largestDistanceOffset, largestDistanceOffset, 100);
+    [xq,yq] = meshgrid(X, X);
+    c_ex = griddata(positions(:,1), positions(:,2), r_ex, xq, yq);
+    c_in = griddata(positions(:,1), positions(:,2), r_in, xq, yq);
+    
+    c = c_ex;
+    c(:,:,2) = c_in;
+    c(:,:,3) = 0;
+    surface(xq, yq, zeros(size(xq)), c)
+    grid off
+    axis square
+    axis equal
+    
+    shading interp
 else
     disp('incorrect plot type')
 end
