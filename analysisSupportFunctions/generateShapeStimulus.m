@@ -122,11 +122,19 @@ function runConfig = generateStandardSearch(parameters, analysisData, runConfig)
     end
 
     % select positions
-    positions = generatePositions('random', [parameters.numSpots, parameters.spotDiameter, searchDiameterUpdated / 2]);
-    %             positions = generatePositions('grid', [obj.searchDiameter, round(sqrt(obj.numSpots))]);
+    if parameters.generatePositions
+        positions = generatePositions('random', [parameters.numSpots, parameters.spotDiameter, searchDiameterUpdated / 2]);
+        %             positions = generatePositions('grid', [obj.searchDiameter, round(sqrt(obj.numSpots))]);
+        
+        % add center offset
+        positions = bsxfun(@plus, positions, center);
+        parameters.numSpots = size(positions, 1);
+    else
+        
+        positions = analysisData.positions;
+    end
 
-    % add center offset
-    positions = bsxfun(@plus, positions, center);
+
 
     % generate intensity values and repeats
 
@@ -138,7 +146,6 @@ end
 function runConfig = makeFlashedSpotsMatrix(parameters, runConfig, positions)
     runConfig.epochMode = 'flashingSpots';
     
-    numSpots = size(positions,1); % in case the generatePositions function is imprecise
     values = linspace(parameters.valueMin, parameters.valueMax, parameters.numValues);
     positionList = zeros(parameters.numValues * numSpots, 3);
     starts = zeros(parameters.numSpots, 1);
@@ -146,9 +153,9 @@ function runConfig = makeFlashedSpotsMatrix(parameters, runConfig, positions)
 
     si = 1; %spot index
     for repeat = 1:parameters.numValueRepeats
-        usedValues = zeros(numSpots, parameters.numValues);
+        usedValues = zeros(parameters.numSpots, parameters.numValues);
         for l = 1:parameters.numValues
-            positionIndexList = randperm(stream, numSpots);
+            positionIndexList = randperm(stream, parameters.numSpots);
             for i = 1:numSpots
                 curPosition = positionIndexList(i);
                 possibleNextValueIndices = find(usedValues(curPosition,:) == 0);

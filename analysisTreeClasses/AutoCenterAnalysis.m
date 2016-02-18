@@ -91,7 +91,53 @@ classdef AutoCenterAnalysis < AnalysisTree
                     end
                 end
             end
-        end        
+        end       
+
+        function plotSpatialDiagnostics(node, ~)
+            
+            nodeData = node.get(1);
+                        
+            if isfield(nodeData, 'splitParam')
+                if strcmp(nodeData.splitParam, 'sessionId')
+                    if isfield(nodeData.analysisData, 'value')
+                        figure(14);clf;
+                        analysisData = nodeData.analysisData.value;
+                        plotShapeData(analysisData, 'spatialDiagnostics');
+                    end
+                end
+            end
+        end
+        
+        function plotWholeCell(node, ~)
+            
+            nodeData = node.get(1);
+                        
+            if isfield(nodeData, 'splitParam')
+                if strcmp(nodeData.splitParam, 'sessionId')
+                    if isfield(nodeData.analysisData, 'value')
+                        figure(15);clf;
+                        analysisData = nodeData.analysisData.value;
+                        plotShapeData(analysisData, 'wholeCell');
+                    end
+                end
+            end
+        end      
+        
+        
+        function plotTemporalResponses(node, ~)
+            
+            nodeData = node.get(1);
+                        
+            if isfield(nodeData, 'splitParam')
+                if strcmp(nodeData.splitParam, 'sessionId')
+                    if isfield(nodeData.analysisData, 'value')
+                        figure(16);clf;
+                        analysisData = nodeData.analysisData.value;
+                        plotShapeData(analysisData, 'temporalResponses');
+                    end
+                end
+            end
+        end               
     end
 end
 

@@ -185,12 +185,16 @@ classdef ShapeData < handle
         end
         
         function processWholeCell(obj)
+%             figure(99)
             % call after setResponse to make current like spikeRate
+%             subplot(4,1,1)
             r = sign(obj.ampVoltage) * obj.response;
-            r = r - mean(r(1:round(obj.sampleRate*obj.preTime)));
-            r = r - prctile(r,10); % set the bottom 10 % of samples to be negative, to keep things generally positive
-%             Fstop = .05;
-%             Fpass = .1;
+%             plot(r)
+%             r = r - mean(r);
+%             subplot(4,1,2); plot(r);
+            
+%             Fstop = .5;
+%             Fpass = 1;
 %             Astop = 20;
 %             Apass = 0.5;
 %             wc_filter = designfilt('highpassiir','StopbandFrequency',Fstop, ...
@@ -198,6 +202,16 @@ classdef ShapeData < handle
 %                 'PassbandRipple',Apass,'SampleRate',obj.sampleRate,'DesignMethod','butter');
 %             
 %             r = filtfilt(wc_filter, r);
+%             subplot(4,1,3)
+%             plot(r)
+                        
+%             r = r - prctile(r,10); % set the bottom 10 % of samples to be negative, to keep things generally positive
+           
+            r = r - mean(r(1:round(obj.sampleRate*obj.preTime)));
+
+%             subplot(4,1,4)
+%             plot(r)
+%             pause
             
             fprintf('%d %d ', obj.sessionId, obj.presentationId)
             fprintf('processing wc %d %2f %2f\n', obj.ampVoltage, mean(r), mean(obj.response));

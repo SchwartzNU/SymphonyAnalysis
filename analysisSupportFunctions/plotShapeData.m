@@ -21,7 +21,7 @@ if strcmp(mode,'spatial')
 %     clf;
 %     set(gcf, 'Name','Spatial RF','NumberTitle','off');
 
-    ha = tight_subplot(2,2,.08);
+    ha = tight_subplot(1,2,.08);
     if ad.validSearchResult == 1
 
         dataNames = {'On','Off','Total'};
@@ -31,8 +31,8 @@ if strcmp(mode,'spatial')
 
         xlist = positions(:,1);
         ylist = positions(:,2);
-%         largestDistanceOffset = max(max(abs(xlist)), max(abs(ylist)));
-        largestDistanceOffset = 150;
+        largestDistanceOffset = max(max(abs(xlist)), max(abs(ylist)));
+%         largestDistanceOffset = 150;
         
         
         axes_by_ooi = [ha(1), ha(1), ha(2)];
@@ -101,9 +101,92 @@ if strcmp(mode,'spatial')
         subplot(2,1,1)
         title('No valid search epoch result')
     end
+    
+elseif strcmp(mode, 'subunit')
 
+    if ad.numValues > 1
+    
+        %% Plot figure with subunit models
+    %     figure(12);
+        obs = ad.observations;
+        num_positions = size(ad.responseData,1);
+        dim1 = floor(sqrt(num_positions));
+        dim2 = ceil(num_positions / dim1);
 
+        distance_to_center = zeros(num_positions, 1);
+        for p = 1:num_positions
+            gfp = ad.gaussianFitParams_ooi{3};
+            distance_to_center(p,1) = sqrt(sum((ad.positions(p,:) - [gfp('centerX'),gfp('centerY')]).^2));
+        end
+        sorted_positions = sortrows([distance_to_center, (1:num_positions)'], 1);
+
+        ha = tight_subplot(dim1,dim2);
+        
+        obs = ad.observations;
+        voltages = unique(obs(:,4));
+        num_voltages = length(voltages);
+        
+        for p = 1:num_positions
+%             tight_subplot(dim1,dim2,p)
+            axes(ha(p))
+            hold on
+            
+            pos = ad.positions(p,:);
+            obs_sel = ismember(obs(:,1:2), pos, 'rows');
+            
+            for vi = 1:num_voltages
+                v = voltages(vi);
+                obs_sel_v = obs_sel & obs(:,4) == v;
+            
+                responses = obs(obs_sel_v, 6); % peak: 6, mean: 5
+                intensities = obs(obs_sel_v, 3);
+
+                plot(intensities, responses, 'o')
+                if length(unique(intensities)) > 1
+                    pfit = polyfit(intensities, responses, 1);
+                    plot(intensities, polyval(pfit,intensities))
+                end
+    %             ylim([0,max(rate)+.1])
+            end
+            hold off
+
+        end
+        
+        set(ha(1:end-dim2),'XTickLabel','');
+%         set(ha,'YTickLabel','')
+    else
+        disp('No multiple value subunits measured');
+    end
+    
+elseif strcmp(mode, 'temporalResponses')
+    num_plots = length(ad.epochData);
+    ha = tight_subplot(num_plots, 1, .1);
+    
+    for ei = 1:num_plots
+        plot(ha(ei), ad.epochData{ei}.t, ad.epochData{ei}.response);
+        title(ha(ei), sprintf('Epoch %d', ei))
+    end
+    
+elseif strcmp(mode, 'temporalAlignment')    
+    
+    ha = tight_subplot(2, 1, .1);
+    
+    ei = ad.alignmentEpochIndex;
+    axes(ha(1));
+    if ~isnan(ei)
+        t = ad.epochData{ei}.t;
+        hold on
+        plot(t, ad.alignmentRate ./ max(ad.alignmentRate),'r');
+        plot(t, ad.alignmentLightOn,'b')
+        plot(t + ad.timeOffset(1), ad.alignmentLightOn * .8,'g')
+        legend('rate','light','shifted')
+        title(ad.timeOffset(1))
+        hold off
+    end
+    
+    
     %% plot time graph
+    axes(ha(2));
     spotOnTime = ad.spotOnTime;
     spotTotalTime = ad.spotTotalTime;
 
@@ -114,7 +197,6 @@ if strcmp(mode,'spatial')
     
     displayTime = (1:(ad.sampleRate * spotTotalTime)) ./ ad.sampleRate + timeOffset(1);
 
-    axes(ha(3))
     plot(displayTime, spotBinDisplay)
     %                 plot(spikeBins(1:end-1), spikeBinsValues);
     %                 xlim([0,spikeBins(end-1)])
@@ -141,61 +223,7 @@ if strcmp(mode,'spatial')
 
     title(['temporal offset of collection bins (on, off): ' num2str(timeOffset) ' sec'])
     
-elseif strcmp(mode, 'subunit')
-
-    if ad.numValues > 1
     
-        %% Plot figure with subunit models
-    %     figure(12);
-        num_positions = size(ad.responseData,1);
-        dim1 = floor(sqrt(num_positions));
-        dim2 = ceil(num_positions / dim1);
-
-        distance_to_center = zeros(num_positions, 1);
-        for p = 1:num_positions
-            gfp = ad.gaussianFitParams_ooi{3};
-            distance_to_center(p,1) = sqrt(sum((ad.positions(p,:) - [gfp('centerX'),gfp('centerY')]).^2));
-        end
-        sorted_positions = sortrows([distance_to_center, (1:num_positions)'], 1);
-
-        ha = tight_subplot(dim1,dim2);
-        
-        for p = 1:num_positions
-%             tight_subplot(dim1,dim2,p)
-            axes(ha(p))
-            resp_index = sorted_positions(p,2);
-            responses = ad.responseData{resp_index,3};
-            responses = sortrows(responses, 1); % order by intensity values for plot
-            intensity = responses(:,1);
-            rate = responses(:,2);
-            plot(intensity, rate, 'o')
-            hold on
-            if length(unique(intensity)) > 1
-                pfit = polyfit(intensity, rate, 1);
-                plot(intensity, polyval(pfit,intensity))
-            end
-%             ylim([0,max(rate)+.1])
-            hold off
-        end
-        
-        set(ha(1:end-dim2),'XTickLabel','');
-%         set(ha,'YTickLabel','')
-    else
-        disp('No multiple value subunits measured');
-    end
-    
-elseif strcmp(mode, 'temporalAlignment')    
-    ei = ad.alignmentEpochIndex;
-    if ~isnan(ei)
-        t = ad.epochData{ei}.t;
-        hold on
-        plot(t, ad.alignmentRate ./ max(ad.alignmentRate),'r');
-        plot(t, ad.alignmentLightOn,'b')
-        plot(t + ad.timeOffset(1), ad.alignmentLightOn * .8,'g')
-        legend('rate','light','shifted')
-        title(ad.timeOffset(1))
-        hold off
-    end
 elseif strcmp(mode, 'wholeCell')
     obs = ad.observations;
    
@@ -203,7 +231,6 @@ elseif strcmp(mode, 'wholeCell')
     v_in = max(obs(:,4));
     v_ex = min(obs(:,4));
     
-    positions = [];
     r_ex = [];
     r_in = [];
     
@@ -215,34 +242,75 @@ elseif strcmp(mode, 'wholeCell')
         obs_sel_in = obs_sel & obs(:,4) == v_in;
         r_ex(poi,1) = mean(obs(obs_sel_ex,5),1);
         r_in(poi,1) = mean(obs(obs_sel_in,5),1);
-        positions(poi,:) = pos;
     end
-    h = max(abs(vertcat(r_ex,r_in)));
-%     r_ex = r_ex - min(r_ex);
-    r_ex = r_ex / h;
+    r_exinrat = r_ex ./ r_in;
     
-%     r_in = r_in - min(r_in);
-    r_in = r_in / h;
+    ha = tight_subplot(1,3);
+
+    % EX
+    axes(ha(1))
+    plotSpatial(ad.positions, r_ex, sprintf('Excitatory: %d mV', v_ex), 0)
+    
+    % IN
+    axes(ha(2))
+    plotSpatial(ad.positions, r_in, sprintf('Inhibitory: %d mV', v_in), 0)
+    
+    % Ratio    
+    axes(ha(3))
+    plotSpatial(ad.positions, r_exinrat, 'Ex/In ratio', 1)
+    
+
+elseif strcmp(mode, 'spatialDiagnostics')
+    obs = ad.observations;
+    voltages = unique(obs(:,4));
+    num_voltages = length(voltages);
+        
+    % variance by point value at max value
+    maxIntensity = max(obs(:,3));
+    
+    ha = tight_subplot(1, num_voltages);
+    for vi = 1:num_voltages
+        v = voltages(vi);
+        stds = [];
+        for poi = 1:length(ad.positions)
+            pos = ad.positions(poi,:);
+            obs_sel = ismember(obs(:,1:2), pos, 'rows');
+            obs_sel = obs_sel & obs(:,3) == maxIntensity;
+            obs_sel = obs_sel & obs(:,4) == v;
+            stds(poi,1) = std(obs(obs_sel,5),1);
+        end    
+        axes(ha(vi));
+        plotSpatial(ad.positions, stds, sprintf('STD, %d mV', v), 1)
+        caxis([0, max(stds)]);
+    end
     
     
-    largestDistanceOffset = max(abs(obs(:,1)));
-    X = linspace(-1*largestDistanceOffset, largestDistanceOffset, 100);
-    [xq,yq] = meshgrid(X, X);
-    c_ex = griddata(positions(:,1), positions(:,2), r_ex, xq, yq);
-    c_in = griddata(positions(:,1), positions(:,2), r_in, xq, yq);
+%     diagTxt = uicontrol('style','text');
+%     diagTxt.HorizontalAlignment = 'left';
+%     diagTxt.Units = 'characters';
+%     diagTxt.Position = [0, 0, 30, 10];
+%     align([diagTxt, h],'Distribute','Top')
+%     
+%     diagTxt.String = 'Hello World';
     
-    c = c_ex;
-    c(:,:,2) = c_in;
-    c(:,:,3) = 0;
-    surface(xq, yq, zeros(size(xq)), c)
-    grid off
-    axis square
-    axis equal
-    
-    shading interp
 else
     disp('incorrect plot type')
 end
 
+    function plotSpatial(positions, values, titl, cb)
+        largestDistanceOffset = max(abs(positions(:)));
+        X = linspace(-1*largestDistanceOffset, largestDistanceOffset, 100);
+        [xq,yq] = meshgrid(X, X);        
+        c = griddata(positions(:,1), positions(:,2), values, xq, yq);
+        surface(xq, yq, zeros(size(xq)), c)
+        title(titl)
+        grid off
+    %     axis square
+        axis equal
+        shading interp
+        if cb
+            colorbar
+        end
+    end
 
 end
