@@ -5,7 +5,7 @@ function spikes = simulateSpikeTrain(sd)
 
 center = [0,0];
 width = 70;
-baseFiringRate = 80; % Hz
+baseFiringRate = 100; % Hz
 baseDiameter = 30;
 
 col_x = sd.shapeDataColumns('X');

@@ -138,7 +138,7 @@ elseif strcmp(mode, 'subunit')
                 v = voltages(vi);
                 obs_sel_v = obs_sel & obs(:,4) == v;
             
-                responses = obs(obs_sel_v, 6); % peak: 6, mean: 5
+                responses = obs(obs_sel_v, 5); % peak: 6, mean: 5
                 intensities = obs(obs_sel_v, 3);
 
                 plot(intensities, responses, 'o')
@@ -262,6 +262,9 @@ elseif strcmp(mode, 'wholeCell')
 
 elseif strcmp(mode, 'spatialDiagnostics')
     obs = ad.observations;
+    if isempty(obs)
+        return
+    end
     voltages = unique(obs(:,4));
     num_voltages = length(voltages);
         
@@ -277,7 +280,7 @@ elseif strcmp(mode, 'spatialDiagnostics')
             obs_sel = ismember(obs(:,1:2), pos, 'rows');
             obs_sel = obs_sel & obs(:,3) == maxIntensity;
             obs_sel = obs_sel & obs(:,4) == v;
-            stds(poi,1) = std(obs(obs_sel,5),1);
+            stds(poi,1) = std(obs(obs_sel,5),1) / mean(obs(obs_sel,5),1);
         end    
         axes(ha(vi));
         plotSpatial(ad.positions, stds, sprintf('STD, %d mV', v), 1)

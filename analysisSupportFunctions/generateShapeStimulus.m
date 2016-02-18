@@ -15,12 +15,12 @@ function runConfig = generateShapeStimulus(mode, parameters, analysisData)
         runConfig = generateTemporalAlignment(parameters, runConfig);
         mode = 'temporalAlignment';
     else
-        if strcmp(mode, 'autoReceptiveField')
-            if parameters.refineEdges && analysisData.validSearchResult
-                runConfig = generateSpatialRefineEdges(parameters, analysisData, runConfig);
-            else
-                runConfig = generateStandardSearch(parameters, analysisData, runConfig);
-            end
+        if strcmp(mode, 'receptiveField')
+%             if parameters.refineEdges && analysisData.validSearchResult
+%                 runConfig = generateSpatialRefineEdges(parameters, analysisData, runConfig);
+%             else
+            runConfig = generateStandardSearch(parameters, analysisData, runConfig);
+%             end
             
         elseif strcmp(mode, 'isoResponse')
             if ~analysisData.validSearchResult
@@ -28,6 +28,8 @@ function runConfig = generateShapeStimulus(mode, parameters, analysisData)
             else
                 runConfig = generateIsoResponse(parameters, analysisData, runConfig);
             end
+        elseif strcmp(mode, 'refineVariance')
+            runConfig = generateRefineVariance(parameters, analysisData, runConfig);
         end
     end
 
@@ -105,6 +107,34 @@ function runConfig = generateIsoResponse(parameters, analysisData, runConfig)
     runConfig.stimTime = round(1e3 * (1 + ends(end)));
 end
 
+function runConfig = generateRefineVariance(parameters, analysisData, runConfig)
+    
+    obs = analysisData.observations;
+    % get a list of all of the option sets: position, intensity, voltage
+    settings = unique(obs(:,1:4), 'rows');
+    stds = zeros(size(settings,1), 1);
+       
+    % get the variance for each option set
+    for si = 1:size(settings,1)
+        sett = settings(si,:);
+        obs_sel = ismember(obs(:,1:4), sett, 'rows');
+        stds(si,1) = std(obs(obs_sel,5),1);
+    end
+
+    % select those to be repeated (remove voltage, assume alternateVoltage
+    % is enabled in the stimulus)
+    s = sortrows(horzcat(stds, settings), 1);
+    settings = s(:,2:end);
+    
+    numSettings = floor(length(settings,1) * parameters.variancePercentile);
+    settings_select = settings(1:numSettings,:);
+    
+    positions = settings_select(:,1:2);
+    
+    
+    % generate the flashing spots
+    runConfig = makeFlashedSpotsMatrix(parameters, runConfig, positions);
+end
 
 function runConfig = generateStandardSearch(parameters, analysisData, runConfig)
     
@@ -146,8 +176,12 @@ end
 function runConfig = makeFlashedSpotsMatrix(parameters, runConfig, positions)
     runConfig.epochMode = 'flashingSpots';
     
-    values = linspace(parameters.valueMin, parameters.valueMax, parameters.numValues);
-    positionList = zeros(parameters.numValues * numSpots, 3);
+    if parameters.manualValues
+        values = parameters.values;
+    else
+        values = linspace(parameters.valueMin, parameters.valueMax, parameters.numValues);
+    end
+    positionList = zeros(parameters.numValues * parameters.numSpots, 3);
     starts = zeros(parameters.numSpots, 1);
     stream = RandStream('mt19937ar');
 
@@ -156,7 +190,7 @@ function runConfig = makeFlashedSpotsMatrix(parameters, runConfig, positions)
         usedValues = zeros(parameters.numSpots, parameters.numValues);
         for l = 1:parameters.numValues
             positionIndexList = randperm(stream, parameters.numSpots);
-            for i = 1:numSpots
+            for i = 1:parameters.numSpots
                 curPosition = positionIndexList(i);
                 possibleNextValueIndices = find(usedValues(curPosition,:) == 0);
                 nextValueIndex = possibleNextValueIndices(randi(stream, length(possibleNextValueIndices)));

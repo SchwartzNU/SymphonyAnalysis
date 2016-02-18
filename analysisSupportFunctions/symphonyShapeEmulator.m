@@ -15,30 +15,55 @@ while continueRun
     epoch_num = epoch_num + 1;
 
     p = struct();
-    runTimeSeconds = 30;
+    runTimeSeconds = 300;
     p.spotDiameter = 30; %um
-    p.searchDiameter = 250;
-    p.numSpots = 10;
+    p.searchDiameter = 350;
+    p.numSpots = 100;
     p.spotTotalTime = .3;
     p.spotOnTime = .1;
 
     p.valueMin = .1;
     p.valueMax = 1;
-    p.numValues = 1;
+    p.numValues = 3;
     p.numValueRepeats = 1;
     p.epochNum = epoch_num;
     ISOResponse = false;
     p.refineCenter = false;
     p.refineEdges = true;
+    
+    p.generatePositions = true;
 
+    mode = 'receptiveField';
+    if ISOResponse
+        mode = 'isoResponse';
+    end    
+    
+    if true
+        imode = input('stimulus mode? ','s');
+        if strcmp(imode, 'curves') % response curves
+            mode = 'receptiveField';
+            p.numSpots = input('num positions? ');
+            p.generatePositions = false;
+            p.numValues = input('num values? ');
+            p.numValueRepeats = input('num value repeats? ');
+
+        elseif strcmp(imode, 'map')
+            mode = 'receptiveField';
+            p.generatePositions = input('generate new positions? ');
+
+        elseif strcmp(imode, 'align')
+            mode = 'temporalAlignment';
+
+        elseif strcmp(imode, 'rv')
+            mode = 'refineVariance';
+            p.variancePercentile = input('percentile of highest variance to refine (0-100)? ');
+            p.numValueRepeats = input('num value repeats to add? ');
+        end
+    end    
 
     timeElapsed = currentTime - startTime;
     p.timeRemainingSeconds = runTimeSeconds - timeElapsed;
 
-    mode = 'autoReceptiveField';
-    if ISOResponse
-        mode = 'isoResponse';
-    end
 
     %% generate stimulus
 
@@ -65,11 +90,16 @@ while continueRun
     plotShapeData(analysisData, 'spatial');
 
     figure(9);clf;
-    plotShapeData(analysisData, 'temporalAlignment');    
+    plotShapeData(analysisData, 'temporalAlignment');
 
+    figure(10);clf;
+    plotShapeData(analysisData, 'subunit');    
+
+    figure(11);clf;
+    plotShapeData(analysisData, 'spatialDiagnostics');        
     %% pause and repeat
 
     currentTime = currentTime + 1.0 + sd.stimTime / 1000
-    pause(3)
+%     pause(3)
 end
 
