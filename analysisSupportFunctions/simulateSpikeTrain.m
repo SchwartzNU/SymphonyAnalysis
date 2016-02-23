@@ -5,7 +5,7 @@ function spikes = simulateSpikeTrain(sd)
 
 center = [0,0];
 width = 70;
-baseFiringRate = 100; % Hz
+baseFiringRate = 200; % Hz
 baseDiameter = 30;
 
 col_x = sd.shapeDataColumns('X');
@@ -58,6 +58,8 @@ lightIntensityFiltered = [zeros(1, shiftFrames) lightIntensityFiltered(1:(end-sh
 % pd = makedist('Poisson');
 chance = rand(size(t));
 rate = lightIntensityFiltered * baseFiringRate / sd.sampleRate;
+
+
 spikeBins = rate > chance;
 
 % ha(3) = subplot(3,1,3);

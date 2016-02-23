@@ -139,7 +139,6 @@ elseif strncmp(mode, 'plotSpatial', 11)
                 obs_sel = obs_sel & obs(:,4) == voltage;
                 vals(poi,1) = nanmean(obs(obs_sel, mode_col),1);
             end
-            vals
             
             axes(ha(vi + (ii-1) * num_intensities));
             plotSpatial(ad.positions, vals, sprintf('%s at V = %d mV, intensity = %f', smode, voltage, intensity), 1)
@@ -195,11 +194,12 @@ elseif strcmp(mode, 'subunit')
                 end
     %             ylim([0,max(rate)+.1])
             end
+            grid on
             hold off
 
         end
         
-        set(ha(1:end-dim2),'XTickLabel','');
+%         set(ha(1:end-dim2),'XTickLabel','');
 %         set(ha,'YTickLabel','')
     else
         disp('No multiple value subunits measured');
@@ -331,7 +331,7 @@ elseif strcmp(mode, 'spatialDiagnostics')
         end    
         axes(ha(vi));
         plotSpatial(ad.positions, vals, sprintf('STD/mean at V = %d mV', voltage), 1)
-        caxis([0, max(vals)]);
+%         caxis([0, max(vals)]);
     end
     
     

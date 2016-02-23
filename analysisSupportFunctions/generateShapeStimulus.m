@@ -56,7 +56,7 @@ function runConfig = generateIsoResponse(parameters, analysisData, runConfig)
         end
     end
     
-    num_positions = length(validPositionIndices);
+    num_positions = length(validPositionIndices)
     positions = analysisData.positions(validPositionIndices, :);
 
 %         histogram(values, 20);
@@ -67,6 +67,8 @@ function runConfig = generateIsoResponse(parameters, analysisData, runConfig)
     else        
         runConfig.targetIsoValue = median(values);
     end
+    
+    targetValue = runConfig.targetIsoValue
     
     % fit lines to response curves at each spot,
     % find target light intensity
@@ -79,8 +81,8 @@ function runConfig = generateIsoResponse(parameters, analysisData, runConfig)
         value = responses(:,2);
         pfit = polyfit(intensity, value, 1);
         
-        targetIntensity = (runConfig.targetIsoValue - pfit(2)) / pfit(1);
-        realIntensity = min(max(targetIntensity, .001), 1);
+        targetIntensity = (runConfig.targetIsoValue - pfit(2)) / pfit(1)
+        realIntensity = min(max(targetIntensity, .00001), 1.0);
         intensities(p,1) = realIntensity;
     end
     % create shapeMatrix for those intensities
@@ -176,7 +178,7 @@ end
 function runConfig = makeFlashedSpotsMatrix(parameters, runConfig, positions)
     runConfig.epochMode = 'flashingSpots';
     
-    if parameters.manualValues
+    if isfield(parameters, 'useGivenValues') && parameters.useGivenValues
         values = parameters.values;
     else
         values = linspace(parameters.valueMin, parameters.valueMax, parameters.numValues);

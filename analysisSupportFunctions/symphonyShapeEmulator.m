@@ -18,14 +18,14 @@ while continueRun
     runTimeSeconds = 300;
     p.spotDiameter = 30; %um
     p.searchDiameter = 350;
-    p.numSpots = 100;
+    p.numSpots = 20;
     p.spotTotalTime = .3;
     p.spotOnTime = .1;
 
     p.valueMin = .1;
-    p.valueMax = 1;
-    p.numValues = 3;
-    p.numValueRepeats = 1;
+    p.valueMax = .5;
+    p.numValues = 2;
+    p.numValueRepeats = 3;
     p.epochNum = epoch_num;
     ISOResponse = false;
     p.refineCenter = false;
@@ -58,6 +58,10 @@ while continueRun
             mode = 'refineVariance';
             p.variancePercentile = input('percentile of highest variance to refine (0-100)? ');
             p.numValueRepeats = input('num value repeats to add? ');
+            
+        elseif strcmp(imode, 'iso')
+            mode = 'isoResponse';
+            
         end
     end    
 
@@ -95,8 +99,8 @@ while continueRun
     figure(10);clf;
     plotShapeData(analysisData, 'subunit');
 
-    figure(11);clf;
-    plotShapeData(analysisData, 'spatialDiagnostics');
+%     figure(11);clf;
+%     plotShapeData(analysisData, '');
     %% pause and repeat
 
     currentTime = currentTime + 1.0 + sd.stimTime / 1000
