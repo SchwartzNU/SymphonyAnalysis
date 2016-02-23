@@ -47,21 +47,54 @@ classdef AutoCenterAnalysis < AnalysisTree
     
     methods(Static)
         
-        function plotSpatial(node, ~)
+        
+        function plotSpatial_tHalfMax(node, ~)
             
             nodeData = node.get(1);
 
             if isfield(nodeData, 'splitParam')
                 if strcmp(nodeData.splitParam, 'sessionId')
                     if isfield(nodeData.analysisData, 'value')
-                        figure(11);clf;
+                        figure(100);clf;
                         analysisData = nodeData.analysisData.value;
-                        plotShapeData(analysisData, 'spatial');
+                        plotShapeData(analysisData, 'plotSpatial_tHalfMax');
 
                     end
                 end
             end
         end
+        
+        function plotSpatial_mean(node, ~)
+            
+            nodeData = node.get(1);
+
+            if isfield(nodeData, 'splitParam')
+                if strcmp(nodeData.splitParam, 'sessionId')
+                    if isfield(nodeData.analysisData, 'value')
+                        figure(101);clf;
+                        analysisData = nodeData.analysisData.value;
+                        plotShapeData(analysisData, 'plotSpatial_mean');
+
+                    end
+                end
+            end
+        end           
+
+        function plotSpatial_peak(node, ~)
+            
+            nodeData = node.get(1);
+
+            if isfield(nodeData, 'splitParam')
+                if strcmp(nodeData.splitParam, 'sessionId')
+                    if isfield(nodeData.analysisData, 'value')
+                        figure(102);clf;
+                        analysisData = nodeData.analysisData.value;
+                        plotShapeData(analysisData, 'plotSpatial_peak');
+
+                    end
+                end
+            end
+        end           
         
         function plotSubunit(node, ~)
             
@@ -137,7 +170,22 @@ classdef AutoCenterAnalysis < AnalysisTree
                     end
                 end
             end
-        end               
+        end 
+        
+        function plotPositionDifferenceAnalysis(node, ~)
+            
+            nodeData = node.get(1);
+                        
+            if isfield(nodeData, 'splitParam')
+                if strcmp(nodeData.splitParam, 'sessionId')
+                    if isfield(nodeData.analysisData, 'value')
+                        figure(17);clf;
+                        analysisData = nodeData.analysisData.value;
+                        plotShapeData(analysisData, 'positionDifferenceAnalysis');
+                    end
+                end
+            end
+        end         
     end
 end
 

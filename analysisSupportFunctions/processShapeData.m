@@ -30,7 +30,6 @@ all_positions = unique(all_positions, 'rows');
 num_positions = length(all_positions);
 responseData = cell(num_positions, 3); % On, Off, Total
 observations = [];
-observationColumns = {'X','Y','intensity','voltage','respMean','respPeak'}; %,'distFromPrev'
 oi = 0;
 
 for p = 1:num_epochs
@@ -156,6 +155,7 @@ for p = 1:num_epochs
     
 %     figure(12)
     
+    prevPosition = nan;
     for si = 1:e.totalNumSpots
         spot_position = epoch_positions(si,:);
         spot_intensity = epoch_intensities(si);
@@ -184,12 +184,22 @@ for p = 1:num_epochs
 
             if ooi == 3
             % using ooi = 3 -> complete
-        %       {'X','Y','intensity','voltage','respMean','respPeak'}
+            % add distance from previous spot to check for overlap effects
+                %                         1   2   3           4         5          6          7          8
+                ad.observationColumns = {'X','Y','intensity','voltage','respMean','respPeak','tHalfMax','distFromPrev'};
                 oi = oi + 1;
-                mn = mean(e.response(segmentIndices));
-                pk = max(e.response(segmentIndices));
-                obs = [spot_position, spot_intensity, e.ampVoltage, mn, pk];
-                observations(oi,:) = obs;            
+                resp = e.response(segmentIndices);
+                mn = mean(resp);
+                pk = max(resp);
+                if pk > 0
+                    del = find(resp > pk / 2.0, 1, 'first') / e.sampleRate;
+                else
+                    del = nan;
+                end
+                dist = sqrt(sum((spot_position - prevPosition).^2));
+                obs = [spot_position, spot_intensity, e.ampVoltage, mn, pk, del, dist];
+                observations(oi,1:length(obs)) = obs;
+                prevPosition = spot_position;
             end
         end
         

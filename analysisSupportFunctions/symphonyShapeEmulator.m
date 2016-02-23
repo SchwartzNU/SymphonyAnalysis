@@ -93,10 +93,10 @@ while continueRun
     plotShapeData(analysisData, 'temporalAlignment');
 
     figure(10);clf;
-    plotShapeData(analysisData, 'subunit');    
+    plotShapeData(analysisData, 'subunit');
 
     figure(11);clf;
-    plotShapeData(analysisData, 'spatialDiagnostics');        
+    plotShapeData(analysisData, 'spatialDiagnostics');
     %% pause and repeat
 
     currentTime = currentTime + 1.0 + sd.stimTime / 1000

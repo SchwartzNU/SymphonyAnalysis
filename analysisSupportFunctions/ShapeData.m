@@ -189,25 +189,26 @@ classdef ShapeData < handle
             % call after setResponse to make current like spikeRate
 %             subplot(4,1,1)
             r = sign(obj.ampVoltage) * obj.response;
+            r = r - median(r(1:round(obj.sampleRate*obj.preTime)));
 %             plot(r)
 %             r = r - mean(r);
 %             subplot(4,1,2); plot(r);
             
-%             Fstop = .5;
-%             Fpass = 1;
-%             Astop = 20;
-%             Apass = 0.5;
-%             wc_filter = designfilt('highpassiir','StopbandFrequency',Fstop, ...
-%                 'PassbandFrequency',Fpass,'StopbandAttenuation',Astop, ...
-%                 'PassbandRipple',Apass,'SampleRate',obj.sampleRate,'DesignMethod','butter');
-%             
-%             r = filtfilt(wc_filter, r);
+            Fstop = .02;
+            Fpass = .03;
+            Astop = 20;
+            Apass = 0.5;
+            wc_filter = designfilt('highpassiir','StopbandFrequency',Fstop, ...
+                'PassbandFrequency',Fpass,'StopbandAttenuation',Astop, ...
+                'PassbandRipple',Apass,'SampleRate',obj.sampleRate);
+            
+            r = filter(wc_filter, r);
 %             subplot(4,1,3)
 %             plot(r)
                         
 %             r = r - prctile(r,10); % set the bottom 10 % of samples to be negative, to keep things generally positive
            
-            r = r - mean(r(1:round(obj.sampleRate*obj.preTime)));
+            r = r - median(r(1:round(obj.sampleRate*obj.preTime)));
 
 %             subplot(4,1,4)
 %             plot(r)

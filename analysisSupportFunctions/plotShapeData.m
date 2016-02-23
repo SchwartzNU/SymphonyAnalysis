@@ -101,6 +101,53 @@ if strcmp(mode,'spatial')
         subplot(2,1,1)
         title('No valid search epoch result')
     end
+
+elseif strncmp(mode, 'plotSpatial', 11)
+% elseif strcmp(mode, 'plotSpatial_tHalfMax')
+    if strfind(mode, 'mean')
+        mode_col = 5;
+        smode = 'mean';
+    elseif strfind(mode, 'peak')
+        mode_col = 6;
+        smode = 'peak';
+    elseif strfind(mode, 'tHalfMax')
+        mode_col = 7;
+        smode = 't half max';
+    end
+    obs = ad.observations;
+    if isempty(obs)
+        return
+    end
+    
+    voltages = unique(obs(:,4));
+    num_voltages = length(voltages);
+        
+    intensities = unique(obs(:,3));
+    num_intensities = length(intensities);
+    
+    ha = tight_subplot(num_intensities, num_voltages);
+    for vi = 1:num_voltages
+        for ii = 1:num_intensities
+            intensity = intensities(ii);
+            voltage = voltages(vi);
+            
+            vals = zeros(length(ad.positions),1);
+            for poi = 1:length(ad.positions)
+                pos = ad.positions(poi,:);
+                obs_sel = ismember(obs(:,1:2), pos, 'rows');
+                obs_sel = obs_sel & obs(:,3) == intensity;
+                obs_sel = obs_sel & obs(:,4) == voltage;
+                vals(poi,1) = nanmean(obs(obs_sel, mode_col),1);
+            end
+            vals
+            
+            axes(ha(vi + (ii-1) * num_intensities));
+            plotSpatial(ad.positions, vals, sprintf('%s at V = %d mV, intensity = %f', smode, voltage, intensity), 1)
+%             caxis([0, max(vals)]);
+%             colormap(flipud(colormap))
+        end
+    end    
+    
     
 elseif strcmp(mode, 'subunit')
 
@@ -135,8 +182,8 @@ elseif strcmp(mode, 'subunit')
             obs_sel = ismember(obs(:,1:2), pos, 'rows');
             
             for vi = 1:num_voltages
-                v = voltages(vi);
-                obs_sel_v = obs_sel & obs(:,4) == v;
+                voltage = voltages(vi);
+                obs_sel_v = obs_sel & obs(:,4) == voltage;
             
                 responses = obs(obs_sel_v, 5); % peak: 6, mean: 5
                 intensities = obs(obs_sel_v, 3);
@@ -273,18 +320,18 @@ elseif strcmp(mode, 'spatialDiagnostics')
     
     ha = tight_subplot(1, num_voltages);
     for vi = 1:num_voltages
-        v = voltages(vi);
-        stds = [];
+        voltage = voltages(vi);
+        vals = [];
         for poi = 1:length(ad.positions)
             pos = ad.positions(poi,:);
             obs_sel = ismember(obs(:,1:2), pos, 'rows');
             obs_sel = obs_sel & obs(:,3) == maxIntensity;
-            obs_sel = obs_sel & obs(:,4) == v;
-            stds(poi,1) = std(obs(obs_sel,5),1) / mean(obs(obs_sel,5),1);
+            obs_sel = obs_sel & obs(:,4) == voltage;
+            vals(poi,1) = std(obs(obs_sel,5),1) / mean(obs(obs_sel,5),1);
         end    
         axes(ha(vi));
-        plotSpatial(ad.positions, stds, sprintf('STD, %d mV', v), 1)
-        caxis([0, max(stds)]);
+        plotSpatial(ad.positions, vals, sprintf('STD/mean at V = %d mV', voltage), 1)
+        caxis([0, max(vals)]);
     end
     
     
@@ -295,6 +342,25 @@ elseif strcmp(mode, 'spatialDiagnostics')
 %     align([diagTxt, h],'Distribute','Top')
 %     
 %     diagTxt.String = 'Hello World';
+    
+elseif strcmp(mode, 'positionDifferenceAnalysis')
+    obs = ad.observations;
+    if isempty(obs)
+        return
+    end
+    
+    % general distance to value
+    subplot(2,1,1)
+    plot(obs(:,8), obs(:,5), 'o')
+    hold on
+    sel = ~isnan(obs(:,8)) & ~isnan(obs(:,5));
+    p = polyfit(obs(sel,8), obs(sel,5), 1);
+    plot(obs(:,8), polyval(p, obs(:,8)))
+    hold off
+    
+    % compare repeat values with different distances
+    subplot(2,1,2)
+    
     
 else
     disp('incorrect plot type')
