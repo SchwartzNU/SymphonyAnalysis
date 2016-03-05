@@ -185,8 +185,8 @@ for p = 1:num_epochs
             if ooi == 3
             % using ooi = 3 -> complete
             % add distance from previous spot to check for overlap effects
-                %                         1   2   3           4         5          6          7          8
-                ad.observationColumns = {'X','Y','intensity','voltage','respMean','respPeak','tHalfMax','distFromPrev'};
+                %                         1   2   3           4         5          6          7          8             9              10                11
+                ad.observationColumns = {'X','Y','intensity','voltage','respMean','respPeak','tHalfMax','distFromPrev','sourceEpoch','signalStartIndex','signalEndIndex'};
                 oi = oi + 1;
                 resp = e.response(segmentIndices);
                 mn = mean(resp);
@@ -197,7 +197,7 @@ for p = 1:num_epochs
                     del = nan;
                 end
                 dist = sqrt(sum((spot_position - prevPosition).^2));
-                obs = [spot_position, spot_intensity, e.ampVoltage, mn, pk, del, dist];
+                obs = [spot_position, spot_intensity, e.ampVoltage, mn, pk, del, dist, ei, segmentStartIndex, segmentStartIndex + sampleCount_total];
                 observations(oi,1:length(obs)) = obs;
                 prevPosition = spot_position;
             end

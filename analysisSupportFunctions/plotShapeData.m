@@ -269,7 +269,69 @@ elseif strcmp(mode, 'temporalAlignment')
     set(p,'EdgeColor','none');    
 
     title(['temporal offset of collection bins (on, off): ' num2str(timeOffset) ' sec'])
+
+elseif strcmp(mode, 'responsesByPosition')
     
+    obs = ad.observations;
+   
+    maxIntensity = max(obs(:,3));
+    v_in = max(obs(:,4));
+    v_ex = min(obs(:,4));    
+    
+    num_positions = size(ad.positions,1);
+    dim1 = floor(sqrt(num_positions));
+    dim2 = ceil(num_positions / dim1);
+
+    ha = tight_subplot(dim1, dim2, .01, .01);    
+    
+    max_value = -inf;
+    min_value = inf;
+    
+    for poi = 1:num_positions
+        pos = ad.positions(poi,:);
+        obs_sel = ismember(obs(:,1:2), pos, 'rows');
+        obs_sel = obs_sel & obs(:,3) == maxIntensity;
+        obs_sel_ex = obs_sel & obs(:,4) == v_ex;
+        ind_ex = find(obs_sel_ex);
+        obs_sel_in = obs_sel & obs(:,4) == v_in;
+        ind_in = find(obs_sel_in);
+        
+        hold(ha(poi), 'on');
+        for ii = ind_ex'
+            entry = obs(ii,:)';
+            epoch = ad.epochData{entry(9)};
+            
+            signal = -3 * epoch.response(entry(10):entry(11));
+            plot(ha(poi), signal,'r');
+            
+            max_value = max(max_value, max(signal));
+            min_value = min(min_value, min(signal));
+        end
+        
+        for ii = ind_in'
+            entry = obs(ii,:)';
+            epoch = ad.epochData{entry(9)};
+            
+            signal = epoch.response(entry(10):entry(11));
+            plot(ha(poi), signal,'b');
+            
+            max_value = max(max_value, max(signal));
+            min_value = min(min_value, min(signal));
+        end        
+        
+%         set(gca,'XTickLabelMode','manual')
+        set(ha(poi),'XTickLabels',[])
+        if poi > 1
+            set(ha(poi),'YTickLabels',[])
+        end
+        
+
+%         title(ha(poi), pos);
+        
+    end
+    linkaxes(ha)
+    ylim(ha(1), [min_value, max_value]);
+%     xlim(ha(1), [signal(1), signal(end)])
     
 elseif strcmp(mode, 'wholeCell')
     obs = ad.observations;

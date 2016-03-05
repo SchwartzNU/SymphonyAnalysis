@@ -186,6 +186,22 @@ classdef AutoCenterAnalysis < AnalysisTree
                 end
             end
         end         
+        
+        
+        function plotResponsesByPosition(node, ~)
+            
+            nodeData = node.get(1);
+                        
+            if isfield(nodeData, 'splitParam')
+                if strcmp(nodeData.splitParam, 'sessionId')
+                    if isfield(nodeData.analysisData, 'value')
+                        figure(18);clf;
+                        analysisData = nodeData.analysisData.value;
+                        plotShapeData(analysisData, 'responsesByPosition');
+                    end
+                end
+            end
+        end           
     end
 end
 
