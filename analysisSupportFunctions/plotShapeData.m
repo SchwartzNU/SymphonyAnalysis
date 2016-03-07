@@ -13,96 +13,7 @@ function [] = printPresentationParams(ad)
     fprintf('holding voltages: %d\n', voltages');
 end
 
-if strcmp(mode,'spatial')
-    
-    printPresentationParams(ad)
-    
-    %% Plot spatial receptive field using responses from highest intensity spots
-%     clf;
-%     set(gcf, 'Name','Spatial RF','NumberTitle','off');
-
-    ha = tight_subplot(1,2,.08);
-    if ad.validSearchResult == 1
-
-        dataNames = {'On','Off','Total'};
-        titles = {'', 'On Off RF', 'Total RF'};
-        colors = {'g';'r';'m'};
-        positions = ad.positions;
-
-        xlist = positions(:,1);
-        ylist = positions(:,2);
-        largestDistanceOffset = max(max(abs(xlist)), max(abs(ylist)));
-%         largestDistanceOffset = 150;
-        
-        
-        axes_by_ooi = [ha(1), ha(1), ha(2)];
-        on_data_stored = [];
-        
-        for ooi = 1:3
-            zlist = ad.maxIntensityResponses(:,ooi);
-
-            X = linspace(-1*largestDistanceOffset, largestDistanceOffset, 100);
-            Y = X;
-            %                 X = linspace(min(xlist), max(xlist), 40);
-            %                 Y = linspace(min(ylist), max(ylist), 40);
-
-            %                 ax = gca;
-            axes(axes_by_ooi(ooi));
-            [xq,yq] = meshgrid(X, Y);
-            vq = griddata(xlist, ylist, zlist, xq, yq);
-            
-            if ooi == 1
-                on_data_stored = vq;
-            else
-                if ooi == 2 % use On as Green, Off as Red
-                    c = vq;
-                    c(:,:,2) = on_data_stored;
-                    c(:,:,3) = 0;
-%                     c(isnan(c)) = 0;
-                    c = c ./ nanmax(c(:));
-                else
-                    c = vq;
-                end
-                surface(xq, yq, zeros(size(xq)), c)
-            end
-            grid off
-            shading interp
-            hold on
-
-            % plot measured points
-            plot3(xlist,ylist,zlist,'.','MarkerSize',5,'MarkerEdgeColor',[.7 .7 .7]);
-
-            % plot gaussian ellipse
-            % [Amplitude, x0, sigmax, y0, sigmay] = x;
-            gfp = ad.gaussianFitParams_ooi{ooi};
-            disp([dataNames{ooi}, ' center of gaussian fit: ' num2str([gfp('centerX'), gfp('centerY')]) ' um'])
-
-            plot(gfp('centerX'), gfp('centerY'),colors{ooi},'MarkerSize',20, 'Marker','+')
-            ellipse(gfp('sigma2X'), gfp('sigma2Y'), -gfp('angle'), gfp('centerX'), gfp('centerY'), colors{ooi});
-
-            view(0, 90)
-            set(gca,'XTickLabelMode','auto')
-            set(gca,'YTickLabelMode','auto')
-    %         xlabel('X (um)');
-    %         ylabel('Y (um)');
-            axis([-largestDistanceOffset,largestDistanceOffset,-largestDistanceOffset,largestDistanceOffset])
-    %         axis equal
-            axis square
-            %                 colorbar;
-            title(titles{ooi});
-%             
-%             if ooi == 3
-%                 save('rf.mat', 'xq','yq','vq')
-%             end
-            
-        end
-        
-    else
-        subplot(2,1,1)
-        title('No valid search epoch result')
-    end
-
-elseif strncmp(mode, 'plotSpatial', 11)
+if strncmp(mode, 'plotSpatial', 11)
 % elseif strcmp(mode, 'plotSpatial_tHalfMax')
     if strfind(mode, 'mean')
         mode_col = 5;
@@ -131,41 +42,54 @@ elseif strncmp(mode, 'plotSpatial', 11)
             intensity = intensities(ii);
             voltage = voltages(vi);
             
-            vals = zeros(length(ad.positions),1);
+%             vals = zeros(length(ad.positions),1);
+            vals = [];
+            posIndex = 0;
+            goodPositions = [];
             for poi = 1:length(ad.positions)
                 pos = ad.positions(poi,:);
                 obs_sel = ismember(obs(:,1:2), pos, 'rows');
                 obs_sel = obs_sel & obs(:,3) == intensity;
                 obs_sel = obs_sel & obs(:,4) == voltage;
-                vals(poi,1) = nanmean(obs(obs_sel, mode_col),1);
+                val = nanmean(obs(obs_sel, mode_col),1);
+                if any(obs_sel) && ~isnan(val)
+                    posIndex = posIndex + 1;
+                    vals(posIndex,1) = val;
+                    goodPositions(posIndex,:) = pos;
+                end
             end
             
-            axes(ha(vi + (ii-1) * num_intensities));
-            plotSpatial(ad.positions, vals, sprintf('%s at V = %d mV, intensity = %f', smode, voltage, intensity), 1)
+            a = vi + (ii-1) * num_voltages;
+            
+            axes(ha(a));
+            plotSpatial(goodPositions, vals, sprintf('%s at V = %d mV, intensity = %f', smode, voltage, intensity), 1, 1);
 %             caxis([0, max(vals)]);
 %             colormap(flipud(colormap))
+
         end
-    end    
+    end
     
     
 elseif strcmp(mode, 'subunit')
 
-    if ad.numValues > 1
+%     if ad.numValues > 1
     
         %% Plot figure with subunit models
     %     figure(12);
-        obs = ad.observations;
-        num_positions = size(ad.responseData,1);
+
+
+%         distance_to_center = zeros(num_positions, 1);
+%         for p = 1:num_positions
+%             gfp = ad.gaussianFitParams_ooi{3};
+%             distance_to_center(p,1) = sqrt(sum((ad.positions(p,:) - [gfp('centerX'),gfp('centerY')]).^2));
+%         end
+%         sorted_positions = sortrows([distance_to_center, (1:num_positions)'], 1);
+
+
+        num_positions = size(ad.positions,1);
         dim1 = floor(sqrt(num_positions));
         dim2 = ceil(num_positions / dim1);
-
-        distance_to_center = zeros(num_positions, 1);
-        for p = 1:num_positions
-            gfp = ad.gaussianFitParams_ooi{3};
-            distance_to_center(p,1) = sqrt(sum((ad.positions(p,:) - [gfp('centerX'),gfp('centerY')]).^2));
-        end
-        sorted_positions = sortrows([distance_to_center, (1:num_positions)'], 1);
-
+        
         ha = tight_subplot(dim1,dim2);
         
         obs = ad.observations;
@@ -201,9 +125,9 @@ elseif strcmp(mode, 'subunit')
         
 %         set(ha(1:end-dim2),'XTickLabel','');
 %         set(ha,'YTickLabel','')
-    else
-        disp('No multiple value subunits measured');
-    end
+%     else
+%         disp('No multiple value subunits measured');
+%     end
     
 elseif strcmp(mode, 'temporalResponses')
     num_plots = length(ad.epochData);
@@ -239,11 +163,24 @@ elseif strcmp(mode, 'temporalAlignment')
 
     %                 spikeBins = nodeData.spikeBins.value;
     
-    spotBinDisplay = mean(ad.spikeRate_by_spot, 1);
+    
+    % get average of all responses
+    obs = ad.observations;
+    sm = [];
+    for oi = 1:size(obs, 1)
+        
+        entry = obs(oi,:)';
+        epoch = ad.epochData{entry(9)};
+
+        sm(oi,:) = epoch.response(entry(10):entry(11));
+    end
+    spotBinDisplay = mean(sm,1);
+    
+%     spotBinDisplay = mean(ad.spikeRate_by_spot, 1);
     timeOffset = ad.timeOffset;
     
-    displayTime = (1:(ad.sampleRate * spotTotalTime)) ./ ad.sampleRate + timeOffset(1);
-
+    displayTime = (1:length(spotBinDisplay)) ./ ad.sampleRate + timeOffset(1);
+    
     plot(displayTime, spotBinDisplay)
     %                 plot(spikeBins(1:end-1), spikeBinsValues);
     %                 xlim([0,spikeBins(end-1)])
@@ -358,15 +295,15 @@ elseif strcmp(mode, 'wholeCell')
 
     % EX
     axes(ha(1))
-    plotSpatial(ad.positions, r_ex, sprintf('Excitatory: %d mV', v_ex), 0)
+    plotSpatial(ad.positions, r_ex, sprintf('Excitatory: %d mV', v_ex), 0, 1)
     
     % IN
     axes(ha(2))
-    plotSpatial(ad.positions, r_in, sprintf('Inhibitory: %d mV', v_in), 0)
+    plotSpatial(ad.positions, r_in, sprintf('Inhibitory: %d mV', v_in), 0, 1)
     
     % Ratio    
     axes(ha(3))
-    plotSpatial(ad.positions, r_exinrat, 'Ex/In ratio', 1)
+    plotSpatial(ad.positions, r_exinrat, 'Ex/In ratio', 1, 0)
     
 
 elseif strcmp(mode, 'spatialDiagnostics')
@@ -392,7 +329,7 @@ elseif strcmp(mode, 'spatialDiagnostics')
             vals(poi,1) = std(obs(obs_sel,5),1) / mean(obs(obs_sel,5),1);
         end    
         axes(ha(vi));
-        plotSpatial(ad.positions, vals, sprintf('STD/mean at V = %d mV', voltage), 1)
+        plotSpatial(ad.positions, vals, sprintf('STD/mean at V = %d mV', voltage), 1, 0)
 %         caxis([0, max(vals)]);
     end
     
@@ -428,7 +365,7 @@ else
     disp('incorrect plot type')
 end
 
-    function plotSpatial(positions, values, titl, cb)
+    function plotSpatial(positions, values, titl, addcolorbar, gaussianfit)
         largestDistanceOffset = max(abs(positions(:)));
         X = linspace(-1*largestDistanceOffset, largestDistanceOffset, 100);
         [xq,yq] = meshgrid(X, X);        
@@ -439,9 +376,18 @@ end
     %     axis square
         axis equal
         shading interp
-        if cb
+        if addcolorbar
             colorbar
         end
+        if gaussianfit
+            hold on
+            gfp = fit2DGaussian(positions, vals);
+%             disp([dataNames{ooi}, ' center of gaussian fit: ' num2str([gfp('centerX'), gfp('centerY')]) ' um'])
+
+            plot(gfp('centerX'), gfp('centerY'),'red','MarkerSize',20, 'Marker','+')
+            ellipse(gfp('sigma2X'), gfp('sigma2Y'), -gfp('angle'), gfp('centerX'), gfp('centerY'), 'red');
+            hold off
+        end            
     end
 
 end

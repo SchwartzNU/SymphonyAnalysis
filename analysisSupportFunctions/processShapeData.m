@@ -28,7 +28,6 @@ for p = 1:num_epochs
 end
 all_positions = unique(all_positions, 'rows');
 num_positions = length(all_positions);
-responseData = cell(num_positions, 3); % On, Off, Total
 observations = [];
 oi = 0;
 
@@ -104,7 +103,7 @@ for p = 1:num_epochs
     
     % this is to give it a bit of slack early in case some strong
     % responses are making it delay too much
-    t_offset = t_offset - .04;
+    t_offset = t_offset - .02;
     
     % pull temporal alignment from temporal alignment epoch if available,
     % or store it now if generated
@@ -139,15 +138,8 @@ for p = 1:num_epochs
 
 
     sampleCount_total = round(e.spotTotalTime * e.sampleRate);
-    sampleCount_on = round(e.spotOnTime * 1.2 * e.sampleRate); % extend the On a bit
-    sampleCount_off = sampleCount_total - sampleCount_on;
     
-    sampleSet_ooi = {};
-    sampleSet_ooi{1} = (0:(sampleCount_on-1))'; % ON
-    sampleSet_ooi{2} = sampleCount_on + (0:(sampleCount_off-1))'; % OFF
-    sampleSet_ooi{3} = (0:(sampleCount_total-1))'; % total
-    
-    spikeRate_by_spot = zeros(e.numSpots, sampleCount_total);
+    sampleSet = (0:(sampleCount_total-1))'; % total
     
     if skipResponses == 1
         continue
@@ -160,48 +152,36 @@ for p = 1:num_epochs
         spot_position = epoch_positions(si,:);
         spot_intensity = epoch_intensities(si);
         
-        for ooi = 1:3 % on (1) off (2) total (3) index
 
-            segmentStartTime = e.spotTotalTime * (si - 1) + t_offset(1);
-            segmentStartIndex = find(e.t > segmentStartTime, 1);
-            if isempty(segmentStartIndex)
-                continue
-            end
-    %         t_range = (t - t_offset) > spotTotalTime * (si - 1) & (t - t_offset) < spotTotalTime * si;
-    
-    
-            segmentIndices = segmentStartIndex + sampleSet_ooi{ooi};
-            
-            if size(e.response, 1) < segmentStartIndex + sampleCount_total % off the end of the recording
-                continue
-            end
-            spikeRate_by_spot(si,:) = e.response(segmentStartIndex + sampleSet_ooi{3}); % grab the whole thing to display later (3x)
-
-            all_position_index = all_positions(:,1) == spot_position(1) & all_positions(:,2) == spot_position(2);
-            response = mean(e.response(segmentIndices)); % average of spike rate over time chunk
-                       
-            responseData{all_position_index, ooi} = vertcat(responseData{all_position_index,ooi}, [spot_intensity, response]);
-
-            if ooi == 3
-            % using ooi = 3 -> complete
-            % add distance from previous spot to check for overlap effects
-                %                         1   2   3           4         5          6          7          8             9              10                11
-                ad.observationColumns = {'X','Y','intensity','voltage','respMean','respPeak','tHalfMax','distFromPrev','sourceEpoch','signalStartIndex','signalEndIndex'};
-                oi = oi + 1;
-                resp = e.response(segmentIndices);
-                mn = mean(resp);
-                pk = max(resp);
-                if pk > 0
-                    del = find(resp > pk / 2.0, 1, 'first') / e.sampleRate;
-                else
-                    del = nan;
-                end
-                dist = sqrt(sum((spot_position - prevPosition).^2));
-                obs = [spot_position, spot_intensity, e.ampVoltage, mn, pk, del, dist, ei, segmentStartIndex, segmentStartIndex + sampleCount_total];
-                observations(oi,1:length(obs)) = obs;
-                prevPosition = spot_position;
-            end
+        segmentStartTime = e.spotTotalTime * (si - 1) + t_offset(1);
+        segmentStartIndex = find(e.t > segmentStartTime, 1);
+        if isempty(segmentStartIndex)
+            continue
         end
+%         t_range = (t - t_offset) > spotTotalTime * (si - 1) & (t - t_offset) < spotTotalTime * si;
+
+        segmentIndices = segmentStartIndex + sampleSet;
+
+        if size(e.response, 1) < segmentStartIndex + sampleCount_total % off the end of the recording
+            continue
+        end
+
+        % add distance from previous spot to check for overlap effects
+        %                         1   2   3           4         5          6          7          8             9              10                11
+        ad.observationColumns = {'X','Y','intensity','voltage','respMean','respPeak','tHalfMax','distFromPrev','sourceEpoch','signalStartIndex','signalEndIndex'};
+        oi = oi + 1;
+        resp = e.response(segmentIndices);
+        mn = mean(resp);
+        pk = max(resp);
+        if pk > 0
+            del = find(resp > pk / 2.0, 1, 'first') / e.sampleRate;
+        else
+            del = nan;
+        end
+        dist = sqrt(sum((spot_position - prevPosition).^2));
+        obs = [spot_position, spot_intensity, e.ampVoltage, mn, pk, del, dist, ei, segmentStartIndex, segmentStartIndex + sampleCount_total];
+        observations(oi,1:length(obs)) = obs;
+        prevPosition = spot_position;
         
 %         responseData{all_position_index, :}
 
@@ -228,31 +208,31 @@ if num_positions < 3 % can't triangulate
     validSearchResult = 0;
 end
 
-maxIntensityResponses = zeros(num_positions, 2);
-
-highestIntensity = -Inf;
-numValues = 0;
-% find highest intensity
-for p = 1:num_positions
-    r = responseData{p,1};
-    if ~isempty(r)
-        highestIntensity = max(max(r(:,1)), highestIntensity);
-        numValues = max(numValues, size(r,1));
-    end
-end
-
-% get the responses at that intensity for simple mapping
-for ooi = 1:3
-    for p = 1:num_positions
-        r = responseData{p,ooi}; %on data
-        if ~isempty(r) && any(r(:,1) == highestIntensity)
-            spikes = mean(r(r(:,1) == highestIntensity, 2)); % just get the high intensity ones
-        else
-            spikes = 0;
-        end
-        maxIntensityResponses(p,ooi) = spikes;
-    end
-end
+% maxIntensityResponses = zeros(num_positions, 2);
+% 
+% highestIntensity = -Inf;
+% numValues = 0;
+% % find highest intensity
+% for p = 1:num_positions
+%     r = responseData{p,1};
+%     if ~isempty(r)
+%         highestIntensity = max(max(r(:,1)), highestIntensity);
+%         numValues = max(numValues, size(r,1));
+%     end
+% end
+% 
+% % get the responses at that intensity for simple mapping
+% for ooi = 1:3
+%     for p = 1:num_positions
+%         r = responseData{p,ooi}; %on data
+%         if ~isempty(r) && any(r(:,1) == highestIntensity)
+%             spikes = mean(r(r(:,1) == highestIntensity, 2)); % just get the high intensity ones
+%         else
+%             spikes = 0;
+%         end
+%         maxIntensityResponses(p,ooi) = spikes;
+%     end
+% end
 
 % centerOfMassXY = [sum(all_positions(:,1) .* maxIntensityResponses)/sum(maxIntensityResponses), ...
 %                     sum(all_positions(:,2) .* maxIntensityResponses)/sum(maxIntensityResponses)];
@@ -262,59 +242,18 @@ end
 
 % save('fitData','all_positions','maxIntensityResponses')
 
-%% Fit a 2d gaussian to the data
-function F = gauss_2d(x,xdata)
-%  F = x(1)*exp(   -((xdata(:,1)-x(2)).^2/(2*x(3)^2) + (xdata(:,2)-x(4)).^2/(2*x(5)^2) )    );
- xdatarot(:,1)= xdata(:,1)*cos(x(6)) - xdata(:,2)*sin(x(6));
- xdatarot(:,2)= xdata(:,1)*sin(x(6)) + xdata(:,2)*cos(x(6));
- x0rot = x(2)*cos(x(6)) - x(4)*sin(x(6));
- y0rot = x(2)*sin(x(6)) + x(4)*cos(x(6));
-
- F = x(1)*exp(   -((xdatarot(:,1)-x0rot).^2/(2*x(3)^2) + (xdatarot(:,2)-y0rot).^2/(2*x(5)^2) )    );
-end
-
-if validSearchResult == 1
-    
-    
-    gaussianFitParams_ooi = cell(3,1);
-    for ooi = 1:3
-
-        % add zero positions far away to keep gaussian fit reasonable
-        g_num_positions = num_positions + 4;
-        g_all_positions = vertcat(all_positions, 1000*[-1, -1; -1, 1; 1, 1; 1, -1]);
-        g_responses = vertcat(maxIntensityResponses(:,ooi), zeros(4,1));
-        
-        x0 = [1,0,50,0,50,pi/4];
-
-        opts = optimset('Display','off');
-        lb = [0,-g_num_positions/2,0,-g_num_positions/2,0,0];
-        ub = [realmax('double'),g_num_positions/2,(g_num_positions/2)^2,g_num_positions/2,(g_num_positions/2)^2,pi/2];
-    
-
-        [gaussianFitParams,~,~,~] = lsqcurvefit(@gauss_2d,x0,g_all_positions,g_responses,lb,ub,opts);
-
-        keys = {'amplitude','centerX','sigma2X','centerY','sigma2Y','angle'};
-        gaussianFitParams_ooi{ooi} = containers.Map(keys, gaussianFitParams);
-    end
-    % [Amplitude, x0, sigmax, y0, sigmay] = x;
-else
-%     keys = {'amplitude','centerX','sigma2X','centerY','sigma2Y','angle'};
-%     gaussianFitParams = containers.Map(keys, zeros(length(keys),1));
-    gaussianFitParams_ooi = [];
-end
-
 %% store data for the next stages of processing/output
 ad.positions = all_positions;
-ad.responseData = responseData;
+% ad.responseData = responseData;
 ad.observations = observations;
-ad.maxIntensityResponses = maxIntensityResponses;
-ad.spikeRate_by_spot = spikeRate_by_spot;
+% ad.maxIntensityResponses = maxIntensityResponses;
+% ad.spikeRate_by_spot = spikeRate_by_spot;
 % od.displayTime = displayTime_on; 
 ad.timeOffset = t_offset;
 % od.centerOfMassXY = centerOfMassXY;
-ad.gaussianFitParams_ooi = gaussianFitParams_ooi;
+% ad.gaussianFitParams_ooi = gaussianFitParams_ooi;
 % od.farthestResponseDistance = farthestResponseDistance;
 ad.validSearchResult = validSearchResult;
-ad.numValues = numValues;
+% ad.numValues = numValues;
 
 end
