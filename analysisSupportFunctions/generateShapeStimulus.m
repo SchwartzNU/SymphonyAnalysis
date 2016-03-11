@@ -30,6 +30,8 @@ function runConfig = generateShapeStimulus(mode, parameters, analysisData)
             end
         elseif strcmp(mode, 'refineVariance')
             runConfig = generateRefineVariance(parameters, analysisData, runConfig);
+        elseif strcmp(mode, 'adaptationRegion')
+            runConfig = generateAdaptationRegionStimulus(parameters, analysisData, runConfig);
         end
     end
 
@@ -172,6 +174,57 @@ function runConfig = generateStandardSearch(parameters, analysisData, runConfig)
 
     runConfig = makeFlashedSpotsMatrix(parameters, runConfig, positions);
     
+end
+
+function runConfig = generateAdaptationRegionStimulus(p, analysisData, runConfig)
+
+    numAdaptationPositions = size(p.positions,1);
+
+    % first time setup / all for now
+%     for ai = 1:numAdaptationPositions
+    % make array of spot positions around 
+    searchRadius = 60;
+    spotSpacing = 30;
+    probePositions = generatePositions('triangular', [searchRadius, spotSpacing]);
+    probePositions = bsxfun(@plus, probePositions, p.adaptationSpotPositions(1,:));
+    numProbeSpots = size(probePositions, 1);
+    values = [0.05, 0.1, 0.4, 1.0];
+    
+    starts = [];
+    ends = [];
+    intensities = [];
+    
+    % get curves before & after adaptation
+    si = 1;
+    delay = 0;
+    for prePostAdapt = 1:2
+        for repeat = 1:2
+            for val = values
+                for pri = 1:numProbeSpots
+                    positions = probePositions(pri,:);
+                    starts(si,1) = (si - 1) * (p.probeSpotDuration * 2) + delay;
+                    ends(si,1) = starts(si,1) + p.probeSpotDuration;
+                    intensities(si,1) = val;
+                    si = si + 1;
+                end
+            end
+        end
+        if prePostAdapt == 1
+            flickerStartTime = starts(end) + 2;
+            delay = ends(end,1) + 3;
+        end
+    end
+
+    diams = p.probeSpotDiameter * ones(length(starts), 1);
+    frequencies = zeros(size(starts));
+    
+    % then add the adapting points to end
+    adaptPoints = [p.adaptationSpotPositions(1,:), 0.1, flickerStartTime, ends(end) + 1, p.adaptationSpotDiameter, p.adaptationSpotFrequency];
+    
+    runConfig.shapeDataMatrix = horzcat(positions, intensities, starts, ends, diams, frequencies);
+    runConfig.shapeDataMatrix = vertcat(runConfig.shapeDataMatrix, adaptPoints);
+    runConfig.shapeDataColumns = {'X','Y','intensity','startTime','endTime','diameter','flickerFrequency'};
+    runConfig.stimTime = round(1e3 * (1 + ends(end)));
 end
 
 
