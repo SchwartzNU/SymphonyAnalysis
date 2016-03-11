@@ -98,6 +98,13 @@ classdef ShapeData < handle
                     obj.shapeDataColumns('diameter') = find(not(cellfun('isempty', strfind(colsTxt, 'diameter'))));
                     obj.shapeDataColumns('startTime') = find(not(cellfun('isempty', strfind(colsTxt, 'startTime'))));
                     obj.shapeDataColumns('endTime') = find(not(cellfun('isempty', strfind(colsTxt, 'endTime'))));
+                    
+                    ff = find(not(cellfun('isempty', strfind(colsTxt, 'flickerFrequency'))));
+                    if ff
+                        obj.shapeDataColumns('flickerFrequency') = ff;
+                    end
+                        
+                    
                 else
                     % or need to generate those later
                     obj.epochMode = 'flashingSpots';
@@ -110,7 +117,7 @@ classdef ShapeData < handle
             
             obj.totalNumSpots = size(obj.shapeDataMatrix,1);
             
-            % add columns that we don't have
+            % add default values for columns that we don't have in the epoch
             if ~isKey(obj.shapeDataColumns, 'intensity')
                 newColumnsNames{end+1} = 'intensity';
                 newColumnsData = horzcat(newColumnsData, ones(length(obj.shapeDataMatrix),1));
@@ -129,14 +136,21 @@ classdef ShapeData < handle
                 newColumnsData = horzcat(newColumnsData, obj.spotDiameter * ones(length(obj.shapeDataMatrix),1));
                 newColumnsNames{end+1} = 'diameter';
             end
+            
+            if ~isKey(obj.shapeDataColumns, 'flickerFrequency')
+                newColumnsData = horzcat(newColumnsData, 0 * ones(length(obj.shapeDataMatrix),1));
+                newColumnsNames{end+1} = 'flickerFrequency';
+            end
 
-            % add new columns
+            % add new columns to matrix and column Map
             for ci = 1:length(newColumnsNames)
                 name = newColumnsNames{ci};
                 obj.shapeDataMatrix = horzcat(obj.shapeDataMatrix, newColumnsData(:,ci));
                 obj.shapeDataColumns(name) = size(obj.shapeDataMatrix, 2);
             end
 
+            
+            
             % process actual response or spikes from epoch
             if strcmp(runmode, 'offline')
                 if strcmp(obj.ampMode, 'Cell attached')

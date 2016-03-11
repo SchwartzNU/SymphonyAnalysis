@@ -21,7 +21,8 @@ function runConfig = generateShapeStimulus(mode, parameters, analysisData)
 %             else
             runConfig = generateStandardSearch(parameters, analysisData, runConfig);
 %             end
-            
+        elseif strcmp(mode, 'temporalAlignment')
+            runConfig = generateTemporalAlignment(parameters, runConfig);
         elseif strcmp(mode, 'isoResponse')
             if ~analysisData.validSearchResult
                 runConfig = generateStandardSearch(parameters, analysisData, runConfig);
@@ -32,6 +33,8 @@ function runConfig = generateShapeStimulus(mode, parameters, analysisData)
             runConfig = generateRefineVariance(parameters, analysisData, runConfig);
         elseif strcmp(mode, 'adaptationRegion')
             runConfig = generateAdaptationRegionStimulus(parameters, analysisData, runConfig);
+        elseif strcmp(mode, 'null')
+            runConfig = generateNullStimulus(parameters, analysisData, runConfig);
         end
     end
 
@@ -39,6 +42,13 @@ function runConfig = generateShapeStimulus(mode, parameters, analysisData)
     if parameters.timeRemainingSeconds - (runConfig.stimTime / 1000) < 0
         runConfig.autoContinueRun = false;
     end
+end
+
+function runConfig = generateNullStimulus(parameters, analysisData, runConfig)
+
+    runConfig.shapeDataMatrix = [];
+    runConfig.shapeDataColumns = {};
+    runConfig.stimTime = 0;
 end
 
 function runConfig = generateIsoResponse(parameters, analysisData, runConfig)
@@ -112,7 +122,7 @@ function runConfig = generateIsoResponse(parameters, analysisData, runConfig)
 end
 
 function runConfig = generateRefineVariance(parameters, analysisData, runConfig)
-    
+    runConfig.epochMode = 'flashingSpots';
     obs = analysisData.observations;
     % get a list of all of the option sets: position, intensity, voltage
     settings = unique(obs(:,1:4), 'rows');
@@ -177,8 +187,9 @@ function runConfig = generateStandardSearch(parameters, analysisData, runConfig)
 end
 
 function runConfig = generateAdaptationRegionStimulus(p, analysisData, runConfig)
-
-    numAdaptationPositions = size(p.positions,1);
+    runConfig.epochMode = 'flashingSpots';
+    
+    numAdaptationPositions = size(p.adaptationSpotPositions,1);
 
     % first time setup / all for now
 %     for ai = 1:numAdaptationPositions
@@ -188,8 +199,9 @@ function runConfig = generateAdaptationRegionStimulus(p, analysisData, runConfig
     probePositions = generatePositions('triangular', [searchRadius, spotSpacing]);
     probePositions = bsxfun(@plus, probePositions, p.adaptationSpotPositions(1,:));
     numProbeSpots = size(probePositions, 1);
-    values = [0.05, 0.1, 0.4, 1.0];
+    values = [0.1, 0.4, 0.8];
     
+    positions = [];
     starts = [];
     ends = [];
     intensities = [];
@@ -201,7 +213,7 @@ function runConfig = generateAdaptationRegionStimulus(p, analysisData, runConfig
         for repeat = 1:2
             for val = values
                 for pri = 1:numProbeSpots
-                    positions = probePositions(pri,:);
+                    positions(si,1:2) = probePositions(pri,:);
                     starts(si,1) = (si - 1) * (p.probeSpotDuration * 2) + delay;
                     ends(si,1) = starts(si,1) + p.probeSpotDuration;
                     intensities(si,1) = val;
@@ -219,8 +231,9 @@ function runConfig = generateAdaptationRegionStimulus(p, analysisData, runConfig
     frequencies = zeros(size(starts));
     
     % then add the adapting points to end
-    adaptPoints = [p.adaptationSpotPositions(1,:), 0.1, flickerStartTime, ends(end) + 1, p.adaptationSpotDiameter, p.adaptationSpotFrequency];
-    
+    adaptationSpotIntensity = 0.5;
+    adaptPoints = [p.adaptationSpotPositions(1,:), adaptationSpotIntensity, flickerStartTime, ends(end) + 1, p.adaptationSpotDiameter, p.adaptationSpotFrequency];
+        
     runConfig.shapeDataMatrix = horzcat(positions, intensities, starts, ends, diams, frequencies);
     runConfig.shapeDataMatrix = vertcat(runConfig.shapeDataMatrix, adaptPoints);
     runConfig.shapeDataColumns = {'X','Y','intensity','startTime','endTime','diameter','flickerFrequency'};

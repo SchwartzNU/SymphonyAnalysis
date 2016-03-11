@@ -25,6 +25,10 @@ if strncmp(mode, 'plotSpatial', 11)
         mode_col = 7;
         smode = 't half max';
     end
+    
+    if ~isfield(ad,'observations')
+        return
+    end
     obs = ad.observations;
     if isempty(obs)
         return
@@ -93,6 +97,9 @@ elseif strcmp(mode, 'subunit')
         ha = tight_subplot(dim1,dim2);
         
         obs = ad.observations;
+        if isempty(obs)
+            return
+        end
         voltages = unique(obs(:,4));
         num_voltages = length(voltages);
         
@@ -166,6 +173,9 @@ elseif strcmp(mode, 'temporalAlignment')
     
     % get average of all responses
     obs = ad.observations;
+    if isempty(obs)
+        return;
+    end
     sm = [];
     for oi = 1:size(obs, 1)
         
