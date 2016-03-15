@@ -3,42 +3,39 @@ function runConfig = generateShapeStimulus(mode, parameters, analysisData)
     runConfig = struct();
     runConfig.autoContinueRun = true;
     
-
-    if isempty(analysisData)
-        firstEpoch = true;
-        analysisData = struct();
-    else
-        firstEpoch = false;
-    end
-
     % select the type of epoch to run based on params & results
-    if firstEpoch
+
+    if strcmp(mode, 'temporalAlignment')
         runConfig = generateTemporalAlignment(parameters, runConfig);
-        mode = 'temporalAlignment';
-    else
-        if strcmp(mode, 'receptiveField')
+        
+    elseif strcmp(mode, 'receptiveField')
 %             if parameters.refineEdges && analysisData.validSearchResult
 %                 runConfig = generateSpatialRefineEdges(parameters, analysisData, runConfig);
 %             else
-            runConfig = generateStandardSearch(parameters, analysisData, runConfig);
+        runConfig = generateStandardSearch(parameters, analysisData, runConfig);
 %             end
-        elseif strcmp(mode, 'temporalAlignment')
-            runConfig = generateTemporalAlignment(parameters, runConfig);
-        elseif strcmp(mode, 'isoResponse')
-            if ~analysisData.validSearchResult
-                runConfig = generateStandardSearch(parameters, analysisData, runConfig);
-            else
-                runConfig = generateIsoResponse(parameters, analysisData, runConfig);
-            end
-        elseif strcmp(mode, 'refineVariance')
-            runConfig = generateRefineVariance(parameters, analysisData, runConfig);
-        elseif strcmp(mode, 'adaptationRegion')
-            runConfig = generateAdaptationRegionStimulus(parameters, analysisData, runConfig);
-        elseif strcmp(mode, 'null')
-            runConfig = generateNullStimulus(parameters, analysisData, runConfig);
+
+    elseif strcmp(mode, 'temporalAlignment')
+        runConfig = generateTemporalAlignment(parameters, runConfig);
+        
+    elseif strcmp(mode, 'isoResponse')
+        if ~analysisData.validSearchResult
+            runConfig = generateStandardSearch(parameters, analysisData, runConfig);
         else
-            disp('error no usable mode');
+            runConfig = generateIsoResponse(parameters, analysisData, runConfig);
         end
+        
+    elseif strcmp(mode, 'refineVariance')
+        runConfig = generateRefineVariance(parameters, analysisData, runConfig);
+        
+    elseif strcmp(mode, 'adaptationRegion')
+        runConfig = generateAdaptationRegionStimulus(parameters, analysisData, runConfig);
+        
+    elseif strcmp(mode, 'null')
+        runConfig = generateNullStimulus(parameters, analysisData, runConfig);
+        
+    else
+        disp('error no usable mode');
     end
     
     % set the auto continue bit for after this epoch finishes
@@ -54,6 +51,32 @@ function runConfig = generateNullStimulus(parameters, analysisData, runConfig)
     runConfig.shapeDataColumns = {};
     runConfig.stimTime = 0;
     runConfig.numShapes = 1;
+end
+
+function runConfig = generateTemporalAlignment(parameters, runConfig)
+
+    runConfig.epochMode = 'temporalAlignment';
+    runConfig.numShapes = 1;
+    durations = [1, 0.6, 0.4, 0.2];
+%     durations = [8];
+    numSpotsPerRate = 1;
+    diam_ta = 100;
+    runConfig.shapeDataMatrix = [];
+
+    tim = 0;
+    for si = 1:numSpotsPerRate
+        for dur = durations
+            shape = [0, 0, parameters.valueMax, tim, tim + dur / 3, diam_ta, 0];
+            runConfig.shapeDataMatrix = vertcat(runConfig.shapeDataMatrix, shape);
+            tim = tim + dur;
+        end
+        tim = tim + 0.5;
+    end
+    %                 obj.stimTimeSaved = round(1000 * (1.0 + tim));
+    runConfig.shapeDataColumns = {'X','Y','intensity','startTime','endTime','diameter', 'flickerFrequency'};
+    runConfig.stimTime = round(1e3 * (1 + tim));
+    %                 disp(obj.shapeDataMatrix)
+    
 end
 
 function runConfig = generateStandardSearch(parameters, analysisData, runConfig)
@@ -202,45 +225,42 @@ function runConfig = generateAdaptationRegionStimulus(p, analysisData, runConfig
     % first time setup / all for now
 %     for ai = 1:numAdaptationPositions
     % make array of spot positions around 
-    searchRadius = 60;
-    spotSpacing = 30;
+    searchRadius = p.probeSpotPositionRadius;
+    spotSpacing = p.probeSpotSpacing;
     probePositions = generatePositions('triangular', [searchRadius, spotSpacing]);
     probePositions = bsxfun(@plus, probePositions, p.adaptationSpotPositions(1,:));
     numProbeSpots = size(probePositions, 1);
-    values = [0.1, 0.4, 0.8];
     
     positions = [];
     starts = [];
-    ends = [];
     intensities = [];
     
     % get curves before & after adaptation
     si = 1;
     delay = 0;
     for prePostAdapt = 1:2
-        for repeat = 1:2
-            for val = values
+        for repeat = 1:p.probeSpotRepeats
+            for val = p.probeSpotValues
                 for pri = 1:numProbeSpots
                     positions(si,1:2) = probePositions(pri,:);
                     starts(si,1) = (si - 1) * (p.probeSpotDuration * 2) + delay;
-                    ends(si,1) = starts(si,1) + p.probeSpotDuration;
                     intensities(si,1) = val;
                     si = si + 1;
                 end
             end
         end
         if prePostAdapt == 1
-            flickerStartTime = starts(end) + 2;
-            delay = ends(end,1) + 3;
+            flickerStartTime = starts(end) + 1;
+            delay = p.adaptSpotWarmupTime;
         end
     end
 
+    ends = starts + p.probeSpotDuration;
     diams = p.probeSpotDiameter * ones(length(starts), 1);
     frequencies = zeros(size(starts));
     
     % then add the adapting points to end
-    adaptationSpotIntensity = 0.5;
-    adaptPoints = [p.adaptationSpotPositions(1,:), adaptationSpotIntensity, flickerStartTime, ends(end) + 1, p.adaptationSpotDiameter, p.adaptationSpotFrequency];
+    adaptPoints = [p.adaptationSpotPositions(1,:), p.adaptationSpotIntensity, flickerStartTime, ends(end) + 1, p.adaptationSpotDiameter, p.adaptationSpotFrequency];
         
     runConfig.shapeDataMatrix = horzcat(positions, intensities, starts, ends, diams, frequencies);
     runConfig.shapeDataMatrix = vertcat(runConfig.shapeDataMatrix, adaptPoints);
@@ -250,30 +270,7 @@ function runConfig = generateAdaptationRegionStimulus(p, analysisData, runConfig
 end
 
 
-function runConfig = generateTemporalAlignment(parameters, runConfig)
 
-    runConfig.epochMode = 'temporalAlignment';
-    runConfig.numShapes = 1;
-    durations = [1, 0.6, 0.4, 0.2];
-    numSpotsPerRate = 2;
-    diam_ta = 100;
-    runConfig.shapeDataMatrix = [];
-
-    tim = 0;
-    for si = 1:numSpotsPerRate
-        for dur = durations
-            shape = [0, 0, parameters.valueMax, tim, tim + dur / 3, diam_ta, 0];
-            runConfig.shapeDataMatrix = vertcat(runConfig.shapeDataMatrix, shape);
-            tim = tim + dur;
-        end
-        tim = tim + 0.5;
-    end
-    %                 obj.stimTimeSaved = round(1000 * (1.0 + tim));
-    runConfig.shapeDataColumns = {'X','Y','intensity','startTime','endTime','diameter', 'flickerFrequency'};
-    runConfig.stimTime = round(1e3 * (1 + tim));
-    %                 disp(obj.shapeDataMatrix)
-    
-end
 
 function runConfig = generateSpatialRefineEdges(parameters, analysisData, runConfig)
 
