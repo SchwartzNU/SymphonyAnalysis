@@ -1,45 +1,45 @@
-function runConfig = generateShapeStimulus(mode, parameters, analysisData)
+function runConfig = generateShapeStimulus(p, analysisData)
 
     runConfig = struct();
     runConfig.autoContinueRun = true;
     
     % select the type of epoch to run based on params & results
 
-    if strcmp(mode, 'temporalAlignment')
-        runConfig = generateTemporalAlignment(parameters, runConfig);
+    if strcmp(p.mode, 'temporalAlignment')
+        runConfig = generateTemporalAlignment(p, runConfig);
         
-    elseif strcmp(mode, 'receptiveField')
+    elseif strcmp(p.mode, 'receptiveField')
 %             if parameters.refineEdges && analysisData.validSearchResult
 %                 runConfig = generateSpatialRefineEdges(parameters, analysisData, runConfig);
 %             else
-        runConfig = generateStandardSearch(parameters, analysisData, runConfig);
+        runConfig = generateStandardSearch(p, analysisData, runConfig);
 %             end
 
-    elseif strcmp(mode, 'temporalAlignment')
-        runConfig = generateTemporalAlignment(parameters, runConfig);
+    elseif strcmp(p.mode, 'temporalAlignment')
+        runConfig = generateTemporalAlignment(p, runConfig);
         
-    elseif strcmp(mode, 'isoResponse')
+    elseif strcmp(p.mode, 'isoResponse')
         if ~analysisData.validSearchResult
-            runConfig = generateStandardSearch(parameters, analysisData, runConfig);
+            runConfig = generateStandardSearch(p, analysisData, runConfig);
         else
-            runConfig = generateIsoResponse(parameters, analysisData, runConfig);
+            runConfig = generateIsoResponse(p, analysisData, runConfig);
         end
         
-    elseif strcmp(mode, 'refineVariance')
-        runConfig = generateRefineVariance(parameters, analysisData, runConfig);
+    elseif strcmp(p.mode, 'refineVariance')
+        runConfig = generateRefineVariance(p, analysisData, runConfig);
         
-    elseif strcmp(mode, 'adaptationRegion')
-        runConfig = generateAdaptationRegionStimulus(parameters, analysisData, runConfig);
+    elseif strcmp(p.mode, 'adaptationRegion')
+        runConfig = generateAdaptationRegionStimulus(p, analysisData, runConfig);
         
-    elseif strcmp(mode, 'null')
-        runConfig = generateNullStimulus(parameters, analysisData, runConfig);
+    elseif strcmp(p.mode, 'null')
+        runConfig = generateNullStimulus(p, analysisData, runConfig);
         
     else
         disp('error no usable mode');
     end
     
     % set the auto continue bit for after this epoch finishes
-    if parameters.timeRemainingSeconds - (runConfig.stimTime / 1000) < 0
+    if p.timeRemainingSeconds - (runConfig.stimTime / 1000) < 0
         runConfig.autoContinueRun = false;
     end
     
