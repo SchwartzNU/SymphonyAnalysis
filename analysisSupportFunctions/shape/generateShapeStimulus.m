@@ -228,8 +228,11 @@ function runConfig = generateAdaptationRegionStimulus(p, analysisData, runConfig
     searchRadius = p.probeSpotPositionRadius;
     spotSpacing = p.probeSpotSpacing;
     probePositions = generatePositions('triangular', [searchRadius, spotSpacing]);
-    probePositions = bsxfun(@plus, probePositions, p.adaptationSpotPositions(1,:));
     numProbeSpots = size(probePositions, 1);
+    probePositions_by_adapt = cell(numAdaptationPositions,1);
+    for ai = 1:numAdaptationPositions
+        probePositions_by_adapt{ai,1} = bsxfun(@plus, probePositions, p.adaptationSpotPositions(ai,:));
+    end        
     
     positions = [];
     starts = [];
@@ -242,10 +245,12 @@ function runConfig = generateAdaptationRegionStimulus(p, analysisData, runConfig
         for repeat = 1:p.probeSpotRepeats
             for val = p.probeSpotValues
                 for pri = 1:numProbeSpots
-                    positions(si,1:2) = probePositions(pri,:);
-                    starts(si,1) = (si - 1) * (p.probeSpotDuration * 2) + delay;
-                    intensities(si,1) = val;
-                    si = si + 1;
+                    for adapti = 1:numAdaptationPositions
+                        positions(si,1:2) = probePositions_by_adapt{adapti}(pri,:);
+                        starts(si,1) = (si - 1) * (p.probeSpotDuration * 2) + delay;
+                        intensities(si,1) = val;
+                        si = si + 1;
+                    end
                 end
             end
         end
@@ -260,7 +265,8 @@ function runConfig = generateAdaptationRegionStimulus(p, analysisData, runConfig
     frequencies = zeros(size(starts));
     
     % then add the adapting points to end
-    adaptPoints = [p.adaptationSpotPositions(1,:), p.adaptationSpotIntensity, flickerStartTime, ends(end) + 1, p.adaptationSpotDiameter, p.adaptationSpotFrequency];
+    col = ones(numAdaptationPositions, 1);
+    adaptPoints = [p.adaptationSpotPositions, p.adaptationSpotIntensity * col, flickerStartTime * col, (ends(end) + 1) * col, p.adaptationSpotDiameter * col, p.adaptationSpotFrequency * col];
         
     runConfig.shapeDataMatrix = horzcat(positions, intensities, starts, ends, diams, frequencies);
     runConfig.shapeDataMatrix = vertcat(runConfig.shapeDataMatrix, adaptPoints);
