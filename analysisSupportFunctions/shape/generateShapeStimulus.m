@@ -36,13 +36,16 @@ function runConfig = generateShapeStimulus(mode, parameters, analysisData)
             runConfig = generateAdaptationRegionStimulus(parameters, analysisData, runConfig);
         elseif strcmp(mode, 'null')
             runConfig = generateNullStimulus(parameters, analysisData, runConfig);
+        else
+            disp('error no usable mode');
         end
     end
-
+    
     % set the auto continue bit for after this epoch finishes
     if parameters.timeRemainingSeconds - (runConfig.stimTime / 1000) < 0
         runConfig.autoContinueRun = false;
     end
+    
 end
 
 function runConfig = generateNullStimulus(parameters, analysisData, runConfig)
@@ -52,6 +55,40 @@ function runConfig = generateNullStimulus(parameters, analysisData, runConfig)
     runConfig.stimTime = 0;
     runConfig.numShapes = 1;
 end
+
+function runConfig = generateStandardSearch(parameters, analysisData, runConfig)
+    
+
+    % choose center position and search width
+    center = [0,0];
+    searchDiameterUpdated = parameters.searchDiameter;
+
+%     if parameters.refineCenter && analysisData.validSearchResult == 1
+%         gfp = analysisData.gaussianFitParams_ooi{3};
+% 
+%         center = [gfp('centerX'), gfp('centerY')];
+%         refineSizeMultiplier = 2;
+%         searchDiameterUpdated = refineSizeMultiplier * max([gfp('sigma2X'), gfp('sigma2Y')]) + 1;
+%     end
+
+    % select positions
+    if parameters.generatePositions
+%         positions = generatePositions('random', [parameters.numSpots, parameters.spotDiameter, searchDiameterUpdated / 2]);
+        %             positions = generatePositions('grid', [obj.searchDiameter, round(sqrt(obj.numSpots))]);
+        positions = generatePositions('triangular', [searchDiameterUpdated / 2, parameters.mapResolution]);
+        
+        % add center offset
+        positions = bsxfun(@plus, positions, center);
+%         parameters.numSpots = size(positions, 1);
+    else
+        positions = analysisData.positions;
+    end
+
+    % generate intensity values and repeats
+    parameters.numPositions = size(positions,1);
+    runConfig = makeFlashedSpotsMatrix(parameters, runConfig, positions);
+end
+
 
 function runConfig = generateIsoResponse(parameters, analysisData, runConfig)
     
@@ -104,8 +141,9 @@ function runConfig = generateIsoResponse(parameters, analysisData, runConfig)
     starts = (0:(num_positions-1))' * parameters.spotTotalTime;
     ends = starts + parameters.spotOnTime;
     diams = parameters.spotDiameter * ones(length(starts), 1);
+    frequencies = zeros(size(starts));
     
-    sdm = horzcat(positions, intensities, starts, ends, diams);
+    sdm = horzcat(positions, intensities, starts, ends, diams, frequencies);
     
     runConfig.shapeDataMatrix = [];
     numRepeatsIso = 2; % use averaging in isoresponse 
@@ -119,7 +157,7 @@ function runConfig = generateIsoResponse(parameters, analysisData, runConfig)
         ordering = randperm(size(runConfig.shapeDataMatrix,1))';
     end
     runConfig.shapeDataMatrix = runConfig.shapeDataMatrix(ordering,:);
-    runConfig.shapeDataColumns = {'X','Y','intensity','startTime','endTime','diameter'};
+    runConfig.shapeDataColumns = {'X','Y','intensity','startTime','endTime','diameter','flickerFrequency'};
     runConfig.stimTime = round(1e3 * (1 + ends(end)));
     runConfig.numShapes = 1;
 end
@@ -153,41 +191,7 @@ function runConfig = generateRefineVariance(parameters, analysisData, runConfig)
     runConfig = makeFlashedSpotsMatrix(parameters, runConfig, positions);
 end
 
-function runConfig = generateStandardSearch(parameters, analysisData, runConfig)
-    
 
-    % choose center position and search width
-    center = [0,0];
-    searchDiameterUpdated = parameters.searchDiameter;
-
-    if parameters.refineCenter && analysisData.validSearchResult == 1
-        gfp = analysisData.gaussianFitParams_ooi{3};
-
-        center = [gfp('centerX'), gfp('centerY')];
-        refineSizeMultiplier = 2;
-        searchDiameterUpdated = refineSizeMultiplier * max([gfp('sigma2X'), gfp('sigma2Y')]) + 1;
-    end
-
-    % select positions
-    if parameters.generatePositions
-        positions = generatePositions('random', [parameters.numSpots, parameters.spotDiameter, searchDiameterUpdated / 2]);
-        %             positions = generatePositions('grid', [obj.searchDiameter, round(sqrt(obj.numSpots))]);
-        
-        % add center offset
-        positions = bsxfun(@plus, positions, center);
-        parameters.numSpots = size(positions, 1);
-    else
-        
-        positions = analysisData.positions;
-    end
-
-
-
-    % generate intensity values and repeats
-
-    runConfig = makeFlashedSpotsMatrix(parameters, runConfig, positions);
-    
-end
 
 function runConfig = generateAdaptationRegionStimulus(p, analysisData, runConfig)
     runConfig.epochMode = 'flashingSpots';
@@ -246,52 +250,10 @@ function runConfig = generateAdaptationRegionStimulus(p, analysisData, runConfig
 end
 
 
-function runConfig = makeFlashedSpotsMatrix(parameters, runConfig, positions)
-    runConfig.epochMode = 'flashingSpots';
-    runConfig.numShapes = 1;
-    
-    if isfield(parameters, 'useGivenValues') && parameters.useGivenValues
-        values = parameters.values;
-    else
-        values = linspace(parameters.valueMin, parameters.valueMax, parameters.numValues);
-    end
-    positionList = zeros(parameters.numValues * parameters.numSpots, 3);
-    starts = zeros(parameters.numSpots, 1);
-    stream = RandStream('mt19937ar');
-
-    si = 1; %spot index
-    for repeat = 1:parameters.numValueRepeats
-        usedValues = zeros(parameters.numSpots, parameters.numValues);
-        for l = 1:parameters.numValues
-            positionIndexList = randperm(stream, parameters.numSpots);
-            for i = 1:parameters.numSpots
-                curPosition = positionIndexList(i);
-                possibleNextValueIndices = find(usedValues(curPosition,:) == 0);
-                nextValueIndex = possibleNextValueIndices(randi(stream, length(possibleNextValueIndices)));
-
-                positionList(si,:) = [positions(curPosition,:), values(nextValueIndex)];
-                usedValues(curPosition, nextValueIndex) = 1;
-
-                starts(si) = (si - 1) * parameters.spotTotalTime;
-
-                si = si + 1;
-            end
-        end
-    end
-    diams = parameters.spotDiameter * ones(length(starts), 1);
-    ends = starts + parameters.spotOnTime;
-
-    %                 obj.stimTimeSaved = round(1000 * (ends(end) + 1.0));
-
-    runConfig.shapeDataMatrix = horzcat(positionList, starts, ends, diams);
-    runConfig.shapeDataColumns = {'X','Y','intensity','startTime','endTime','diameter'};
-    runConfig.stimTime = round(1e3 * (1 + ends(end)));
-end
-
-
 function runConfig = generateTemporalAlignment(parameters, runConfig)
 
     runConfig.epochMode = 'temporalAlignment';
+    runConfig.numShapes = 1;
     durations = [1, 0.6, 0.4, 0.2];
     numSpotsPerRate = 2;
     diam_ta = 100;
@@ -300,14 +262,14 @@ function runConfig = generateTemporalAlignment(parameters, runConfig)
     tim = 0;
     for si = 1:numSpotsPerRate
         for dur = durations
-            shape = [0, 0, parameters.valueMax, tim, tim + dur / 3, diam_ta];
+            shape = [0, 0, parameters.valueMax, tim, tim + dur / 3, diam_ta, 0];
             runConfig.shapeDataMatrix = vertcat(runConfig.shapeDataMatrix, shape);
             tim = tim + dur;
         end
         tim = tim + 0.5;
     end
     %                 obj.stimTimeSaved = round(1000 * (1.0 + tim));
-    runConfig.shapeDataColumns = {'X','Y','intensity','startTime','endTime','diameter'};
+    runConfig.shapeDataColumns = {'X','Y','intensity','startTime','endTime','diameter', 'flickerFrequency'};
     runConfig.stimTime = round(1e3 * (1 + tim));
     %                 disp(obj.shapeDataMatrix)
     
@@ -349,6 +311,54 @@ function runConfig = generateSpatialRefineEdges(parameters, analysisData, runCon
         midpos = mean([pos1;pos2], 2);
         positions(p,:) = midpos;
     end
-    
+    parameters.numPositions = num_positions;
     runConfig = makeFlashedSpotsMatrix(parameters, runConfig, positions);
 end
+
+
+function runConfig = makeFlashedSpotsMatrix(parameters, runConfig, positions)
+    runConfig.epochMode = 'flashingSpots';
+    runConfig.numShapes = 1;
+    
+    if isfield(parameters, 'useGivenValues') && parameters.useGivenValues
+        values = parameters.values;
+    else
+        values = linspace(parameters.valueMin, parameters.valueMax, parameters.numValues);
+    end
+    positionList = [];
+    starts = [];
+    stream = RandStream('mt19937ar');
+
+    si = 1; %spot index
+    for repeat = 1:parameters.numValueRepeats
+        usedValues = zeros(parameters.numPositions, parameters.numValues);
+%         usedValues = [];
+        for l = 1:parameters.numValues
+%             positionIndexList = randperm(stream, parameters.numPositions);
+            for i = 1:parameters.numPositions
+%                 curPosition = positionIndexList(i);
+                curPosition = i;
+                possibleNextValueIndices = find(usedValues(curPosition,:) == 0);
+                nextValueIndex = possibleNextValueIndices(randi(stream, length(possibleNextValueIndices)));
+
+                positionList(si,:) = [positions(curPosition,:), values(nextValueIndex)]; %#ok<*AGROW>
+                usedValues(curPosition, nextValueIndex) = 1;
+
+                starts(si,1) = (si - 1) * parameters.spotTotalTime;
+
+                si = si + 1;
+            end
+        end
+    end
+    diams = parameters.spotDiameter * ones(length(starts), 1);
+    ends = starts + parameters.spotOnTime;
+    frequencies = zeros(size(starts));
+
+    %                 obj.stimTimeSaved = round(1000 * (ends(end) + 1.0));
+
+    runConfig.shapeDataMatrix = horzcat(positionList, starts, ends, diams, frequencies);
+    runConfig.shapeDataColumns = {'X','Y','intensity','startTime','endTime','diameter','flickerFrequency'};
+    runConfig.stimTime = round(1e3 * (1 + ends(end)));
+end
+
+

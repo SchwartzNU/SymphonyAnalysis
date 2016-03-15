@@ -18,7 +18,7 @@ classdef ShapeData < handle
 
         spotTotalTime
         spotOnTime
-        numSpots
+%         numSpots
         totalNumSpots % including values and repeats
         spotDiameter
         numValues
@@ -47,7 +47,7 @@ classdef ShapeData < handle
                 obj.spotTotalTime = epoch.get('spotTotalTime');
                 obj.spotOnTime = epoch.get('spotOnTime');
                 obj.spotDiameter = epoch.get('spotDiameter');
-                obj.numSpots = epoch.get('numSpots');
+%                 obj.numSpots = epoch.get('numSpots');
                 obj.ampMode = char(epoch.get('ampMode'));
                 obj.ampVoltage = epoch.get('ampHoldSignal');
                 obj.numValues = epoch.get('numValues');
@@ -66,7 +66,7 @@ classdef ShapeData < handle
                 obj.spotTotalTime = epoch.getParameter('spotTotalTime');
                 obj.spotOnTime = epoch.getParameter('spotOnTime');
                 obj.spotDiameter = epoch.getParameter('spotDiameter');
-                obj.numSpots = epoch.getParameter('numSpots');
+%                 obj.numSpots = epoch.getParameter('numSpots');
                 obj.ampMode = char(epoch.getParameter('ampMode'));
                 obj.ampVoltage = epoch.getParameter('ampHoldSignal');                
                 obj.numValues = epoch.getParameter('numValues');

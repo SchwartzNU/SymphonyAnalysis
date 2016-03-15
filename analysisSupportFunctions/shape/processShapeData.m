@@ -36,7 +36,7 @@ for p = 1:num_epochs
     e = epochData{ei};
     ad.spotTotalTime = e.spotTotalTime;
     ad.spotOnTime = e.spotOnTime;
-    ad.numSpots = e.numSpots;
+%     ad.numSpots = e.numSpots;
     ad.sampleRate = e.sampleRate;
         
     col_x = e.shapeDataColumns('X');

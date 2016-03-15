@@ -372,6 +372,7 @@ elseif strcmp(mode, 'positionDifferenceAnalysis')
     
     
 else
+    disp(mode)
     disp('incorrect plot type')
 end
 
