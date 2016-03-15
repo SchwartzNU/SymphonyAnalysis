@@ -2,6 +2,7 @@ function runConfig = generateShapeStimulus(mode, parameters, analysisData)
 
     runConfig = struct();
     runConfig.autoContinueRun = true;
+    
 
     if isempty(analysisData)
         firstEpoch = true;
@@ -49,6 +50,7 @@ function runConfig = generateNullStimulus(parameters, analysisData, runConfig)
     runConfig.shapeDataMatrix = [];
     runConfig.shapeDataColumns = {};
     runConfig.stimTime = 0;
+    runConfig.numShapes = 1;
 end
 
 function runConfig = generateIsoResponse(parameters, analysisData, runConfig)
@@ -119,6 +121,7 @@ function runConfig = generateIsoResponse(parameters, analysisData, runConfig)
     runConfig.shapeDataMatrix = runConfig.shapeDataMatrix(ordering,:);
     runConfig.shapeDataColumns = {'X','Y','intensity','startTime','endTime','diameter'};
     runConfig.stimTime = round(1e3 * (1 + ends(end)));
+    runConfig.numShapes = 1;
 end
 
 function runConfig = generateRefineVariance(parameters, analysisData, runConfig)
@@ -190,6 +193,7 @@ function runConfig = generateAdaptationRegionStimulus(p, analysisData, runConfig
     runConfig.epochMode = 'flashingSpots';
     
     numAdaptationPositions = size(p.adaptationSpotPositions,1);
+    runConfig.numShapes = numAdaptationPositions + 1;
 
     % first time setup / all for now
 %     for ai = 1:numAdaptationPositions
@@ -238,11 +242,13 @@ function runConfig = generateAdaptationRegionStimulus(p, analysisData, runConfig
     runConfig.shapeDataMatrix = vertcat(runConfig.shapeDataMatrix, adaptPoints);
     runConfig.shapeDataColumns = {'X','Y','intensity','startTime','endTime','diameter','flickerFrequency'};
     runConfig.stimTime = round(1e3 * (1 + ends(end)));
+    
 end
 
 
 function runConfig = makeFlashedSpotsMatrix(parameters, runConfig, positions)
     runConfig.epochMode = 'flashingSpots';
+    runConfig.numShapes = 1;
     
     if isfield(parameters, 'useGivenValues') && parameters.useGivenValues
         values = parameters.values;
