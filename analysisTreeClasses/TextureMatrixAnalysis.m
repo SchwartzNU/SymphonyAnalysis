@@ -1,4 +1,5 @@
 classdef TextureMatrixAnalysis < AnalysisTree
+    %re-written 10/21/15 by Adam
     properties
         StartTime = 0;
         EndTime = 0;
@@ -39,161 +40,453 @@ classdef TextureMatrixAnalysis < AnalysisTree
             rootData = obj.get(1);
             leafIDs = obj.findleaves();
             L = length(leafIDs);
-            allBaselineSpikes = [];
-            for i=1:L
+            baseline = zeros(1,L);  %for grandBaseline subt.
+            
+            
+            for i=1:L %for each leaf node
                 curNode = obj.get(leafIDs(i));
-                [baselineSpikes, respUnits, baselineLen] = getEpochResponses(cellData, curNode.epochID, 'Baseline spikes', 'DeviceName', rootData.deviceName, ...
-                    'StartTime', obj.StartTime, 'EndTime', obj.EndTime);
-                [spikes, respUnits, intervalLen] = getEpochResponses(cellData, curNode.epochID, 'Spike count', 'DeviceName', rootData.deviceName, ...
-                    'StartTime', obj.StartTime, 'EndTime', obj.EndTime);
-                N = length(spikes);
-                curNode.N = N;                
-                allBaselineSpikes = [allBaselineSpikes, baselineSpikes];
-                curNode.spikes = spikes;
+                if strcmp(rootData.(rootData.ampModeParam), 'Cell attached')
+                    outputStruct = getEpochResponses_CA(cellData, curNode.epochID, ...
+                        'DeviceName', rootData.deviceName,'StartTime', obj.StartTime, 'EndTime', obj.EndTime, ...
+                        'FitPSTH', 0);
+                    outputStruct = getEpochResponseStats(outputStruct);
+                    curNode = mergeIntoNode(curNode, outputStruct);
+                    baseline(i) = outputStruct.baselineRate.mean_c; %for grandBaseline subt.
+                else %whole cell
+                    outputStruct = getEpochResponses_WC(cellData, curNode.epochID, ...
+                        'DeviceName', rootData.deviceName);
+                    %'ZeroCrossingPeaks', crossingParam);
+                    outputStruct = getEpochResponseStats(outputStruct);
+                    curNode = mergeIntoNode(curNode, outputStruct);
+                end
+                
                 obj = obj.set(leafIDs(i), curNode);
             end
-            %subtract baseline
-            baselineMean = mean(allBaselineSpikes);
-            for i=1:L
-                curNode = obj.get(leafIDs(i));
-                curNode.resp = curNode.spikes - (baselineMean * intervalLen/baselineLen);
-                curNode.respMean = mean(curNode.resp);
-                curNode.respVar = var(curNode.resp);
-                curNode.respSEM = std(curNode.resp)./sqrt(curNode.N);
-                obj = obj.set(leafIDs(i), curNode);
+            
+            %grand baseline subtraction
+            if strcmp(rootData.(rootData.ampModeParam), 'Cell attached')
+                %baseline subtraction
+                
+                grandBaselineMean = mean(baseline);
+                for i=1:L %for each leaf node
+                    curNode = obj.get(leafIDs(i));
+                    tempStruct.spikeCount_stimInterval_grndBlSubt = curNode.spikeCount_stimInterval;
+                    tempStruct.spikeCount_stimInterval_grndBlSubt.value = curNode.spikeCount_stimInterval.value - grandBaselineMean; %assumes 1 sec stim interval
+                    tempStruct.spikeCount_stimInterval_grndBlSubt.type = 'byEpoch';
+                    
+                    tempStruct.spikeCount_stimToEnd_grndBlSubt = curNode.spikeCount_stimToEnd;
+                    tempStruct.spikeCount_stimToEnd_grndBlSubt.value = curNode.spikeCount_stimToEnd.value - grandBaselineMean*2; %assumes 2 sec stim to end
+                    tempStruct.spikeCount_stimToEnd_grndBlSubt.type = 'byEpoch';
+                    
+                    tempStruct = getEpochResponseStats(tempStruct);
+                    curNode = mergeIntoNode(curNode, tempStruct);
+                    obj = obj.set(leafIDs(i), curNode);
+                end
             end
             
             
             randSeedLeaves = getTreeLevel(obj, 'randSeed');
+            randSeedLeaves = intersect(randSeedLeaves,leafIDs);
             pixelBlurLeaves = getTreeLevel(obj, 'pixelBlur');
+            pixelBlurLeaves = intersect(pixelBlurLeaves,leafIDs);
             
+            % percolate up randSeedLeaves subtree
             obj = obj.percolateUp(randSeedLeaves, ...
-                'respMean', 'respMean_seed', ...
-                'respSEM', 'respSEM_seed', ...
-                'respVar', 'respVar_seed', ...
-                'N', 'N_seed');
+                'splitValue', 'randSeed');
             
+            
+            [byEpochParamList, singleValParamList, collectedParamList] = getParameterListsByType(curNode);
+            obj = obj.percolateUp(randSeedLeaves, byEpochParamList, byEpochParamList);
+            obj = obj.percolateUp(randSeedLeaves, singleValParamList, singleValParamList);
+            obj = obj.percolateUp(randSeedLeaves, collectedParamList, collectedParamList);
+            
+            % percolate up pixelBlurLeaves subtree
             obj = obj.percolateUp(pixelBlurLeaves, ...
-                'respMean', 'respMean_blur', ...
-                'respSEM', 'respSEM_blur', ...
-                'respVar', 'respVar_blur', ...
-                'N', 'N_blur', ...
-                'splitValue', 'pixelBlurVals');
+                'splitValue', 'pixelBlur');
+            
+            [byEpochParamList, singleValParamList, collectedParamList] = getParameterListsByType(curNode);
+            obj = obj.percolateUp(pixelBlurLeaves, byEpochParamList, byEpochParamList);
+            obj = obj.percolateUp(pixelBlurLeaves, singleValParamList, singleValParamList);
+            obj = obj.percolateUp(pixelBlurLeaves, collectedParamList, collectedParamList);
+            
+            %to add more here
+            rootData = obj.get(1);
+            rootData.byEpochParamList = byEpochParamList;
+            rootData.singleValParamList = singleValParamList;
+            rootData.collectedParamList = collectedParamList;
+            rootData.stimParameterList = {'randSeed','curInnerDiameter'};
+            obj = obj.set(1, rootData);
+            % % %
             
             randSeedParents = obj.getchildren(childrenByValue(obj, 1, 'name', 'Across blur tree'));
             pixelBlurParents = obj.getchildren(childrenByValue(obj, 1, 'name', 'Across seed tree'));
             
-            %these 2 are just 2 copies of the same data!
-            obj = obj.percolateUp(randSeedParents, ...
-                'respMean_blur', 'respMean_blur_all', ...
-                'respVar_blur', 'respVar_blur_all');
+            %             %these 2 are just 2 copies of the same data!
+            %             obj = obj.percolateUp(randSeedParents, ...
+            %                 'respMean_blur', 'respMean_blur_all', ...
+            %                 'respVar_blur', 'respVar_blur_all');
+            %
+            %             obj = obj.percolateUp(pixelBlurParents, ...
+            %                 'respMean_seed', 'respMean_seed_all', ...
+            %                 'respVar_seed', 'respVar_seed_all');
             
-            obj = obj.percolateUp(pixelBlurParents, ...
-                'respMean_seed', 'respMean_seed_all', ...
-                'respVar_seed', 'respVar_seed_all');
+            % %             %these 2 are just 2 copies of the same data!
+            %             obj = obj.percolateUp(randSeedParents, byEpochParamList, byEpochParamList);
+            %             obj = obj.percolateUp(randSeedParents, singleValParamList, singleValParamList);
+            %             obj = obj.percolateUp(randSeedParents, collectedParamList, collectedParamList);
+            %
+            %             obj = obj.percolateUp(pixelBlurParents, byEpochParamList, byEpochParamList);
+            %             obj = obj.percolateUp(pixelBlurParents, singleValParamList, singleValParamList);
+            %             obj = obj.percolateUp(pixelBlurParents, collectedParamList, collectedParamList);
+            %
             
             
             for i=1:length(randSeedParents)
-               nodeData = obj.get(randSeedParents(i));
-               nodeData.var_ratio = var(nodeData.respMean_blur) ./ mean(nodeData.respVar_blur);
-               nodeData.SNR = std(nodeData.respMean_blur) ./ mean(nodeData.respMean_blur); 
-               nodeData.meanVals = mean(nodeData.respMean_blur); 
-               obj = obj.set(randSeedParents(i), nodeData);
+                nodeData = obj.get(randSeedParents(i));
+                %                 nodeData.var_ratio = var(nodeData.respMean_blur) ./ mean(nodeData.respVar_blur);
+                %                 nodeData.SNR = std(nodeData.respMean_blur) ./ mean(nodeData.respMean_blur);
+                %                 nodeData.meanVals = mean(nodeData.respMean_blur);
+                nodeData = vectorsToScalarMeans(nodeData);
+                obj = obj.set(randSeedParents(i), nodeData);
             end
             
             for i=1:length(pixelBlurParents)
-               nodeData = obj.get(pixelBlurParents(i));
-               nodeData.var_ratio = var(nodeData.respMean_seed) ./ mean(nodeData.respVar_seed);   
-               nodeData.SNR = std(nodeData.respMean_seed) ./ mean(nodeData.respMean_seed);  
-               nodeData.meanVals = mean(nodeData.respMean_seed);  
-               obj = obj.set(pixelBlurParents(i), nodeData);
+                nodeData = obj.get(pixelBlurParents(i));
+                %                 nodeData.var_ratio = var(nodeData.respMean_blur) ./ mean(nodeData.respVar_blur);
+                %                 nodeData.SNR = std(nodeData.respMean_blur) ./ mean(nodeData.respMean_blur);
+                %                 nodeData.meanVals = mean(nodeData.respMean_blur);
+                nodeData = vectorsToScalarMeans(nodeData);
+                obj = obj.set(pixelBlurParents(i), nodeData);
             end
             
-            obj = obj.percolateUp(randSeedParents, ...
-                'var_ratio', 'var_ratio', ...
-                'SNR', 'SNR', ...
-                'meanVals', 'meanVals', ...
-                'splitValue', 'randSeed');
+            %             obj = obj.percolateUp(randSeedParents, ...
+            %                 'var_ratio', 'var_ratio', ...
+            %                 'SNR', 'SNR', ...
+            %                 'meanVals', 'meanVals', ...
+            %                 'splitValue', 'randSeed');
+            %
+            %             obj = obj.percolateUp(pixelBlurParents, ...
+            %                 'var_ratio', 'var_ratio', ...
+            %                 'SNR', 'SNR', ...
+            %                 'meanVals', 'meanVals', ...
+            %                 'splitValue', 'pixelBlur');
             
             obj = obj.percolateUp(pixelBlurParents, ...
-                'var_ratio', 'var_ratio', ...
-                'SNR', 'SNR', ...
-                'meanVals', 'meanVals', ...
                 'splitValue', 'pixelBlur');
-                        
+            obj = obj.percolateUp(pixelBlurParents, byEpochParamList, byEpochParamList);
+            obj = obj.percolateUp(pixelBlurParents, singleValParamList, singleValParamList);
+            obj = obj.percolateUp(pixelBlurParents, collectedParamList, collectedParamList);
+            
+            obj = obj.percolateUp(randSeedParents, ...
+                'splitValue', 'randSeed');
+            obj = obj.percolateUp(randSeedParents, byEpochParamList, byEpochParamList);
+            obj = obj.percolateUp(randSeedParents, singleValParamList, singleValParamList);
+            obj = obj.percolateUp(randSeedParents, collectedParamList, collectedParamList);
+            
         end
         
     end
     
     methods(Static)
         
-        function plotPixelBlurDataVarRatio(node, cellData)
-            seedRootData = node.get(childrenByValue(node, 1, 'name', 'Across seed tree'));
-            
-            plot(seedRootData.pixelBlur, seedRootData.var_ratio, 'o-');
-            xlabel('Pixel blur');
-            ylabel('Variance ratio');
-            
-        end
-        
-        function plotRandSeedDataVarRatio(node, cellData)
-            blurRootData = node.get(childrenByValue(node, 1, 'name', 'Across blur tree'));
-            
-            scatter(blurRootData.randSeed, blurRootData.var_ratio);
-            xlabel('Random seed');
-            ylabel('Variance ratio');
-
-        end
-        
-         function plotPixelBlurDataSNR(node, cellData)
-            seedRootData = node.get(childrenByValue(node, 1, 'name', 'Across seed tree'));
-            
-            plot(seedRootData.pixelBlur, seedRootData.SNR, 'o-');
-            xlabel('Pixel blur');
-            ylabel('SNR');
-            
-        end
-        
-        function plotRandSeedDataSNR(node, cellData)
-            blurRootData = node.get(childrenByValue(node, 1, 'name', 'Across blur tree'));
-            
-            scatter(blurRootData.randSeed, blurRootData.SNR);
-            xlabel('Random seed');
-            ylabel('SNR');
-
-        end
-        
-        function plotPixelBlurDataMeans(node, cellData)
-            seedRootData = node.get(childrenByValue(node, 1, 'name', 'Across seed tree'));
-            
-            plot(seedRootData.pixelBlur, seedRootData.meanVals, 'o-');
-            xlabel('Pixel blur');
-            ylabel('MeanResp');
-            
-        end
-        
-        function plotRandSeedDataMeans(node, cellData)
-            blurRootData = node.get(childrenByValue(node, 1, 'name', 'Across blur tree'));
-            
-            scatter(blurRootData.randSeed, blurRootData.meanVals);
-            xlabel('Random seed');
-            ylabel('MeanResp');
-
-        end
-        
-        function plotAllData(node, cellData)            
+        function plotAllData(node, cellData)
             seedChildren = node.getchildren(childrenByValue(node, 1, 'name', 'Across blur tree'));
-            c = ['b', 'r', 'g', 'k', 'm'];
+            %            c = ['b', 'r', 'g', 'k', 'm'];
             for i=1:length(seedChildren);
-                errorbar(node.get(seedChildren(i)).pixelBlurVals, node.get(seedChildren(i)).respMean_blur, node.get(seedChildren(i)).respSEM_blur, ...
-                    [c(mod(i,5)+1) 'o-']);
+                curNode = node.get(seedChildren(i));
+                xvals = curNode.pixelBlur;
+                %                 yvals = curNode.overEpochs_ONSETspikes.mean_c;
+                %                 yerrs = curNode.overEpochs_ONSETspikes.SEM;
+                yvals = curNode.overEpochs_spikeCount_stimInterval_baselineSubtracted.mean_c;
+                yerrs = curNode.overEpochs_spikeCount_stimInterval_baselineSubtracted.SEM;
+                %plot(xvals, yvals, [c(mod(i,5)+1) 'o']);
+                errorbar(xvals, yvals, yerrs,'b','marker','o','LineStyle','none');
+                %                 errorbar(node.get(seedChildren(i)).pixelBlurVals, node.get(seedChildren(i)).respMean_blur, node.get(seedChildren(i)).respSEM_blur, ...
+                %                     [c(mod(i,5)+1) 'o-']);
                 hold('on');
-            end            
+            end
+            blurRootData = node.get(childrenByValue(node, 1, 'name', 'Across seed tree'));
+            %             yMean = blurRootData.ONSETspikes.mean_c;`
+            %             yMeanErr = blurRootData.ONSETspikes.SEM_c;
+            yMean = blurRootData.spikeCount_stimInterval_baselineSubtracted.mean_c;
+            yMeanErr = blurRootData.spikeCount_stimInterval_baselineSubtracted.SEM_c;
+            errorbar(xvals, yMean, yMeanErr,'r');
             xlabel('Pixel blur');
             ylabel('Spike count (norm)');
             hold('off');
         end
-
+        
+        function plotAllData_gbl(node, cellData)
+            seedChildren = node.getchildren(childrenByValue(node, 1, 'name', 'Across blur tree'));
+            %            c = ['b', 'r', 'g', 'k', 'm'];
+            for i=1:length(seedChildren)      %i=[1,4]
+                curNode = node.get(seedChildren(i));
+                xvals = curNode.pixelBlur;
+                %                 yvals = curNode.overEpochs_ONSETspikes.mean_c;
+                %                 yerrs = curNode.overEpochs_ONSETspikes.SEM;
+                yvals = curNode.overEpochs_spikeCount_stimInterval_grndBlSubt.mean_c;
+                yerrs = curNode.overEpochs_spikeCount_stimInterval_grndBlSubt.SEM;
+                %plot(xvals, yvals, [c(mod(i,5)+1) 'o']);
+                errorbar(xvals, yvals, yerrs,'b','marker','o','LineStyle','none');  %,'LineStyle','none'
+                %                 errorbar(node.get(seedChildren(i)).pixelBlurVals, node.get(seedChildren(i)).respMean_blur, node.get(seedChildren(i)).respSEM_blur, ...
+                %                     [c(mod(i,5)+1) 'o-']);
+                hold('on');
+            end
+            blurRootData = node.get(childrenByValue(node, 1, 'name', 'Across seed tree'));
+            %             yMean = blurRootData.ONSETspikes.mean_c;`
+            %             yMeanErr = blurRootData.ONSETspikes.SEM_c;
+            yMean = blurRootData.spikeCount_stimInterval_grndBlSubt.mean_c;
+            yMeanErr = blurRootData.spikeCount_stimInterval_grndBlSubt.SEM_c;
+            errorbar(xvals, yMean, yMeanErr,'r');
+            xlabel('Pixel blur');
+            ylabel('Spike count (norm)');
+            hold('off');
+        end
+        
+        function plotAllData_stimToEnd_gbl(node, cellData)
+            seedChildren = node.getchildren(childrenByValue(node, 1, 'name', 'Across blur tree'));
+            %            c = ['b', 'r', 'g', 'k', 'm'];
+            for i=1:length(seedChildren)      %i=[1,4]
+                curNode = node.get(seedChildren(i));
+                xvals = curNode.pixelBlur;
+                %                 yvals = curNode.overEpochs_ONSETspikes.mean_c;
+                %                 yerrs = curNode.overEpochs_ONSETspikes.SEM;
+                yvals = curNode.overEpochs_spikeCount_stimToEnd_grndBlSubt.mean_c;
+                yerrs = curNode.overEpochs_spikeCount_stimToEnd_grndBlSubt.SEM;
+                %plot(xvals, yvals, [c(mod(i,5)+1) 'o']);
+                errorbar(xvals, yvals, yerrs,'b','marker','o','LineStyle','none');  %,'LineStyle','none'
+                %                 errorbar(node.get(seedChildren(i)).pixelBlurVals, node.get(seedChildren(i)).respMean_blur, node.get(seedChildren(i)).respSEM_blur, ...
+                %                     [c(mod(i,5)+1) 'o-']);
+                hold('on');
+            end
+            blurRootData = node.get(childrenByValue(node, 1, 'name', 'Across seed tree'));
+            %             yMean = blurRootData.ONSETspikes.mean_c;`
+            %             yMeanErr = blurRootData.ONSETspikes.SEM_c;
+            yMean = blurRootData.spikeCount_stimToEnd_grndBlSubt.mean_c;
+            yMeanErr = blurRootData.spikeCount_stimToEnd_grndBlSubt.SEM_c;
+            errorbar(xvals, yMean, yMeanErr,'r');
+            xlabel('Pixel blur');
+            ylabel('Spike count stimToEnd');
+            hold('off');
+        end
+        
+        function plotAllData_ONSETspikes(node, cellData)
+            seedChildren = node.getchildren(childrenByValue(node, 1, 'name', 'Across blur tree'));
+            %            c = ['b', 'r', 'g', 'k', 'm'];
+            for i=1:length(seedChildren);
+                curNode = node.get(seedChildren(i));
+                xvals = curNode.pixelBlur;
+                yvals = curNode.overEpochs_ONSETspikes.mean_c;
+                yerrs = curNode.overEpochs_ONSETspikes.SEM;
+                %plot(xvals, yvals, [c(mod(i,5)+1) 'o']);
+                errorbar(xvals, yvals, yerrs,'b','marker','o','LineStyle','none');
+                %                 errorbar(node.get(seedChildren(i)).pixelBlurVals, node.get(seedChildren(i)).respMean_blur, node.get(seedChildren(i)).respSEM_blur, ...
+                %                     [c(mod(i,5)+1) 'o-']);
+                hold('on');
+            end
+            blurRootData = node.get(childrenByValue(node, 1, 'name', 'Across seed tree'));
+            yMean = blurRootData.ONSETspikes.mean_c;
+            yMeanErr = blurRootData.ONSETspikes.SEM_c;
+            errorbar(xvals, yMean, yMeanErr,'r');
+            xlabel('Pixel blur');
+            ylabel('Spike count (norm)');
+            hold('off');
+        end
+        
+        function plotAllData_OFFspikes_blSubt(node, cellData)
+            seedChildren = node.getchildren(childrenByValue(node, 1, 'name', 'Across blur tree'));
+            %            c = ['b', 'r', 'g', 'k', 'm'];
+            for i=1:length(seedChildren);
+                curNode = node.get(seedChildren(i));
+                xvals = curNode.pixelBlur;
+                yvals = curNode.overEpochs_spikeCount_tailInterval_baselineSubtracted.mean_c;
+                yerrs = curNode.overEpochs_spikeCount_tailInterval_baselineSubtracted.SEM;
+                %plot(xvals, yvals, [c(mod(i,5)+1) 'o']);
+                errorbar(xvals, yvals, yerrs,'b','marker','o','LineStyle','none');
+                %                 errorbar(node.get(seedChildren(i)).pixelBlurVals, node.get(seedChildren(i)).respMean_blur, node.get(seedChildren(i)).respSEM_blur, ...
+                %                     [c(mod(i,5)+1) 'o-']);
+                hold('on');
+            end
+            blurRootData = node.get(childrenByValue(node, 1, 'name', 'Across seed tree'));
+            yMean = blurRootData.spikeCount_tailInterval_baselineSubtracted.mean_c;
+            yMeanErr = blurRootData.spikeCount_tailInterval_baselineSubtracted.SEM_c;
+            errorbar(xvals, yMean, yMeanErr,'r');
+            xlabel('Pixel blur');
+            ylabel('Spike count (norm)');
+            hold('off');
+        end
+        
+        function plotAllData_ONSET_FRmax(node, cellData)
+            seedChildren = node.getchildren(childrenByValue(node, 1, 'name', 'Across blur tree'));
+            %            c = ['b', 'r', 'g', 'k', 'm'];
+            for i=1:length(seedChildren);
+                curNode = node.get(seedChildren(i));
+                xvals = curNode.pixelBlur;
+                yvals = curNode.overEpochs_ONSET_FRmax.value;
+                %yerrs = curNode.overEpochs_ONSET_FRmax.SEM;
+                %plot(xvals, yvals, [c(mod(i,5)+1) 'o']);
+                plot(xvals, yvals,'b','marker','o','LineStyle','none');
+                %                 errorbar(node.get(seedChildren(i)).pixelBlurVals, node.get(seedChildren(i)).respMean_blur, node.get(seedChildren(i)).respSEM_blur, ...
+                %                     [c(mod(i,5)+1) 'o-']);
+                hold('on');
+            end
+            blurRootData = node.get(childrenByValue(node, 1, 'name', 'Across seed tree'));
+            yMean = blurRootData.ONSET_FRmax.mean_c;
+            yMeanErr = blurRootData.ONSET_FRmax.SEM_c;
+            errorbar(xvals, yMean, yMeanErr,'r');
+            xlabel('Pixel blur');
+            ylabel('Spike count (norm)');
+            hold('off');
+        end
+        
+        function plotAllData_ONSETpeakInstantaneousFR(node, cellData)
+            seedChildren = node.getchildren(childrenByValue(node, 1, 'name', 'Across blur tree'));
+            %            c = ['b', 'r', 'g', 'k', 'm'];
+            for i=1:length(seedChildren);
+                curNode = node.get(seedChildren(i));
+                xvals = curNode.pixelBlur;
+                yvals = curNode.overEpochs_ONSETpeakInstantaneousFR.mean_c;
+                yerrs = curNode.overEpochs_ONSETpeakInstantaneousFR.SEM;
+                %plot(xvals, yvals, [c(mod(i,5)+1) 'o']);
+                errorbar(xvals, yvals, yerrs,'b','marker','o','LineStyle','none');
+                %                 errorbar(node.get(seedChildren(i)).pixelBlurVals, node.get(seedChildren(i)).respMean_blur, node.get(seedChildren(i)).respSEM_blur, ...
+                %                     [c(mod(i,5)+1) 'o-']);
+                hold('on');
+            end
+            blurRootData = node.get(childrenByValue(node, 1, 'name', 'Across seed tree'));
+            yMean = blurRootData.ONSETpeakInstantaneousFR.mean_c;
+            yMeanErr = blurRootData.ONSETpeakInstantaneousFR.SEM_c;
+            errorbar(xvals, yMean, yMeanErr,'r');
+            xlabel('Pixel blur');
+            ylabel('Spike count (norm)');
+            hold('off');
+        end
+        
+        
+        %         function plotAllData_ONSETspikesGrandBLsubt(node, cellData)
+        %         COMPLETE
+        %             seedChildren = node.getchildren(childrenByValue(node, 1, 'name', 'Across blur tree'));
+        % %            c = ['b', 'r', 'g', 'k', 'm'];
+        %             for i=1:length(seedChildren);
+        %                 curNode = node.get(seedChildren(i));
+        %                 xvals = curNode.pixelBlur;
+        %                 yvals = curNode.overEpochs_ONSETpeakInstantaneousFR.mean_c;
+        %                 yerrs = curNode.overEpochs_ONSETpeakInstantaneousFR.SEM;
+        %                 %plot(xvals, yvals, [c(mod(i,5)+1) 'o']);
+        %                 errorbar(xvals, yvals, yerrs,'b','marker','o','LineStyle','none');
+        % %                 errorbar(node.get(seedChildren(i)).pixelBlurVals, node.get(seedChildren(i)).respMean_blur, node.get(seedChildren(i)).respSEM_blur, ...
+        % %                     [c(mod(i,5)+1) 'o-']);
+        %                 hold('on');
+        %             end
+        %             blurRootData = node.get(childrenByValue(node, 1, 'name', 'Across seed tree'));
+        %             yMean = blurRootData.ONSETpeakInstantaneousFR.mean_c;
+        %             yMeanErr = blurRootData.ONSETpeakInstantaneousFR.SEM_c;
+        %             errorbar(xvals, yMean, yMeanErr,'r');
+        %             xlabel('Pixel blur');
+        %             ylabel('Spike count (norm)');
+        %             hold('off');
+        %         end
+        
+        function plotMeanDataNorm(node, cellData)
+            blurRootData = node.get(childrenByValue(node, 1, 'name', 'Across seed tree'));
+            xvals = blurRootData.pixelBlur;
+            yMean = blurRootData.spikeCount_stimInterval_baselineSubtracted.mean_c;
+            yMeanErr = blurRootData.spikeCount_stimInterval_baselineSubtracted.SEM_c;
+            M = max(yMean);
+            yMean = yMean./M;
+            yMeanErr = yMeanErr./M;
+            errorbar(xvals, yMean, yMeanErr,'r');
+            xlabel('Pixel blur');
+            ylabel('Spike count (norm)');
+            hold('off');
+        end
+        
+        function plotMeanDataNormOFF(node, cellData)
+            blurRootData = node.get(childrenByValue(node, 1, 'name', 'Across seed tree'));
+            xvals = blurRootData.pixelBlur;
+            yMean = blurRootData.spikeCount_tailInterval_baselineSubtracted.mean_c;
+            yMeanErr = blurRootData.spikeCount_tailInterval_baselineSubtracted.SEM_c;
+            M = max(yMean);
+            yMean = yMean./M;
+            yMeanErr = yMeanErr./M;
+            errorbar(xvals, yMean, yMeanErr,'r');
+            xlabel('Pixel blur');
+            ylabel('Spike count (norm)');
+            hold('off');
+        end
+        
+        %         function plotMeanData_spkStimInt_gblSubt(node, cellData)
+        %             rootData = node.get(1);
+        %             xvals = rootData.curInnerDiameter;
+        %             yField = rootData.spikeCount_stimInterval_grndBlSubt;
+        %             if strcmp(yField.units, 's')
+        %                 yvals = yField.median_c;
+        %             else
+        %                 yvals = yField.mean_c;
+        %             end
+        %             errs = yField.SEM;
+        %             errorbar(xvals, yvals, errs);
+        %             xlabel('inner diameter');
+        %             ylabel(['spikeCount_stimInterval_granBaselineSubtracted (' yField.units ')']);
+        %         end
+        
+        function plotMeanData_spkStimInt_gblSubt(node, cellData)
+            blurRootData = node.get(childrenByValue(node, 1, 'name', 'Across seed tree'));
+            xvals = blurRootData.pixelBlur;
+            yMean = blurRootData.spikeCount_stimInterval_grndBlSubt.mean_c;
+            yMeanErr = blurRootData.spikeCount_stimInterval_grndBlSubt.SEM_c;
+            errorbar(xvals, yMean, yMeanErr,'r');
+            xlabel('Pixel blur');
+            ylabel('Spike count gblSubt');
+            hold('off');
+        end
+        
+        %         function plotMeanData_spkStimInt_gblSubtNORM(node, cellData)
+        %             rootData = node.get(1);
+        %             xvals = rootData.curInnerDiameter;
+        %             yField = rootData.spikeCount_stimInterval_grndBlSubt;
+        %             if strcmp(yField.units, 's')
+        %                 yvals = yField.median_c;
+        %             else
+        %                 yvals = yField.mean_c;
+        %             end
+        %             errs = yField.SEM;
+        %             M = max(abs(yvals));
+        %             yvals = yvals./M;
+        %             errs = errs./M;
+        %             errorbar(xvals, yvals, errs);
+        %             xlabel('inner diameter');
+        %             ylabel(['spikeCount_stimInterval_granBaselineSubtracted (' yField.units ')']);
+        %         end
+        
+        function plotMeanData_spkStimInt_gblSubtNORM(node, cellData)
+            blurRootData = node.get(childrenByValue(node, 1, 'name', 'Across seed tree'));
+            xvals = blurRootData.pixelBlur;
+            yMean = blurRootData.spikeCount_stimInterval_grndBlSubt.mean_c;
+            yMeanErr = blurRootData.spikeCount_stimInterval_grndBlSubt.SEM_c;
+            M = max(abs(yMean));
+            yMean = yMean./M;
+            yMeanErr = yMeanErr./M;
+            errorbar(xvals, yMean, yMeanErr,'r');
+            xlabel('Pixel blur');
+            ylabel('Spike count gblSubt (norm)');
+            hold('off');
+        end
+        
+        function plotMeanData_stimToEnd_gblSubtNORM(node, cellData)
+            blurRootData = node.get(childrenByValue(node, 1, 'name', 'Across seed tree'));
+            xvals = blurRootData.pixelBlur;
+            yMean = blurRootData.spikeCount_stimToEnd_grndBlSubt.mean_c;
+            yMeanErr = blurRootData.spikeCount_stimToEnd_grndBlSubt.SEM_c;
+            M = max(abs(yMean));
+            yMean = yMean./M;
+            yMeanErr = yMeanErr./M;
+            errorbar(xvals, yMean, yMeanErr,'r');
+            xlabel('Pixel blur');
+            ylabel('Spike count stimToEnd gblSubt (norm)');
+            hold('off');
+        end
+        
     end
     
 end

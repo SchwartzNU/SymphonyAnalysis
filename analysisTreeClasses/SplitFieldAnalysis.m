@@ -21,7 +21,7 @@ classdef SplitFieldAnalysis < AnalysisTree
             obj = obj.copyAnalysisParams(params);
             obj = obj.copyParamsFromSampleEpoch(cellData, dataSet, ...
                 {'RstarMean', 'RstarIntensity', params.ampModeParam, 'offsetX', 'offsetY'});
-            obj = obj.buildCellTree(1, cellData, dataSet, {'barAngle', @(epoch)barPosition2D(epoch)});
+            obj = obj.buildCellTree(1, cellData, dataSet, {'barAngle', 'blackSide', @(epoch)barPosition2D(epoch)});
         end
         
         function obj = doAnalysis(obj, cellData)
@@ -55,14 +55,14 @@ classdef SplitFieldAnalysis < AnalysisTree
             obj = obj.percolateUp(leafIDs, collectedParamList, collectedParamList);
          
             %add lists to angleNodes
-            angleNodes = getTreeLevel(obj,'barAngle');
-            for i=1:length(angleNodes)
-                curData = obj.get(angleNodes(i));
+            bsNodes = getTreeLevel(obj,'blackSide');
+            for i=1:length(bsNodes)
+                curData = obj.get(bsNodes(i));
                 curData.byEpochParamList = byEpochParamList;
                 curData.singleValParamList = singleValParamList;
                 curData.collectedParamList = collectedParamList;
                 curData.stimParameterList = {'position'};
-                obj = obj.set(angleNodes(i), curData);
+                obj = obj.set(bsNodes(i), curData);
             end
             
 %             %to add more here
@@ -76,10 +76,7 @@ classdef SplitFieldAnalysis < AnalysisTree
             
         end
         
-    end
-    
-    
-    
+    end    
     
     methods(Static)
         function plot_positionVsONSETspikes(node, cellData)

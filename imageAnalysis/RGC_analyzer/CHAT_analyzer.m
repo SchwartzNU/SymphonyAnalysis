@@ -4,12 +4,13 @@ rawImageSequence = imageData{1,1};
 CHATsequence_raw = rawImageSequence(CHAT_channel:Nchannels:end,1);
 
 Nframes = length(CHATsequence_raw);
-[pixX, pixY] = size(CHATsequence_raw{1});
+[pixX, pixY] = size(CHATsequence_raw{1})
 resampleFactor = pixX / resampleSquares;
 voxelsX = round(pixX/resampleFactor);
 voxelsY = round(pixY/resampleFactor);
 CHATsequence = zeros(voxelsX, voxelsY, Nframes);
 
+keyboard;
 CHATsequence_raw_mat = zeros(pixX, pixY, Nframes);
 for i=1:Nframes
     CHATsequence(:,:,i) = imresize(CHATsequence_raw{i}, 1/resampleFactor);
@@ -44,14 +45,18 @@ for i=1:voxelsX
             hold(peaksAx, 'on');
             pos1 = px;
             px = round(px);
-            if px>0
-                scatter(peaksAx, px, curProj(px), 'rx');
+            if ~isempty(px)
+                if px>0 && px < length(curProj)
+                    scatter(peaksAx, px, curProj(px), 'rx');
+                end
             end
             [px, ~] = ginput(1);
             pos2 = px;
             px = round(px);
-            if px>0
-                scatter(peaksAx, px, curProj(px), 'rx');
+            if ~isempty(px)
+                if px>0 && px < length(curProj)
+                    scatter(peaksAx, px, curProj(px), 'rx');
+                end
             end
             
             key = input('ok?: [y=return, skip=s, redo=r]', 's');

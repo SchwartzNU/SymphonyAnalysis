@@ -1,7 +1,7 @@
 classdef SpotsMultiSizeAnalysis < AnalysisTree
     properties
         StartTime = 0;
-        EndTime = 0;
+        EndTime = 1000;
     end
     
     methods
@@ -30,37 +30,37 @@ classdef SpotsMultiSizeAnalysis < AnalysisTree
             L = length(leafIDs);
             
             %get grand mean for multi-peak fitting (with zero crossings)
-%             if strcmp(rootData.(rootData.ampModeParam), 'Whole cell')
-%                 allEpochIDs = [];
-%                 lowPassFreq = 10;
-%                 
-%                 for i=1:L %for each leaf node
-%                     curNode = obj.get(leafIDs(i));
-%                     allEpochIDs = [allEpochIDs, curNode.epochID];
-%                 end
-%                 [dataMean, xvals] = cellData.getMeanData(allEpochIDs, rootData.deviceName);
-%                 
-%                 %multiple peaks from zero crossings
-%                 [zeroCrossings, directions] = findZeroCrossings(dataMean, xvals, obj.EndTime*1E-3, lowPassFreq, 1E-4);
-%                 for i=1:length(zeroCrossings)
-%                     
-%                     
-%                 end
-%                 
-%                 zeroCrossings = [zeroCrossings getThresCross(xvals, obj.EndTime*1E-3, 1)] %add end time to get last peak;
-%                 directions = [directions, 0];
-%                 zeroCrossings(1) = getThresCross(xvals, 0, 1) %replace first zero crossing with stim start
-%                 %zeroCrossings(2) = getThresCross(xvals, 0.14, 1) %temp hack
-%                 
-%                 Npeaks = length(zeroCrossings)-1;
-%                 if Npeaks > 1
-%                     crossingParam = [zeroCrossings; directions]
-%                 else
-%                     crossingParam = [];
-%                 end
-%                 %keyboard;
-%             end
-%             
+            %             if strcmp(rootData.(rootData.ampModeParam), 'Whole cell')
+            %                 allEpochIDs = [];
+            %                 lowPassFreq = 10;
+            %
+            %                 for i=1:L %for each leaf node
+            %                     curNode = obj.get(leafIDs(i));
+            %                     allEpochIDs = [allEpochIDs, curNode.epochID];
+            %                 end
+            %                 [dataMean, xvals] = cellData.getMeanData(allEpochIDs, rootData.deviceName);
+            %
+            %                 %multiple peaks from zero crossings
+            %                 [zeroCrossings, directions] = findZeroCrossings(dataMean, xvals, obj.EndTime*1E-3, lowPassFreq, 1E-4);
+            %                 for i=1:length(zeroCrossings)
+            %
+            %
+            %                 end
+            %
+            %                 zeroCrossings = [zeroCrossings getThresCross(xvals, obj.EndTime*1E-3, 1)]; %add end time to get last peak;
+            %                 directions = [directions, 0];
+            %                 zeroCrossings(1) = getThresCross(xvals, 0, 1); %replace first zero crossing with stim start
+            %                 zeroCrossings(2) = getThresCross(xvals, 0.14, 1); %temp hack
+            %
+            %                 Npeaks = length(zeroCrossings)-1;
+            %                 if Npeaks > 1
+            %                     crossingParam = [zeroCrossings; directions]
+            %                 else
+            %                     crossingParam = [];
+            %                 end
+            %                 %keyboard;
+            %             end
+            
             
             
             for i=1:L %for each leaf node
@@ -74,7 +74,7 @@ classdef SpotsMultiSizeAnalysis < AnalysisTree
                 else %whole cell
                     outputStruct = getEpochResponses_WC(cellData, curNode.epochID, ...
                         'DeviceName', rootData.deviceName);
-                        %'ZeroCrossingPeaks', crossingParam);
+                    %'ZeroCrossingPeaks', crossingParam);
                     outputStruct = getEpochResponseStats(outputStruct);
                     curNode = mergeIntoNode(curNode, outputStruct);
                 end
@@ -288,6 +288,28 @@ classdef SpotsMultiSizeAnalysis < AnalysisTree
             ylabel(['stimInterval_charge (' yField.units ')']);
         end
         
+        function plot_spotSizeVsstimInterval_chargeNORM(node, cellData)
+            rootData = node.get(1);
+            xvals = rootData.spotSize;
+            yField = rootData.stimInterval_charge;
+            if strcmp(yField.units, 's')
+                yvals = yField.median_c;
+            else
+                yvals = yField.mean_c;
+            end
+            errs = yField.SEM;
+            [M, Mind] = max(abs(yvals));
+            if yvals(Mind) < 0 
+                yvals = -yvals./M;
+            else
+                yvals = yvals./M;
+            end;
+            errs = errs./M;
+            errorbar(xvals, yvals, errs);
+            xlabel('spotSize');
+            ylabel(['stimInterval_charge (' yField.units ')']);
+        end
+        
         function plot_spotSizeVsONSET_avgTracePeak(node, cellData)
             rootData = node.get(1);
             xvals = rootData.spotSize;
@@ -311,6 +333,111 @@ classdef SpotsMultiSizeAnalysis < AnalysisTree
             errorbar(xvals, yvals, errs);
             xlabel('spotSize');
             ylabel(['spikeCount_stimInterval_baselineSubtracted (' yField.units ')']);
+        end
+        
+        function plot_spotSizeVsONSET_FRhalfMaxSusLatency(node, cellData)
+            rootData = node.get(1);
+            xvals = rootData.spotSize;
+            yField = rootData.ONSET_FRhalfMaxSusLatency;
+            yvals = yField.value;
+            plot(xvals, yvals, 'bx-');
+            xlabel('spotSize');
+            ylabel(['ONSET_FRhalfMaxSusLatency (' yField.units ')']);
+        end
+        
+        function plot_spotSizeVsONSET_FRhalfMaxSusLatency_inXlimits(node, cellData)
+            xRangeMin = 180;
+            xRangeMax = 700;
+            rootData = node.get(1);
+            xvals = rootData.spotSize;
+            yField = rootData.ONSET_FRhalfMaxSusLatency;
+            yvals = yField.value;
+            xvalsNew = xvals((xvals>=xRangeMin)&(xvals<=xRangeMax));
+            yvalsNew = yvals((xvals>=xRangeMin)&(xvals<=xRangeMax));
+            plot(xvalsNew, yvalsNew, 'bx-');
+            xlabel('spotSize');
+            ylabel(['ONSET_FRhalfMaxSusLatency (' yField.units ')']);
+        end
+        
+        function plot_spotSizeVsONSETspikesNORM(node, cellData)
+            rootData = node.get(1);
+            xvals = rootData.spotSize;
+            yField = rootData.ONSETspikes;
+            if strcmp(yField.units, 's')
+                yvals = yField.median_c;
+            else
+                yvals = yField.mean_c;
+            end
+            errs = yField.SEM;
+            M = max(abs(yvals));
+            yvals = yvals./M;
+            errs = errs./M;
+            errorbar(xvals, yvals, errs);
+            xlabel('spotSize');
+            ylabel(['ONSETspikes (' yField.units ')']);
+        end
+        
+        function plot_spotSizeVsONSETspikesNORM_inXlimits(node, cellData)
+            xRangeMin = 180;
+            xRangeMax = 700;
+            rootData = node.get(1);
+            xvals = rootData.spotSize;
+            yField = rootData.ONSETspikes;
+            if strcmp(yField.units, 's')
+                yvals = yField.median_c;
+            else
+                yvals = yField.mean_c;
+            end
+            errs = yField.SEM;
+            M = max(abs(yvals));
+            yvals = yvals./M;
+            errs = errs./M;
+            xvalsNew = xvals((xvals>=xRangeMin)&(xvals<=xRangeMax));
+            yvalsNew = yvals((xvals>=xRangeMin)&(xvals<=xRangeMax));
+            errsNew = errs((xvals>=xRangeMin)&(xvals<=xRangeMax));
+            errorbar(xvalsNew, yvalsNew, errsNew);
+            xlabel('spotSize');
+            ylabel(['ONSETspikes (' yField.units ')']);
+        end
+        
+        function plot_spotSizeVsstimToEnd_respIntervalT25(node, cellData)
+            rootData = node.get(1);
+            xvals = rootData.spotSize;
+            yField = rootData.stimToEnd_respIntervalT25;
+            yvals = yField.value;
+            plot(xvals, yvals, 'bx-');
+            xlabel('spotSize');
+            ylabel(['ONSET_respIntervalT25 (' yField.units ')']);
+        end
+        
+        function plot_spotSizeVsstimToEnd_respIntervalT50(node, cellData)
+            rootData = node.get(1);
+            xvals = rootData.spotSize;
+            yField = rootData.stimToEnd_respIntervalT50;
+            yvals = yField.value;
+            plot(xvals, yvals, 'bx-');
+            xlabel('spotSize');
+            ylabel(['stimToEnd_respIntervalT50 (' yField.units ')']);
+        end
+        
+        function plot_spotSizeVsstimToEnd_avgTrace_latencyToT50(node, cellData)
+            rootData = node.get(1);
+            xvals = rootData.spotSize;
+            yField = rootData.stimToEnd_avgTrace_latencyToT50;
+            yvals = yField.value;
+            plot(xvals, yvals, 'bx-');
+            xlabel('spotSize');
+            ylabel(['stimToEnd_avgTrace_latencyToT50 (' yField.units ')']);
+        end
+        
+        function plot_spotSizeVsstimToEnd_avgTrace_latencyToT25(node, cellData)
+            rootData = node.get(1);
+            xvals = rootData.spotSize;
+            yField = rootData.stimToEnd_avgTrace_latencyToT25;
+            yvals = yField.value;
+            plot(xvals, yvals, 'bx-');
+            xlabel('spotSize');
+            ylabel(['stimToEnd_avgTrace_latencyToT25 (' yField.units ')']);
         end
         
     end

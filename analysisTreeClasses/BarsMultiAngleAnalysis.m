@@ -265,11 +265,55 @@ classdef BarsMultiAngleAnalysis < AnalysisTree
             xlabel('barAngle');
             ylabel(['spikeCount_stimInterval_baselineSubtracted (' yField.units ')']);
             
-             hold on;
-            x = [rootData.ONSET_peak_OSang,rootData.ONSET_peak_OSang];
+            hold on;
+            x = [rootData.spikeCount_stimInterval_baselineSubtracted,rootData.spikeCount_stimInterval_baselineSubtracted];
             y = get(gca, 'ylim');
             plot(x,y);
             title(['OSI = ' num2str(rootData.spikeCount_stimInterval_baselineSubtracted_OSI) ', OSang = ' num2str(rootData.spikeCount_stimInterval_baselineSubtracted_OSang)]);
+            hold off;
+        end
+        
+        function plot_barAngleVsspikeCount_stimTo200ms(node, cellData)
+            rootData = node.get(1);
+            xvals = rootData.barAngle;
+            yField = rootData.spikeCount_stimTo200ms;
+            if strcmp(yField.units, 's')
+            yvals = yField.median_c;
+            else
+            yvals = yField.mean_c;
+            end
+            errs = yField.SEM;
+            errorbar(xvals, yvals, errs);
+            xlabel('barAngle');
+            ylabel(['spikeCount_stimTo200ms (' yField.units ')']);
+            
+            hold on;
+            x = [rootData.spikeCount_stimTo200ms,rootData.spikeCount_stimTo200ms];
+            y = get(gca, 'ylim');
+            plot(x,y);
+            title(['OSI = ' num2str(rootData.spikeCount_stimTo200ms_OSI) ', OSang = ' num2str(rootData.spikeCount_stimTo200ms_OSang)]);
+            hold off;
+        end
+        
+        function plot_barAngleVsspikeCount_stimAfter200ms(node, cellData)
+            rootData = node.get(1);
+            xvals = rootData.barAngle;
+            yField = rootData.spikeCount_stimAfter200ms;
+            if strcmp(yField.units, 's')
+            yvals = yField.median_c;
+            else
+            yvals = yField.mean_c;
+            end
+            errs = yField.SEM;
+            errorbar(xvals, yvals, errs);
+            xlabel('barAngle');
+            ylabel(['spikeCount_stimAfter200ms (' yField.units ')']);
+            
+            hold on;
+            x = [rootData.spikeCount_stimAfter200ms,rootData.spikeCount_stimAfter200ms];
+            y = get(gca, 'ylim');
+            plot(x,y);
+            title(['OSI = ' num2str(rootData.spikeCount_stimAfter200ms_OSI) ', OSang = ' num2str(rootData.spikeCount_stimAfter200ms_OSang)]);
             hold off;
         end
     end

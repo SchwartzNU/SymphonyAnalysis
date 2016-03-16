@@ -4,7 +4,7 @@ outlierThres = 4; %SDs
 fnames = fieldnames(outputStruct);
 for i=1:length(fnames)
     curField = fnames{i};
-    if strcmp(outputStruct.(curField).type, 'byEpoch');
+    if strcmp(outputStruct.(curField).type, 'byEpoch') || strcmp(outputStruct.(curField).type, 'bySplitParameter')
         N = sum(~isnan(outputStruct.(curField).value));
         outputStruct.(curField).N = N;
         outputStruct.(curField).mean = nanmean(outputStruct.(curField).value);
