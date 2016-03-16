@@ -1,16 +1,4 @@
-
 *.m~
-
-imageAnalysis/.DS_Store
-<<<<<<< Updated upstream
 *.asv
-=======
-
-imageAnalysis/.DS_Store
->>>>>>> Stashed changes
-
-imageAnalysis/.DS_Store
-
-imageAnalysis/.DS_Store
-
-imageAnalysis/RGC_analyzer/CHAT_analyzer.m
+*.bak
+*.DS_Store
