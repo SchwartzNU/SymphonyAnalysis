@@ -415,6 +415,36 @@ for i=1:L
         outputStruct.OFFSETsuppressedSpikes.type = 'singleValue';
         outputStruct.OFFSETsuppressedSpikes.value = 0;
         
+        %Amurta 12/10/15
+        outputStruct.ONSETtransPeak.units = 'Hz';
+        outputStruct.ONSETtransPeak.type = 'singleValue';
+        outputStruct.ONSETtransPeak.value = 0;
+        
+        %Amurta 12/10/15
+        outputStruct.ONSETsusPeak.units = 'Hz';
+        outputStruct.ONSETsusPeak.type = 'singleValue';
+        outputStruct.ONSETsusPeak.value = 0;
+        
+        %Amurta 12/10/15
+        outputStruct.ONSETpause.units = 'Hz';
+        outputStruct.ONSETpause.type = 'singleValue';
+        outputStruct.ONSETpause.value = 0;
+        
+        %Amurta 12/10/15
+        outputStruct.ONSETsuspauseDiff.units = 'Hz';
+        outputStruct.ONSETsuspauseDiff.type = 'singleValue';
+        outputStruct.ONSETsuspauseDiff.value = 0;
+        
+        %Amurta 12/10/15
+        outputStruct.ONSET_ISI_peak.units = 'ms';
+        outputStruct.ONSET_ISI_peak.type = 'singleValue';
+        outputStruct.ONSET_ISI_peak.value = [];
+        
+        %Amurta 12/10/15
+        outputStruct.ONSET_ISI_peakLatency.units = 'ms';
+        outputStruct.ONSET_ISI_peakLatency.type = 'singleValue';
+        outputStruct.ONSET_ISI_peakLatency.value = [];
+        
     end
     
     curEpoch = cellData.epochs(epochInd(i));
@@ -502,6 +532,15 @@ for i=1:L
             outputStruct.ONSETrespRate_baselineSubtracted.value(i) = outputStruct.ONSETrespRate.value(i) - meanBaselineRate;
         end
         outputStruct.ONSETspikes.value(i) = ONSETspikes;
+        %Amurta
+        if (i == 1)
+            ISI_100msTo500ms = diff(spikeTimes((spikeTimes >= intervalStart + 0.1) & (spikeTimes <= intervalStart + 0.5)));
+            [outputStruct.ONSET_ISI_peak.value, ONSET_ISI_peak_index] = max(ISI_100msTo500ms);
+            outputStruct.ONSET_ISI_peak.value = outputStruct.ONSET_ISI_peak.value * 1E3;
+            spikeTimes_ONSET = spikeTimes(spikeTimes >= 0 & spikeTimes <= 1);
+            outputStruct.ONSET_ISI_peakLatency.value = (spikeTimes_ONSET(ONSET_ISI_peak_index) - intervalStart) * 1E3;
+        end
+        %Amurta
     end
     
     %offset latency, spike count, duration, fullISI, and mean rate
@@ -679,6 +718,19 @@ if ONSETresponseEndTime_max > ONSETresponseStartTime_min
     psth_onset = psth(xvals >= ONSETresponseStartTime_min & xvals < ONSETresponseEndTime_max);
     xvals_stimToEnd = xvals(xvals >= 0);
     psth_stimToEnd = psth(xvals >= 0);
+    %Amurta
+    transEndTime = 0.2; %s %duration of transient response
+    pauseStart = 0.1; %s
+    pauseEnd = 0.3; %s
+    susStart = 0.3; %s
+    psth_trans = psth(xvals >= 0 & xvals <= transEndTime);
+    outputStruct.ONSETtransPeak.value = max(psth_trans);
+    psth_pause = psth(xvals >= pauseStart & xvals <= pauseEnd);
+    outputStruct.ONSETpause.value = min(psth_pause);
+    psth_sus = psth(xvals >= susStart & xvals <= 1);
+    outputStruct.ONSETsusPeak.value = max(psth_sus);
+    outputStruct.ONSETsuspauseDiff.value = max(psth_sus) - min(psth_pause);
+    %Amurta
     outputStruct.ONSETpsth.value = psth_onset;
     [outputStruct.ONSET_FRmax.value, maxLoc] = max(psth_onset);
     if ~isempty(maxLoc)
@@ -693,6 +745,7 @@ if ONSETresponseEndTime_max > ONSETresponseStartTime_min
         outputStruct.ONSET_FRrange.value = outputStruct.ONSET_FRmax.value - min(psth_onset(maxLoc:end)); %range from max to end
         outputStruct.ONSET_FRrangeFrac.value = outputStruct.ONSET_FRrange.value / outputStruct.ONSET_FRmax.value;
     end
+    
 end
 %OFFSET
 if OFFSETresponseEndTime_max > OFFSETresponseStartTime_min
