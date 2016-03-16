@@ -26,7 +26,7 @@ arborBoundaries(3) = min(nodes(:,2)); arborBoundaries(4) = max(nodes(:,2));
 if exist(CHATsurfName, 'file')
    load(CHATsurfName);
 else
-    resampleSquares = 16;
+    resampleSquares = 4;
     [X_flat, Y_flat, Z_flat_ON, Z_flat_OFF] = CHAT_analyzer(image_fname, Nchannels, CHAT_channel, resampleSquares, voxelRes_XY);
     save(CHATsurfName, 'X_flat', 'Y_flat', 'Z_flat_ON', 'Z_flat_OFF');
 end
