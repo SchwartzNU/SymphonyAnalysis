@@ -1,3 +1,4 @@
+function susCrossInd = getSustainedThresCross(V)
 %Adam 9/22/15, change 2/13/16
 
 
