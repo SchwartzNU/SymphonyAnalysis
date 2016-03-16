@@ -35,7 +35,7 @@ function runConfig = generateShapeStimulus(p, analysisData)
         runConfig = generateNullStimulus(p, analysisData, runConfig);
         
     else
-        disp('error no usable mode');
+        fprintf('error no usable mode %s', p.mode);
     end
     
     % set the auto continue bit for after this epoch finishes
@@ -217,7 +217,7 @@ end
 
 
 function runConfig = generateAdaptationRegionStimulus(p, analysisData, runConfig)
-    runConfig.epochMode = 'flashingSpots';
+    runConfig.epochMode = 'adaptationRegion';
     
     numAdaptationPositions = size(p.adaptationSpotPositions,1);
     runConfig.numShapes = numAdaptationPositions + 1;
@@ -225,9 +225,7 @@ function runConfig = generateAdaptationRegionStimulus(p, analysisData, runConfig
     % first time setup / all for now
 %     for ai = 1:numAdaptationPositions
     % make array of spot positions around 
-    searchRadius = p.probeSpotPositionRadius;
-    spotSpacing = p.probeSpotSpacing;
-    probePositions = generatePositions('triangular', [searchRadius, spotSpacing]);
+    probePositions = generatePositions('triangular', [p.probeSpotPositionRadius, p.probeSpotSpacing]);
     numProbeSpots = size(probePositions, 1);
     probePositions_by_adapt = cell(numAdaptationPositions,1);
     for ai = 1:numAdaptationPositions
