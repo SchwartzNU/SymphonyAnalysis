@@ -54,6 +54,12 @@ for i=1:L
         %         baselineInterval = xvals < ip.Results.BaselineTime * 1E-3;
         responseIntervalLen = intervalEnd - intervalStart; %s
         baselineIntervalLen = baselineEnd - baselineStart; %s
+        
+        try
+            tailTime = curEpoch.attributes('tailTime')* 1E-3; %Adam 11/14/15
+        catch
+            tailTime = 0;
+        end;
     end
     
     %only cell-attached in this version: TODO: change name of function to
@@ -183,6 +189,12 @@ for i=1:L
         outputStruct.spikeCount_ONSET_after200ms.type = 'byEpoch';
         outputStruct.spikeCount_ONSET_after200ms.value = ones(1,L) * NaN;
         
+        % Adam 12/6/15
+        outputStruct.spikeCount_ONSET_after200ms_baselineSubtracted.units = 'spikes';
+        outputStruct.spikeCount_ONSET_after200ms_baselineSubtracted.type = 'byEpoch';
+        outputStruct.spikeCount_ONSET_after200ms_baselineSubtracted.value = ones(1,L) * NaN;
+        %
+        
         outputStruct.spikeCount_ONSET_400ms.units = 'spikes';
         outputStruct.spikeCount_ONSET_400ms.type = 'byEpoch';
         outputStruct.spikeCount_ONSET_400ms.value = ones(1,L) * NaN;
@@ -210,6 +222,10 @@ for i=1:L
         outputStruct.spikeRate_stimInterval_baselineSubtracted.units = 'Hz';
         outputStruct.spikeRate_stimInterval_baselineSubtracted.type = 'byEpoch';
         outputStruct.spikeRate_stimInterval_baselineSubtracted.value = ones(1,L) * NaN;
+        
+        outputStruct.spikeCount_tailInterval_baselineSubtracted.units = 'Hz';
+        outputStruct.spikeCount_tailInterval_baselineSubtracted.type = 'byEpoch';
+        outputStruct.spikeCount_tailInterval_baselineSubtracted.value = ones(1,L) * NaN;
         
         outputStruct.ONSETlatency.units = 's';
         outputStruct.ONSETlatency.type = 'byEpoch';
@@ -351,7 +367,7 @@ for i=1:L
         outputStruct.ONSET_FRhalfMaxLatency.type = 'singleValue';
         outputStruct.ONSET_FRhalfMaxLatency.value = NaN;
         
-        %%%%Adam 9/22/15
+        %%%%Adam 9/22/15    
         outputStruct.ONSET_FRhalfMaxSusLatency.units = 's';
         outputStruct.ONSET_FRhalfMaxSusLatency.type = 'singleValue';
         outputStruct.ONSET_FRhalfMaxSusLatency.value = NaN;
@@ -366,6 +382,7 @@ for i=1:L
         outputStruct.centerOfMassLatency.type = 'singleValue';
         outputStruct.centerOfMassLatency.value = NaN;
         %%%
+       
         
         outputStruct.OFFSET_FRmax.units = 'Hz';
         outputStruct.OFFSET_FRmax.type = 'singleValue';
@@ -503,13 +520,21 @@ for i=1:L
         outputStruct.spikeCount_ONSET_after200ms.value(i) = spikeCount;
     end
     
+    %count spikes 100 ms offset till epoch end
+    tailSpikeCount = length(find(spikeTimes >= intervalEnd + 0.1 & spikeTimes < intervalEnd+tailTime));
+    
     %subtract baseline
-    spikeCount_baselineSubtracted = spikeCount - meanBaselineRate/responseIntervalLen;
     outputStruct.spikeCount_stimInterval_baselineSubtracted.value(i) = spikeCount_baselineSubtracted;
     outputStruct.spikeRate_stimInterval_baselineSubtracted.value(i) = spikeCount_baselineSubtracted/responseIntervalLen;
+    
+    tailSpikeCount_baselineSubtracted = tailSpikeCount - meanBaselineRate*(tailTime-0.1);
+    outputStruct.spikeCount_tailInterval_baselineSubtracted.value(i) = tailSpikeCount_baselineSubtracted;
+    
     %subtract baseline
-    outputStruct.spikeCount_ONSET_400ms_baselineSubtracted.value(i) = outputStruct.spikeCount_ONSET_400ms.value(i) - meanBaselineRate/0.4;
-    outputStruct.spikeCount_OFFSET_400ms_baselineSubtracted.value(i) = outputStruct.spikeCount_OFFSET_400ms.value(i) - meanBaselineRate/0.4;
+    
+    outputStruct.spikeCount_ONSET_after200ms_baselineSubtracted.value(i) = ...
+        outputStruct.spikeCount_ONSET_after200ms.value(i) - meanBaselineRate*(responseIntervalLen-0.2);
+    
     
     %find response start and end times based on ISIs: This is for a
     %stimulus that starts and ends and a particular time
@@ -622,11 +647,12 @@ OFFSETresponseEndTime_max = max(OFFSETresponseEndTime_all);
 
 %%%%%%%%%Adam 8/27/15 temp hack centerOfMassLatency
 respOffs = 0.15;
-stimXvals = xvals((xvals >= respOffs)&(xvals <= 1 + respOffs));
-stimPsth = psth((xvals >= respOffs)&(xvals <= 1 + respOffs));
+stimXvals = xvals((xvals >= respOffs)&(xvals <= 1 + respOffs)); 
+stimPsth = psth((xvals >= respOffs)&(xvals <= 1 + respOffs)); 
 comTime = sum(stimXvals.*stimPsth)/sum(stimPsth);
 outputStruct.centerOfMassLatency.value = comTime;
 %%%%%%%%%%
+
 
 %PSTH fit
 if ip.Results.FitPSTH > 0
@@ -637,9 +663,9 @@ if ip.Results.FitPSTH > 0
     outputStruct.latencyTo_peak1.units = 's';
     outputStruct.latencyTo_peak1.type = 'singleValue';
     outputStruct.latencyTo_peak1.value = NaN;
-    
+
     [params_fit, PSTH_fit] = PSTH_fitter_sequential(psth, ip.Results.FitPSTH);
-    
+
     outputStruct.PSTH_fit.units = 'Hz';
     outputStruct.PSTH_fit.type = 'combinedAcrossEpochs';
     outputStruct.PSTH_fit.value = PSTH_fit;
@@ -657,7 +683,7 @@ if ip.Results.FitPSTH > 0
         outputStruct.latencyTo_peak2.units = 's';
         outputStruct.latencyTo_peak2.type = 'singleValue';
         outputStruct.latencyTo_peak2.value = NaN;
-        
+                
         spCount_peak2 = zeros(1,L);
         
         fitVals_p2 = raisedCosine(params_fit(2,:), span);
@@ -683,13 +709,13 @@ if ip.Results.FitPSTH > 0
         [~, peak1_ind] = max(fitVals_p1);
         if ~isempty(peak1_ind)
             outputStruct.latencyTo_peak1.value = xvals(peak1_ind(1));
-        end
+        end        
         [~, peak2_ind] = max(fitVals_p2);
         if ~isempty(peak2_ind)
             outputStruct.latencyTo_peak1.value = xvals(peak2_ind(1));
         end
     else % 1 peak
-        if ~isempty(ind_p1)
+        if ~isempty(ind_p1) 
             start_p1 = xvals(ind_p1(1));
             end_p1 = xvals(ind_p1(end));
             
@@ -707,7 +733,7 @@ if ip.Results.FitPSTH > 0
             outputStruct.latencyTo_peak1.value = xvals(peak1_ind(1));
         end
     end
-    
+        
 end
 
 
@@ -741,7 +767,7 @@ if ONSETresponseEndTime_max > ONSETresponseStartTime_min
     FRthres = outputStruct.ONSET_FRmax.value / 2; %half max
     if FRthres>0
         outputStruct.ONSET_FRhalfMaxLatency.value = min(xvals_stimToEnd(getThresCross(psth_stimToEnd, FRthres, 1)));
-        outputStruct.ONSET_FRhalfMaxSusLatency.value = min(xvals_onset(getSustainedThresCross(psth_onset, FRthres))); % Adam 9/22/15
+        outputStruct.ONSET_FRhalfMaxSusLatency.value = min(xvals_stimToEnd(getSustainedThresCross_021316(psth_stimToEnd))); % Adam 9/22/15 %2/14/16 changed "PSTH_onset" to "psth_stimToEnd"
         outputStruct.ONSET_FRrange.value = outputStruct.ONSET_FRmax.value - min(psth_onset(maxLoc:end)); %range from max to end
         outputStruct.ONSET_FRrangeFrac.value = outputStruct.ONSET_FRrange.value / outputStruct.ONSET_FRmax.value;
     end

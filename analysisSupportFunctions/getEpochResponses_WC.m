@@ -125,6 +125,10 @@ for i=1:L
         outputStruct.stimToEnd_respIntervalT25.type = 'singleValue';
         outputStruct.stimToEnd_respIntervalT25.value = 0;
         
+        outputStruct.stimToEnd_respIntervalT50.units = 's';         %Adam 2/19/16
+        outputStruct.stimToEnd_respIntervalT50.type = 'singleValue';
+        outputStruct.stimToEnd_respIntervalT50.value = 0;
+        
         outputStruct.stimToEnd_chargeT25.units = 'pC';
         outputStruct.stimToEnd_chargeT25.type = 'byEpoch';
         outputStruct.stimToEnd_chargeT25.value = ones(1,L) * NaN;
@@ -132,6 +136,10 @@ for i=1:L
         outputStruct.stimToEnd_avgTrace_latencyToT50.units = 's';
         outputStruct.stimToEnd_avgTrace_latencyToT50.type = 'singleValue';
         outputStruct.stimToEnd_avgTrace_latencyToT50.value = NaN;
+        
+        outputStruct.stimToEnd_avgTrace_latencyToT25.units = 's';
+        outputStruct.stimToEnd_avgTrace_latencyToT25.type = 'singleValue';
+        outputStruct.stimToEnd_avgTrace_latencyToT25.value = NaN;
         
         outputStruct.stimToEnd_latencyToPeak.units = 's';
         outputStruct.stimToEnd_latencyToPeak.type = 'byEpoch';
@@ -325,7 +333,7 @@ for i=1:L
     
 end
 
-%baseline 
+%baseline
 outputStruct.baseline.value = mean(baselineVal);
 
 if ~isempty(ip.Results.ZeroCrossingPeaks)
@@ -335,7 +343,7 @@ if ~isempty(ip.Results.ZeroCrossingPeaks)
     dataMean = mean(data, 1);
     
     %keyboard;
-    %start from the end and count 
+    %start from the end and count
     for i=1:Npeaks
         varName = ['peak' num2str(i) '_avgTracePeak'];
         outputStruct.(varName).units = units;
@@ -354,7 +362,7 @@ if ~isempty(ip.Results.ZeroCrossingPeaks)
         outputStruct.(varName).value = peakTime;
     end
 end
-                
+
 %values that need to be calculated after collecting all data
 %stimToEnd
 meanTrace_stimToEnd = [mean(Mstim, 1), mean(Mpost, 1)];
@@ -364,7 +372,7 @@ if abs(max(meanTrace_stimToEnd)) > abs(min(meanTrace_stimToEnd)) %outward curren
     thresDir = 1;
 else %inward current larger
     [outputStruct.stimToEnd_avgTracePeak.value, pos] = min(meanTrace_stimToEnd);
-    outputStruct.stimToEnd_avgTrace_latencyToPeak.value = pos / sampleRate; 
+    outputStruct.stimToEnd_avgTrace_latencyToPeak.value = pos / sampleRate;
     thresDir = -1;
 end
 
@@ -372,28 +380,60 @@ end
 maxVal = outputStruct.stimToEnd_avgTracePeak.value;
 T25_up = getThresCross(meanTrace_stimToEnd, 0.25*maxVal, thresDir);
 T25_down = getThresCross(meanTrace_stimToEnd, 0.25*maxVal, -thresDir);
-T50 = getThresCross(meanTrace_stimToEnd, 0.5*maxVal, thresDir);
+T50_up = getThresCross(meanTrace_stimToEnd, 0.5*maxVal, thresDir);
+T50_down = getThresCross(meanTrace_stimToEnd, 0.5*maxVal, -thresDir);
 if ~isempty(T25_up) && ~isempty(T25_down)
+    %     timeDiff_up = T25_up - pos;
+    %     timeDiff_up_abs = abs(timeDiff_up);
+    %     timeDiff_down = T25_down - pos;
+    %     timeDiff_down_abs = abs(timeDiff_down);
+    %     [~, prePos] = min(timeDiff_up_abs(timeDiff_up<0)); MISTAKE, the vector inside "min" is shortened by the indexing
+    %     [~, postPos] = min(timeDiff_down_abs(timeDiff_down>0));
+    
+    % % % Corrected by Adam 2/2016
     timeDiff_up = T25_up - pos;
-    timeDiff_up_abs = abs(timeDiff_up);
     timeDiff_down = T25_down - pos;
-    timeDiff_down_abs = abs(timeDiff_down);
-    [~, prePos] = min(timeDiff_up_abs(timeDiff_up<0));
-    [~, postPos] = min(timeDiff_down_abs(timeDiff_down>0));
+    T25_up = T25_up(timeDiff_up<0);
+    T25_down = T25_down(timeDiff_down>0);
+    [~, prePos] = max(T25_up);
+    [~, postPos] = min(T25_down);
+    % % % % % % % % Hack to avoind including OFF response! Adam
+    if T25_up(prePos) > 1.1*sampleRate
+        T25_up(prePos) = 1.1*sampleRate;
+    end;
+    if T25_down(postPos) > 1.1*sampleRate
+        T25_down(postPos) = 1.1*sampleRate;
+    end;
+    % % % % % % % %
+    
     if ~isempty(prePos) && ~isempty(postPos)
+        outputStruct.stimToEnd_avgTrace_latencyToT25.value = T25_up(prePos) / sampleRate;
+        
         outputStruct.stimToEnd_respIntervalT25.value = (T25_down(postPos) - T25_up(prePos)) / sampleRate;
         for i=1:L
             outputStruct.stimToEnd_chargeT25.value(i) = mean(MstimToEnd(i,T25_up(prePos):T25_down(postPos))) * outputStruct.stimToEnd_respIntervalT25.value;
         end
     end
 end
-if ~isempty(T50)
-    timeDiff = T50 - pos;
+if ~isempty(T50_up)
+    timeDiff = T50_up - pos;
     timeDiff_abs = abs(timeDiff);
     [~, prePos] = min(timeDiff_abs(timeDiff<0));
     if ~isempty(prePos)
-        outputStruct.stimToEnd_avgTrace_latencyToT50.value = T50(prePos) / sampleRate;
+        outputStruct.stimToEnd_avgTrace_latencyToT50.value = T50_up(prePos) / sampleRate;
     end
+<<<<<<< HEAD
+    if ~isempty(T50_down)
+        timeDiff_up = T50_up - pos;
+        timeDiff_down = T50_down - pos;
+        T50_up = T50_up(timeDiff_up<0);
+        T50_down = T50_down(timeDiff_down>0);
+        [~, prePos] = max(T50_up);
+        [~, postPos] = min(T50_down);
+        
+        if ~isempty(prePos) && ~isempty(postPos)
+            outputStruct.stimToEnd_respIntervalT50.value = (T50_down(postPos) - T50_up(prePos)) / sampleRate;
+=======
 end
 
 %ONSET
@@ -430,18 +470,10 @@ if ~isempty(T25_up) && ~isempty(T25_down)
         outputStruct.ONSET_respIntervalT25.value = (T25_down(postPos) - T25_up(prePos)) / sampleRate;
         for i=1:L
             outputStruct.ONSET_chargeT25.value(i) = mean(MstimToEnd(i,T25_up(prePos):T25_down(postPos))) * outputStruct.ONSET_respIntervalT25.value;
+>>>>>>> origin/master
         end
     end
 end
-if ~isempty(T50)
-    timeDiff = T50 - pos;
-    timeDiff_abs = abs(timeDiff);
-    [~, prePos] = min(timeDiff_abs(timeDiff<0));
-    if ~isempty(prePos)
-        outputStruct.ONSET_avgTrace_latencyToT50.value = T50(prePos) / sampleRate;
-    end
-end
-
 
 %OFFSET
 meanTrace_post = mean(Mpost, 1);
@@ -458,7 +490,7 @@ end
 maxVal = outputStruct.OFFSET_avgTracePeak.value;
 T25_up = getThresCross(meanTrace_post, 0.25*maxVal, thresDir);
 T25_down = getThresCross(meanTrace_post, 0.25*maxVal, -thresDir);
-T50 = getThresCross(meanTrace_post, 0.5*maxVal, thresDir);
+T50_up = getThresCross(meanTrace_post, 0.5*maxVal, thresDir);
 if ~isempty(T25_up) && ~isempty(T25_down)
     timeDiff_up = T25_up - pos;
     timeDiff_up_abs = abs(timeDiff_up);
@@ -473,12 +505,12 @@ if ~isempty(T25_up) && ~isempty(T25_down)
         end
     end
 end
-if ~isempty(T50)
-    timeDiff = T50 - pos;
+if ~isempty(T50_up)
+    timeDiff = T50_up - pos;
     timeDiff_abs = abs(timeDiff);
     [~, prePos] = min(timeDiff_abs(timeDiff<0));
     if ~isempty(prePos)
-        outputStruct.OFFSET_avgTrace_latencyToT50.value = T50(prePos) / sampleRate;
+        outputStruct.OFFSET_avgTrace_latencyToT50.value = T50_up(prePos) / sampleRate;
     end
 end
 
