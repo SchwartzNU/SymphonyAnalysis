@@ -17,13 +17,13 @@ classdef DriftingGratingsAnalysis < AnalysisTree
                 params.holdSignalParam = 'amp2HoldSignal';
             end            
             
-            nameStr = [cellData.savedFileName ': ' dataSetName ': DriftingGratingsAnalysis'];            
+            nameStr = [cellData.savedFileName ': ' dataSetName ': MovingBarAnalysis'];            
             obj = obj.setName(nameStr);
             dataSet = cellData.savedDataSets(dataSetName);
             obj = obj.copyAnalysisParams(params);
             obj = obj.copyParamsFromSampleEpoch(cellData, dataSet, ...
                 {'RstarMean', 'RstarIntensity', params.ampModeParam, params.holdSignalParam, 'gratingProfile', 'contrast', 'offsetX', 'offsetY'});
-            obj = obj.buildCellTree(1, cellData, dataSet, {'temporalFreq', 'spatialFreq', 'gratingAngle'});
+            obj = obj.buildCellTree(1, cellData, dataSet, {'contrast','temporalFreq', 'spatialFreq','gratingAngle'});
         end
         
         function obj = doAnalysis(obj, cellData)
@@ -81,21 +81,22 @@ classdef DriftingGratingsAnalysis < AnalysisTree
     
     methods(Static)
         
-%         function plotMeanTraces(node, cellData)
-%             rootData = node.get(1);
-%             chInd = node.getchildren(1);
-%             L = length(chInd);
-%             for i=1:L
-%                 hold(ax, 'on');
-%                 epochInd = node.get(chInd(i)).epochID;
-%                 if strcmp(rootData.(rootData.ampModeParam), 'Cell attached')
-%                     cellData.plotPSTH(epochInd, 10, rootData.deviceName, ax);
-%                 else
-%                     cellData.plotMeanData(epochInd, false, [], rootData.deviceName, ax);
-%                 end
-%             end
-%             hold(ax, 'off');
-%         end
+        function plotMeanTraces(node, cellData)
+            rootData = node.get(1);
+            chInd = node.getchildren(1);
+            L = length(chInd);
+            ax = axes;
+            for i=1:L
+                hold(ax, 'on');
+                epochInd = node.get(chInd(i)).epochID;
+                if strcmp(rootData.(rootData.ampModeParam), 'Cell attached')
+                    cellData.plotPSTH(epochInd, 10, rootData.deviceName, ax);
+                else
+                    cellData.plotMeanData(epochInd, false, [], rootData.deviceName, ax);
+                end
+            end
+            hold(ax, 'off');
+        end
         
          function plot_gratingAngleVsF1(node, cellData)
             rootData = node.get(1);
