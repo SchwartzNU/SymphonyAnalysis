@@ -11,7 +11,7 @@ classdef ShapeData < handle
         preTime
         stimTime
         
-        spikes       
+        spikes
         spikeRate
         t
         response
@@ -93,6 +93,8 @@ classdef ShapeData < handle
                 obj.shapeDataColumns('Y') = find(not(cellfun('isempty', strfind(colsTxt, 'Y'))));
                 
                 % ... startTime,endTime,diameter (also)
+                % this is the main area for contemporary changes, the above
+                % are mostly for making it work with old epochs
                 if isa(em,'System.String') || isa(em,'char')
                     obj.epochMode = char(em);
                     obj.shapeDataColumns('diameter') = find(not(cellfun('isempty', strfind(colsTxt, 'diameter'))));
@@ -103,8 +105,7 @@ classdef ShapeData < handle
                     if ff
                         obj.shapeDataColumns('flickerFrequency') = ff;
                     end
-                        
-                    
+
                 else
                     % or need to generate those later
                     obj.epochMode = 'flashingSpots';
