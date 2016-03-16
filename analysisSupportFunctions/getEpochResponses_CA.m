@@ -524,6 +524,7 @@ for i=1:L
     tailSpikeCount = length(find(spikeTimes >= intervalEnd + 0.1 & spikeTimes < intervalEnd+tailTime));
     
     %subtract baseline
+    spikeCount_baselineSubtracted = spikeCount - meanBaselineRate.*responseIntervalLen; %division?? should be *. luckily it's usually 1.
     outputStruct.spikeCount_stimInterval_baselineSubtracted.value(i) = spikeCount_baselineSubtracted;
     outputStruct.spikeRate_stimInterval_baselineSubtracted.value(i) = spikeCount_baselineSubtracted/responseIntervalLen;
     
@@ -531,6 +532,8 @@ for i=1:L
     outputStruct.spikeCount_tailInterval_baselineSubtracted.value(i) = tailSpikeCount_baselineSubtracted;
     
     %subtract baseline
+    outputStruct.spikeCount_ONSET_400ms_baselineSubtracted.value(i) = outputStruct.spikeCount_ONSET_400ms.value(i) - meanBaselineRate.*0.4; %should be *.
+    outputStruct.spikeCount_OFFSET_400ms_baselineSubtracted.value(i) = outputStruct.spikeCount_OFFSET_400ms.value(i) - meanBaselineRate.*0.4; %should be *.
     
     outputStruct.spikeCount_ONSET_after200ms_baselineSubtracted.value(i) = ...
         outputStruct.spikeCount_ONSET_after200ms.value(i) - meanBaselineRate*(responseIntervalLen-0.2);
