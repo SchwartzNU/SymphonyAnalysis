@@ -11,14 +11,14 @@ try
     localModDate = fileinfo.datenum;
     load([ANALYSIS_FOLDER 'cellData' filesep cellDataName '.mat']); %load cellData
     cellData_local = cellData;
-    disp(['Local copy of ' cellDataName ' loaded']);
+    disp([cellDataName ': Local copy loaded']);
 catch
-    disp(['Local copy of ' cellDataName ' not found']);
+    disp([cellDataName ': Local copy not found']);
 end
 
 if SYNC_TO_SERVER
     if exist([filesep 'Volumes' filesep 'SchwartzLab'  filesep 'CellDataMaster']) == 7 %sever is connected and CellDataMaster folder is found
-        disp('CellDataMaster found');
+%         disp('CellDataMaster found');
         try
             fileinfo = dir([filesep 'Volumes' filesep 'SchwartzLab'  filesep 'CellDataMaster'  filesep cellDataName '.mat']);
             serverModDate = fileinfo.datenum;
@@ -81,7 +81,7 @@ if SYNC_TO_SERVER
             disp('adding new entry');
             new_entry = true;
         else %check status
-            disp('found existing entry');
+            disp([cellDataName ': Found local cellData']);
             curStatus = status(ind);
         end
         
@@ -106,7 +106,7 @@ if SYNC_TO_SERVER
                     disp('adding new entry');
                     new_entry = true;
                 else %check status
-                    disp('found existing entry');
+                    disp([cellDataName ': Found local cellData']);
                     curStatus = status(ind);
                 end
                 time_elapsed = toc;

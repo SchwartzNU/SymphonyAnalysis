@@ -304,7 +304,7 @@ classdef LabDataGUI < handle
                 'ColumnName', {'Tag', 'Value'}, ...
                 'ColumnEditable', logical([0 0]), ...
                 'RowName', [], ...
-                'Data', cell(7,2));
+                'Data', cell(12,2));
             
             tablePos = get(obj.handles.cellTagsTable,'Position');
             tableWidth = tablePos(3);
@@ -390,7 +390,7 @@ classdef LabDataGUI < handle
                 'ColumnName', {'Param', 'Operator', 'Value'}, ...
                 'ColumnEditable', logical([1 1 1]), ...
                 'CellEditCallback', @(uiobj, evt)obj.cellFilterTableEdit(evt), ...
-                'Data', cell(7,3));
+                'Data', cell(12,3));
             
             L_cellFilterPattern = uiextras.HBox('Parent',L_filterBox);
             cellFilterPatternText = uicontrol('Parent', L_cellFilterPattern, ...
@@ -576,6 +576,7 @@ classdef LabDataGUI < handle
             for i=1:length(obj.curDataSets)
                 %curName =[cellDataFolder obj.curDataSets{i} '.mat'];
                 %load(curName);
+                fprintf('LabDataGUI select cell: ');
                 cellData = loadAndSyncCellData(obj.curDataSets{i});
                 dataSetsList = [dataSetsList, cellData.savedDataSets.keys];
             end
@@ -792,6 +793,7 @@ classdef LabDataGUI < handle
                 drawnow;
                 %curName_fixed = [cellDataFolder curName '.mat'];
                 %load(curName_fixed);
+                fprintf('LabDataGUI load cell: ');
                 cellData = loadAndSyncCellData(curName);
                 obj.curCellData = cellData;
                 set(obj.fig, 'Name', ['LabDataGUI: ' obj.projName]);
@@ -877,6 +879,7 @@ classdef LabDataGUI < handle
                     %figure out cellType and add cell to labData
                     %curName = [cellDataFolder cellDataNames{j}];
                     %load(curName); %loads cellData
+                    fprintf('LabDataGUI load names: ');
                     cellData = loadAndSyncCellData(cellDataNames{j});
                     if cellData.get('Nepochs') > 0
                         if  ~isnan(cellData.epochs(1).get('amp2')) %if 2 amps
@@ -941,6 +944,7 @@ classdef LabDataGUI < handle
                         obj.fullCellDataList = [obj.fullCellDataList cellDataNames{j}];
                         %curName = [cellDataFolder cellDataNames{j}];
                         %load(curName); %loads cellData
+                        fprintf('LabDataGUI load epoch & cell keys: ');
                         cellData = loadAndSyncCellData(cellDataNames{j});
                         
                         %                     %automatically fix cellData save locations here
@@ -1053,6 +1057,7 @@ classdef LabDataGUI < handle
                         for i=1:length(cellDataNames)
                             %curName = [cellDataFolder cellDataNames{i} '.mat'];
                             %load(curName);
+                            fprintf('LabDataGUI change cell type: ');
                             cellData = loadAndSyncCellData(cellDataNames{i});
                             %keyboard;
                             if ~isnan(cellData.epochs(1).get('amp2')) %if 2 amps
@@ -1256,7 +1261,7 @@ classdef LabDataGUI < handle
         
         function clearCellInformation(obj)
             %set cellTagsTable
-            set(obj.handles.cellTagsTable, 'Data', cell(7,2));
+            set(obj.handles.cellTagsTable, 'Data', cell(12,2));
             
             %set cell position
             set(obj.handles.cellPositionTable, 'Data', cell(1,3));

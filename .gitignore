@@ -1,1 +1,5 @@
+*.m~
+*.asv
+*.bak
+*.DS_Store
 *.asv
