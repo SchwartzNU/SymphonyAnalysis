@@ -1,12 +1,14 @@
-function susCrossInd = getSustainedThresCross(V,th)
-%Adam 9/22/15
+%Adam 9/22/15, change 2/13/16
 
 
+% % % definition of "maximum"
+Vsort = sort(V,'descend');
+Vmax = median(Vsort(1:10));
+th = 0.5*Vmax;
+upperTh = 0.8*Vmax;
+maxInd = find(V>=upperTh);
 
-
-[MaxV, MaxVind] = max(V);
 zeroInd = find(V == 0);
-maxInd = find(V == MaxV);
 susCrossInd = [];
 
 
@@ -22,7 +24,7 @@ for indOfInd = 1:length(Ind)
     if ~isempty(nextZeros)
         nextZero = nextZeros(1);
     end;
-    nextMaxima = maxInd(maxInd>Ind(indOfInd));
+    nextMaxima = maxInd(maxInd>=Ind(indOfInd));
     if ~isempty(nextMaxima)
         nextMax = nextMaxima(1);
     end;
@@ -31,14 +33,9 @@ for indOfInd = 1:length(Ind)
              susCrossInd = [susCrossInd, Ind(indOfInd)];
         end;
     end;
-    %if nextMax is empty - then don't include,
-    %unless it's the case below
+    %if nextMax is empty - then don't include
 
 end;
-%If no such crossing was found, then the only crossings found are also maxima
-%Commenting this out is an option, which will give more NaNs but maybe fewer outliers
-if isempty(susCrossInd) 
-    susCrossInd = MaxVind;
-end;
+
 
 
