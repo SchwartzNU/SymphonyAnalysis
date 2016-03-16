@@ -32,6 +32,9 @@ for fi = 1:numFiles
     
     
     cellData = correctAngles(cellData, files{fi});
+    if cellData == 1
+        continue
+    end
 %     cellData.cellType = 'WFDS';
 
 

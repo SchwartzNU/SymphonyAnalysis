@@ -121,7 +121,7 @@ classdef ShapeData < handle
             % add default values for columns that we don't have in the epoch
             if ~isKey(obj.shapeDataColumns, 'intensity')
                 newColumnsNames{end+1} = 'intensity';
-                newColumnsData = horzcat(newColumnsData, ones(length(obj.shapeDataMatrix),1));
+                newColumnsData = horzcat(newColumnsData, ones(size(obj.shapeDataMatrix,1),1));
             end
             
             if ~isKey(obj.shapeDataColumns, 'startTime')
@@ -134,12 +134,12 @@ classdef ShapeData < handle
             end
                                 
             if ~isKey(obj.shapeDataColumns, 'diameter')
-                newColumnsData = horzcat(newColumnsData, obj.spotDiameter * ones(length(obj.shapeDataMatrix),1));
+                newColumnsData = horzcat(newColumnsData, obj.spotDiameter * ones(size(obj.shapeDataMatrix,1),1));
                 newColumnsNames{end+1} = 'diameter';
             end
             
             if ~isKey(obj.shapeDataColumns, 'flickerFrequency')
-                newColumnsData = horzcat(newColumnsData, 0 * ones(length(obj.shapeDataMatrix),1));
+                newColumnsData = horzcat(newColumnsData, zeros(size(obj.shapeDataMatrix,1),1));
                 newColumnsNames{end+1} = 'flickerFrequency';
             end
 
