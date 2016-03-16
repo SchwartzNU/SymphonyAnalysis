@@ -304,7 +304,7 @@ classdef LabDataGUI < handle
                 'ColumnName', {'Tag', 'Value'}, ...
                 'ColumnEditable', logical([0 0]), ...
                 'RowName', [], ...
-                'Data', cell(7,2));
+                'Data', cell(12,2));
             
             tablePos = get(obj.handles.cellTagsTable,'Position');
             tableWidth = tablePos(3);
@@ -390,7 +390,7 @@ classdef LabDataGUI < handle
                 'ColumnName', {'Param', 'Operator', 'Value'}, ...
                 'ColumnEditable', logical([1 1 1]), ...
                 'CellEditCallback', @(uiobj, evt)obj.cellFilterTableEdit(evt), ...
-                'Data', cell(7,3));
+                'Data', cell(12,3));
             
             L_cellFilterPattern = uiextras.HBox('Parent',L_filterBox);
             cellFilterPatternText = uicontrol('Parent', L_cellFilterPattern, ...
@@ -1261,7 +1261,7 @@ classdef LabDataGUI < handle
         
         function clearCellInformation(obj)
             %set cellTagsTable
-            set(obj.handles.cellTagsTable, 'Data', cell(7,2));
+            set(obj.handles.cellTagsTable, 'Data', cell(12,2));
             
             %set cell position
             set(obj.handles.cellPositionTable, 'Data', cell(1,3));
