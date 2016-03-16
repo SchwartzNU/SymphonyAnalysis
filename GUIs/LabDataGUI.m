@@ -1238,7 +1238,7 @@ classdef LabDataGUI < handle
             temp = textscan(fid, '%s', 'delimiter', '\n');
             cellNames_old = temp{1};
             fclose(fid);
-            cellNames_new = cellNames_old(~strcmp(cellNames_old, cellNames));
+            cellNames_new = setdiff(cellNames_old,cellNames);
             
             fid = fopen([obj.projFolder 'cellNames.txt'], 'w');
             for i=1:length(cellNames_new)
