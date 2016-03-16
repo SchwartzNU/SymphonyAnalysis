@@ -422,7 +422,6 @@ if ~isempty(T50_up)
     if ~isempty(prePos)
         outputStruct.stimToEnd_avgTrace_latencyToT50.value = T50_up(prePos) / sampleRate;
     end
-<<<<<<< HEAD
     if ~isempty(T50_down)
         timeDiff_up = T50_up - pos;
         timeDiff_down = T50_down - pos;
@@ -433,7 +432,7 @@ if ~isempty(T50_up)
         
         if ~isempty(prePos) && ~isempty(postPos)
             outputStruct.stimToEnd_respIntervalT50.value = (T50_down(postPos) - T50_up(prePos)) / sampleRate;
-=======
+        end
 end
 
 %ONSET
@@ -470,7 +469,6 @@ if ~isempty(T25_up) && ~isempty(T25_down)
         outputStruct.ONSET_respIntervalT25.value = (T25_down(postPos) - T25_up(prePos)) / sampleRate;
         for i=1:L
             outputStruct.ONSET_chargeT25.value(i) = mean(MstimToEnd(i,T25_up(prePos):T25_down(postPos))) * outputStruct.ONSET_respIntervalT25.value;
->>>>>>> origin/master
         end
     end
 end
