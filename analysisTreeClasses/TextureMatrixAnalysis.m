@@ -487,6 +487,17 @@ classdef TextureMatrixAnalysis < AnalysisTree
             hold('off');
         end
         
+        function plotMeanData_stimToEnd_gblSubt(node, cellData)
+            blurRootData = node.get(childrenByValue(node, 1, 'name', 'Across seed tree'));
+            xvals = blurRootData.pixelBlur;
+            yMean = blurRootData.spikeCount_stimToEnd_grndBlSubt.mean_c;
+            yMeanErr = blurRootData.spikeCount_stimToEnd_grndBlSubt.SEM_c;
+            errorbar(xvals, yMean, yMeanErr,'r');
+            xlabel('Pixel blur');
+            ylabel('Spike count stimToEnd gblSubt (norm)');
+            hold('off');
+        end
+        
     end
     
 end
