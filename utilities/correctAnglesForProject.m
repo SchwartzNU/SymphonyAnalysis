@@ -25,7 +25,7 @@ numFiles = length(files);
 
 %% loop through cellData
 % angles are relative to moving bar towards direction
-for fi = 1:numFiles
+for fi = numFiles:-1:1
     fprintf('processing cellData %d of %d: %s\n', fi, numFiles, files{fi})
     fname = fullfile(cellData_folder, [files{fi}, '.mat']);
     load(fname)
@@ -39,6 +39,7 @@ for fi = 1:numFiles
 
 
     %% Save cellData
+    disp('saving cell data');
     save(fname, 'cellData');
     
 end
