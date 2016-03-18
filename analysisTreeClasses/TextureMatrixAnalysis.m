@@ -494,7 +494,7 @@ classdef TextureMatrixAnalysis < AnalysisTree
             yMeanErr = blurRootData.spikeCount_stimToEnd_grndBlSubt.SEM_c;
             errorbar(xvals, yMean, yMeanErr,'r');
             xlabel('Pixel blur');
-            ylabel('Spike count stimToEnd gblSubt (norm)');
+            ylabel('Spike count stimToEnd gblSubt');
             hold('off');
         end
         
