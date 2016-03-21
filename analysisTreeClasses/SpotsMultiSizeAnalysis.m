@@ -335,7 +335,7 @@ classdef SpotsMultiSizeAnalysis < AnalysisTree
             ylabel(['spikeCount_stimInterval_baselineSubtracted (' yField.units ')']);
         end
         
-<<<<<<< Updated upstream
+%%<<<<<<< Updated upstream
         function plot_spotSizeVsONSET_FRhalfMaxSusLatency(node, cellData)
             rootData = node.get(1);
             xvals = rootData.spotSize;
@@ -441,7 +441,6 @@ classdef SpotsMultiSizeAnalysis < AnalysisTree
             ylabel(['stimToEnd_avgTrace_latencyToT25 (' yField.units ')']);
         end
         
-=======
         function plot_spotSizeVsspikeCount_stimTo200ms(node, cellData)
             rootData = node.get(1);
             xvals = rootData.spotSize;
@@ -471,7 +470,7 @@ classdef SpotsMultiSizeAnalysis < AnalysisTree
             xlabel('spotSize');
             ylabel(['spikeCount_stimAfter200ms (' yField.units ')']);
         end
->>>>>>> Stashed changes
+
     end
     
 end
