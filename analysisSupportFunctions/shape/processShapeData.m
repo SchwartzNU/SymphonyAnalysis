@@ -17,6 +17,7 @@ end
 [~,epochOrder] = sort(pId);
 epochData = epochData(epochOrder);
 ad.epochData = epochData;
+observationColumns = {};
 
 
 %% create full positions list
@@ -168,7 +169,7 @@ for p = 1:num_epochs
 
         % add distance from previous spot to check for overlap effects
         %                         1   2   3           4         5          6          7          8             9              10                11
-        ad.observationColumns = {'X','Y','intensity','voltage','respMean','respPeak','tHalfMax','distFromPrev','sourceEpoch','signalStartIndex','signalEndIndex'};
+        observationColumns = {'X','Y','intensity','voltage','respMean','respPeak','tHalfMax','distFromPrev','sourceEpoch','signalStartIndex','signalEndIndex'};
         oi = oi + 1;
         resp = e.response(segmentIndices);
         mn = mean(resp);
@@ -246,6 +247,7 @@ end
 ad.positions = all_positions;
 % ad.responseData = responseData;
 ad.observations = observations;
+ad.observationColumns = observationColumns;
 % ad.maxIntensityResponses = maxIntensityResponses;
 % ad.spikeRate_by_spot = spikeRate_by_spot;
 % od.displayTime = displayTime_on; 
