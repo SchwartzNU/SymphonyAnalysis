@@ -54,13 +54,25 @@ classdef DriftingTextureAnalysis < AnalysisTree
             obj = obj.percolateUp(leafIDs, singleValParamList, singleValParamList);
             obj = obj.percolateUp(leafIDs, collectedParamList, collectedParamList);
             
+%             spatialFreqLevelNodes = getTreeLevel(obj, 'spatialFreq');
+%             for i=1:length(spatialFreqLevelNodes)
+%                 nodeData = obj.get(spatialFreqLevelNodes(i));
+%                 nodeData = addDSIandOSI(nodeData, 'gratingAngle');
+%                 nodeData.stimParameterList = {'gratingAngle'};  
+%                 nodeData.byEpochParamList = byEpochParamList;
+%                 nodeData.singleValParamList = singleValParamList;
+%                 nodeData.collectedParamList = collectedParamList;
+%                 obj = obj.set(spatialFreqLevelNodes(i), nodeData); 
+%             end            
+            
+            
             %OSI, OSang
             rootData = obj.get(1);
-            rootData = addOSI(rootData, 'textureAngle');
-            rootData.stimParameterList = {'textureAngle'};
-            rootData.byEpochParamList = byEpochParamList;
-            rootData.singleValParamList = singleValParamList;
-            rootData.collectedParamList = collectedParamList;
+            rootData = addDSIandOSI(rootData, 'textureAngle');
+%             rootData.stimParameterList = {'textureAngle'};
+%             rootData.byEpochParamList = byEpochParamList;
+%             rootData.singleValParamList = singleValParamList;
+%             rootData.collectedParamList = collectedParamList;
             obj = obj.set(1, rootData);
         end
         
@@ -79,7 +91,12 @@ classdef DriftingTextureAnalysis < AnalysisTree
             end
             errs = yField.SEM;
             polarerror(xvals*pi/180, yvals, errs);
-            
+            hold on
+            polar([0 rootData.spikeCount_stimInterval_DSang*pi/180], [0 (100*rootData.spikeCount_stimInterval_DSI)], 'r-');
+            polar([0 rootData.spikeCount_stimInterval_OSang*pi/180], [0 (100*rootData.spikeCount_stimInterval_OSI)], 'g-');
+            title(['DSI = ' num2str(rootData.spikeCount_stimInterval_DSI) ', DSang = ' num2str(rootData.spikeCount_stimInterval_DSang) ...
+                ' and OSI = ' num2str(rootData.spikeCount_stimInterval_OSI) ', OSang = ' num2str(rootData.spikeCount_stimInterval_OSang)]);
+            hold off
         end
         
         function plot_textureAngleVsCharge_stimInterval(node, cellData)
@@ -88,7 +105,11 @@ classdef DriftingTextureAnalysis < AnalysisTree
             yField = rootData.stimToEnd_avgTracePeak;
             yvals = yField.value;
             polar(xvals*pi/180, yvals);
-
+            hold on
+            polar([0 rootData.stimToEnd_avgTracePeak_DSang*pi/180], [0 (100*rootData.stimToEnd_avgTracePeak_DSI)], 'r-');
+            polar([0 rootData.stimToEnd_avgTracePeak_OSang*pi/180], [0 (100*rootData.stimToEnd_avgTracePeak_OSI)], 'g-');
+            title(['DSI = ' num2str(rootData.stimToEnd_avgTracePeak_DSI) ', DSang = ' num2str(rootData.stimToEnd_avgTracePeak_DSang) ...
+                ' and OSI = ' num2str(rootData.stimToEnd_avgTracePeak_OSI) ', OSang = ' num2str(rootData.stimToEnd_avgTracePeak_OSang)]);
             hold off;
         end        
     end
