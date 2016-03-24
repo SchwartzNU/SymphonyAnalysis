@@ -124,7 +124,7 @@ classdef DriftingGratingsAnalysis < AnalysisTree
             ylabel(['F2 (' yField(1).units ')']);
         end
         
-         function plot_gratingAngleVsF2overF1(node, cellData)
+        function plot_gratingAngleVsF2overF1(node, cellData)
             rootData = node.get(1);
             xvals = rootData.gratingAngle;
             yField = rootData.F2overF1;
