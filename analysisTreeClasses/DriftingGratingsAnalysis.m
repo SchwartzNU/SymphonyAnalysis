@@ -134,7 +134,17 @@ classdef DriftingGratingsAnalysis < AnalysisTree
             ylabel('F2 over F1');
         end
          
-         
+        function plotLeaf(node, cellData)
+            leafData = node.get(1);
+            xField = leafData.cycleAvg_x;
+            xvals = xField.value;
+            yField = leafData.cycleAvg_y;
+            yvals = yField.value;
+            plot (xvals,yvals);
+            xlabel('Time (s)');
+            ylabel('Current (pA)');
+        end
+       
     end
 end
 

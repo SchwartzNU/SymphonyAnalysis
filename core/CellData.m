@@ -321,7 +321,7 @@ classdef CellData < handle
             ylabel(ax, 'Spike rate (Hz)');
             %hold(ax, 'off');
         end
-        
+             
         function detectSpikes(obj, mode, threshold, epochInd, interactive, streamName)
             if nargin < 6
                 streamName = 'Amplifier_Ch1';
