@@ -17,6 +17,7 @@ end
 [~,epochOrder] = sort(pId);
 epochData = epochData(epochOrder);
 ad.epochData = epochData;
+ad.positionOffset = epochData{1}.positionOffset;
 observationColumns = {};
 
 
@@ -115,13 +116,16 @@ for p = 1:num_epochs
             lightOnTime(e.t > startTime(si) & e.t < endTime(si)) = epoch_intensities(si);
         end
         
+        % make light signal decay with time to better align to very start of light for transience
+%         lightOnTime = conv(lightOnTime
+        
         [c_on,lags_on] = xcorr(e.response, lightOnTime);
         [~,I] = max(c_on);
         t_offset = lags_on(I) ./ e.sampleRate;
         
         % this is to give it a bit of slack early in case some strong
         % responses are making it delay too much
-        t_offset = t_offset - .02;        
+        t_offset = t_offset - .02;
         
         ad.alignmentEpochIndex = ei;
         ad.alignmentLightOn = lightOnTime;
@@ -187,6 +191,10 @@ for p = 1:num_epochs
         observationColumns = {'X','Y','intensity','voltage','respMean','respPeak','tHalfMax','distFromPrev','sourceEpoch','signalStartIndex','signalEndIndex'};
         oi = oi + 1;
         resp = e.response(segmentIndices);
+        
+        if abs(e.ampVoltage) > 0 % a nice alignment for the whole cell data
+            resp = resp - mean(resp(1:10));
+        end
         mn = mean(resp);
         pk = max(resp);
         if pk > 0

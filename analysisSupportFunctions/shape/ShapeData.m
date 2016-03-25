@@ -10,6 +10,7 @@ classdef ShapeData < handle
         sampleRate
         preTime
         stimTime
+        positionOffset
         
         spikes
         spikeRate
@@ -53,6 +54,7 @@ classdef ShapeData < handle
                 obj.numValues = epoch.get('numValues');
                 obj.numValueRepeats = epoch.get('numValueRepeats');
                 obj.stimTime = epoch.get('stimTime');
+                obj.positionOffset = [epoch.get('offsetX'),epoch.get('offsetY')];
                 
             elseif strcmp(runmode, 'online')
                 obj.sessionId = epoch.getParameter('sessionId');
@@ -72,6 +74,7 @@ classdef ShapeData < handle
                 obj.numValues = epoch.getParameter('numValues');
                 obj.numValueRepeats = epoch.getParameter('numValueRepeats');
                 obj.stimTime = epoch.getParameter('stimTime');
+                obj.positionOffset = [epoch.getParameter('offsetX'),epoch.getParameter('offsetY')];
             end
             
             % process shape data from epoch

@@ -1,7 +1,7 @@
 function [] = plotShapeData(ad, mode)
 
 
-function [] = printPresentationParams(ad)
+if strcmp(mode, 'printParameters')
     firstEpoch = ad.epochData{1};
     fprintf('num positions: %d\n', length(ad.positions));
     fprintf('num values: %d\n', firstEpoch.numValues);
@@ -11,9 +11,10 @@ function [] = printPresentationParams(ad)
         voltages(i) = ad.epochData{i}.ampVoltage;
     end
     fprintf('holding voltages: %d\n', voltages');
-end
 
-if strncmp(mode, 'plotSpatial', 11)
+    disp(ad);
+
+elseif strncmp(mode, 'plotSpatial', 11)
 % elseif strcmp(mode, 'plotSpatial_tHalfMax')
     if strfind(mode, 'mean')
         mode_col = 5;
@@ -66,7 +67,7 @@ if strncmp(mode, 'plotSpatial', 11)
             a = vi + (ii-1) * num_voltages;
             
             axes(ha(a));
-            plotSpatial(goodPositions, vals, sprintf('%s at V = %d mV, intensity = %f', smode, voltage, intensity), 1, 1);
+            plotSpatial(goodPositions, vals, sprintf('%s at V = %d mV, intensity = %f', smode, voltage, intensity), 1, 1, ad.positionOffset);
 %             caxis([0, max(vals)]);
 %             colormap(flipud(colormap))
 
@@ -249,6 +250,7 @@ elseif strcmp(mode, 'responsesByPosition')
             epoch = ad.epochData{entry(9)};
             
             signal = -3 * epoch.response(entry(10):entry(11));
+            signal = signal - mean(signal(1:10));
             plot(ha(poi), signal,'r');
             
             max_value = max(max_value, max(signal));
@@ -260,6 +262,7 @@ elseif strcmp(mode, 'responsesByPosition')
             epoch = ad.epochData{entry(9)};
             
             signal = epoch.response(entry(10):entry(11));
+            signal = signal - mean(signal(1:10));
             plot(ha(poi), signal,'b');
             
             max_value = max(max_value, max(signal));
@@ -299,21 +302,31 @@ elseif strcmp(mode, 'wholeCell')
         r_ex(poi,1) = mean(obs(obs_sel_ex,5),1);
         r_in(poi,1) = mean(obs(obs_sel_in,5),1);
     end
-    r_exinrat = r_ex ./ r_in;
+    v_reversal_ex = 0;
+    v_reversal_in = -60;
+    r_ex = r_ex ./ abs(v_ex - v_reversal_ex);
+    r_in = r_in ./ abs(v_in - v_reversal_in);
+    r_exinrat = r_ex - r_in;
+%     r_exinrat = sign(r_exinrat) .* log10(abs(r_exinrat));
     
+    max_ = max(vertcat(r_ex, r_in));
+    min_ = min(vertcat(r_ex, r_in));
+
     ha = tight_subplot(1,3);
 
     % EX
     axes(ha(1))
-    plotSpatial(ad.positions, r_ex, sprintf('Excitatory: %d mV', v_ex), 0, 1)
+    plotSpatial(ad.positions, r_ex, sprintf('Excitatory conductance: %d mV', v_ex), 1, 1, ad.positionOffset)
+%     caxis([min_, max_]);
     
     % IN
     axes(ha(2))
-    plotSpatial(ad.positions, r_in, sprintf('Inhibitory: %d mV', v_in), 0, 1)
+    plotSpatial(ad.positions, r_in, sprintf('Inhibitory conductance: %d mV', v_in), 1, 1, ad.positionOffset)
+%     caxis([min_, max_]);
     
     % Ratio    
     axes(ha(3))
-    plotSpatial(ad.positions, r_exinrat, 'Ex/In ratio', 1, 0)
+    plotSpatial(ad.positions, r_exinrat, 'Ex/In difference', 1, 0, ad.positionOffset)
     
 
 elseif strcmp(mode, 'spatialDiagnostics')
@@ -339,7 +352,7 @@ elseif strcmp(mode, 'spatialDiagnostics')
             vals(poi,1) = std(obs(obs_sel,5),1) / mean(obs(obs_sel,5),1);
         end    
         axes(ha(vi));
-        plotSpatial(ad.positions, vals, sprintf('STD/mean at V = %d mV', voltage), 1, 0)
+        plotSpatial(ad.positions, vals, sprintf('STD/mean at V = %d mV', voltage), 1, 0, ad.positionOffset)
 %         caxis([0, max(vals)]);
     end
     
@@ -376,7 +389,8 @@ else
     disp('incorrect plot type')
 end
 
-    function plotSpatial(positions, values, titl, addcolorbar, gaussianfit)
+    function plotSpatial(positions, values, titl, addcolorbar, gaussianfit, positionOffset)
+        positions = bsxfun(@plus, positions, positionOffset);
         largestDistanceOffset = max(abs(positions(:)));
         X = linspace(-1*largestDistanceOffset, largestDistanceOffset, 100);
         [xq,yq] = meshgrid(X, X);        
@@ -392,13 +406,19 @@ end
         end
         if gaussianfit
             hold on
-            gfp = fit2DGaussian(positions, vals);
+            gfp = fit2DGaussian(positions, values);
 %             disp([dataNames{ooi}, ' center of gaussian fit: ' num2str([gfp('centerX'), gfp('centerY')]) ' um'])
 
             plot(gfp('centerX'), gfp('centerY'),'red','MarkerSize',20, 'Marker','+')
             ellipse(gfp('sigma2X'), gfp('sigma2Y'), -gfp('angle'), gfp('centerX'), gfp('centerY'), 'red');
             hold off
-        end            
+        end
+        
+        % draw soma
+        rectangle('Position',[0, 0, 10, 10],'Curvature',1,'FaceColor',[1 0 1]);
+        
+        set(gca, 'XTickMode', 'auto', 'XTickLabelMode', 'auto')
+        set(gca, 'YTickMode', 'auto', 'YTickLabelMode', 'auto')
     end
 
 end
