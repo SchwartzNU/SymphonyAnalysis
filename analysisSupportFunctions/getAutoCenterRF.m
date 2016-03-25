@@ -8,7 +8,7 @@ end
 
 
 %% Process it using standard function
-ad = processShapeData(shapeData)
+ad = processShapeData(shapeData);
 
 
 %% Return output to tree

@@ -54,16 +54,16 @@ for p = 1:num_epochs
 
     %% find the time offset from light to spikes, assuming On semi-transient cell
 %     lightOnValue = 1.0 * (mod(e.t - e.preTime, e.spotTotalTime) < e.spotOnTime * 1.2);
-    lightOnTime = zeros(size(e.t));
-
-    for si = 1:e.totalNumSpots
-        lightOnTime(e.t > startTime(si) & e.t < endTime(si)) = epoch_intensities(si);
-    end
-    lightOffTime = ~lightOnTime * 1.0;
-    % 
-    [c_on,lags_on] = xcorr(e.response, lightOnTime);
-    [~,I] = max(c_on);
-    t_offset_on = lags_on(I) ./ e.sampleRate;
+%     lightOnTime = zeros(size(e.t));
+% 
+%     for si = 1:e.totalNumSpots
+%         lightOnTime(e.t > startTime(si) & e.t < endTime(si)) = epoch_intensities(si);
+%     end
+% %     lightOffTime = ~lightOnTime * 1.0;
+%     % 
+%     [c_on,lags_on] = xcorr(e.response, lightOnTime);
+%     [~,I] = max(c_on);
+%     t_offset = lags_on(I) ./ e.sampleRate;
     
 %     if strcmp(e.epochMode, 'temporalAlignment')
 %         figure(67)
@@ -81,9 +81,9 @@ for p = 1:num_epochs
 %         plot(e.t-t_offset_on, e.response./max(e.response))
 %     end
     
-    [c_off,lags_off] = xcorr(e.response, lightOffTime);
-    [~,I] = max(c_off);
-    t_offset_off = lags_off(I) ./ e.sampleRate;
+%     [c_off,lags_off] = xcorr(e.response, lightOffTime);
+%     [~,I] = max(c_off);
+%     t_offset_off = lags_off(I) ./ e.sampleRate;
     
 %     if t_offset_on < t_offset_off
 %         disp('On cell')
@@ -92,25 +92,37 @@ for p = 1:num_epochs
 % %         t_offset = t_offset_off;
 %     end
     
-    t_offset = [t_offset_on, t_offset_off];
+%     t_offset = [t_offset_on, t_offset_off];  
     
-    if strcmp(e.epochMode, 'flashingSpots')
-        t_offset = mod(t_offset, e.spotTotalTime);
-        
-        % might go too low if the responses are actually more than one time
-        % unit late:
-        t_offset(t_offset < 0.1) = t_offset(t_offset < 0.1) + e.spotTotalTime; 
-    end
+%     if strcmp(e.epochMode, 'flashingSpots')
+%         t_offset = mod(t_offset, e.spotTotalTime);
+%         
+%         % might go too low if the responses are actually more than one time
+%         % unit late:
+%         t_offset(t_offset < 0.1) = t_offset(t_offset < 0.1) + e.spotTotalTime; 
+%     end
     
-    % this is to give it a bit of slack early in case some strong
-    % responses are making it delay too much
-    t_offset = t_offset - .02;
+
     
     % pull temporal alignment from temporal alignment epoch if available,
     % or store it now if generated
 %     disp(e.epochMode)
     skipResponses = 0;
     if strcmp(e.epochMode, 'temporalAlignment')
+        lightOnTime = zeros(size(e.t));
+
+        for si = 1:e.totalNumSpots
+            lightOnTime(e.t > startTime(si) & e.t < endTime(si)) = epoch_intensities(si);
+        end
+        
+        [c_on,lags_on] = xcorr(e.response, lightOnTime);
+        [~,I] = max(c_on);
+        t_offset = lags_on(I) ./ e.sampleRate;
+        
+        % this is to give it a bit of slack early in case some strong
+        % responses are making it delay too much
+        t_offset = t_offset - .02;        
+        
         ad.alignmentEpochIndex = ei;
         ad.alignmentLightOn = lightOnTime;
         ad.alignmentRate = e.response;
@@ -123,6 +135,9 @@ for p = 1:num_epochs
         t_offset = alignmentTemporalOffset;
 %         disp('using t_offset from alignment epoch')
 %         disp(t_offset)
+    else
+        t_offset = 0.3;
+        disp('using default temporal offset of 0.3');
     end
     
     
