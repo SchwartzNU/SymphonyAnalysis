@@ -64,7 +64,7 @@ classdef AutoCenterAnalysis < AnalysisTree
             end
         end
         
-        function plotSpatial_mean(node, ~)
+        function plot0Spatial_mean(node, ~)
             
             nodeData = node.get(1);
 

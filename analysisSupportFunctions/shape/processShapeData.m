@@ -192,9 +192,9 @@ for p = 1:num_epochs
         oi = oi + 1;
         resp = e.response(segmentIndices);
         
-        if abs(e.ampVoltage) > 0 % a nice alignment for the whole cell data
-            resp = resp - mean(resp(1:10));
-        end
+%         if abs(e.ampVoltage) > 0 % a nice alignment for the whole cell data
+%             resp = resp - mean(resp(1:10));
+%         end
         mn = mean(resp);
         pk = max(resp);
         if pk > 0

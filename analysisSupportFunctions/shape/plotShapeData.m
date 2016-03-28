@@ -250,7 +250,7 @@ elseif strcmp(mode, 'responsesByPosition')
             epoch = ad.epochData{entry(9)};
             
             signal = -3 * epoch.response(entry(10):entry(11));
-            signal = signal - mean(signal(1:10));
+%             signal = signal - mean(signal(1:10));
             plot(ha(poi), signal,'r');
             
             max_value = max(max_value, max(signal));
