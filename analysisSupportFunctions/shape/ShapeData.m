@@ -206,7 +206,7 @@ classdef ShapeData < handle
 %             figure(99)
             % call after setResponse to make current like spikeRate
 %             subplot(4,1,1)
-            r = sign(obj.ampVoltage) * obj.response;
+            r = sign(obj.ampVoltage + eps) * obj.response; % use positive for 0 mV
             r = r - median(r(1:round(obj.sampleRate*obj.preTime)));
 %             plot(r)
 %             r = r - mean(r);
