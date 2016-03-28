@@ -4,6 +4,7 @@ classdef DriftingGratingsAnalysis < AnalysisTree
         EndTime = 0;
     end
     
+    
     methods
         function obj = DriftingGratingsAnalysis(cellData, dataSetName, params)
             if nargin < 3
