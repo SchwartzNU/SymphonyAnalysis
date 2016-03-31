@@ -212,21 +212,24 @@ classdef ShapeData < handle
 %             r = r - mean(r);
 %             subplot(4,1,2); plot(r);
             
-            Fstop = .02;
-            Fpass = .03;
-            Astop = 20;
-            Apass = 0.5;
-            wc_filter = designfilt('highpassiir','StopbandFrequency',Fstop, ...
-                'PassbandFrequency',Fpass,'StopbandAttenuation',Astop, ...
-                'PassbandRipple',Apass,'SampleRate',obj.sampleRate);
+%             Fstop = .02;
+%             Fpass = .03;
+%             Astop = 20;
+%             Apass = 0.5;
+%             wc_filter = designfilt('highpassiir','StopbandFrequency',Fstop, ...
+%                 'PassbandFrequency',Fpass,'StopbandAttenuation',Astop, ...
+%                 'PassbandRipple',Apass,'SampleRate',obj.sampleRate);
+
+%             wc_filter = butter(20, .03 / 5000, 'high');
+%             wc_filter = [0.999879883755627,-19.9975976751125,189.977177913569,-1139.86306748141,4844.41803679601,-15502.1377177472,38755.3442943681,-77510.6885887362,125954.868956696,-167939.825275595,184733.807803155,-167939.825275595,125954.868956696,-77510.6885887362,38755.3442943681,-15502.1377177472,4844.41803679601,-1139.86306748141,189.977177913569,-19.9975976751125,0.999879883755627];
             
-            r = filter(wc_filter, r);
+%             r = filter(wc_filter, 1, r);
 %             subplot(4,1,3)
 %             plot(r)
                         
 %             r = r - prctile(r,10); % set the bottom 10 % of samples to be negative, to keep things generally positive
            
-            r = r - median(r(1:round(obj.sampleRate*obj.preTime)));
+%             r = r - median(r(1:round(obj.sampleRate*obj.preTime)));
 
 %             subplot(4,1,4)
 %             plot(r)
