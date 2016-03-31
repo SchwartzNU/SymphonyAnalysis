@@ -104,6 +104,10 @@ elseif strcmp(mode, 'subunit')
         voltages = unique(obs(:,4));
         num_voltages = length(voltages);
         
+        
+        goodPosIndex = 0;
+        goodPositions = [];
+        goodSlopes = [];
         for p = 1:num_positions
 %             tight_subplot(dim1,dim2,p)
             axes(ha(p))
@@ -123,13 +127,25 @@ elseif strcmp(mode, 'subunit')
                 if length(unique(intensities)) > 1
                     pfit = polyfit(intensities, responses, 1);
                     plot(intensities, polyval(pfit,intensities))
+                    
+                    
+                    goodPosIndex = goodPosIndex + 1;
+                    goodPositions(goodPosIndex, :) = pos;
+                    goodSlopes(goodPosIndex, 1) = pfit(1);
                 end
+%                 title(pfit)
     %             ylim([0,max(rate)+.1])
             end
             grid on
             hold off
+            
+            set(gca, 'XTickMode', 'auto', 'XTickLabelMode', 'auto')
+            set(gca, 'YTickMode', 'auto', 'YTickLabelMode', 'auto')
 
         end
+        
+        figure(99)
+        plotSpatial(goodPositions, goodSlopes, 'intensity response slope', 1, 0, ad.positionOffset)
         
 %         set(ha(1:end-dim2),'XTickLabel','');
 %         set(ha,'YTickLabel','')
@@ -139,7 +155,7 @@ elseif strcmp(mode, 'subunit')
     
 elseif strcmp(mode, 'temporalResponses')
     num_plots = length(ad.epochData);
-    ha = tight_subplot(num_plots, 1, .1);
+    ha = tight_subplot(num_plots, 1, .03);
     
     for ei = 1:num_plots
         plot(ha(ei), ad.epochData{ei}.t, ad.epochData{ei}.response);
@@ -236,6 +252,7 @@ elseif strcmp(mode, 'responsesByPosition')
     min_value = inf;
     
     for poi = 1:num_positions
+%         fprintf('%d',poi)
         pos = ad.positions(poi,:);
         obs_sel = ismember(obs(:,1:2), pos, 'rows');
         obs_sel = obs_sel & obs(:,3) == maxIntensity;
@@ -249,8 +266,8 @@ elseif strcmp(mode, 'responsesByPosition')
             entry = obs(ii,:)';
             epoch = ad.epochData{entry(9)};
             
-            signal = -3 * epoch.response(entry(10):entry(11));
-%             signal = signal - mean(signal(1:10));
+            signal = -1 * epoch.response(entry(10):entry(11));
+            signal = signal - mean(signal(1:10));
             plot(ha(poi), signal,'r');
             
             max_value = max(max_value, max(signal));
@@ -279,6 +296,7 @@ elseif strcmp(mode, 'responsesByPosition')
 %         title(ha(poi), pos);
         
     end
+%     fprintf('\n');
     linkaxes(ha)
     ylim(ha(1), [min_value, max_value]);
 %     xlim(ha(1), [signal(1), signal(end)])
@@ -292,15 +310,22 @@ elseif strcmp(mode, 'wholeCell')
     
     r_ex = [];
     r_in = [];
-    
+
+    posIndex = 0;
+    goodPositions = [];
     for poi = 1:length(ad.positions)
         pos = ad.positions(poi,:);
         obs_sel = ismember(obs(:,1:2), pos, 'rows');
         obs_sel = obs_sel & obs(:,3) == maxIntensity;
         obs_sel_ex = obs_sel & obs(:,4) == v_ex;
         obs_sel_in = obs_sel & obs(:,4) == v_in;
-        r_ex(poi,1) = mean(obs(obs_sel_ex,5),1);
-        r_in(poi,1) = mean(obs(obs_sel_in,5),1);
+        
+        if any(obs_sel_ex) && any(obs_sel_in)
+            posIndex = posIndex + 1;
+            r_ex(posIndex,1) = mean(obs(obs_sel_ex,5),1);
+            r_in(posIndex,1) = mean(obs(obs_sel_in,5),1);
+            goodPositions(posIndex,:) = pos;
+        end
     end
     v_reversal_ex = 0;
     v_reversal_in = -60;
@@ -316,17 +341,17 @@ elseif strcmp(mode, 'wholeCell')
 
     % EX
     axes(ha(1))
-    plotSpatial(ad.positions, r_ex, sprintf('Excitatory conductance: %d mV', v_ex), 1, 1, ad.positionOffset)
+    plotSpatial(goodPositions, r_ex, sprintf('Excitatory conductance: %d mV', v_ex), 1, 0, ad.positionOffset)
 %     caxis([min_, max_]);
     
     % IN
     axes(ha(2))
-    plotSpatial(ad.positions, r_in, sprintf('Inhibitory conductance: %d mV', v_in), 1, 1, ad.positionOffset)
+    plotSpatial(goodPositions, r_in, sprintf('Inhibitory conductance: %d mV', v_in), 1, 0, ad.positionOffset)
 %     caxis([min_, max_]);
     
     % Ratio    
     axes(ha(3))
-    plotSpatial(ad.positions, r_exinrat, 'Ex/In difference', 1, 0, ad.positionOffset)
+    plotSpatial(goodPositions, r_exinrat, 'Ex/In difference', 1, 0, ad.positionOffset)
     
 
 elseif strcmp(mode, 'spatialDiagnostics')
