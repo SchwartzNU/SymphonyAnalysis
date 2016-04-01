@@ -81,7 +81,15 @@ classdef SpikeDetectorGUI < handle
                 'Style', 'pushbutton', ...
                 'String', 'Apply to this & future epochs', ...
                 'Callback', @(uiobj, evt)obj.updateFutureSpikeTimes());
-            set(L_info, 'Sizes', [-1, -1, -1, -1, -1, -1, -1]);
+            obj.handles.skipBackward10 = uicontrol('Parent', L_info, ...
+                'Style', 'pushbutton', ...
+                'String', 'Back 10', ...
+                'Callback', @(uiobj, evt)obj.skipBackward10());
+            obj.handles.skipForward10 = uicontrol('Parent', L_info, ...
+                'Style', 'pushbutton', ...
+                'String', 'Forward 10', ...
+                'Callback', @(uiobj, evt)obj.skipForward10());
+            set(L_info, 'Sizes', [-1, -1, -1, -1, -1, -1, -1, -.5, -.5]);
             obj.handles.ax = axes('Parent', L_main, ...
                 'ButtonDownFcn', @axisZoomCallback);
             set(L_main, 'Sizes', [40, -1]);
@@ -176,7 +184,7 @@ classdef SpikeDetectorGUI < handle
             set(obj.fig, 'Name', 'Busy...');
             drawnow;
             for i=1:length(obj.epochInd)
-              if i < obj.curEpochInd
+              if i < obj.curEpochInd % this is the only unique part here
                   continue
               end
               if isSpikeEpoch(obj.cellData.epochs(obj.epochInd(i)), obj.streamName)
@@ -238,6 +246,15 @@ classdef SpikeDetectorGUI < handle
             end
             
             obj.updateUI();
+        end
+        
+        function skipBackward10(obj)
+            obj.curEpochInd = max(obj.curEpochInd-10, 1);
+            obj.loadData();
+        end
+        function skipForward10(obj)
+            obj.curEpochInd = min(obj.curEpochInd+10, length(obj.epochInd));
+            obj.loadData();
         end
         
         function initializeEpochsInDataSetsList(obj)
