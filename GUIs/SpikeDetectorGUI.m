@@ -199,8 +199,8 @@ classdef SpikeDetectorGUI < handle
             hold(obj.handles.ax, 'on');
             plot(obj.handles.ax, obj.spikeTimes, obj.data(obj.spikeTimes), 'rx');
             hold(obj.handles.ax, 'off');
-            
-            set(obj.fig, 'Name',['Spike Detector: Epoch ' num2str(obj.epochInd(obj.curEpochInd)) ': ' num2str(length(obj.spikeTimes)) ' spikes']);
+            displayName = obj.cellData.epochs(obj.epochInd(obj.curEpochInd)).get('displayName');
+            set(obj.fig, 'Name',['Spike Detector: Epoch ' num2str(obj.epochInd(obj.curEpochInd)) ' (' displayName '): ' num2str(length(obj.spikeTimes)) ' spikes']);
         end
         
         function keyHandler(obj, evt)
