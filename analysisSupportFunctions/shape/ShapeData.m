@@ -10,6 +10,7 @@ classdef ShapeData < handle
         sampleRate
         preTime
         stimTime
+        positionOffset
         
         spikes
         spikeRate
@@ -53,6 +54,7 @@ classdef ShapeData < handle
                 obj.numValues = epoch.get('numValues');
                 obj.numValueRepeats = epoch.get('numValueRepeats');
                 obj.stimTime = epoch.get('stimTime');
+                obj.positionOffset = [epoch.get('offsetX'),epoch.get('offsetY')];
                 
             elseif strcmp(runmode, 'online')
                 obj.sessionId = epoch.getParameter('sessionId');
@@ -72,6 +74,7 @@ classdef ShapeData < handle
                 obj.numValues = epoch.getParameter('numValues');
                 obj.numValueRepeats = epoch.getParameter('numValueRepeats');
                 obj.stimTime = epoch.getParameter('stimTime');
+                obj.positionOffset = [epoch.getParameter('offsetX'),epoch.getParameter('offsetY')];
             end
             
             % process shape data from epoch
@@ -121,7 +124,7 @@ classdef ShapeData < handle
             % add default values for columns that we don't have in the epoch
             if ~isKey(obj.shapeDataColumns, 'intensity')
                 newColumnsNames{end+1} = 'intensity';
-                newColumnsData = horzcat(newColumnsData, ones(length(obj.shapeDataMatrix),1));
+                newColumnsData = horzcat(newColumnsData, ones(size(obj.shapeDataMatrix,1),1));
             end
             
             if ~isKey(obj.shapeDataColumns, 'startTime')
@@ -134,12 +137,12 @@ classdef ShapeData < handle
             end
                                 
             if ~isKey(obj.shapeDataColumns, 'diameter')
-                newColumnsData = horzcat(newColumnsData, obj.spotDiameter * ones(length(obj.shapeDataMatrix),1));
+                newColumnsData = horzcat(newColumnsData, obj.spotDiameter * ones(size(obj.shapeDataMatrix,1),1));
                 newColumnsNames{end+1} = 'diameter';
             end
             
             if ~isKey(obj.shapeDataColumns, 'flickerFrequency')
-                newColumnsData = horzcat(newColumnsData, 0 * ones(length(obj.shapeDataMatrix),1));
+                newColumnsData = horzcat(newColumnsData, zeros(size(obj.shapeDataMatrix,1),1));
                 newColumnsNames{end+1} = 'flickerFrequency';
             end
 
@@ -203,27 +206,30 @@ classdef ShapeData < handle
 %             figure(99)
             % call after setResponse to make current like spikeRate
 %             subplot(4,1,1)
-            r = sign(obj.ampVoltage) * obj.response;
+            r = sign(obj.ampVoltage + eps) * obj.response; % use positive for 0 mV
             r = r - median(r(1:round(obj.sampleRate*obj.preTime)));
 %             plot(r)
 %             r = r - mean(r);
 %             subplot(4,1,2); plot(r);
             
-            Fstop = .02;
-            Fpass = .03;
-            Astop = 20;
-            Apass = 0.5;
-            wc_filter = designfilt('highpassiir','StopbandFrequency',Fstop, ...
-                'PassbandFrequency',Fpass,'StopbandAttenuation',Astop, ...
-                'PassbandRipple',Apass,'SampleRate',obj.sampleRate);
+%             Fstop = .02;
+%             Fpass = .03;
+%             Astop = 20;
+%             Apass = 0.5;
+%             wc_filter = designfilt('highpassiir','StopbandFrequency',Fstop, ...
+%                 'PassbandFrequency',Fpass,'StopbandAttenuation',Astop, ...
+%                 'PassbandRipple',Apass,'SampleRate',obj.sampleRate);
+
+%             wc_filter = butter(20, .03 / 5000, 'high');
+%             wc_filter = [0.999879883755627,-19.9975976751125,189.977177913569,-1139.86306748141,4844.41803679601,-15502.1377177472,38755.3442943681,-77510.6885887362,125954.868956696,-167939.825275595,184733.807803155,-167939.825275595,125954.868956696,-77510.6885887362,38755.3442943681,-15502.1377177472,4844.41803679601,-1139.86306748141,189.977177913569,-19.9975976751125,0.999879883755627];
             
-            r = filter(wc_filter, r);
+%             r = filter(wc_filter, 1, r);
 %             subplot(4,1,3)
 %             plot(r)
                         
 %             r = r - prctile(r,10); % set the bottom 10 % of samples to be negative, to keep things generally positive
            
-            r = r - median(r(1:round(obj.sampleRate*obj.preTime)));
+%             r = r - median(r(1:round(obj.sampleRate*obj.preTime)));
 
 %             subplot(4,1,4)
 %             plot(r)

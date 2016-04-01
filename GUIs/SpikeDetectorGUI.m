@@ -77,7 +77,19 @@ classdef SpikeDetectorGUI < handle
                 'Style', 'pushbutton', ...
                 'String', 'Apply to all epochs', ...
                 'Callback', @(uiobj, evt)obj.updateAllSpikeTimes());
-            set(L_info, 'Sizes', [-1, -1, -1, -1, -1, -1]);
+            obj.handles.applyToFutureButton = uicontrol('Parent', L_info, ...
+                'Style', 'pushbutton', ...
+                'String', 'Apply to this & future epochs', ...
+                'Callback', @(uiobj, evt)obj.updateFutureSpikeTimes());
+            obj.handles.skipBackward10 = uicontrol('Parent', L_info, ...
+                'Style', 'pushbutton', ...
+                'String', 'Back 10', ...
+                'Callback', @(uiobj, evt)obj.skipBackward10());
+            obj.handles.skipForward10 = uicontrol('Parent', L_info, ...
+                'Style', 'pushbutton', ...
+                'String', 'Forward 10', ...
+                'Callback', @(uiobj, evt)obj.skipForward10());
+            set(L_info, 'Sizes', [-1, -1, -1, -1, -1, -1, -1, -.5, -.5]);
             obj.handles.ax = axes('Parent', L_main, ...
                 'ButtonDownFcn', @axisZoomCallback);
             set(L_main, 'Sizes', [40, -1]);
@@ -161,6 +173,55 @@ classdef SpikeDetectorGUI < handle
             saveAndSyncCellData(obj.cellData) %save cellData file);
             obj.updateUI();
         end
+
+        % TERRIBLE CODE DUPLICATION -sam
+        function updateFutureSpikeTimes(obj)
+            ind = get(obj.handles.detectorModeMenu, 'value');
+            s = get(obj.handles.detectorModeMenu, 'String');
+            obj.mode = s{ind};
+            obj.threshold = str2double(get(obj.handles.thresholdEdit, 'String'));
+            
+            set(obj.fig, 'Name', 'Busy...');
+            drawnow;
+            for i=1:length(obj.epochInd)
+              if i < obj.curEpochInd % this is the only unique part here
+                  continue
+              end
+              if isSpikeEpoch(obj.cellData.epochs(obj.epochInd(i)), obj.streamName)
+                    data = obj.cellData.epochs(obj.epochInd(i)).getData(obj.streamName);
+                    data = data - mean(data);
+                    data = data';
+                    
+                    if strcmp(obj.mode, 'Simple threshold')
+                        spikeTimes = getThresCross(data,obj.threshold,sign(obj.threshold));
+                    elseif strcmp(obj.cellData.epochs(obj.epochInd(obj.curEpochInd)).get('ampMode'), 'Cell attached')
+                        spikeResults = SpikeDetector_simple(data, 1./obj.sampleRate, obj.threshold);
+                        spikeTimes = spikeResults.sp;
+                    else
+                        spikeResults = SpikeDetector_simple_Iclamp(data, 1./obj.sampleRate, obj.threshold);
+                        spikeTimes = spikeResults.sp;
+                    end
+                    
+                    %remove double-counted spikes
+                    if  length(spikeTimes) >= 2
+                        ISItest = diff(spikeTimes);
+                        spikeTimes = spikeTimes([(ISItest > 0.0015) true]);
+                    end
+                    
+                    if i==obj.curEpochInd
+                        obj.spikeTimes = spikeTimes;
+                    end
+                    
+                    if strcmp(obj.streamName, 'Amplifier_Ch1')
+                        obj.cellData.epochs(obj.epochInd(i)).attributes('spikes_ch1') = spikeTimes;
+                    else
+                        obj.cellData.epochs(obj.epochInd(i)).attributes('spikes_ch2') = spikeTimes;
+                    end
+                end
+            end
+            saveAndSyncCellData(obj.cellData) %save cellData file);
+            obj.updateUI();
+        end        
         
         function loadData(obj)
             obj.sampleRate = obj.cellData.epochs(obj.epochInd(obj.curEpochInd)).get('sampleRate');
@@ -187,6 +248,15 @@ classdef SpikeDetectorGUI < handle
             obj.updateUI();
         end
         
+        function skipBackward10(obj)
+            obj.curEpochInd = max(obj.curEpochInd-10, 1);
+            obj.loadData();
+        end
+        function skipForward10(obj)
+            obj.curEpochInd = min(obj.curEpochInd+10, length(obj.epochInd));
+            obj.loadData();
+        end
+        
         function initializeEpochsInDataSetsList(obj)
            k = obj.cellData.savedDataSets.keys;
            for i=1:length(k)
@@ -199,8 +269,8 @@ classdef SpikeDetectorGUI < handle
             hold(obj.handles.ax, 'on');
             plot(obj.handles.ax, obj.spikeTimes, obj.data(obj.spikeTimes), 'rx');
             hold(obj.handles.ax, 'off');
-            
-            set(obj.fig, 'Name',['Spike Detector: Epoch ' num2str(obj.epochInd(obj.curEpochInd)) ': ' num2str(length(obj.spikeTimes)) ' spikes']);
+            displayName = obj.cellData.epochs(obj.epochInd(obj.curEpochInd)).get('displayName');
+            set(obj.fig, 'Name',['Spike Detector: Epoch ' num2str(obj.epochInd(obj.curEpochInd)) ' (' displayName '): ' num2str(length(obj.spikeTimes)) ' spikes']);
         end
         
         function keyHandler(obj, evt)

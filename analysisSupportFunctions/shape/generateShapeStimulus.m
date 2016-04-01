@@ -96,9 +96,10 @@ function runConfig = generateStandardSearch(parameters, analysisData, runConfig)
 
     % select positions
     if parameters.generatePositions
+        rotAngle = parameters.epochNum * 1.1; % sure, why not, doesn't matter the real value
 %         positions = generatePositions('random', [parameters.numSpots, parameters.spotDiameter, searchDiameterUpdated / 2]);
         %             positions = generatePositions('grid', [obj.searchDiameter, round(sqrt(obj.numSpots))]);
-        positions = generatePositions('triangular', [searchDiameterUpdated / 2, parameters.mapResolution]);
+        positions = generatePositions('triangular', [searchDiameterUpdated / 2, parameters.mapResolution, rotAngle]);
         
         % add center offset
         positions = bsxfun(@plus, positions, center);
@@ -245,7 +246,7 @@ function runConfig = generateAdaptationRegionStimulus(p, analysisData, runConfig
                 for pri = 1:numProbeSpots
                     for adapti = 1:numAdaptationPositions
                         positions(si,1:2) = probePositions_by_adapt{adapti}(pri,:);
-                        starts(si,1) = (si - 1) * (p.probeSpotDuration * 2) + delay;
+                        starts(si,1) = (si - 1) * (p.probeSpotDuration * 1.5) + delay;
                         intensities(si,1) = val;
                         si = si + 1;
                     end
@@ -335,10 +336,10 @@ function runConfig = makeFlashedSpotsMatrix(parameters, runConfig, positions)
         usedValues = zeros(parameters.numPositions, parameters.numValues);
 %         usedValues = [];
         for l = 1:parameters.numValues
-%             positionIndexList = randperm(stream, parameters.numPositions);
+            positionIndexList = randperm(stream, parameters.numPositions);
             for i = 1:parameters.numPositions
-%                 curPosition = positionIndexList(i);
-                curPosition = i;
+                curPosition = positionIndexList(i);
+%                 curPosition = i;
                 possibleNextValueIndices = find(usedValues(curPosition,:) == 0);
                 nextValueIndex = possibleNextValueIndices(randi(stream, length(possibleNextValueIndices)));
 

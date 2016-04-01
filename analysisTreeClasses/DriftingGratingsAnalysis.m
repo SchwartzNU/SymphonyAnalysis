@@ -4,6 +4,7 @@ classdef DriftingGratingsAnalysis < AnalysisTree
         EndTime = 0;
     end
     
+    
     methods
         function obj = DriftingGratingsAnalysis(cellData, dataSetName, params)
             if nargin < 3
@@ -124,7 +125,7 @@ classdef DriftingGratingsAnalysis < AnalysisTree
             ylabel(['F2 (' yField(1).units ')']);
         end
         
-         function plot_gratingAngleVsF2overF1(node, cellData)
+        function plot_gratingAngleVsF2overF1(node, cellData)
             rootData = node.get(1);
             xvals = rootData.gratingAngle;
             yField = rootData.F2overF1;
@@ -134,7 +135,17 @@ classdef DriftingGratingsAnalysis < AnalysisTree
             ylabel('F2 over F1');
         end
          
-         
+        function plotLeaf(node, cellData)
+            leafData = node.get(1);
+            xField = leafData.cycleAvg_x;
+            xvals = xField.value;
+            yField = leafData.cycleAvg_y;
+            yvals = yField.value;
+            plot (xvals,yvals);
+            xlabel('Time (s)');
+            ylabel('Current (pA)');
+        end
+       
     end
 end
 

@@ -86,7 +86,7 @@ classdef MovingBarAnalysis < AnalysisTree
             obj = obj.percolateUp(leafIDs, singleValParamList, singleValParamList);
             obj = obj.percolateUp(leafIDs, collectedParamList, collectedParamList);
             
-            %OSI, OSang
+            %DSI, OSI, DSang, OSang
             rootData = obj.get(1);
             rootData = addDSIandOSI(rootData, 'barAngle');
             rootData.stimParameterList = {'barAngle'};
@@ -127,6 +127,7 @@ classdef MovingBarAnalysis < AnalysisTree
             yField = rootData.ONSET_avgTracePeak;
             yvals = yField.value;
             polarerror(xvals*pi/180, yvals, zeros(1,length(xvals)));
+            
             hold on;
             polar([0 rootData.ONSET_avgTracePeak_DSang*pi/180], [0 (100*rootData.ONSET_avgTracePeak_DSI)], 'r-');
             polar([0 rootData.ONSET_avgTracePeak_OSang*pi/180], [0 (100*rootData.ONSET_avgTracePeak_OSI)], 'g-');

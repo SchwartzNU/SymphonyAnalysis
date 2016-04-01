@@ -335,6 +335,7 @@ classdef SpotsMultiSizeAnalysis < AnalysisTree
             ylabel(['spikeCount_stimInterval_baselineSubtracted (' yField.units ')']);
         end
         
+%%<<<<<<< Updated upstream
         function plot_spotSizeVsONSET_FRhalfMaxSusLatency(node, cellData)
             rootData = node.get(1);
             xvals = rootData.spotSize;
@@ -440,6 +441,36 @@ classdef SpotsMultiSizeAnalysis < AnalysisTree
             ylabel(['stimToEnd_avgTrace_latencyToT25 (' yField.units ')']);
         end
         
+        function plot_spotSizeVsspikeCount_stimTo200ms(node, cellData)
+            rootData = node.get(1);
+            xvals = rootData.spotSize;
+            yField = rootData.spikeCount_stimTo200ms;
+            if strcmp(yField.units, 's')
+            yvals = yField.median_c;
+            else
+            yvals = yField.mean_c;
+            end
+            errs = yField.SEM;
+            errorbar(xvals, yvals, errs);
+            xlabel('spotSize');
+            ylabel(['spikeCount_stimTo200ms (' yField.units ')']);
+        end
+        
+        function plot_spotSizeVsspikeCount_stimAfter200ms(node, cellData)
+            rootData = node.get(1);
+            xvals = rootData.spotSize;
+            yField = rootData.spikeCount_stimAfter200ms;
+            if strcmp(yField.units, 's')
+            yvals = yField.median_c;
+            else
+            yvals = yField.mean_c;
+            end
+            errs = yField.SEM;
+            errorbar(xvals, yvals, errs);
+            xlabel('spotSize');
+            ylabel(['spikeCount_stimAfter200ms (' yField.units ')']);
+        end
+
     end
     
 end

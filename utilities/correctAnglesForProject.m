@@ -25,17 +25,21 @@ numFiles = length(files);
 
 %% loop through cellData
 % angles are relative to moving bar towards direction
-for fi = 1:numFiles
+for fi = numFiles:-1:1
     fprintf('processing cellData %d of %d: %s\n', fi, numFiles, files{fi})
     fname = fullfile(cellData_folder, [files{fi}, '.mat']);
     load(fname)
     
     
     cellData = correctAngles(cellData, files{fi});
+    if cellData == 1
+        continue
+    end
 %     cellData.cellType = 'WFDS';
 
 
     %% Save cellData
+    disp('saving cell data');
     save(fname, 'cellData');
     
 end

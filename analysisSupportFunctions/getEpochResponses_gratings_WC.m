@@ -108,7 +108,8 @@ end
 %baseline 
 outputStruct.baseline.value = mean(baselineVal);
 
-meanTrace_stim = mean(Mstim_baselineSubtracted, 1);
+%meanTrace_stim = mean(Mstim_baselineSubtracted, 1);
+meanTrace_stim = mean(Mstim, 1);
 xvals = [0:length(meanTrace_stim)] ./ sampleRate;
 
 freq = sampleEpoch.get('temporalFreq'); %Hz

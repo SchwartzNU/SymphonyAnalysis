@@ -1,6 +1,8 @@
 function cd = correctAngles(cd, cellName)
 
     if isKey(cd.attributes, 'anglesCorrected')
+        fprintf('%s angles already corrected\n', cellName);
+        cd = 1;
         return
     end
 
@@ -58,6 +60,7 @@ function cd = correctAngles(cd, cellName)
 %         epoch.get('ventralAngle');
     end
     
+    fprintf('%s angles corrected\n', cellName);
     cd.attributes('anglesCorrected') = 1;
     
 end

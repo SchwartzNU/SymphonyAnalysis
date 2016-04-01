@@ -64,7 +64,7 @@ classdef AutoCenterAnalysis < AnalysisTree
             end
         end
         
-        function plotSpatial_mean(node, ~)
+        function plot0Spatial_mean(node, ~)
             
             nodeData = node.get(1);
 
@@ -201,7 +201,21 @@ classdef AutoCenterAnalysis < AnalysisTree
                     end
                 end
             end
-        end           
+        end
+        
+        function plotPrintParameters(node, ~)
+            
+            nodeData = node.get(1);
+                        
+            if isfield(nodeData, 'splitParam')
+                if strcmp(nodeData.splitParam, 'sessionId')
+                    if isfield(nodeData.analysisData, 'value')
+                        analysisData = nodeData.analysisData.value;
+                        plotShapeData(analysisData, 'printParameters');
+                    end
+                end
+            end
+        end        
     end
 end
 
