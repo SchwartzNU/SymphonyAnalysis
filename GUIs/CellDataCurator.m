@@ -271,14 +271,19 @@ classdef CellDataCurator < handle
         
         function updateParamsList(obj)
             obj.allKeys = obj.cellData.getEpochKeysetUnion(obj.dataSet);
-            set(obj.handles.diaryYMenu,'String',obj.allKeys);
-            %set to displayName as default
-            displayNameInd = find(strcmp(obj.allKeys, 'displayName'));
-            set(obj.handles.diaryYMenu, 'Value', displayNameInd);
-            %update popupmenu for filter table
-            props = [' ', obj.allKeys];
-            columnFormat = {props, obj.operators, 'char'};
-            set(obj.handles.filterTable,'ColumnFormat',columnFormat)
+            if isempty(obj.allKeys)
+                warning('No epochs match these settings');
+            
+            else
+                set(obj.handles.diaryYMenu,'String',obj.allKeys);
+                %set to displayName as default
+                displayNameInd = find(strcmp(obj.allKeys, 'displayName'));
+                set(obj.handles.diaryYMenu, 'Value', displayNameInd);
+                %update popupmenu for filter table
+                props = [' ', obj.allKeys];
+                columnFormat = {props, obj.operators, 'char'};
+                set(obj.handles.filterTable,'ColumnFormat',columnFormat)
+            end
         end
         
         function updateDiaryPlot(obj)
