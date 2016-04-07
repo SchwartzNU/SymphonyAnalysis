@@ -144,8 +144,10 @@ elseif strcmp(mode, 'subunit')
 
         end
         
-        figure(99)
-        plotSpatial(goodPositions, goodSlopes, 'intensity response slope', 1, 0, ad.positionOffset)
+        if ~isempty(goodPositions)
+            figure(99)
+            plotSpatial(goodPositions, goodSlopes, 'intensity response slope', 1, 0, ad.positionOffset)
+        end
         
 %         set(ha(1:end-dim2),'XTickLabel','');
 %         set(ha,'YTickLabel','')
@@ -158,11 +160,30 @@ elseif strcmp(mode, 'temporalResponses')
     ha = tight_subplot(num_plots, 1, .03);
     
     for ei = 1:num_plots
-        plot(ha(ei), ad.epochData{ei}.t, ad.epochData{ei}.response);
+        t = ad.epochData{ei}.t;
+        resp = ad.epochData{ei}.response';
+        
+%         if max(t) > 5
+%             resp = resp - mean(resp((end-100):end)); % set end to 0
+%             startA = mean(resp(1:100))/exp(0);
+%             startB = -0.3;
+%             f = fit(t(1:5000)', resp(1:5000)', 'exp1','StartPoint',[startA, startB]);
+%             expFit = f(t)';
+%             f
+%         else
+%             expFit = zeros(size(t));
+%         end
+        
+        plot(ha(ei), t, resp);
+%         hold(ha(ei), 'on');
+%         plot(ha(ei), t, expFit)
+%         plot(ha(ei), t, resp - expFit);
+%         hold(ha(ei), 'off');
+        
         title(ha(ei), sprintf('Epoch %d', ei))
     end
     
-elseif strcmp(mode, 'temporalAlignment')    
+elseif strcmp(mode, 'temporalAlignment')
     
     ha = tight_subplot(2, 1, .1);
     
@@ -240,7 +261,7 @@ elseif strcmp(mode, 'responsesByPosition')
    
     maxIntensity = max(obs(:,3));
     v_in = max(obs(:,4));
-    v_ex = min(obs(:,4));    
+    v_ex = min(obs(:,4));
     
     num_positions = size(ad.positions,1);
     dim1 = floor(sqrt(num_positions));
@@ -262,18 +283,7 @@ elseif strcmp(mode, 'responsesByPosition')
         ind_in = find(obs_sel_in);
         
         hold(ha(poi), 'on');
-        for ii = ind_ex'
-            entry = obs(ii,:)';
-            epoch = ad.epochData{entry(9)};
-            
-            signal = -1 * epoch.response(entry(10):entry(11));
-            signal = signal - mean(signal(1:10));
-            plot(ha(poi), signal,'r');
-            
-            max_value = max(max_value, max(signal));
-            min_value = min(min_value, min(signal));
-        end
-        
+       
         for ii = ind_in'
             entry = obs(ii,:)';
             epoch = ad.epochData{entry(9)};
@@ -284,14 +294,28 @@ elseif strcmp(mode, 'responsesByPosition')
             
             max_value = max(max_value, max(signal));
             min_value = min(min_value, min(signal));
-        end        
+        end
+        
+        if v_in ~= v_ex
+            for ii = ind_ex'
+                entry = obs(ii,:)';
+                epoch = ad.epochData{entry(9)};
+
+                signal = -1 * epoch.response(entry(10):entry(11));
+                signal = signal - mean(signal(1:10));
+                plot(ha(poi), signal,'r');
+
+                max_value = max(max_value, max(signal));
+                min_value = min(min_value, min(signal));
+            end
+        end
         
 %         set(gca,'XTickLabelMode','manual')
         set(ha(poi),'XTickLabels',[])
         if poi > 1
             set(ha(poi),'YTickLabels',[])
         end
-        
+        grid(ha(poi), 'on')
 
 %         title(ha(poi), pos);
         
@@ -441,6 +465,9 @@ end
         
         % draw soma
         rectangle('Position',[0, 0, 10, 10],'Curvature',1,'FaceColor',[1 0 1]);
+        
+        % set axis limits
+        axis(largestDistanceOffset * [-1 1 -1 1])
         
         set(gca, 'XTickMode', 'auto', 'XTickLabelMode', 'auto')
         set(gca, 'YTickMode', 'auto', 'YTickLabelMode', 'auto')

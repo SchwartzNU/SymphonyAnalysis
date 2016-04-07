@@ -174,7 +174,9 @@ classdef ShapeData < handle
         
         function setResponse(obj, response)
             % downsample and generate time vector
-            response = resample(response, obj.sampleRate, 10000);
+            offset = response(1); % offset to avoid resample filtering artifact at start
+            % should I reoffset afterward? don't know.
+            response = resample(response - offset, obj.sampleRate, 10000);
             obj.response = response;
             obj.t = (0:(length(obj.response)-1)) / obj.sampleRate;
             obj.t = obj.t - obj.preTime;
@@ -206,8 +208,32 @@ classdef ShapeData < handle
 %             figure(99)
             % call after setResponse to make current like spikeRate
 %             subplot(4,1,1)
-            r = sign(obj.ampVoltage + eps) * obj.response; % use positive for 0 mV
-            r = r - median(r(1:round(obj.sampleRate*obj.preTime)));
+            
+            % flip currents
+            resp = sign(obj.ampVoltage + eps) * obj.response; % use positive for 0 mV
+            
+            % exponential decay cancellation
+            if max(obj.t) > 6
+                resp = resp';
+                % first order fit the whole length
+                resp = resp - mean(resp((end-100):end)); % set end to 0
+                startA = mean(resp(1:100))/exp(0);
+                startB = -0.1;
+                f1 = fit(obj.t', resp', 'exp1','StartPoint',[startA, startB]);
+                resp = resp - f1(obj.t)';
+                
+                % second order cancel just the very beginning
+                startA = mean(resp(1:100))/exp(0);
+                startB = -1;
+                f2 = fit(obj.t(1:5000)', resp(1:5000)', 'exp1','StartPoint',[startA, startB]);
+                resp = resp - f2(obj.t)';
+                
+                resp = resp';
+            end
+            
+            
+%             r = r - median(r(1:round(obj.sampleRate*obj.preTime)));
+%             r = r - r(1);
 %             plot(r)
 %             r = r - mean(r);
 %             subplot(4,1,2); plot(r);
@@ -236,8 +262,8 @@ classdef ShapeData < handle
 %             pause
             
             fprintf('%d %d ', obj.sessionId, obj.presentationId)
-            fprintf('processing wc %d %2f %2f\n', obj.ampVoltage, mean(r), mean(obj.response));
-            obj.response = r;
+            fprintf('processing wc %d %2f %2f\n', obj.ampVoltage, mean(resp), mean(obj.response));
+            obj.response = resp;
             
 
         end
