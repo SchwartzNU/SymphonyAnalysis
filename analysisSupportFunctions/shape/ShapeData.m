@@ -178,7 +178,7 @@ classdef ShapeData < handle
             % should I reoffset afterward? don't know.
             response = resample(response - offset, obj.sampleRate, 10000);
             obj.response = response;
-            obj.t = (0:(length(obj.response)-1)) / obj.sampleRate;
+            obj.t = (0:(length(obj.response)-1))' / obj.sampleRate;
             obj.t = obj.t - obj.preTime;
         end
         
@@ -218,14 +218,14 @@ classdef ShapeData < handle
                 resp = resp - mean(resp((end-100):end)); % set end to 0
                 startA = mean(resp(1:100))/exp(0);
                 startB = -0.1;
-                f1 = fit(obj.t', resp, 'exp1','StartPoint',[startA, startB]);
+                f1 = fit(obj.t, resp, 'exp1','StartPoint',[startA, startB]);
                 resp = resp - f1(obj.t);
                 
                 % second order cancel just the very beginning
                 startA = mean(resp(1:100))/exp(0);
                 startB = -1;
-                f2 = fit(obj.t(1:5000)', resp(1:5000), 'exp1','StartPoint',[startA, startB]);
-                resp = resp - f2(obj.t)';
+                f2 = fit(obj.t(1:5000), resp(1:5000), 'exp1','StartPoint',[startA, startB]);
+                resp = resp - f2(obj.t);
                 
             end
             

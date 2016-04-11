@@ -239,7 +239,7 @@ function runConfig = generateAdaptationRegionStimulus(p, analysisData, runConfig
     
     % get curves before & after adaptation
     si = 1;
-    delay = 0;
+    delay = 0.5; % add a little delay to start to ensure a baseline
     for prePostAdapt = 1:2
         for repeat = 1:p.probeSpotRepeats
             for val = p.probeSpotValues
@@ -255,7 +255,7 @@ function runConfig = generateAdaptationRegionStimulus(p, analysisData, runConfig
         end
         if prePostAdapt == 1
             flickerStartTime = starts(end) + 1;
-            delay = p.adaptSpotWarmupTime;
+            delay = p.adaptSpotWarmupTime + delay;
         end
     end
 
