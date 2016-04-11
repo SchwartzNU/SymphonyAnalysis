@@ -213,22 +213,20 @@ classdef ShapeData < handle
             resp = sign(obj.ampVoltage + eps) * obj.response; % use positive for 0 mV
             
             % exponential decay cancellation
-            if max(obj.t) > 6
-                resp = resp';
+            if max(obj.t) > 6.0
                 % first order fit the whole length
                 resp = resp - mean(resp((end-100):end)); % set end to 0
                 startA = mean(resp(1:100))/exp(0);
                 startB = -0.1;
-                f1 = fit(obj.t', resp', 'exp1','StartPoint',[startA, startB]);
-                resp = resp - f1(obj.t)';
+                f1 = fit(obj.t', resp, 'exp1','StartPoint',[startA, startB]);
+                resp = resp - f1(obj.t);
                 
                 % second order cancel just the very beginning
                 startA = mean(resp(1:100))/exp(0);
                 startB = -1;
-                f2 = fit(obj.t(1:5000)', resp(1:5000)', 'exp1','StartPoint',[startA, startB]);
+                f2 = fit(obj.t(1:5000)', resp(1:5000), 'exp1','StartPoint',[startA, startB]);
                 resp = resp - f2(obj.t)';
                 
-                resp = resp';
             end
             
             
