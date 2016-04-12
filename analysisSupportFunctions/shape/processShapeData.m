@@ -46,12 +46,13 @@ for p = 1:num_epochs
     col_intensity = e.shapeDataColumns('intensity');
     col_startTime = e.shapeDataColumns('startTime');
     col_endTime = e.shapeDataColumns('endTime');
+    col_flickerFrequency = e.shapeDataColumns('flickerFrequency');
 
-    epoch_positions = e.shapeDataMatrix(:,[col_x col_y]);
-    epoch_intensities = e.shapeDataMatrix(:,col_intensity);
+    positions = e.shapeDataMatrix(:,[col_x col_y]);
+    intensities = e.shapeDataMatrix(:,col_intensity);
     startTime = e.shapeDataMatrix(:,col_startTime);
     endTime = e.shapeDataMatrix(:,col_endTime);
-
+    flickerFreq = e.shapeDataMatrix(:,col_flickerFrequency);
 
     %% find the time offset from light to spikes, assuming On semi-transient cell
 %     lightOnValue = 1.0 * (mod(e.t - e.preTime, e.spotTotalTime) < e.spotOnTime * 1.2);
@@ -113,7 +114,7 @@ for p = 1:num_epochs
         lightOnTime = zeros(size(e.t));
 
         for si = 1:e.totalNumSpots
-            lightOnTime(e.t > startTime(si) & e.t < endTime(si)) = epoch_intensities(si);
+            lightOnTime(e.t > startTime(si) & e.t < endTime(si)) = intensities(si);
         end
         
         % make light signal decay with time to better align to very start of light for transience
@@ -167,118 +168,145 @@ for p = 1:num_epochs
     
 %     figure(12)
     
-    prevPosition = nan;
-    for si = 1:e.totalNumSpots
-        spot_position = epoch_positions(si,:);
-        spot_intensity = epoch_intensities(si);
+    if strcmp(e.epochMode, 'flashingSpots')
         
+        prevPosition = nan;
+        for si = 1:e.totalNumSpots
+            spot_position = positions(si,:);
+            spot_intensity = intensities(si);
 
-        segmentStartTime = e.spotTotalTime * (si - 1) + t_offset(1);
-        segmentStartIndex = find(e.t > segmentStartTime, 1);
-        if isempty(segmentStartIndex)
-            continue
+            segmentStartTime = e.spotTotalTime * (si - 1) + t_offset;
+            segmentStartIndex = find(e.t > segmentStartTime, 1);
+            if isempty(segmentStartIndex)
+                continue
+            end
+    %         t_range = (t - t_offset) > spotTotalTime * (si - 1) & (t - t_offset) < spotTotalTime * si;
+
+            segmentIndices = segmentStartIndex + sampleSet;
+
+            if size(e.response, 1) < segmentStartIndex + sampleCount_total % off the end of the recording
+                continue
+            end
+
+            % add distance from previous spot to check for overlap effects
+            %                      1   2   3           4         5          6          7          8             9              10                11               12           13           14
+            observationColumns = {'X','Y','intensity','voltage','respMean','respPeak','tHalfMax','distFromPrev','sourceEpoch','signalStartIndex','signalEndIndex','adaptSpotX','adaptSpotY','adaptSpotEnabled'};
+            oi = oi + 1;
+            resp = e.response(segmentIndices);
+
+    %         if abs(e.ampVoltage) > 0 % a nice alignment for the whole cell data
+    %             resp = resp - mean(resp(1:10));
+    %         end
+            mn = mean(resp);
+            pk = max(resp);
+            if pk > 0
+                del = find(resp > pk / 2.0, 1, 'first') / e.sampleRate;
+            else
+                del = nan;
+            end
+            dist = sqrt(sum((spot_position - prevPosition).^2));
+            obs = [spot_position, spot_intensity, e.ampVoltage, mn, pk, del, dist, ei, segmentStartIndex, segmentStartIndex + sampleCount_total, nan, nan, nan];
+            observations(oi,1:length(obs)) = obs;
+            prevPosition = spot_position;
+
+    %         responseData{all_position_index, :}
+
+
+    %         title(si)
+    %         if max(spikeRate_by_spot(si,:)) > 0
+    %             plot(e.t(segmentIndices), spikeRate_by_spot(si,:))
+    %             drawnow
+    %             pause
+    %         end
+
+
+    %         spikes = spikeTimes > t_range(1) & spikeTimes < t_range(2);
+    %         spikeRate_by_spot(end+1,:) = spikeRateSegment;
+    %         responseValues(end+1,1) = sum(spikes);
         end
-%         t_range = (t - t_offset) > spotTotalTime * (si - 1) & (t - t_offset) < spotTotalTime * si;
+    end
+    
+    if strcmp(e.epochMode, 'adaptationRegion')
 
-        segmentIndices = segmentStartIndex + sampleSet;
+        
+        % find adaptation regions and make indices
+        adapters = flickerFreq > 0;
+        adaptMatrix = e.shapeDataMatrix(adapters,:);
+        num_adapters = sum(adapters);
+        
+        % get adaptation start time
+        adaptStartTime = adaptMatrix(1, col_startTime); % just use one, assuming they come on simultaneously and only once
+        
+        % remove them from the data
+        probeMatrix = e.shapeDataMatrix;
+        probeMatrix(adapters, :) = [];
+        
+        % loop through probe spots
+        num_probes = size(probeMatrix, 1);
+        for ri = 1:num_probes
+            spot = probeMatrix(ri,:);
+                    
+            spot_start = spot(1, col_startTime);
+            spot_position = spot(1, [col_x, col_y]);
+            spot_intensity = spot(1, col_intensity);
+            
+            % select nearest adaptation region index
+            minDist = inf;
+            adaptSpotindex = nan;
+            for ai = 1:num_adapters
+                adaptPos = adaptMatrix(ai, [col_x, col_y]);
+                d = sum((adaptPos - spot_position).^2);
+                if d < minDist
+                    adaptSpotindex = ai;
+                    minDist = d;
+                end
+            end
+            adaptSpotPosition = adaptMatrix(adaptSpotindex, [col_x, col_y]);
+           
+            % make observation & add to data
 
-        if size(e.response, 1) < segmentStartIndex + sampleCount_total % off the end of the recording
-            continue
+            segmentStartTime = spot(1, col_startTime) + t_offset;
+            segmentStartIndex = find(e.t > segmentStartTime, 1);
+            segmentEndIndex = find(e.t > spot(1, col_endTime) + t_offset, 1);
+            
+            if isempty(segmentStartIndex) || isempty(segmentEndIndex)
+                continue
+            end            
+            
+            segmentIndices = segmentStartIndex:segmentEndIndex;
+            %                      1   2   3           4         5          6          7          8             9              10                11               12           13           14
+            observationColumns = {'X','Y','intensity','voltage','respMean','respPeak','tHalfMax','distFromPrev','sourceEpoch','signalStartIndex','signalEndIndex','adaptSpotX','adaptSpotY','adaptSpotEnabled'};
+            oi = oi + 1;
+            resp = e.response(segmentIndices);
+
+            mn = mean(resp);
+            pk = max(resp);
+            if pk > 0
+                del = find(resp > pk / 2.0, 1, 'first') / e.sampleRate;
+            else
+                del = nan;
+            end            
+            dist = 0;
+            obs = [spot_position, spot_intensity, e.ampVoltage, mn, pk, del, dist, ei, segmentStartIndex, segmentEndIndex, adaptSpotPosition, spot_start > adaptStartTime];
+            observations(oi,1:length(obs)) = obs;
+            
         end
-
-        % add distance from previous spot to check for overlap effects
-        %                         1   2   3           4         5          6          7          8             9              10                11
-        observationColumns = {'X','Y','intensity','voltage','respMean','respPeak','tHalfMax','distFromPrev','sourceEpoch','signalStartIndex','signalEndIndex'};
-        oi = oi + 1;
-        resp = e.response(segmentIndices);
-        
-%         if abs(e.ampVoltage) > 0 % a nice alignment for the whole cell data
-%             resp = resp - mean(resp(1:10));
-%         end
-        mn = mean(resp);
-        pk = max(resp);
-        if pk > 0
-            del = find(resp > pk / 2.0, 1, 'first') / e.sampleRate;
-        else
-            del = nan;
-        end
-        dist = sqrt(sum((spot_position - prevPosition).^2));
-        obs = [spot_position, spot_intensity, e.ampVoltage, mn, pk, del, dist, ei, segmentStartIndex, segmentStartIndex + sampleCount_total];
-        observations(oi,1:length(obs)) = obs;
-        prevPosition = spot_position;
-        
-%         responseData{all_position_index, :}
-
-        
-%         title(si)
-%         if max(spikeRate_by_spot(si,:)) > 0
-%             plot(e.t(segmentIndices), spikeRate_by_spot(si,:))
-%             drawnow
-%             pause
-%         end
-
-        
-%         spikes = spikeTimes > t_range(1) & spikeTimes < t_range(2);
-%         spikeRate_by_spot(end+1,:) = spikeRateSegment;
-%         responseValues(end+1,1) = sum(spikes);
     end
 
 end
 
+
 %% overall analysis
-validSearchResult = 1;
 
-if num_positions < 3 % can't triangulate
-    validSearchResult = 0;
-end
 
-% maxIntensityResponses = zeros(num_positions, 2);
-% 
-% highestIntensity = -Inf;
-% numValues = 0;
-% % find highest intensity
-% for p = 1:num_positions
-%     r = responseData{p,1};
-%     if ~isempty(r)
-%         highestIntensity = max(max(r(:,1)), highestIntensity);
-%         numValues = max(numValues, size(r,1));
-%     end
-% end
-% 
-% % get the responses at that intensity for simple mapping
-% for ooi = 1:3
-%     for p = 1:num_positions
-%         r = responseData{p,ooi}; %on data
-%         if ~isempty(r) && any(r(:,1) == highestIntensity)
-%             spikes = mean(r(r(:,1) == highestIntensity, 2)); % just get the high intensity ones
-%         else
-%             spikes = 0;
-%         end
-%         maxIntensityResponses(p,ooi) = spikes;
-%     end
-% end
+validSearchResult = num_positions > 3;
 
-% centerOfMassXY = [sum(all_positions(:,1) .* maxIntensityResponses)/sum(maxIntensityResponses), ...
-%                     sum(all_positions(:,2) .* maxIntensityResponses)/sum(maxIntensityResponses)];
-% if any(isnan(centerOfMassXY(:)))
-%     validSearchResult = 0;
-% end
-
-% save('fitData','all_positions','maxIntensityResponses')
 
 %% store data for the next stages of processing/output
 ad.positions = all_positions;
-% ad.responseData = responseData;
 ad.observations = observations;
 ad.observationColumns = observationColumns;
-% ad.maxIntensityResponses = maxIntensityResponses;
-% ad.spikeRate_by_spot = spikeRate_by_spot;
-% od.displayTime = displayTime_on; 
 ad.timeOffset = t_offset;
-% od.centerOfMassXY = centerOfMassXY;
-% ad.gaussianFitParams_ooi = gaussianFitParams_ooi;
-% od.farthestResponseDistance = farthestResponseDistance;
 ad.validSearchResult = validSearchResult;
-% ad.numValues = numValues;
 
 end

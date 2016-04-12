@@ -435,6 +435,10 @@ elseif strcmp(mode, 'positionDifferenceAnalysis')
     subplot(2,1,2)
     
     
+elseif strcmp(mode, 'adaptationRegion')
+    obs = ad.observations
+    
+    
 else
     disp(mode)
     disp('incorrect plot type')

@@ -215,7 +215,22 @@ classdef AutoCenterAnalysis < AnalysisTree
                     end
                 end
             end
-        end        
+        end     
+        
+        function plotAdaptationRegion(node, ~)
+            
+            nodeData = node.get(1);
+                        
+            if isfield(nodeData, 'splitParam')
+                if strcmp(nodeData.splitParam, 'sessionId')
+                    if isfield(nodeData.analysisData, 'value')
+                        analysisData = nodeData.analysisData.value;
+                        plotShapeData(analysisData, 'adaptationRegion');
+                    end
+                end
+            end
+        end     
+        
     end
 end
 
