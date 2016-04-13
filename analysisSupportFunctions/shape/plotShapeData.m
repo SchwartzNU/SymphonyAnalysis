@@ -436,8 +436,65 @@ elseif strcmp(mode, 'positionDifferenceAnalysis')
     
     
 elseif strcmp(mode, 'adaptationRegion')
-    obs = ad.observations
+    obs = ad.observations;
     
+    % get list of adaptation points
+    adaptationPositions = unique(obs(:,[12,13]), 'rows');
+    num_adapt = size(adaptationPositions, 1);
+    
+    
+    for ai = 1:num_adapt
+        thisAdaptPos = adaptationPositions(ai,:);
+        probesThisAdapt = obs(:,12) == thisAdaptPos(1) & obs(:,13) == thisAdaptPos(2);
+        probeDataThisAdapt = obs(probesThisAdapt, :);
+        % make a figure
+        figure(110 + ai)
+        spatialPositions = [];
+        spatialValues = [];
+        spatialIndex = 0;
+        
+        % make a subplot for each probe
+        probePositions = unique(probeDataThisAdapt(:,[1,2]), 'rows');
+        numProbes = size(probePositions, 1);
+%         dim1 = floor(sqrt(numProbes));
+%         dim2 = ceil(numProbes / dim1);
+        clf;
+%         ha = tight_subplot(dim1,dim2);
+        for pri = 1:numProbes
+%             axes(ha(pri));
+            
+%             hold on;
+            
+            pos = probePositions(pri,:);
+            spatialIndex = spatialIndex + 1;
+            spatialPositions(spatialIndex, :) = pos;
+            for adaptOn = 0:1
+                
+                obs_sel = ismember(probeDataThisAdapt(:,1:2), pos, 'rows');
+                obs_sel = obs_sel & probeDataThisAdapt(:,14) == adaptOn;
+                
+                ints = probeDataThisAdapt(obs_sel, 3);
+                vals = probeDataThisAdapt(obs_sel, 5);
+%                 plot(ints, vals, '-o');
+                spatialValues(spatialIndex, adaptOn + 1) = mean(vals);
+            end
+            
+            
+%             legend('off','on')
+        end
+        ha = tight_subplot(1,3);
+        maxv = max(spatialValues(:));
+        minv = min(spatialValues(:));
+        spatialValues(:,3) = diff(spatialValues, 1, 2);
+        for a = 1:3
+            axes(ha(a))
+            plotSpatial(spatialPositions, spatialValues(:,a), '', 1, 0, -1 * thisAdaptPos)
+            caxis([minv, maxv]);
+        end
+        title(ha(1), 'before adaptation');
+        title(ha(2), 'during adaptation');
+        title(ha(3), 'difference');
+    end
     
 else
     disp(mode)
@@ -470,7 +527,7 @@ end
         end
         
         % draw soma
-        rectangle('Position',[0, 0, 10, 10],'Curvature',1,'FaceColor',[1 0 1]);
+        rectangle('Position',0.1 * largestDistanceOffset * [0, 0, 1, 1],'Curvature',1,'FaceColor',[1 0 1]);
         
         % set axis limits
         axis(largestDistanceOffset * [-1 1 -1 1])

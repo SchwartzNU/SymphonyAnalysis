@@ -226,8 +226,9 @@ function runConfig = generateAdaptationRegionStimulus(p, analysisData, runConfig
     % first time setup / all for now
 %     for ai = 1:numAdaptationPositions
     % make array of spot positions around 
-    probePositions = generatePositions('triangular', [p.probeSpotPositionRadius, p.probeSpotSpacing]);
+    probePositions = generatePositions('triangular', [p.probeSpotPositionRadius, p.probeSpotSpacing, 0]);
     numProbeSpots = size(probePositions, 1);
+    probePositions = probePositions(randperm(numProbeSpots), :); % randomly reorder, but I suppose use the same for each adapt spot
     probePositions_by_adapt = cell(numAdaptationPositions,1);
     for ai = 1:numAdaptationPositions
         probePositions_by_adapt{ai,1} = bsxfun(@plus, probePositions, p.adaptationSpotPositions(ai,:));
