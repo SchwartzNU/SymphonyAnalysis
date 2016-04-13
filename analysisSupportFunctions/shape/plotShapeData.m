@@ -163,14 +163,14 @@ elseif strcmp(mode, 'temporalResponses')
     
     for ei = 1:num_plots
         t = ad.epochData{ei}.t;
-        resp = ad.epochData{ei}.response';
+        resp = ad.epochData{ei}.response;
         
 %         if max(t) > 5
 %             resp = resp - mean(resp((end-100):end)); % set end to 0
 %             startA = mean(resp(1:100))/exp(0);
 %             startB = -0.3;
-%             f = fit(t(1:5000)', resp(1:5000)', 'exp1','StartPoint',[startA, startB]);
-%             expFit = f(t)';
+%             f = fit(t(1:end), resp(1:end), 'exp1','StartPoint',[startA, startB]);
+%             expFit = f(t);
 %             f
 %         else
 %             expFit = zeros(size(t));
@@ -183,6 +183,8 @@ elseif strcmp(mode, 'temporalResponses')
 %         hold(ha(ei), 'off');
         
         title(ha(ei), sprintf('Epoch %d', ei))
+        disp('Normalization parameters:');
+        disp(ad.epochData{ei}.signalNormalizationParameters)
     end
     
 elseif strcmp(mode, 'temporalAlignment')

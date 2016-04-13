@@ -16,6 +16,7 @@ classdef ShapeData < handle
         spikeRate
         t
         response
+        signalNormalizationParameters
 
         spotTotalTime
         spotOnTime
@@ -221,12 +222,14 @@ classdef ShapeData < handle
                 f1 = fit(obj.t, resp, 'exp1','StartPoint',[startA, startB]);
                 resp = resp - f1(obj.t);
                 
-                % second order cancel just the very beginning
+                % second order cancel just the very beginning (no, cause it could be bad for the whole thing)
                 startA = mean(resp(1:100))/exp(0);
                 startB = -1;
-                f2 = fit(obj.t(1:5000), resp(1:5000), 'exp1','StartPoint',[startA, startB]);
+                f2 = fit(obj.t, resp, 'exp1','StartPoint',[startA, startB]);
                 resp = resp - f2(obj.t);
                 
+                obj.signalNormalizationParameters = [f1.a, f1.b, f2.a, f2.b];
+%                 disp(obj.signalNormalizationParameters)
             end
             
             

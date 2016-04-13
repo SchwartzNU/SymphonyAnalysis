@@ -114,8 +114,24 @@ for p = 1:num_epochs
         lightOnTime = zeros(size(e.t));
 
         for si = 1:e.totalNumSpots
-            lightOnTime(e.t > startTime(si) & e.t < endTime(si)) = intensities(si);
+            
+            % get region
+            tRegion = e.t > startTime(si) & e.t < endTime(si);
+            
+            totalLen = sum(tRegion);
+            if totalLen > 0
+
+                responseShape = linspace(1, 0, totalLen);
+                riseLen = 20; % msec
+                responseShape(1:riseLen) = linspace(0,responseShape(riseLen),riseLen);
+
+                lightOnTime(tRegion) = responseShape';
+            end
+            
+%             lightOnTime(e.t > startTime(si) & e.t < endTime(si)) = intensities(si);
         end
+        
+        
         
         % make light signal decay with time to better align to very start of light for transience
 %         lightOnTime = conv(lightOnTime
@@ -126,7 +142,7 @@ for p = 1:num_epochs
         
         % this is to give it a bit of slack early in case some strong
         % responses are making it delay too much
-        t_offset = t_offset - .02;
+%         t_offset = t_offset - .02;
         
         ad.alignmentEpochIndex = ei;
         ad.alignmentLightOn = lightOnTime;
