@@ -439,58 +439,58 @@ if ~isempty(T50_up)
     end
 end
 
-% %ONSET
-% meanTrace_stim = mean(Mstim, 1);
-% meanTrace_stimToEnd = [mean(Mstim, 1), mean(Mpost, 1)];
-% if abs(max(meanTrace_stim)) > abs(min(meanTrace_stim)) %outward current larger
-%     [outputStruct.ONSET_avgTracePeak.value, pos] = max(meanTrace_stim);
-%     outputStruct.ONSET_avgTrace_latencyToPeak.value = pos / sampleRate;
-%     thresDir = 1;
-% else %inward current larger
-%     [outputStruct.ONSET_avgTracePeak.value, pos] = min(meanTrace_stim);
-%     outputStruct.ONSET_avgTrace_latencyToPeak.value = pos / sampleRate;
-%     thresDir = -1;
-% end
-% %thresholds
-% maxVal = outputStruct.ONSET_avgTracePeak.value;
-% T25_up = getThresCross(meanTrace_stimToEnd, 0.25*maxVal, thresDir);
-% T25_down = getThresCross(meanTrace_stimToEnd, 0.25*maxVal, -thresDir);
-% T50_up = getThresCross(meanTrace_stimToEnd, 0.5*maxVal, thresDir);
-% % T25_up = getThresCross(meanTrace_stim, 0.25*maxVal, thresDir);     %PROBLEM: Doesn't take care of trace still up at stim offset.
-% % T25_down = getThresCross(meanTrace_stim, 0.25*maxVal, -thresDir);
-% % T50 = getThresCross(meanTrace_stim, 0.5*maxVal, thresDir);
-% if ~isempty(T25_up) && ~isempty(T25_down)
-% %     timeDiff_up = T25_up - pos;
-% %     timeDiff_up_abs = abs(timeDiff_up);
-% %     timeDiff_down = T25_down - pos;
-% %     timeDiff_down_abs = abs(timeDiff_down);
-% %     [~, prePos] = min(timeDiff_up_abs(timeDiff_up<0));
-% %     [~, postPos] = min(timeDiff_down_abs(timeDiff_down>0)); MISTAKE
-%
-% % % % Corrected by Adam 2/2016
-% timeDiff_up = T25_up - pos;
-% timeDiff_down = T25_down - pos;
-% T25_up = T25_up(timeDiff_up<0);
-% T25_down = T25_down(timeDiff_down>0);
-% [~, prePos] = max(T25_up);
-% [~, postPos] = min(T25_down);
-%
-%     if ~isempty(prePos) && ~isempty(postPos)
-%         outputStruct.ONSET_respIntervalT25.value = (T25_down(postPos) - T25_up(prePos)) / sampleRate;
-%         for i=1:L
-%             outputStruct.ONSET_chargeT25.value(i) = mean(MstimToEnd(i,T25_up(prePos):T25_down(postPos))) * outputStruct.ONSET_respIntervalT25.value;
-%         end
-%     end
-% end
-% if ~isempty(T50_up)
-%     timeDiff = T50_up - pos;
-%     timeDiff_abs = abs(timeDiff);
-%     [~, prePos] = min(timeDiff_abs(timeDiff<0));
-%     if ~isempty(prePos)
-%         outputStruct.ONSET_avgTrace_latencyToT50.value = T50_up(prePos) / sampleRate;
-%     end
-%
-% end
+%ONSET
+meanTrace_stim = mean(Mstim, 1);
+meanTrace_stimToEnd = [mean(Mstim, 1), mean(Mpost, 1)];
+if abs(max(meanTrace_stim)) > abs(min(meanTrace_stim)) %outward current larger
+    [outputStruct.ONSET_avgTracePeak.value, pos] = max(meanTrace_stim);
+    outputStruct.ONSET_avgTrace_latencyToPeak.value = pos / sampleRate;
+    thresDir = 1;
+else %inward current larger
+    [outputStruct.ONSET_avgTracePeak.value, pos] = min(meanTrace_stim);
+    outputStruct.ONSET_avgTrace_latencyToPeak.value = pos / sampleRate;
+    thresDir = -1;
+end
+%thresholds
+maxVal = outputStruct.ONSET_avgTracePeak.value;
+T25_up = getThresCross(meanTrace_stimToEnd, 0.25*maxVal, thresDir);
+T25_down = getThresCross(meanTrace_stimToEnd, 0.25*maxVal, -thresDir);
+T50_up = getThresCross(meanTrace_stimToEnd, 0.5*maxVal, thresDir);
+% T25_up = getThresCross(meanTrace_stim, 0.25*maxVal, thresDir);     %PROBLEM: Doesn't take care of trace still up at stim offset.
+% T25_down = getThresCross(meanTrace_stim, 0.25*maxVal, -thresDir);
+% T50 = getThresCross(meanTrace_stim, 0.5*maxVal, thresDir);
+if ~isempty(T25_up) && ~isempty(T25_down)
+%     timeDiff_up = T25_up - pos;
+%     timeDiff_up_abs = abs(timeDiff_up);
+%     timeDiff_down = T25_down - pos;
+%     timeDiff_down_abs = abs(timeDiff_down);
+%     [~, prePos] = min(timeDiff_up_abs(timeDiff_up<0));
+%     [~, postPos] = min(timeDiff_down_abs(timeDiff_down>0)); MISTAKE
+
+% % % Corrected by Adam 2/2016
+timeDiff_up = T25_up - pos;
+timeDiff_down = T25_down - pos;
+T25_up = T25_up(timeDiff_up<0);
+T25_down = T25_down(timeDiff_down>0);
+[~, prePos] = max(T25_up);
+[~, postPos] = min(T25_down);
+
+    if ~isempty(prePos) && ~isempty(postPos)
+        outputStruct.ONSET_respIntervalT25.value = (T25_down(postPos) - T25_up(prePos)) / sampleRate;
+        for i=1:L
+            outputStruct.ONSET_chargeT25.value(i) = mean(MstimToEnd(i,T25_up(prePos):T25_down(postPos))) * outputStruct.ONSET_respIntervalT25.value;
+        end
+    end
+end
+if ~isempty(T50_up)
+    timeDiff = T50_up - pos;
+    timeDiff_abs = abs(timeDiff);
+    [~, prePos] = min(timeDiff_abs(timeDiff<0));
+    if ~isempty(prePos)
+        outputStruct.ONSET_avgTrace_latencyToT50.value = T50_up(prePos) / sampleRate;
+    end
+
+end
 
 
 %OFFSET
