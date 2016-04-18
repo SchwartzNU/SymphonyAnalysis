@@ -294,7 +294,8 @@ elseif strcmp(mode, 'responsesByPosition')
             
             signal = epoch.response(entry(10):entry(11));
             signal = signal - mean(signal(1:10));
-            plot(ha(poi), signal,'b');
+            t = (0:(length(signal)-1)) ./ ad.sampleRate;
+            plot(ha(poi), t, signal,'b');
             
             max_value = max(max_value, max(signal));
             min_value = min(min_value, min(signal));
@@ -307,7 +308,8 @@ elseif strcmp(mode, 'responsesByPosition')
 
                 signal = -1 * epoch.response(entry(10):entry(11));
                 signal = signal - mean(signal(1:10));
-                plot(ha(poi), signal,'r');
+                t = (0:(length(signal)-1)) ./ ad.sampleRate;
+                plot(ha(poi), t, signal,'r');
 
                 max_value = max(max_value, max(signal));
                 min_value = min(min_value, min(signal));
@@ -316,9 +318,11 @@ elseif strcmp(mode, 'responsesByPosition')
         
 %         set(gca,'XTickLabelMode','manual')
         set(ha(poi),'XTickLabels',[])
-        if poi > 1
-            set(ha(poi),'YTickLabels',[])
+        if poi == 1
+            set(ha(poi),'YTickLabelMode','auto');
+            set(ha(poi),'XTickLabelMode','auto');
         end
+        
         grid(ha(poi), 'on')
 
 %         title(ha(poi), pos);
@@ -327,7 +331,7 @@ elseif strcmp(mode, 'responsesByPosition')
 %     fprintf('\n');
     linkaxes(ha)
     ylim(ha(1), [min_value, max_value]);
-%     xlim(ha(1), [signal(1), signal(end)])
+    xlim(ha(1), [0, max(t)])
     
 elseif strcmp(mode, 'wholeCell')
     obs = ad.observations;
@@ -510,6 +514,9 @@ end
         [xq,yq] = meshgrid(X, X);        
         c = griddata(positions(:,1), positions(:,2), values, xq, yq);
         surface(xq, yq, zeros(size(xq)), c)
+        hold on
+        plot(positions(:,1), positions(:,2), '.r');
+        hold off
         title(titl)
         grid off
     %     axis square
