@@ -881,6 +881,10 @@ classdef LabDataGUI < handle
                     %load(curName); %loads cellData
                     fprintf('LabDataGUI load names: ');
                     cellData = loadAndSyncCellData(cellDataNames{j});
+                    if isempty(cellData)
+                        disp('Cell Data file not loaded: may be missing');
+                        continue;
+                    end
                     if cellData.get('Nepochs') > 0
                         if  ~isnan(cellData.epochs(1).get('amp2')) %if 2 amps
                             has2amps = true;
