@@ -11,6 +11,7 @@ classdef ShapeData < handle
         preTime
         stimTime
         positionOffset
+        timeOffset % set in curator
         
         spikes
         spikeRate
@@ -56,6 +57,7 @@ classdef ShapeData < handle
                 obj.numValueRepeats = epoch.get('numValueRepeats');
                 obj.stimTime = epoch.get('stimTime');
                 obj.positionOffset = [epoch.get('offsetX'),epoch.get('offsetY')];
+                obj.timeOffset = epoch.get('timeOffset');
                 
             elseif strcmp(runmode, 'online')
                 obj.sessionId = epoch.getParameter('sessionId');
@@ -76,8 +78,9 @@ classdef ShapeData < handle
                 obj.numValueRepeats = epoch.getParameter('numValueRepeats');
                 obj.stimTime = epoch.getParameter('stimTime');
                 obj.positionOffset = [epoch.getParameter('offsetX'),epoch.getParameter('offsetY')];
+                obj.timeOffset = epoch.getParameter('timeOffset');
             end
-            
+                       
             % process shape data from epoch
             obj.shapeDataColumns = containers.Map;
             newColumnsNames = {};

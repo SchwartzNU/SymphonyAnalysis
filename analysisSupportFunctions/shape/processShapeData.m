@@ -110,7 +110,12 @@ for p = 1:num_epochs
     % or store it now if generated
 %     disp(e.epochMode)
     skipResponses = 0;
-    if strcmp(e.epochMode, 'temporalAlignment')
+    
+    if ~isnan(e.timeOffset) % use the value set in an epoch if it's available
+        alignmentTemporalOffset = e.timeOffset;
+        t_offset = e.timeOffset;
+    
+    elseif strcmp(e.epochMode, 'temporalAlignment')
         lightOnTime = zeros(size(e.t));
 
         for si = 1:e.totalNumSpots
@@ -152,7 +157,8 @@ for p = 1:num_epochs
 %         disp('temporal alignment gave offset of ')
 %         disp(t_offset)
         skipResponses = 1;
-    elseif ~isnan(alignmentTemporalOffset(1))
+        
+    elseif ~isnan(alignmentTemporalOffset)
         t_offset = alignmentTemporalOffset;
 %         disp('using t_offset from alignment epoch')
 %         disp(t_offset)
@@ -162,7 +168,7 @@ for p = 1:num_epochs
     end
     
     
-%     t_offset = 0.3;
+%     t_offset = 0.07;
     
 
 %     
@@ -179,6 +185,10 @@ for p = 1:num_epochs
     sampleSet = (0:(sampleCount_total-1))'; % total
     
     if skipResponses == 1
+        continue
+    end
+    
+    if max(e.response) == 0
         continue
     end
     
