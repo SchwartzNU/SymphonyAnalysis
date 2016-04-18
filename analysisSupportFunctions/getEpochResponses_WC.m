@@ -38,8 +38,8 @@ baselineStart = xvals(1);
 baselineEnd = ip.Results.BaselineTime * 1E-3;
 
 responseInterval = xvals >= intervalStart & xvals < intervalEnd;
-transientInterval = xvals >= intervalStart & xvals < intervalStart + 0.2;
-sustainedInterval = xvals >= intervalStart + 0.2 & xvals < intervalEnd;
+transientInterval = xvals >= intervalStart & xvals < intervalStart + 0.1;
+sustainedInterval = xvals >= intervalEnd - 0.1 & xvals < intervalEnd;
 baselineInterval = xvals < ip.Results.BaselineTime * 1E-3;
 postInterval = xvals >= intervalEnd;
 responseIntervalLen = intervalEnd - intervalStart; %s
@@ -245,14 +245,14 @@ for i=1:L
         outputStruct.OFFSET_avgTrace_latencyToT50.value = NaN;
                 
         %Amurta 12/15/15
-        outputStruct.ONSETtransPeak.units = 'pA';
-        outputStruct.ONSETtransPeak.type = 'singleValue';
-        outputStruct.ONSETtransPeak.value = NaN;
+        outputStruct.ONSETtransPeak.units = units;
+        outputStruct.ONSETtransPeak.type = 'byEpoch';
+        outputStruct.ONSETtransPeak.value = ones(1,L) * NaN;
         
         %Amurta 12/15/15
-        outputStruct.ONSETsusPeak.units = 'pA';
-        outputStruct.ONSETsusPeak.type = 'singleValue';
-        outputStruct.ONSETsusPeak.value = NaN;
+        outputStruct.ONSETsusPeak.units = units;
+        outputStruct.ONSETsusPeak.type = 'byEpoch';
+        outputStruct.ONSETsusPeak.value = ones(1,L) * NaN;
     end
     
     %stimToEnd
@@ -273,6 +273,24 @@ for i=1:L
         outputStruct.ONSET_latencyToPeak.value(i) = pos / sampleRate;
     end
     outputStruct.stimInterval_charge.value(i) = sum(stimData) * responseIntervalLen / sampleRate; %pC
+    
+    %ONSET
+    if ~isempty(transData)
+        if abs(max(transData)) > abs(min(transData)) %outward current larger
+            outputStruct.ONSETtransPeak.value(i) = max(transData);
+        else %inward current larger
+            outputStruct.ONSETtransPeak.value(i) = min(transData);
+        end
+    end
+    
+    %ONSET
+    if ~isempty(susData)
+        if abs(max(susData)) > abs(min(susData)) %outward current larger
+            outputStruct.ONSETsusPeak.value(i) = max(susData);
+        else %inward current larger
+            outputStruct.ONSETsusPeak.value(i) = min(susData);
+        end
+    end
     
     %ONSET
     if ~isempty(stimData400)

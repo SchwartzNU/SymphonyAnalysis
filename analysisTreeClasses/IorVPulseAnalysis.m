@@ -1,22 +1,27 @@
-classdef IVAnalysis < AnalysisTree
+classdef IorVPulseAnalysis < AnalysisTree
     properties
-        StartTime = 100;
-        EndTime = 150;
+        StartTime = 0;
+        EndTime = 1000;
     end
     
     methods
-        function obj = IVAnalysis(cellData, dataSetName, params)
+        function obj = IorVPulseAnalysis(cellData, dataSetName, params)
             if nargin < 3
                 params.deviceName = 'Amplifier_Ch1';
             end
+            if strcmp(params.deviceName, 'Amplifier_Ch1')
+                params.ampModeParam = 'ampMode';
+            else
+                params.ampModeParam = 'amp2Mode';
+            end
             
-            nameStr = [cellData.savedFileName ': ' dataSetName ': IVAnalysis'];
+            nameStr = [cellData.savedFileName ': ' dataSetName ': IorVAnalysis'];
             obj = obj.setName(nameStr);
             obj = obj.copyAnalysisParams(params);
             dataSet = cellData.savedDataSets(dataSetName);
             obj = obj.copyParamsFromSampleEpoch(cellData, dataSet, ...
                 {'RstarMean', 'RstarIntensity', 'spotSize', 'offsetX', 'offsetY'});
-            obj = obj.buildCellTree(1, cellData, dataSet, {'holdSignal'}); %fix this for amp2holdSignal after protocol is fixed!
+            obj = obj.buildCellTree(1, cellData, dataSet, {'pulseAmplitude'});
         end
         
         function obj = doAnalysis(obj, cellData)
@@ -33,7 +38,7 @@ classdef IVAnalysis < AnalysisTree
             end
             
             obj = obj.percolateUp(leafIDs, ...
-                'splitValue', 'holdSignal');
+                'splitValue', 'pulseAmplitude');
             
             [byEpochParamList, singleValParamList, collectedParamList] = getParameterListsByType(curNode);
             obj = obj.percolateUp(leafIDs, byEpochParamList, byEpochParamList);
@@ -41,31 +46,46 @@ classdef IVAnalysis < AnalysisTree
             obj = obj.percolateUp(leafIDs, collectedParamList, collectedParamList);
             
             rootData = obj.get(1);
-            rootData.stimParameterList = {'holdSignal'};
+            rootData.stimParameterList = {'pulseAmplitude'};
             rootData.byEpochParamList = byEpochParamList;
             rootData.singleValParamList = singleValParamList;
             rootData.collectedParamList = collectedParamList;
             obj = obj.set(1, rootData);
             
         end
+        
     end
     
     methods(Static)
-        %         function plotData(node, cellData)
-        %             rootData = node.get(1);
-        %             errorbar(rootData.holdSignal, rootData.respMean, rootData.respSEM);
-        %             xlabel('Hold signal (mV)');
-        %             ylabel('Peak current (pA)');
-        %         end
         
-        function plot_holdSignalVsONSET_avgTracePeak(node, cellData)
+        function plot_pulseAmplitudeVsONSET_avgTracePeak(node, cellData)
             rootData = node.get(1);
-            xvals = rootData.holdSignal;
+            xvals = rootData.pulseAmplitude;
             yField = rootData.ONSET_avgTracePeak;
             yvals = yField.value;
             plot(xvals, yvals, 'bx-');
-            xlabel('holdSignal');
+            xlabel('pulseAmplitude');
             ylabel(['ONSET_avgTracePeak (' yField.units ')']);
+        end
+        
+        function plot_pulseAmplitudeVsONSETtransPeak(node, cellData)
+            rootData = node.get(1);
+            xvals = rootData.pulseAmplitude;
+            yField = rootData.ONSETtransPeak;
+            yvals = yField.mean;
+            plot(xvals, yvals, 'bx-');
+            xlabel('pulseAmplitude');
+            ylabel(['ONSETtransPeak (' yField.units ')']);
+        end
+        
+        function plot_pulseAmplitudeVsONSETsusPeak(node, cellData)
+            rootData = node.get(1);
+            xvals = rootData.pulseAmplitude;
+            yField = rootData.ONSETsusPeak;
+            yvals = yField.mean;
+            plot(xvals, yvals, 'bx-');
+            xlabel('pulseAmplitude');
+            ylabel(['ONSETsusPeak (' yField.units ')']);
         end
         
         function plotMeanTraces(node, cellData)
