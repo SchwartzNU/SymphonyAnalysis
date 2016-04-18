@@ -33,13 +33,13 @@ classdef ShapeObservation < handle
         
         function extractResults(obj, resp)
             obj.respMean = mean(resp);
-            pk = max(resp);
-            if pk > 0
-                del = find(resp > pk / 2.0, 1, 'first') / e.sampleRate;
+            obj.respPeak = max(resp);
+            if obj.respPeak > 0
+                timeToPeak = find(resp > pk / 2.0, 1, 'first') / .sampleRate;
             else
-                del = nan;
+                timeToPeak = nan;
             end
-            dist = sqrt(sum((spot_position - prevPosition).^2));
+%             dist = sqrt(sum((spot_position - prevPosition).^2));
         
         end
         
