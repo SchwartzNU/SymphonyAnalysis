@@ -6,7 +6,7 @@ ad = struct();
 num_epochs = length(epochData);
 ad.numEpochs = num_epochs;
 ad.alignmentEpochIndex = NaN;
-alignmentTemporalOffset = [NaN, NaN];
+alignmentTemporalOffset = NaN;
 
 %% Reorder epochs by presentationId, just in case
 pId = [];
@@ -24,9 +24,16 @@ observationColumns = {};
 %% create full positions list
 all_positions = [];
 for p = 1:num_epochs
-    col_x = epochData{p}.shapeDataColumns('X');
-    col_y = epochData{p}.shapeDataColumns('Y');
-    all_positions = vertcat(all_positions, epochData{p}.shapeDataMatrix(:,[col_x col_y])); %#ok<AGROW>
+    e = epochData{p};
+    col_x = e.shapeDataColumns('X');
+    col_y = e.shapeDataColumns('Y');
+    all_positions = vertcat(all_positions, e.shapeDataMatrix(:,[col_x col_y])); %#ok<AGROW>
+    
+    % grab the time offset while we're here
+    if ~isnan(e.timeOffset) % use the value set in an epoch if it's available
+        alignmentTemporalOffset = e.timeOffset;
+        t_offset = e.timeOffset;
+    end
 end
 all_positions = unique(all_positions, 'rows');
 num_positions = length(all_positions);
@@ -109,12 +116,13 @@ for p = 1:num_epochs
     % pull temporal alignment from temporal alignment epoch if available,
     % or store it now if generated
 %     disp(e.epochMode)
-    skipResponses = 0;
+    skipResponses = 0;   
     
-    if ~isnan(e.timeOffset) % use the value set in an epoch if it's available
-        alignmentTemporalOffset = e.timeOffset;
-        t_offset = e.timeOffset;
-    
+    if ~isnan(alignmentTemporalOffset)
+        t_offset = alignmentTemporalOffset;
+%         disp('using t_offset from alignment epoch')
+%         disp(t_offset)
+
     elseif strcmp(e.epochMode, 'temporalAlignment')
         lightOnTime = zeros(size(e.t));
 
@@ -145,9 +153,9 @@ for p = 1:num_epochs
         [~,I] = max(c_on);
         t_offset = lags_on(I) ./ e.sampleRate;
         
-        % this is to give it a bit of slack early in case some strong
-        % responses are making it delay too much
-%         t_offset = t_offset - .02;
+%         this is to give it a bit of slack early in case some strong
+%         responses are making it delay too much
+        t_offset = t_offset - .03;
         
         ad.alignmentEpochIndex = ei;
         ad.alignmentLightOn = lightOnTime;
@@ -158,13 +166,10 @@ for p = 1:num_epochs
 %         disp(t_offset)
         skipResponses = 1;
         
-    elseif ~isnan(alignmentTemporalOffset)
-        t_offset = alignmentTemporalOffset;
-%         disp('using t_offset from alignment epoch')
-%         disp(t_offset)
+
     else
-        t_offset = 0.3;
-        disp('using default temporal offset of 0.3');
+        t_offset = 0.05;
+        disp('using default temporal offset of 0.05');
     end
     
     
@@ -311,10 +316,17 @@ for p = 1:num_epochs
                 del = find(resp > pk / 2.0, 1, 'first') / e.sampleRate;
             else
                 del = nan;
-            end            
+            end
             dist = 0;
             obs = [spot_position, spot_intensity, e.ampVoltage, mn, pk, del, dist, ei, segmentStartIndex, segmentEndIndex, adaptSpotPosition, spot_start > adaptStartTime];
             observations(oi,1:length(obs)) = obs;
+            
+            % use object to hold observation
+            obObject = ShapeObservation();
+            obObject.extractResults(resp);
+            obObject.signalStartIndex = segmentStartIndex;
+            obObject.signalEndIndex = segmentEndIndex;
+            
             
         end
     end
