@@ -20,8 +20,13 @@ classdef IorVPulseAnalysis < AnalysisTree
             obj = obj.copyAnalysisParams(params);
             dataSet = cellData.savedDataSets(dataSetName);
             obj = obj.copyParamsFromSampleEpoch(cellData, dataSet, ...
-                {'RstarMean', 'RstarIntensity', 'spotSize', 'offsetX', 'offsetY'});
-            obj = obj.buildCellTree(1, cellData, dataSet, {'pulseAmplitude'});
+                {'curPulseAmp', 'pulseAmplitude'});
+            rootData = obj.get(1);
+            if isnan(rootData.pulseAmplitude)
+                obj = obj.buildCellTree(1, cellData, dataSet, {'curPulseAmp'});
+            else
+                obj = obj.buildCellTree(1, cellData, dataSet, {'pulseAmplitude'});
+            end
         end
         
         function obj = doAnalysis(obj, cellData)
@@ -38,7 +43,7 @@ classdef IorVPulseAnalysis < AnalysisTree
             end
             
             obj = obj.percolateUp(leafIDs, ...
-                'splitValue', 'pulseAmplitude');
+                'splitValue', 'pulseAmp');
             
             [byEpochParamList, singleValParamList, collectedParamList] = getParameterListsByType(curNode);
             obj = obj.percolateUp(leafIDs, byEpochParamList, byEpochParamList);
@@ -46,7 +51,7 @@ classdef IorVPulseAnalysis < AnalysisTree
             obj = obj.percolateUp(leafIDs, collectedParamList, collectedParamList);
             
             rootData = obj.get(1);
-            rootData.stimParameterList = {'pulseAmplitude'};
+            rootData.stimParameterList = {'pulseAmp'};
             rootData.byEpochParamList = byEpochParamList;
             rootData.singleValParamList = singleValParamList;
             rootData.collectedParamList = collectedParamList;
@@ -60,31 +65,31 @@ classdef IorVPulseAnalysis < AnalysisTree
         
         function plot_pulseAmplitudeVsONSET_avgTracePeak(node, cellData)
             rootData = node.get(1);
-            xvals = rootData.pulseAmplitude;
+            xvals = rootData.pulseAmp;
             yField = rootData.ONSET_avgTracePeak;
             yvals = yField.value;
             plot(xvals, yvals, 'bx-');
-            xlabel('pulseAmplitude');
+            xlabel('pulseAmp');
             ylabel(['ONSET_avgTracePeak (' yField.units ')']);
         end
         
         function plot_pulseAmplitudeVsONSETtransPeak(node, cellData)
             rootData = node.get(1);
-            xvals = rootData.pulseAmplitude;
+            xvals = rootData.pulseAmp;
             yField = rootData.ONSETtransPeak;
             yvals = yField.mean;
             plot(xvals, yvals, 'bx-');
-            xlabel('pulseAmplitude');
+            xlabel('pulseAmp');
             ylabel(['ONSETtransPeak (' yField.units ')']);
         end
         
         function plot_pulseAmplitudeVsONSETsusPeak(node, cellData)
             rootData = node.get(1);
-            xvals = rootData.pulseAmplitude;
+            xvals = rootData.pulseAmp;
             yField = rootData.ONSETsusPeak;
             yvals = yField.mean;
             plot(xvals, yvals, 'bx-');
-            xlabel('pulseAmplitude');
+            xlabel('pulseAmp');
             ylabel(['ONSETsusPeak (' yField.units ')']);
         end
         
