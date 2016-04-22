@@ -95,9 +95,23 @@ function runConfig = generateStandardSearch(parameters, analysisData, runConfig)
 
     % select positions
     if parameters.generatePositions
-        center = mod(parameters.epochNum * 2 * [1,1], 10); % a bit of jitter makes the graph look nicer
-        rotAngle = parameters.epochNum * 0.3; % sure, why not, doesn't matter the real value
+        si = parameters.pointSetIndex;
+        if si == 1 || si > 5
+            center = [0,0];
+        elseif si == 2
+            center = [.5, .4330] * parameters.mapResolution;
+        elseif si == 3
+            center = [0, .649] * parameters.mapResolution;
+        elseif si == 4
+            center = [0, .325] * parameters.mapResolution;
+        elseif si == 5
+            center = [.5, .1] * parameters.mapResolution;
+        end
         
+        
+%         center = mod(parameters.epochNum * 2 * [1,1], 10); % a bit of jitter makes the graph look nicer
+%         rotAngle = parameters.epochNum * 0.3; % sure, why not, doesn't matter the real value
+        rotAngle = 0;
 %         positions = generatePositions('random', [parameters.numSpots, parameters.spotDiameter, searchDiameterUpdated / 2]);
         %             positions = generatePositions('grid', [obj.searchDiameter, round(sqrt(obj.numSpots))]);
         positions = generatePositions('triangular', [searchDiameterUpdated / 2, parameters.mapResolution, rotAngle]);
