@@ -60,13 +60,12 @@ function runConfig = generateTemporalAlignment(parameters, runConfig)
     durations = [1, 0.6, 0.4, 0.2];
 %     durations = [8];
     numSpotsPerRate = 1;
-    diam_ta = 100;
     runConfig.shapeDataMatrix = [];
 
     tim = 0;
     for si = 1:numSpotsPerRate
         for dur = durations
-            shape = [0, 0, parameters.valueMax, tim, tim + dur / 3, diam_ta, 0];
+            shape = [0, 0, parameters.valueMax, tim, tim + dur / 3, parameters.alignmentSpotDiameter, 0];
             runConfig.shapeDataMatrix = vertcat(runConfig.shapeDataMatrix, shape);
             tim = tim + dur;
         end

@@ -78,7 +78,7 @@ classdef ShapeData < handle
                 obj.numValueRepeats = epoch.getParameter('numValueRepeats');
                 obj.stimTime = epoch.getParameter('stimTime');
                 obj.positionOffset = [epoch.getParameter('offsetX'),epoch.getParameter('offsetY')];
-                obj.timeOffset = epoch.getParameter('timeOffset');
+                obj.timeOffset = nan;
             end
                        
             % process shape data from epoch
