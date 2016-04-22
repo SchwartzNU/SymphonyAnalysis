@@ -641,6 +641,9 @@ classdef LabDataGUI < handle
         
         function analyzeAndBrowseCellType(obj)
             selectedNodes = get(obj.guiTree, 'SelectedNodes');
+            if isempty(selectedNodes)
+                disp('Click on cell to refresh epoch list')
+            end
             node = selectedNodes(1);
             
             if get(node, 'Depth') == 1 %cell type
