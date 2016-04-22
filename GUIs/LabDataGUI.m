@@ -42,13 +42,16 @@ classdef LabDataGUI < handle
     end
     
     methods
-        function obj = LabDataGUI()
+        function obj = LabDataGUI(folder_name)
             %todo: figure out how to organize directory structure for
             %different projects / labData structures
             global ANALYSIS_FOLDER
             global PREFERENCE_FILES_FOLDER
             global SYNC_TO_SERVER
-            folder_name = '';
+            
+            if nargin == 0
+                folder_name = '';
+            end
             while isempty(folder_name)
                 folder_name = uigetdir([ANALYSIS_FOLDER 'Projects/'],'Choose project folder');
             end
