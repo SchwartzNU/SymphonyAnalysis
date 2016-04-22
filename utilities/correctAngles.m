@@ -17,6 +17,7 @@ function cd = correctAngles(cd, cellName)
     
     %% loop through epochs
     for ei = 1:length(cd.epochs)
+        
         epoch = cd.epochs(ei);
         
         displayName = epoch.get('displayName');

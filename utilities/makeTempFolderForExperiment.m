@@ -1,4 +1,4 @@
-function [] = makeTempFolderForExperiment(expName)
+function projectFolder = makeTempFolderForExperiment(expName)
 global ANALYSIS_FOLDER;
 projectFolder = [ANALYSIS_FOLDER 'Projects' filesep expName '_temp'];
 eval(['!rm -rf ' projectFolder]);

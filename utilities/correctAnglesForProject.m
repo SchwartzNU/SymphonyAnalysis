@@ -1,6 +1,11 @@
+function correctAnglesForProject(projFolder)
+
+global ANALYSIS_FOLDER
 cellData_folder = [ANALYSIS_FOLDER 'cellData' filesep];
 
-projFolder = uigetdir;
+if nargin == 0
+    projFolder = uigetdir;
+end
 
 
 fid = fopen([projFolder filesep 'cellNames.txt'], 'r');
@@ -35,8 +40,6 @@ for fi = numFiles:-1:1
     if cellData == 1
         continue
     end
-%     cellData.cellType = 'WFDS';
-
 
     %% Save cellData
     disp('saving cell data');
