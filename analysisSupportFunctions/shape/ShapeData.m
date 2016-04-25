@@ -12,6 +12,7 @@ classdef ShapeData < handle
         stimTime
         positionOffset
         timeOffset % set in curator
+        rigOffsetAngle % set by script
         
         spikes
         spikeRate
@@ -58,6 +59,7 @@ classdef ShapeData < handle
                 obj.stimTime = epoch.get('stimTime');
                 obj.positionOffset = [epoch.get('offsetX'),epoch.get('offsetY')];
                 obj.timeOffset = epoch.get('timeOffset');
+                obj.rigOffsetAngle = epoch.get('rigOffsetAngle');
                 
             elseif strcmp(runmode, 'online')
                 obj.sessionId = epoch.getParameter('sessionId');
@@ -79,6 +81,7 @@ classdef ShapeData < handle
                 obj.stimTime = epoch.getParameter('stimTime');
                 obj.positionOffset = [epoch.getParameter('offsetX'),epoch.getParameter('offsetY')];
                 obj.timeOffset = nan;
+                obj.rigOffsetAngle = 0;%epoch.getParameter('rigOffsetAngle')
             end
                        
             % process shape data from epoch
@@ -157,6 +160,21 @@ classdef ShapeData < handle
                 obj.shapeDataColumns(name) = size(obj.shapeDataMatrix, 2);
             end
 
+            obj.rigOffsetAngle
+            % rotate positions using rig angle offset
+            if isnan(obj.rigOffsetAngle)
+                obj.rigOffsetAngle = 0;
+            end
+                        obj.rigOffsetAngle
+
+            disp('FIX ANGLES!');disp('FIX ANGLES!');disp('FIX ANGLES!');
+            theta = -1 * obj.rigOffsetAngle;
+            R = [cos(theta) -sin(theta); sin(theta) cos(theta)];
+            positions = obj.shapeDataMatrix(:, [obj.shapeDataColumns('X'), obj.shapeDataColumns('Y')]);
+            for p = 1:size(positions, 1);
+                positions(p,:) = (R * positions(p,:)')';
+            end
+            obj.shapeDataMatrix(:, [obj.shapeDataColumns('X'), obj.shapeDataColumns('Y')]) = positions;
             
             
             % process actual response or spikes from epoch
@@ -265,8 +283,8 @@ classdef ShapeData < handle
 %             plot(r)
 %             pause
             
-            fprintf('%d %d ', obj.sessionId, obj.presentationId)
-            fprintf('processing wc %d %2f %2f\n', obj.ampVoltage, mean(resp), mean(obj.response));
+%             fprintf('%d %d ', obj.sessionId, obj.presentationId)
+%             fprintf('processing wc %d V\n', obj.ampVoltage);
             obj.response = resp;
             
 

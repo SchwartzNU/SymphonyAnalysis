@@ -1,10 +1,10 @@
 function cd = correctAngles(cd, cellName)
 
-    if isKey(cd.attributes, 'anglesCorrected')
-        fprintf('%s angles already corrected\n', cellName);
-        cd = 1;
-        return
-    end
+%     if isKey(cd.attributes, 'anglesCorrected')
+%         fprintf('%s angles already corrected\n', cellName);
+%         cd = 1;
+%         return
+%     end
 
     % calculate rig angle offset
     if strfind(cellName,'A')
@@ -47,6 +47,10 @@ function cd = correctAngles(cd, cellName)
             case 'Bars multiple speeds'
                 angleName = 'offsetAngle';
                 angleOffset = 0;
+            
+            case 'Auto Center'
+                angleName = 'rigOffsetAngle';
+                angleOffset = 0;
                 
             otherwise
                 continue
@@ -55,10 +59,20 @@ function cd = correctAngles(cd, cellName)
         % calculate displayName angle offset
         offset = angleOffset + rigAngle;
         
-        % add epoch parameter
+        % add epoch parameter to store the amount of offset made
+        if isKey(epoch.attributes, 'angleOffsetForRigAndStimulus')
+%             disp('already did this epoch')
+            continue
+        end
         epoch.attributes('angleOffsetForRigAndStimulus') = offset;
-        epoch.attributes(angleName) = mod(epoch.get(angleName) + offset, 360);
-%         epoch.get('ventralAngle');
+        
+        % change epoch angle values (danger zone)
+        origAngle = epoch.get(angleName);
+        if isnan(origAngle) % for old autocenter
+            origAngle = 0;
+%             disp('add autocenter angle')
+        end
+        epoch.attributes(angleName) = mod(origAngle + offset, 360);
     end
     
     fprintf('%s angles corrected\n', cellName);
