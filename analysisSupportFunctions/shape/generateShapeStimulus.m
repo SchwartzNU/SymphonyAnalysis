@@ -1,7 +1,7 @@
 function runConfig = generateShapeStimulus(p, analysisData)
 
     runConfig = struct();
-    runConfig.autoContinueRun = true;
+    runConfig.autoContinueRun = false;
     
     % select the type of epoch to run based on params & results
 
@@ -39,9 +39,9 @@ function runConfig = generateShapeStimulus(p, analysisData)
     end
     
     % set the auto continue bit for after this epoch finishes
-    if p.timeRemainingSeconds - (runConfig.stimTime / 1000) < 0
-        runConfig.autoContinueRun = false;
-    end
+%     if p.timeRemainingSeconds - (runConfig.stimTime / 1000) < 0
+%         runConfig.autoContinueRun = false;
+%     end
     
 end
 
@@ -57,7 +57,7 @@ function runConfig = generateTemporalAlignment(parameters, runConfig)
 
     runConfig.epochMode = 'temporalAlignment';
     runConfig.numShapes = 1;
-    durations = [1, 0.6, 0.4, 0.2];
+    durations = [1, 0.6, 0.4];
 %     durations = [8];
     numSpotsPerRate = 1;
     runConfig.shapeDataMatrix = [];
@@ -96,16 +96,18 @@ function runConfig = generateStandardSearch(parameters, analysisData, runConfig)
     % select positions
     if parameters.generatePositions
         si = parameters.pointSetIndex;
-        if si == 1 || si > 5
+        if si == 1
             center = [0,0];
         elseif si == 2
-            center = [.5, .4330] * parameters.mapResolution;
+            center = [-.5, .4330] * parameters.mapResolution;
         elseif si == 3
             center = [0, .649] * parameters.mapResolution;
         elseif si == 4
             center = [0, .325] * parameters.mapResolution;
         elseif si == 5
             center = [.5, .1] * parameters.mapResolution;
+        elseif si > 5
+            center = rand(1,2) * parameters.mapResolution;
         end
         
         
