@@ -81,7 +81,7 @@ classdef ShapeData < handle
                 obj.stimTime = epoch.getParameter('stimTime');
                 obj.positionOffset = [epoch.getParameter('offsetX'),epoch.getParameter('offsetY')];
                 obj.timeOffset = nan;
-                obj.rigOffsetAngle = 0;%epoch.getParameter('rigOffsetAngle')
+                obj.rigOffsetAngle = epoch.getParameter('rigOffsetAngle');
             end
                        
             % process shape data from epoch
