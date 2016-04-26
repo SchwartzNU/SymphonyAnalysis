@@ -47,7 +47,7 @@ end
 % save('li.mat','lightIntensity')
 % [b,a] = butter(40, .7, 'high');
 lightIntensityFiltered = lightIntensity;%abs(filter(b, a, lightIntensity)) * 10;
-delay = .250 + .28;%+ .1 + rand() * .5;
+delay = .250 + .08;%+ .1 + rand() * .5;
 shiftFrames = round(delay * sd.sampleRate);
 lightIntensityFiltered = [zeros(1, shiftFrames) lightIntensityFiltered(1:(end-shiftFrames))];
 
