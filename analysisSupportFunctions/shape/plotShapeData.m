@@ -536,7 +536,7 @@ end
         end
         
         % draw soma
-        rectangle('Position',0.1 * largestDistanceOffset * [0, 0, 1, 1],'Curvature',1,'FaceColor',[1 0 1]);
+        rectangle('Position',0.08 * largestDistanceOffset * [-.5, -.5, 1, 1],'Curvature',1,'FaceColor',[1 1 1]);
         
         % set axis limits
         axis(largestDistanceOffset * [-1 1 -1 1])
