@@ -160,19 +160,22 @@ classdef ShapeData < handle
                 obj.shapeDataColumns(name) = size(obj.shapeDataMatrix, 2);
             end
 
+            % add offset to get real positions relative to center of scope
+            positions = obj.shapeDataMatrix(:, [obj.shapeDataColumns('X'), obj.shapeDataColumns('Y')]);
+            positions = bsxfun(@plus, positions, obj.positionOffset);
+            
             % rotate positions using rig angle offset
             if isnan(obj.rigOffsetAngle)
                 obj.rigOffsetAngle = 0;
+                disp('AutoCenter epoch is missing angle offset');
             end
 
             theta = -1 * obj.rigOffsetAngle; % not sure if this should be positive or negative... test to confirm
-            R = [cos(theta) -sin(theta); sin(theta) cos(theta)];
-            positions = obj.shapeDataMatrix(:, [obj.shapeDataColumns('X'), obj.shapeDataColumns('Y')]);
+            R = [cosd(theta) -sind(theta); sind(theta) cosd(theta)];
             for p = 1:size(positions, 1);
                 positions(p,:) = (R * positions(p,:)')';
             end
             obj.shapeDataMatrix(:, [obj.shapeDataColumns('X'), obj.shapeDataColumns('Y')]) = positions;
-            
             
             % process actual response or spikes from epoch
             if strcmp(runmode, 'offline')

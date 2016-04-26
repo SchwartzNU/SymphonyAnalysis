@@ -508,7 +508,7 @@ else
 end
 
     function plotSpatial(positions, values, titl, addcolorbar, gaussianfit, positionOffset)
-        positions = bsxfun(@plus, positions, positionOffset);
+%         positions = bsxfun(@plus, positions, positionOffset);
         largestDistanceOffset = max(abs(positions(:)));
         X = linspace(-1*largestDistanceOffset, largestDistanceOffset, 100);
         [xq,yq] = meshgrid(X, X);        
