@@ -160,15 +160,12 @@ classdef ShapeData < handle
                 obj.shapeDataColumns(name) = size(obj.shapeDataMatrix, 2);
             end
 
-            obj.rigOffsetAngle
             % rotate positions using rig angle offset
             if isnan(obj.rigOffsetAngle)
                 obj.rigOffsetAngle = 0;
             end
-                        obj.rigOffsetAngle
 
-            disp('FIX ANGLES!');disp('FIX ANGLES!');disp('FIX ANGLES!');
-            theta = -1 * obj.rigOffsetAngle;
+            theta = -1 * obj.rigOffsetAngle; % not sure if this should be positive or negative... test to confirm
             R = [cos(theta) -sin(theta); sin(theta) cos(theta)];
             positions = obj.shapeDataMatrix(:, [obj.shapeDataColumns('X'), obj.shapeDataColumns('Y')]);
             for p = 1:size(positions, 1);

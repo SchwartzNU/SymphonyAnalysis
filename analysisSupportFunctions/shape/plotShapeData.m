@@ -8,7 +8,7 @@ if strcmp(mode, 'printParameters')
     fprintf('num repeats: %d\n',firstEpoch.numValueRepeats);
     voltages = [];
     for i = 1:length(ad.epochData)
-        voltages(i) = ad.epochData{i}.ampVoltage;
+        voltages(i) = ad.epochData{i}.ampVoltage; %#ok<*AGROW>
     end
     fprintf('holding voltages: %d\n', voltages');
 
@@ -112,7 +112,7 @@ elseif strcmp(mode, 'subunit')
         goodSlopes = [];
         for p = 1:num_positions
 %             tight_subplot(dim1,dim2,p)
-            axes(ha(p))
+            axes(ha(p)) %#ok<*LAXES>
             hold on
             
             pos = ad.positions(p,:);
@@ -366,8 +366,8 @@ elseif strcmp(mode, 'wholeCell')
     r_exinrat = r_ex - r_in;
 %     r_exinrat = sign(r_exinrat) .* log10(abs(r_exinrat));
     
-    max_ = max(vertcat(r_ex, r_in));
-    min_ = min(vertcat(r_ex, r_in));
+%     max_ = max(vertcat(r_ex, r_in));
+%     min_ = min(vertcat(r_ex, r_in));
 
     ha = tight_subplot(1,3);
 
@@ -479,7 +479,7 @@ elseif strcmp(mode, 'adaptationRegion')
                 obs_sel = ismember(probeDataThisAdapt(:,1:2), pos, 'rows');
                 obs_sel = obs_sel & probeDataThisAdapt(:,14) == adaptOn;
                 
-                ints = probeDataThisAdapt(obs_sel, 3);
+%                 ints = probeDataThisAdapt(obs_sel, 3);
                 vals = probeDataThisAdapt(obs_sel, 5);
 %                 plot(ints, vals, '-o');
                 spatialValues(spatialIndex, adaptOn + 1) = mean(vals);
