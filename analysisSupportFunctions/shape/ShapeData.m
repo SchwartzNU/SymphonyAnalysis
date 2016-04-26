@@ -59,7 +59,7 @@ classdef ShapeData < handle
                 obj.stimTime = epoch.get('stimTime');
                 obj.positionOffset = [epoch.get('offsetX'),epoch.get('offsetY')];
                 obj.timeOffset = epoch.get('timeOffset');
-                obj.rigOffsetAngle = epoch.get('rigOffsetAngle');
+                obj.rigOffsetAngle = epoch.get('angleOffsetForRigAndStimulus');
                 
             elseif strcmp(runmode, 'online')
                 obj.sessionId = epoch.getParameter('sessionId');
@@ -81,7 +81,7 @@ classdef ShapeData < handle
                 obj.stimTime = epoch.getParameter('stimTime');
                 obj.positionOffset = [epoch.getParameter('offsetX'),epoch.getParameter('offsetY')];
                 obj.timeOffset = nan;
-                obj.rigOffsetAngle = epoch.getParameter('rigOffsetAngle');
+                obj.rigOffsetAngle = epoch.getParameter('angleOffsetForRigAndStimulus');
             end
                        
             % process shape data from epoch
