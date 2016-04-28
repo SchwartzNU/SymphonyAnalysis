@@ -99,7 +99,7 @@ classdef DriftingGratingsAnalysis < AnalysisTree
             hold(ax, 'off');
         end
         
-         function plot_gratingAngleVsF1(node, cellData)
+         function plot0_gratingAngleVsF1(node, cellData)
             rootData = node.get(1);
             xvals = rootData.gratingAngle;
             yField = rootData.F1amplitude;
