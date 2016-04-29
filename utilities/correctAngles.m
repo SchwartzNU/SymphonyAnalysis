@@ -17,8 +17,11 @@ function cd = correctAngles(cd, cellName)
     
     %% loop through epochs
     for ei = 1:length(cd.epochs)
-        
+
         epoch = cd.epochs(ei);
+        if isempty(epoch.parentCell)
+            continue
+        end
         
         displayName = epoch.get('displayName');
         
