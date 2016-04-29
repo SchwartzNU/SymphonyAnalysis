@@ -232,7 +232,8 @@ classdef ShapeData < handle
 %             subplot(4,1,1)
             
             % flip currents
-            resp = sign(obj.ampVoltage + eps) * obj.response; % use positive for 0 mV
+            resp = obj.response;
+            resp = sign(obj.ampVoltage + eps) * resp; % use positive for 0 mV
             
             % exponential decay cancellation
             if max(obj.t) > 6.0

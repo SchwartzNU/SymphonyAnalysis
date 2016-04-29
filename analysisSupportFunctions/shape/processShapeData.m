@@ -322,10 +322,10 @@ for p = 1:num_epochs
             observations(oi,1:length(obs)) = obs;
             
             % use object to hold observation
-            obObject = ShapeObservation();
-            obObject.extractResults(resp);
-            obObject.signalStartIndex = segmentStartIndex;
-            obObject.signalEndIndex = segmentEndIndex;
+%             obObject = ShapeObservation();
+%             obObject.extractResults(resp);
+%             obObject.signalStartIndex = segmentStartIndex;
+%             obObject.signalEndIndex = segmentEndIndex;
             
             
         end

@@ -276,9 +276,11 @@ elseif strcmp(mode, 'responsesByPosition')
     max_value = -inf;
     min_value = inf;
     
+    pos_sorted = sortrows(ad.positions, 1);
+    
     for poi = 1:num_positions
 %         fprintf('%d',poi)
-        pos = ad.positions(poi,:);
+        pos = pos_sorted(poi,:);
         obs_sel = ismember(obs(:,1:2), pos, 'rows');
         obs_sel = obs_sel & obs(:,3) == maxIntensity;
         obs_sel_ex = obs_sel & obs(:,4) == v_ex;
@@ -321,11 +323,13 @@ elseif strcmp(mode, 'responsesByPosition')
         if poi == 1
             set(ha(poi),'YTickLabelMode','auto');
             set(ha(poi),'XTickLabelMode','auto');
+            legend(ha(poi),'In','Ex')
         end
         
         grid(ha(poi), 'on')
+        
 
-%         title(ha(poi), pos);
+        title(ha(poi), sprintf('%d,%d', round(pos)));
         
     end
 %     fprintf('\n');
