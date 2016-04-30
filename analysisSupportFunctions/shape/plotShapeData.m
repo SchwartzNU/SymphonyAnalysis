@@ -277,10 +277,16 @@ elseif strcmp(mode, 'responsesByPosition')
     min_value = inf;
     
     pos_sorted = sortrows(ad.positions, 1);
+    % TODO: make better ordering
+    % bin positions by y into dim1 equal length sets
+    % sort by x within that set
     
     for poi = 1:num_positions
 %         fprintf('%d',poi)
         pos = pos_sorted(poi,:);
+        
+        % TODO: just loop through all voltages
+        % TODO: average signals over larger ranges (better mean for smoothness, lower resolution)
         obs_sel = ismember(obs(:,1:2), pos, 'rows');
         obs_sel = obs_sel & obs(:,3) == maxIntensity;
         obs_sel_ex = obs_sel & obs(:,4) == v_ex;
@@ -294,7 +300,7 @@ elseif strcmp(mode, 'responsesByPosition')
             entry = obs(ii,:)';
             epoch = ad.epochData{entry(9)};
             
-            signal = epoch.response(entry(10):entry(11));
+            signal = epoch.response(entry(10):entry(11)); % start and end indices into signal vector
             signal = signal - mean(signal(1:10));
             t = (0:(length(signal)-1)) ./ ad.sampleRate;
             plot(ha(poi), t, signal,'b');
