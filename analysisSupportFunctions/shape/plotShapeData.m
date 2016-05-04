@@ -383,17 +383,22 @@ elseif strcmp(mode, 'wholeCell')
 
     % EX
     axes(ha(1))
-    plotSpatial(goodPositions, r_ex, sprintf('Excitatory conductance: %d mV', v_ex), 1, 0, ad.positionOffset)
+    g_ex = plotSpatial(goodPositions, r_ex, sprintf('Excitatory conductance: %d mV', v_ex), 1, 1, ad.positionOffset);
 %     caxis([min_, max_]);
     
     % IN
     axes(ha(2))
-    plotSpatial(goodPositions, r_in, sprintf('Inhibitory conductance: %d mV', v_in), 1, 0, ad.positionOffset)
+    g_in = plotSpatial(goodPositions, r_in, sprintf('Inhibitory conductance: %d mV', v_in), 1, 1, ad.positionOffset);
 %     caxis([min_, max_]);
     
     % Ratio    
     axes(ha(3))
     plotSpatial(goodPositions, r_exinrat, 'Ex/In difference', 1, 0, ad.positionOffset)
+    
+    
+    offsetDist = sqrt((g_in('centerX') - g_ex('centerX')).^2) + sqrt((g_in('centerY') - g_ex('centerY')).^2);
+    avgSigma2 = mean([g_in('sigma2X'), g_in('sigma2Y'), g_ex('sigma2X'), g_ex('sigma2Y')]);
+    fprintf('Spatial offset = %3.1f um, avg sigma2 = %3.1f, ratio = %2.2f\n', offsetDist, avgSigma2, offsetDist/avgSigma2);
     
 
 elseif strcmp(mode, 'spatialDiagnostics')
@@ -517,7 +522,7 @@ else
     disp('incorrect plot type')
 end
 
-    function plotSpatial(positions, values, titl, addcolorbar, gaussianfit, positionOffset)
+    function gfit = plotSpatial(positions, values, titl, addcolorbar, gaussianfit, positionOffset)
 %         positions = bsxfun(@plus, positions, positionOffset);
         largestDistanceOffset = max(abs(positions(:)));
         X = linspace(-1*largestDistanceOffset, largestDistanceOffset, 100);
@@ -537,12 +542,21 @@ end
         end
         if gaussianfit
             hold on
-            gfp = fit2DGaussian(positions, values);
-%             disp([dataNames{ooi}, ' center of gaussian fit: ' num2str([gfp('centerX'), gfp('centerY')]) ' um'])
-
-            plot(gfp('centerX'), gfp('centerY'),'red','MarkerSize',20, 'Marker','+')
-            ellipse(gfp('sigma2X'), gfp('sigma2Y'), -gfp('angle'), gfp('centerX'), gfp('centerY'), 'red');
+            
+%             values = zeros(size(values));
+%             hi = 20;%round(length(values) / 2);
+%             positions(hi,:)
+%             values(hi) = 1;
+            gfit = fit2DGaussian(positions, values);
+            fprintf('gaussian fit center: %d um, %d um\n', round(gfit('centerX')), round(gfit('centerY')))
+            v = values - min(values);
+            centerOfMass = mean(bsxfun(@times, positions, v ./ mean(v)), 1);
+            plot(centerOfMass(1), centerOfMass(2),'green','MarkerSize',20, 'Marker','+')
+            plot(gfit('centerX'), gfit('centerY'),'red','MarkerSize',20, 'Marker','+')
+            ellipse(gfit('sigma2X'), gfit('sigma2Y'), -gfit('angle'), gfit('centerX'), gfit('centerY'), 'red');
             hold off
+        else
+            gfit = nan;
         end
         
         % draw soma
