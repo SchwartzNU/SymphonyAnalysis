@@ -241,7 +241,7 @@ classdef CellDataCurator < handle
                 'RowName', [], ...
                 'Data', cell(6,4), ...
                 'CellEditCallback', @(uiobj, evt)obj.curEpochTableEdit(evt), ...
-                'TooltipString', 'table for current eoch parameters');
+                'TooltipString', 'table for current epoch parameters');
             L_viewControls = uiextras.HButtonBox('Parent', L_currentEpochParamsBox, ...
                 'ButtonSize', [100 30], ...
                 'Spacing', 20);
@@ -497,19 +497,17 @@ classdef CellDataCurator < handle
             D = get(obj.handles.curEpochTable,'Data');
             z=1;
             for i=1:size(D,1)
-                if ~isempty(D{i,1})
-                    D{i,2} = obj.cellData.epochs(obj.dataSet(obj.selectedEpochInd)).get(D{i,1});
-                    obj.curViewParams{z} = D{i,1};
-                    obj.curViewLocations{z} = [i,1];
-                    z=z+1;
+                for col = [1, 3]
+                    if ~isempty(D{i,col})
+                        value = obj.cellData.epochs(obj.dataSet(obj.selectedEpochInd)).get(D{i,col});
+                        D{i,col+1} = num2str(value, '%d');
+%                         value;
+                        obj.curViewParams{z} = D{i,col};
+                        obj.curViewLocations{z} = [i,col];
+                        z=z+1;
+                    end
                 end
-                if ~isempty(D{i,3})
-                    D{i,4} = obj.cellData.epochs(obj.dataSet(obj.selectedEpochInd)).get(D{i,3});
-                    obj.curViewParams{z} = D{i,3};
-                    obj.curViewLocations{z} = [i,3];
-                    z=z+1;
-                end
-            end                                    
+            end
             set(obj.handles.curEpochTable,'Data', D);
         end
         
