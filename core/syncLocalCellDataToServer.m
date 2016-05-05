@@ -26,8 +26,8 @@ for i=1:length(cellDataNames)
         catch
             serverModDate = 0;
         end
-        if localModDate > serverModDate + 3 %more than 3 seconds newer - accounts for file write lag
-           disp(['Found newer local copy of ' basename '. Copying to server...']);
+        if localModDate > serverModDate + 60 %more than 60 seconds newer
+           fprintf('Found newer local copy of %s, by %d sec. Copying to server...', basename, round(localModDate - serverModDate));
            load([ANALYSIS_FOLDER 'cellData' filesep basename '.mat']); %loads cellData
            saveAndSyncCellData(cellData);
         end
