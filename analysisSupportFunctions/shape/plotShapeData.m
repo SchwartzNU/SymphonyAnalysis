@@ -379,28 +379,78 @@ elseif strcmp(mode, 'wholeCell')
 %     max_ = max(vertcat(r_ex, r_in));
 %     min_ = min(vertcat(r_ex, r_in));
 
+
     ha = tight_subplot(1,3);
 
     % EX
     axes(ha(1))
-    g_ex = plotSpatial(goodPositions, r_ex, sprintf('Excitatory conductance: %d mV', v_ex), 1, 1, ad.positionOffset);
+    plotSpatial(goodPositions, r_ex, sprintf('Excitatory conductance: %d mV', v_ex), 1, 0, ad.positionOffset);
 %     caxis([min_, max_]);
     
     % IN
     axes(ha(2))
-    g_in = plotSpatial(goodPositions, r_in, sprintf('Inhibitory conductance: %d mV', v_in), 1, 1, ad.positionOffset);
+    plotSpatial(goodPositions, r_in, sprintf('Inhibitory conductance: %d mV', v_in), 1, 0, ad.positionOffset);
 %     caxis([min_, max_]);
     
     % Ratio    
     axes(ha(3))
     plotSpatial(goodPositions, r_exinrat, 'Ex/In difference', 1, 0, ad.positionOffset)
     
+elseif strcmp(mode, 'spatialOffset')
     
+    obs = ad.observations;
+   
+    maxIntensity = max(obs(:,3));
+    v_in = max(obs(:,4));
+    v_ex = min(obs(:,4));
+    
+    r_ex = [];
+    r_in = [];
+
+    posIndex = 0;
+    goodPositions_ex = [];
+    for poi = 1:length(ad.positions)
+        pos = ad.positions(poi,:);
+        obs_sel = ismember(obs(:,1:2), pos, 'rows');
+        obs_sel = obs_sel & obs(:,3) == maxIntensity;
+        obs_sel_ex = obs_sel & obs(:,4) == v_ex;
+        if any(obs_sel_ex)
+            posIndex = posIndex + 1;
+            r_ex(posIndex,1) = mean(obs(obs_sel_ex,5),1);
+            goodPositions_ex(posIndex,:) = pos;
+        end
+    end
+    
+    posIndex = 0;
+    goodPositions_in = [];
+    for poi = 1:length(ad.positions)
+        pos = ad.positions(poi,:);
+        obs_sel = ismember(obs(:,1:2), pos, 'rows');
+        obs_sel = obs_sel & obs(:,3) == maxIntensity;
+        obs_sel_in = obs_sel & obs(:,4) == v_in;
+        if any(obs_sel_in)
+            posIndex = posIndex + 1;
+            r_in(posIndex,1) = mean(obs(obs_sel_in,5),1);
+            goodPositions_in(posIndex,:) = pos;
+        end
+    end
+
+    ha = tight_subplot(1,2);
+
+    % EX
+    axes(ha(1))
+    g_ex = plotSpatial(goodPositions_ex, r_ex, sprintf('Excitatory conductance: %d mV', v_ex), 1, 1, ad.positionOffset);
+%     caxis([min_, max_]);
+    
+    % IN
+    axes(ha(2))
+    g_in = plotSpatial(goodPositions_in, r_in, sprintf('Inhibitory conductance: %d mV', v_in), 1, 1, ad.positionOffset);
+%     caxis([min_, max_]);
+        
     offsetDist = sqrt((g_in('centerX') - g_ex('centerX')).^2) + sqrt((g_in('centerY') - g_ex('centerY')).^2);
     avgSigma2 = mean([g_in('sigma2X'), g_in('sigma2Y'), g_ex('sigma2X'), g_ex('sigma2Y')]);
     fprintf('Spatial offset = %3.1f um, avg sigma2 = %3.1f, ratio = %2.2f\n', offsetDist, avgSigma2, offsetDist/avgSigma2);
     
-
 elseif strcmp(mode, 'spatialDiagnostics')
     obs = ad.observations;
     if isempty(obs)

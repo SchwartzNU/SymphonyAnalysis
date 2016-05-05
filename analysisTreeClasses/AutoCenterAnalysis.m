@@ -224,12 +224,29 @@ classdef AutoCenterAnalysis < AnalysisTree
             if isfield(nodeData, 'splitParam')
                 if strcmp(nodeData.splitParam, 'sessionId')
                     if isfield(nodeData.analysisData, 'value')
+                        figure(19);clf;
                         analysisData = nodeData.analysisData.value;
                         plotShapeData(analysisData, 'adaptationRegion');
                     end
                 end
             end
         end     
+
+        
+        function plotSpatialOffset(node, ~)
+            
+            nodeData = node.get(1);
+                        
+            if isfield(nodeData, 'splitParam')
+                if strcmp(nodeData.splitParam, 'sessionId')
+                    if isfield(nodeData.analysisData, 'value')
+                        figure(20);clf;
+                        analysisData = nodeData.analysisData.value;
+                        plotShapeData(analysisData, 'spatialOffset');
+                    end
+                end
+            end
+        end            
         
     end
 end
