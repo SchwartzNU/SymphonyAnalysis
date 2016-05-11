@@ -144,12 +144,11 @@ for p = 1:num_epochs
 %             lightOnTime(e.t > startTime(si) & e.t < endTime(si)) = intensities(si);
         end
         
-        
-        
-        % make light signal decay with time to better align to very start of light for transience
-%         lightOnTime = conv(lightOnTime
-        
-        [c_on,lags_on] = xcorr(e.response, lightOnTime);
+        corrResponse = e.response;
+        if e.ampVoltage < 0
+            corrResponse = -1 * corrResponse;
+        end
+        [c_on,lags_on] = xcorr(corrResponse, lightOnTime);
         [~,I] = max(c_on);
         t_offset = lags_on(I) ./ e.sampleRate;
         

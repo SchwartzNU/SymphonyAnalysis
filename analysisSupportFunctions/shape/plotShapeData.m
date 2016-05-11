@@ -196,7 +196,7 @@ elseif strcmp(mode, 'temporalAlignment')
     if ~isnan(ei)
         t = ad.epochData{ei}.t;
         hold on
-        plot(t, ad.alignmentRate ./ max(ad.alignmentRate),'r');
+        plot(t, ad.alignmentRate ./ max(abs(ad.alignmentRate)),'r');
         plot(t, ad.alignmentLightOn,'b')
         plot(t + ad.timeOffset(1), ad.alignmentLightOn * .8,'g')
         legend('rate','light','shifted')
@@ -439,7 +439,7 @@ elseif strcmp(mode, 'spatialOffset')
 
     % EX
     axes(ha(1))
-    g_ex = plotSpatial(goodPositions_ex, r_ex, sprintf('Excitatory conductance: %d mV', v_ex), 1, 1, ad.positionOffset);
+    g_ex = plotSpatial(goodPositions_ex, r_ex, sprintf('Excitatory conductance: %d mV', v_ex), 1, -1, ad.positionOffset);
 %     caxis([min_, max_]);
     
     % IN
@@ -612,16 +612,21 @@ end
         if addcolorbar
             colorbar
         end
-        if gaussianfit
+        if gaussianfit ~= 0
+            if gaussianfit < 0
+                fitValues = values * -1; % seems to be the only place we need positive deflections is for fitting
+            else
+                fitValues = values;
+            end
             hold on
             
 %             values = zeros(size(values));
 %             hi = 20;%round(length(values) / 2);
 %             positions(hi,:)
 %             values(hi) = 1;
-            gfit = fit2DGaussian(positions, values);
+            gfit = fit2DGaussian(positions, fitValues);
             fprintf('gaussian fit center: %d um, %d um\n', round(gfit('centerX')), round(gfit('centerY')))
-            v = values - min(values);
+            v = fitValues - min(fitValues);
             centerOfMass = mean(bsxfun(@times, positions, v ./ mean(v)), 1);
             plot(centerOfMass(1), centerOfMass(2),'green','MarkerSize',20, 'Marker','+')
             plot(gfit('centerX'), gfit('centerY'),'red','MarkerSize',20, 'Marker','+')
