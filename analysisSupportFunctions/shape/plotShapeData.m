@@ -69,7 +69,7 @@ elseif strncmp(mode, 'plotSpatial', 11)
             axes(ha(a));
 
             if posIndex >= 3
-                plotSpatial(goodPositions, vals, sprintf('%s at V = %d mV, intensity = %f', smode, voltage, intensity), 1, 1, ad.positionOffset);
+                plotSpatial(goodPositions, vals, sprintf('%s at V = %d mV, intensity = %f', smode, voltage, intensity), 1, sign(voltage), ad.positionOffset);
     %             caxis([0, max(vals)]);
     %             colormap(flipud(colormap))
             end
