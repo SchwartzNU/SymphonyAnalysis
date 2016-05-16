@@ -272,10 +272,30 @@ classdef CellData < handle
             end
             ax = gca;
             hold(ax, 'on');
+            
+            % point display
+%             for i=1:L
+%                 h(i) = scatter(ax, timeAxis_spikes(spikeTimes{i}), i .* ones(1,length(spikeTimes{i})));
+%                 set(h(i), 'Marker', '*', 'MarkerEdgeColor', 'k');
+%             end
+            
+            % line display
             for i=1:L
-                h(i) = scatter(ax, timeAxis_spikes(spikeTimes{i}), i .* ones(1,length(spikeTimes{i})));
-                set(h(i), 'Marker', '*', 'MarkerEdgeColor', 'k');
-            end
+                spikes = timeAxis_spikes(spikeTimes{i});
+                for st_i = 1:length(spikes)
+                    x = spikes(st_i);
+                    line([x, x], [i-0.4, i+0.4]);
+                end
+            end            
+            
+            % use image display
+%             img = [];
+%             for i=1:L
+%                 h(i) = scatter(ax, timeAxis_spikes(spikeTimes{i}), i .* ones(1,length(spikeTimes{i})));
+%                 set(h(i), 'Marker', '*', 'MarkerEdgeColor', 'k');
+%             end
+%             imagesc(ax, img);
+            
             set(ax, 'Ytick', 1:1:L);
             set(ax, 'Xlim', [timeAxis_spikes(1), timeAxis_spikes(end)]);
             set(ax, 'Ylim', [0, L+1]);
