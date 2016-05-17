@@ -13,7 +13,7 @@ if strcmp(mode, 'printParameters')
     fprintf('holding voltages: %d\n', voltages');
 
     disp(ad);
-
+    
 elseif strncmp(mode, 'plotSpatial', 11)
 % elseif strcmp(mode, 'plotSpatial_tHalfMax')
     if strfind(mode, 'mean')
@@ -183,8 +183,8 @@ elseif strcmp(mode, 'temporalResponses')
 %         hold(ha(ei), 'off');
         
         title(ha(ei), sprintf('Epoch %d', ei))
-        disp('Normalization parameters:');
-        disp(ad.epochData{ei}.signalNormalizationParameters)
+%         disp('Normalization parameters:');
+%         disp(ad.epochData{ei}.signalNormalizationParameters)
     end
     
 elseif strcmp(mode, 'temporalAlignment')
@@ -196,7 +196,7 @@ elseif strcmp(mode, 'temporalAlignment')
     if ~isnan(ei)
         t = ad.epochData{ei}.t;
         hold on
-        plot(t, ad.alignmentRate ./ max(abs(ad.alignmentRate)),'r');
+        plot(t, -1 * ad.alignmentRate ./ max(abs(ad.alignmentRate)),'r');
         plot(t, ad.alignmentLightOn,'b')
         plot(t + ad.timeOffset(1), ad.alignmentLightOn * .8,'g')
         legend('rate','light','shifted')
@@ -204,6 +204,21 @@ elseif strcmp(mode, 'temporalAlignment')
         hold off
     end
     
+    % new format
+%     obs = ad.observations;
+%     voltages = sort(unique(obs(:,4)));
+%     for vi = 1:length(voltages)
+%         obs_sel = obs(:,4) == voltages(vi);
+%         indices = find(obs_sel);
+% 
+%         for ii = 1:length(indices)
+%             entry = obs(indices(ii),:)';
+%             epoch = ad.epochData{entry(9)};
+% 
+%             signal = epoch.response(entry(10):entry(11));    
+%         end
+%         plot(mean(signal));
+%     end
     
     %% plot time graph
     axes(ha(2));
@@ -276,7 +291,7 @@ elseif strcmp(mode, 'responsesByPosition')
     dim1 = floor(sqrt(num_positions));
     dim2 = ceil(num_positions / dim1);
 
-    ha = tight_subplot(dim1, dim2, .02, .02);
+    ha = tight_subplot(dim1, dim2, .015, .015);
     
     max_value = -inf;
     min_value = inf;
@@ -322,7 +337,7 @@ elseif strcmp(mode, 'responsesByPosition')
                         epoch = ad.epochData{entry(9)};
 
                         signal = epoch.response(entry(10):entry(11)); % start and end indices into signal vector
-                        signal = signal - mean(signal(1:10));
+%                         signal = signal - mean(signal(1:10));
                         signal = smooth(signal, 20);
                         t = (0:(length(signal)-1)) / ad.sampleRate;
                         h = plot(ha(poi), t, signal,'color',squeeze(colorsets(vi, ai, inti,1:3)));

@@ -6,7 +6,10 @@ ad = struct();
 num_epochs = length(epochData);
 ad.numEpochs = num_epochs;
 ad.alignmentEpochIndex = NaN;
+ad.alignmentLightOn = [];
+ad.alignmentRate = [];
 alignmentTemporalOffset = NaN;
+alignmentTemporalOffset_by_v = containers.Map('KeyType','int32','ValueType','double');
 
 %% Reorder epochs by presentationId, just in case
 pId = [];
@@ -33,6 +36,7 @@ for p = 1:num_epochs
     if ~isnan(e.timeOffset) % use the value set in an epoch if it's available
         alignmentTemporalOffset = e.timeOffset;
         t_offset = e.timeOffset;
+        alignmentTemporalOffset_by_v(e.ampVoltage) = e.timeOffset;
     end
 end
 all_positions = unique(all_positions, 'rows');
@@ -118,10 +122,10 @@ for p = 1:num_epochs
 %     disp(e.epochMode)
     skipResponses = 0;   
     
-    if ~isnan(alignmentTemporalOffset)
-        t_offset = alignmentTemporalOffset;
-%         disp('using t_offset from alignment epoch')
-%         disp(t_offset)
+    if isKey(alignmentTemporalOffset_by_v, e.ampVoltage)
+%     if ~isnan(alignmentTemporalOffset)
+        t_offset = alignmentTemporalOffset_by_v(e.ampVoltage);
+        fprintf('using premade alignment %1.3f for v = %d\n',t_offset,e.ampVoltage)
 
     elseif strcmp(e.epochMode, 'temporalAlignment')
         lightOnTime = zeros(size(e.t));
@@ -154,15 +158,14 @@ for p = 1:num_epochs
         
 %         this is to give it a bit of slack early in case some strong
 %         responses are making it delay too much
-        t_offset = t_offset - .03;
+%         t_offset = t_offset - .03;
         
         ad.alignmentEpochIndex = ei;
         ad.alignmentLightOn = lightOnTime;
         ad.alignmentRate = e.response;
 
-        alignmentTemporalOffset = t_offset;
-%         disp('temporal alignment gave offset of ')
-%         disp(t_offset)
+        alignmentTemporalOffset_by_v(e.ampVoltage) = t_offset;
+        fprintf('temporal alignment gave offset of %1.3f for v = %d\n',t_offset,e.ampVoltage)
         skipResponses = 1;
         
 
@@ -235,7 +238,7 @@ for p = 1:num_epochs
                 del = nan;
             end
             dist = sqrt(sum((spot_position - prevPosition).^2));
-            obs = [spot_position, spot_intensity, e.ampVoltage, mn, pk, del, dist, ei, segmentStartIndex, segmentStartIndex + sampleCount_total, nan, nan, nan];
+            obs = [spot_position, spot_intensity, e.ampVoltage, mn, pk, del, dist, ei, segmentStartIndex, segmentStartIndex + sampleCount_total, nan, nan, 0];
             observations(oi,1:length(obs)) = obs;
             prevPosition = spot_position;
 
