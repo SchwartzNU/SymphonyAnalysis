@@ -263,82 +263,95 @@ elseif strcmp(mode, 'responsesByPosition')
     
     obs = ad.observations;
    
-    maxIntensity = max(obs(:,3));
-    v_in = max(obs(:,4));
-    v_ex = min(obs(:,4));
+%     maxIntensity = max(obs(:,3));
+    voltages = sort(unique(obs(:,4)));
+    adaptstates = unique(obs(:,14));
+    intensities = sort(unique(obs(:,3)));
+    
+    num_options = length(voltages) * length(adaptstates) * length(intensities);
+    
+    colors = hsv(num_options);
     
     num_positions = size(ad.positions,1);
     dim1 = floor(sqrt(num_positions));
     dim2 = ceil(num_positions / dim1);
 
-    ha = tight_subplot(dim1, dim2, .01, .01);    
+    ha = tight_subplot(dim1, dim2, .02, .02);
     
     max_value = -inf;
     min_value = inf;
     
-    pos_sorted = sortrows(ad.positions, 1);
-    % TODO: make better ordering
-    % bin positions by y into dim1 equal length sets
-    % sort by x within that set
+    pos_sorted = flipud(sortrows(ad.positions, 2));
+    for i = 1:dim1
+        l = ((i-1) * dim2) + (1:dim2);
+        l(l > num_positions) = [];
+        pos_sorted(l,:) = sortrows(pos_sorted(l,:), 1);
+    end
+    legends = {};
     
-    for poi = 1:num_positions
-%         fprintf('%d',poi)
-        pos = pos_sorted(poi,:);
-        
-        % TODO: just loop through all voltages
-        % TODO: average signals over larger ranges (better mean for smoothness, lower resolution)
-        obs_sel = ismember(obs(:,1:2), pos, 'rows');
-        obs_sel = obs_sel & obs(:,3) == maxIntensity;
-        obs_sel_ex = obs_sel & obs(:,4) == v_ex;
-        ind_ex = find(obs_sel_ex);
-        obs_sel_in = obs_sel & obs(:,4) == v_in;
-        ind_in = find(obs_sel_in);
-        
-        hold(ha(poi), 'on');
-       
-        for ii = ind_in'
-            entry = obs(ii,:)';
-            epoch = ad.epochData{entry(9)};
-            
-            signal = epoch.response(entry(10):entry(11)); % start and end indices into signal vector
-            signal = signal - mean(signal(1:10));
-            t = (0:(length(signal)-1)) ./ ad.sampleRate;
-            plot(ha(poi), t, signal,'b');
-            
-            max_value = max(max_value, max(signal));
-            min_value = min(min_value, min(signal));
+
+    % set up coloring & legend by going through the options:
+    opti = 1;
+    colorsets = [];
+    for vi = 1:length(voltages)
+        for ai = 1:length(adaptstates)
+            for inti = 1:length(intensities)
+                colorsets(vi, ai, inti, 1:3) = colors(opti,:);
+                legends{opti} = sprintf('v: %d inti: %0.1f ai: %d', voltages(vi), intensities(inti), adaptstates(ai));
+                opti = opti + 1;
+            end
         end
-        
-        if v_in ~= v_ex
-            for ii = ind_ex'
-                entry = obs(ii,:)';
-                epoch = ad.epochData{entry(9)};
+    end
 
-                signal = -1 * epoch.response(entry(10):entry(11));
-                signal = signal - mean(signal(1:10));
-                t = (0:(length(signal)-1)) ./ ad.sampleRate;
-                plot(ha(poi), t, signal,'r');
+    for poi = 1:num_positions
 
-                max_value = max(max_value, max(signal));
-                min_value = min(min_value, min(signal));
+        pos = pos_sorted(poi,:);
+        for vi = 1:length(voltages)
+            for ai = 1:length(adaptstates)
+                for inti = 1:length(intensities)
+
+                    v = voltages(vi);
+                    obs_sel = ismember(obs(:,1:2), pos, 'rows');
+                    obs_sel = obs_sel & obs(:,3) == intensities(inti) & obs(:,4) == v & obs(:,14) == adaptstates(ai);
+                    indices = find(obs_sel);
+
+                    hold(ha(poi), 'on');
+
+                    for ii = 1:length(indices)
+                        entry = obs(indices(ii),:)';
+                        epoch = ad.epochData{entry(9)};
+
+                        signal = epoch.response(entry(10):entry(11)); % start and end indices into signal vector
+                        signal = signal - mean(signal(1:10));
+                        signal = smooth(signal, 20);
+                        t = (0:(length(signal)-1)) / ad.sampleRate;
+                        h = plot(ha(poi), t, signal,'color',squeeze(colorsets(vi, ai, inti,1:3)));
+                        if ii > 1
+                            set(get(get(h,'Annotation'),'LegendInformation'),'IconDisplayStyle','off');
+                        end
+
+                        max_value = max(max_value, max(signal));
+                        min_value = min(min_value, min(signal));
+                    end
+                    
+                end
             end
         end
         
 %         set(gca,'XTickLabelMode','manual')
         set(ha(poi),'XTickLabels',[])
-        if poi == 1
-            set(ha(poi),'YTickLabelMode','auto');
-            set(ha(poi),'XTickLabelMode','auto');
-            legend(ha(poi),'In','Ex')
-        end
         
         grid(ha(poi), 'on')
-        
+        zline = line([0,max(t)],[0,0], 'Parent', ha(poi), 'color', 'k');
+        set(get(get(zline,'Annotation'),'LegendInformation'),'IconDisplayStyle','off');
 
         title(ha(poi), sprintf('%d,%d', round(pos)));
         
     end
-%     fprintf('\n');
+    set(ha(1),'YTickLabelMode','auto');
+    set(ha(1),'XTickLabelMode','auto');
+    legend(ha(1),legends)
+
     linkaxes(ha)
     ylim(ha(1), [min_value, max_value]);
     xlim(ha(1), [0, max(t)])
@@ -637,7 +650,7 @@ end
         end
         
         % draw soma
-        rectangle('Position',0.08 * largestDistanceOffset * [-.5, -.5, 1, 1],'Curvature',1,'FaceColor',[1 1 1]);
+        rectangle('Position',0.05 * largestDistanceOffset * [-.5, -.5, 1, 1],'Curvature',1,'FaceColor',[1 1 1]);
         
         % set axis limits
         axis(largestDistanceOffset * [-1 1 -1 1])
