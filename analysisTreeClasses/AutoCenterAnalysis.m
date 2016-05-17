@@ -247,6 +247,22 @@ classdef AutoCenterAnalysis < AnalysisTree
                 end
             end
         end            
+
+        function plotSaveData(node, ~)
+            
+            nodeData = node.get(1);
+                        
+            if isfield(nodeData, 'splitParam')
+                if strcmp(nodeData.splitParam, 'sessionId')
+                    if isfield(nodeData.analysisData, 'value')
+                        analysisData = nodeData.analysisData.value;
+                        save('analysisData.mat', 'analysisData');
+                        disp('Saved as analysisData.mat');
+                    end
+                end
+            end
+        end          
+        
         
     end
 end
