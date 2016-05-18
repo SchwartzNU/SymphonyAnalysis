@@ -19,6 +19,8 @@ classdef ShapeData < handle
         t
         response
         signalNormalizationParameters
+        signalLightOn
+        signalLightOff
 
         spotTotalTime
         spotOnTime

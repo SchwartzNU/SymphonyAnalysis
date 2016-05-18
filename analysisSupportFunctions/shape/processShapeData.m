@@ -5,10 +5,6 @@ ad = struct();
 
 num_epochs = length(epochData);
 ad.numEpochs = num_epochs;
-ad.alignmentEpochIndex = NaN;
-ad.alignmentLightOn = [];
-ad.alignmentRate = [];
-alignmentTemporalOffset = NaN;
 alignmentTemporalOffset_by_v = containers.Map('KeyType','int32','ValueType','double');
 
 %% Reorder epochs by presentationId, just in case
@@ -34,7 +30,6 @@ for p = 1:num_epochs
     
     % grab the time offset while we're here
     if ~isnan(e.timeOffset) % use the value set in an epoch if it's available
-        alignmentTemporalOffset = e.timeOffset;
         t_offset = e.timeOffset;
         alignmentTemporalOffset_by_v(e.ampVoltage) = e.timeOffset;
     end
@@ -114,81 +109,80 @@ for p = 1:num_epochs
 %         % unit late:
 %         t_offset(t_offset < 0.1) = t_offset(t_offset < 0.1) + e.spotTotalTime; 
 %     end
-    
 
-    
-    % pull temporal alignment from temporal alignment epoch if available,
-    % or store it now if generated
-%     disp(e.epochMode)
     skipResponses = 0;   
     
-    if isKey(alignmentTemporalOffset_by_v, e.ampVoltage)
-%     if ~isnan(alignmentTemporalOffset)
-        t_offset = alignmentTemporalOffset_by_v(e.ampVoltage);
-        fprintf('using premade alignment %1.3f for v = %d\n',t_offset,e.ampVoltage)
+    % make a light onset signal (simulating a zero-lag ON semi transient cell, for alignment)
+    e.signalLightOn = zeros(size(e.t));
+    for si = 1:e.totalNumSpots
 
-    elseif strcmp(e.epochMode, 'temporalAlignment')
-        lightOnTime = zeros(size(e.t));
-
-        for si = 1:e.totalNumSpots
-            
-            % get region
-            tRegion = e.t > startTime(si) & e.t < endTime(si);
-            
-            totalLen = sum(tRegion);
-            if totalLen > 0
-
-                responseShape = linspace(1, 0, totalLen);
-                riseLen = 20; % msec
-                responseShape(1:riseLen) = linspace(0,responseShape(riseLen),riseLen);
-
-                lightOnTime(tRegion) = responseShape';
-            end
-            
-%             lightOnTime(e.t > startTime(si) & e.t < endTime(si)) = intensities(si);
+        if flickerFreq(si) > 0 % ignore the adaptation spots
+            continue
         end
         
-        corrResponse = e.response;
-        if e.ampVoltage < 0
-            corrResponse = -1 * corrResponse;
+        % get region of light spot on
+        tRegion = e.t > startTime(si) & e.t < endTime(si);
+
+        totalLen = sum(tRegion);
+        if totalLen > 0
+
+            responseShape = linspace(1, 0, totalLen);
+            riseLen = 20; % msec
+            responseShape(1:riseLen) = linspace(0,responseShape(riseLen),riseLen);
+
+            e.signalLightOn(tRegion) = responseShape' * intensities(si);
         end
-        [c_on,lags_on] = xcorr(corrResponse, lightOnTime);
-        [~,I] = max(c_on);
-        t_offset = lags_on(I) ./ e.sampleRate;
-        
-%         this is to give it a bit of slack early in case some strong
-%         responses are making it delay too much
-%         t_offset = t_offset - .03;
-        
-        ad.alignmentEpochIndex = ei;
-        ad.alignmentLightOn = lightOnTime;
-        ad.alignmentRate = e.response;
-
-        alignmentTemporalOffset_by_v(e.ampVoltage) = t_offset;
-        fprintf('temporal alignment gave offset of %1.3f for v = %d\n',t_offset,e.ampVoltage)
-        skipResponses = 1;
-        
-
-    else
-        t_offset = 0.05;
-        disp('using default temporal offset of 0.05');
     end
     
     
-%     t_offset = 0.07;
     
+    if isKey(alignmentTemporalOffset_by_v, e.ampVoltage)
+        
+        t_offset = alignmentTemporalOffset_by_v(e.ampVoltage);
+%         fprintf('using premade alignment %1.3f for v = %d\n',t_offset,e.ampVoltage)
 
-%     
-%     figure(96)
-%     clf;
-%     hold on
-%     plot(e.t, e.response./max(e.response)*2,'g')
-%     plot(e.t, lightOnTime,'b')
-%     plot(e.t+t_offset, lightOnTime * .5,'r')
+    elseif strcmp(e.epochMode, 'temporalAlignment')
 
+        % read the value set in the alignment epoch in the curator
+        if ~isnan(e.timeOffset) && abs(e.timeOffset) > 0
+            alignmentTemporalOffset_by_v(e.ampVoltage) = e.timeOffset;
+        else
+            % extract the alignment from the epoch
+            corrResponse = e.response;
+            if e.ampVoltage < 0
+                corrResponse = -1 * corrResponse;
+            end
+            [c_on,lags_on] = xcorr(corrResponse, e.signalLightOn);
+            [~,I] = max(c_on);
+            t_offset = lags_on(I) ./ e.sampleRate;
+
+    %         this is to give it a bit of slack early in case some strong
+    %         responses are making it delay too much
+    %         t_offset = t_offset - .03;
+
+            alignmentTemporalOffset_by_v(e.ampVoltage) = t_offset;
+    %         fprintf('temporal alignment gave offset of %1.3f for v = %d\n',t_offset,e.ampVoltage)
+            skipResponses = 1;
+        end
+        
+
+    else
+        % look in the offset list to find the closest voltage one
+        if ~isempty(alignmentTemporalOffset_by_v)
+            voltages = cell2mat(alignmentTemporalOffset_by_v.keys);
+            [~, idx] = sort(abs(voltages - e.ampVoltage));
+            bestVoltage = voltages(idx(1));
+            t_offset = alignmentTemporalOffset_by_v(bestVoltage);
+%             fprintf('voltage is %d; using nearby offset of %1.3f for v = %d\n',e.ampVoltage, t_offset, bestVoltage)
+        else
+            t_offset = 0.05;
+            disp('no temporal alignment epoch found; using default temporal offset of 0.05');
+        end
+    end
+    
+    e.timeOffset = t_offset; % store it in the epoch for display
 
     sampleCount_total = round(e.spotTotalTime * e.sampleRate);
-    
     sampleSet = (0:(sampleCount_total-1))'; % total
     
     if skipResponses == 1

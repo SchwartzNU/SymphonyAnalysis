@@ -1,12 +1,12 @@
 % process auto center offline simply
 
 % load('/Users/sam/analysis/cellData/051216Ac4.mat')
+% sessionId = 201651215217;
 
-sessionId = 201651215217;
+load('/Users/sam/analysis/cellData/032416Ac9.mat')
+sessionId = 2016324173256;
 
-% epochIds = [13 14 15];
-
-% num_epochs = length(epochIds);
+% process
 
 epochData = cell(1);
 ei = 1;
@@ -32,8 +32,8 @@ end
 % plotShapeData(analysisData, 'spatial');
 
 %
-figure(9);clf;
-plotShapeData(analysisData, 'temporalAlignment');
+% figure(9);clf;
+% plotShapeData(analysisData, 'temporalAlignment');
 
 % figure(11);clf;
 % plotShapeData(analysisData, 'subunit');

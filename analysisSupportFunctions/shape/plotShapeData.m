@@ -165,6 +165,7 @@ elseif strcmp(mode, 'temporalResponses')
         t = ad.epochData{ei}.t;
         resp = ad.epochData{ei}.response;
         
+        % play with exponential fitting:
 %         if max(t) > 5
 %             resp = resp - mean(resp((end-100):end)); % set end to 0
 %             startA = mean(resp(1:100))/exp(0);
@@ -176,7 +177,18 @@ elseif strcmp(mode, 'temporalResponses')
 %             expFit = zeros(size(t));
 %         end
         
+        % display original and shifted light On signal
         plot(ha(ei), t, resp);
+        hold(ha(ei), 'on');
+        light = ad.epochData{ei}.signalLightOn;
+        if abs(min(resp)) > abs(max(resp))
+            light = light * -1;
+        end
+        light = light * max(abs(resp)) * 0.5;
+        plot(ha(ei), ad.epochData{ei}.timeOffset + t, light)
+        hold(ha(ei), 'off');
+        
+        
 %         hold(ha(ei), 'on');
 %         plot(ha(ei), t, expFit)
 %         plot(ha(ei), t, resp - expFit);
@@ -219,6 +231,7 @@ elseif strcmp(mode, 'temporalAlignment')
 %         end
 %         plot(mean(signal));
 %     end
+
     
     %% plot time graph
     axes(ha(2));
