@@ -199,99 +199,186 @@ elseif strcmp(mode, 'temporalResponses')
 %         disp(ad.epochData{ei}.signalNormalizationParameters)
     end
     
-elseif strcmp(mode, 'temporalAlignment')
     
-    ha = tight_subplot(2, 1, .1);
-    
-    ei = ad.alignmentEpochIndex;
-    axes(ha(1));
-    if ~isnan(ei)
-        t = ad.epochData{ei}.t;
-        hold on
-        plot(t, -1 * ad.alignmentRate ./ max(abs(ad.alignmentRate)),'r');
-        plot(t, ad.alignmentLightOn,'b')
-        plot(t + ad.timeOffset(1), ad.alignmentLightOn * .8,'g')
-        legend('rate','light','shifted')
-        title(ad.timeOffset(1))
-        hold off
-    end
-    
-    % new format
-%     obs = ad.observations;
-%     voltages = sort(unique(obs(:,4)));
-%     for vi = 1:length(voltages)
-%         obs_sel = obs(:,4) == voltages(vi);
-%         indices = find(obs_sel);
-% 
-%         for ii = 1:length(indices)
-%             entry = obs(indices(ii),:)';
-%             epoch = ad.epochData{entry(9)};
-% 
-%             signal = epoch.response(entry(10):entry(11));    
-%         end
-%         plot(mean(signal));
+%     old alignment display is deprecated for now. Use temporal responses
+% elseif strcmp(mode, 'temporalAlignment')
+%     
+%     ha = tight_subplot(2, 1, .1);
+%     
+%     ei = ad.alignmentEpochIndex;
+%     axes(ha(1));
+%     if ~isnan(ei)
+%         t = ad.epochData{ei}.t;
+%         hold on
+%         plot(t, -1 * ad.alignmentRate ./ max(abs(ad.alignmentRate)),'r');
+%         plot(t, ad.alignmentLightOn,'b')
+%         plot(t + ad.timeOffset(1), ad.alignmentLightOn * .8,'g')
+%         legend('rate','light','shifted')
+%         title(ad.timeOffset(1))
+%         hold off
 %     end
+%     
+%     % new format
+% %     obs = ad.observations;
+% %     voltages = sort(unique(obs(:,4)));
+% %     for vi = 1:length(voltages)
+% %         obs_sel = obs(:,4) == voltages(vi);
+% %         indices = find(obs_sel);
+% % 
+% %         for ii = 1:length(indices)
+% %             entry = obs(indices(ii),:)';
+% %             epoch = ad.epochData{entry(9)};
+% % 
+% %             signal = epoch.response(entry(10):entry(11));    
+% %         end
+% %         plot(mean(signal));
+% %     end
+% 
+%     
+%     %% plot time graph
+%     axes(ha(2));
+%     spotOnTime = ad.spotOnTime;
+%     spotTotalTime = ad.spotTotalTime;
+% 
+%     %                 spikeBins = nodeData.spikeBins.value;
+%     
+%     
+%     % get average of all responses
+%     obs = ad.observations;
+%     if isempty(obs)
+%         return;
+%     end
+%     sm = [];
+%     for oi = 1:size(obs, 1)
+%         
+%         entry = obs(oi,:)';
+%         epoch = ad.epochData{entry(9)};
+% 
+%         sm(oi,:) = epoch.response(entry(10):entry(11));
+%     end
+%     spotBinDisplay = mean(sm,1);
+%     
+% %     spotBinDisplay = mean(ad.spikeRate_by_spot, 1);
+%     timeOffset = ad.timeOffset;
+%     
+%     displayTime = (1:length(spotBinDisplay)) ./ ad.sampleRate + timeOffset(1);
+%     
+%     plot(displayTime, spotBinDisplay)
+%     %                 plot(spikeBins(1:end-1), spikeBinsValues);
+%     %                 xlim([0,spikeBins(end-1)])
+% 
+%     title('Temporal offset calculation')
+% 
+%     top = max(spotBinDisplay)*1.1;
+% 
+%     % two light spot patches
+%     p = patch([0 spotOnTime spotOnTime 0],[0 0 top top],'y');
+%     set(p,'FaceAlpha',0.3);
+%     set(p,'EdgeColor','none');
+%     p = patch(spotTotalTime+[0 spotOnTime spotOnTime 0],[0 0 top top],'y');
+%     set(p,'FaceAlpha',0.3);
+%     set(p,'EdgeColor','none');
+% 
+%     % analysis spot patch
+%     p = patch(ad.timeOffset(1)+[0 spotOnTime spotOnTime 0],[0 0 -.1*top -.1*top],'g');
+%     set(p,'FaceAlpha',0.3);
+%     set(p,'EdgeColor','none');
+%     p = patch(ad.timeOffset(1)+[spotOnTime spotTotalTime spotTotalTime spotOnTime],[0 0 -.1*top -.1*top],'r');
+%     set(p,'FaceAlpha',0.3);
+%     set(p,'EdgeColor','none');    
+% 
+%     title(['temporal offset of collection bins (on, off): ' num2str(timeOffset) ' sec'])
 
+elseif strcmp(mode, 'temporalComponents')
     
-    %% plot time graph
-    axes(ha(2));
-    spotOnTime = ad.spotOnTime;
-    spotTotalTime = ad.spotTotalTime;
-
-    %                 spikeBins = nodeData.spikeBins.value;
-    
-    
-    % get average of all responses
+    % start with finding the times with highest variance, by voltage
     obs = ad.observations;
-    if isempty(obs)
-        return;
-    end
-    sm = [];
-    for oi = 1:size(obs, 1)
+    voltages = sort(unique(obs(:,4)));
+
+    ha = tight_subplot(length(voltages), 2, .03, .03);
+    num_positions = size(ad.positions,1);
+
+    for vi = 1:length(voltages)
+        v = voltages(vi);
+
+        signalsByPosition = cell(num_positions,1);
+        for poi = 1:num_positions
+            pos = ad.positions(poi,:);
+
+            obs_sel = ismember(obs(:,1:2), pos, 'rows');
+            obs_sel = obs_sel & obs(:,4) == v;
+            indices = find(obs_sel);
+                        
+            signalsThisPos = {};
+            for ii = 1:length(indices)
+                entry = obs(indices(ii),:)';
+                epoch = ad.epochData{entry(9)};
+                
+                signal = epoch.response(entry(10):entry(11)); % start and end indices into signal vector
+                %                         signal = signal - mean(signal(1:10));
+                signalsThisPos{ii,1} = signal';
+            end
+%             signalsThisPos
+            maxLength=max(cellfun(@(x)numel(x),signalsThisPos))+1;
+            
+%             kk = cellfun(@(x)size(x,1),signalsThisPos,'UniformOutput',false)
+            
+            a = cell2mat(cellfun(@(x)cat(2,x,nan*zeros(1,maxLength-length(x))),signalsThisPos,'UniformOutput',false));
+            signalsByPosition{poi,1} = nanmean(a, 1);
+            
+        end
+        maxLength=max(cellfun(@(x)numel(x),signalsByPosition));
+        a = cell2mat(cellfun(@(x)cat(2,x,nan*zeros(1,maxLength-length(x))),signalsByPosition,'UniformOutput',false));
         
-        entry = obs(oi,:)';
-        epoch = ad.epochData{entry(9)};
+        signalByV = nanmean(a, 1);
+        varByV = nanvar(a, 1);
+        varByV = varByV / max(varByV);
+        
+%         axes(ha((vi - 1) * 2 + 1))    
+        axes(ha(vi));
+        t = (1:length(signalByV)) / ad.sampleRate - 1/ad.sampleRate;
+        plot(t, signalByV ./ max(abs(signalByV)))
+        hold on
+        plot(t, varByV)
+        title(v)
+        legend('mean','variance');
+        
+%         axes(ha(vi * 2))
 
-        sm(oi,:) = epoch.response(entry(10):entry(11));
+        % how about some magic numbers? you want some magic numbers? yeah, yes you do.
+        % nice, arbitrary, need to be changed, overfitted magic numbers, right here for you
+        % ah, now that's nice, you like magic numbers, so good, have some more, here they are
+        [~, peakIndices] = findpeaks(smooth(varByV,30), 'MinPeakProminence',.05,'Annotate','extents','MinPeakDistance',0.08);
+
+        plot(t(peakIndices), varByV(peakIndices), 'ro')
+        hold off
+        
+        
+        %% now, with the peak locations in hand, we can pull out the components
+%         num_components = length(peakIndices);
+%         componentWidth = 0.1;
+%         for ci = 1:num_components
+%             mn = t(peakIndices(ci));
+%             basis = 1/sqrt(2*pi)/componentWidth*exp(-(t-mn).^2/2/componentWidth/componentWidth);
+%             plot(basis)
+%             for poi = 1:num_positions
+% %                 pos = ad.positions(poi,:);
+%                 signal = signalsByPosition{poi,1};
+%                 signal(isnan(signal)) = [];
+%                 basisCropped = basis(1:length(signal));
+%                 
+%                 size(signal)
+%                 size(basis)
+%                 val = signal \ basis
+%                 
+%             end
+%         end            
     end
-    spotBinDisplay = mean(sm,1);
     
-%     spotBinDisplay = mean(ad.spikeRate_by_spot, 1);
-    timeOffset = ad.timeOffset;
     
-    displayTime = (1:length(spotBinDisplay)) ./ ad.sampleRate + timeOffset(1);
-    
-    plot(displayTime, spotBinDisplay)
-    %                 plot(spikeBins(1:end-1), spikeBinsValues);
-    %                 xlim([0,spikeBins(end-1)])
-
-    title('Temporal offset calculation')
-
-    top = max(spotBinDisplay)*1.1;
-
-    % two light spot patches
-    p = patch([0 spotOnTime spotOnTime 0],[0 0 top top],'y');
-    set(p,'FaceAlpha',0.3);
-    set(p,'EdgeColor','none');
-    p = patch(spotTotalTime+[0 spotOnTime spotOnTime 0],[0 0 top top],'y');
-    set(p,'FaceAlpha',0.3);
-    set(p,'EdgeColor','none');
-
-    % analysis spot patch
-    p = patch(ad.timeOffset(1)+[0 spotOnTime spotOnTime 0],[0 0 -.1*top -.1*top],'g');
-    set(p,'FaceAlpha',0.3);
-    set(p,'EdgeColor','none');
-    p = patch(ad.timeOffset(1)+[spotOnTime spotTotalTime spotTotalTime spotOnTime],[0 0 -.1*top -.1*top],'r');
-    set(p,'FaceAlpha',0.3);
-    set(p,'EdgeColor','none');    
-
-    title(['temporal offset of collection bins (on, off): ' num2str(timeOffset) ' sec'])
-
 elseif strcmp(mode, 'responsesByPosition')
     
     obs = ad.observations;
-   
-%     maxIntensity = max(obs(:,3));
     voltages = sort(unique(obs(:,4)));
     adaptstates = unique(obs(:,14));
     intensities = sort(unique(obs(:,3)));
@@ -309,8 +396,9 @@ elseif strcmp(mode, 'responsesByPosition')
     max_value = -inf;
     min_value = inf;
     
+    % nice way of displaying plots with an aligned-to-grid location using percentiles
     pos_sorted = flipud(sortrows(ad.positions, 2));
-    for i = 1:dim1
+    for i = 1:dim1 % chunk positions by display rows
         l = ((i-1) * dim2) + (1:dim2);
         l(l > num_positions) = [];
         pos_sorted(l,:) = sortrows(pos_sorted(l,:), 1);
@@ -586,6 +674,7 @@ elseif strcmp(mode, 'adaptationRegion')
         spatialPositions = [];
         spatialValues = [];
         spatialIndex = 0;
+        intensity = 0.3;
         
         % make a subplot for each probe
         probePositions = unique(probeDataThisAdapt(:,[1,2]), 'rows');
@@ -605,7 +694,7 @@ elseif strcmp(mode, 'adaptationRegion')
             for adaptOn = 0:1
                 
                 obs_sel = ismember(probeDataThisAdapt(:,1:2), pos, 'rows');
-                obs_sel = obs_sel & probeDataThisAdapt(:,14) == adaptOn;
+                obs_sel = obs_sel & probeDataThisAdapt(:,14) == adaptOn & probeDataThisAdapt(:,3) == intensity;
                 
 %                 ints = probeDataThisAdapt(obs_sel, 3);
                 vals = probeDataThisAdapt(obs_sel, 5);

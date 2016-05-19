@@ -162,9 +162,10 @@ classdef ShapeData < handle
                 obj.shapeDataColumns(name) = size(obj.shapeDataMatrix, 2);
             end
 
-            % add offset to get real positions relative to center of scope
             positions = obj.shapeDataMatrix(:, [obj.shapeDataColumns('X'), obj.shapeDataColumns('Y')]);
-            positions = bsxfun(@plus, positions, obj.positionOffset);
+
+            % add offset to get real positions relative to center of scope
+%             positions = bsxfun(@plus, positions, obj.positionOffset);
             
             % rotate positions using rig angle offset
             if isnan(obj.rigOffsetAngle)

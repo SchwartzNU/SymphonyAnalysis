@@ -80,7 +80,7 @@ classdef AutoCenterAnalysis < AnalysisTree
             end
         end           
 
-        function plotSpatial_peak(node, ~)
+        function plot1Spatial_peak(node, ~)
             
             nodeData = node.get(1);
 
@@ -111,20 +111,20 @@ classdef AutoCenterAnalysis < AnalysisTree
             end
         end
         
-        function plotTemporalAlignment(node, ~)
-            
-            nodeData = node.get(1);
-                        
-            if isfield(nodeData, 'splitParam')
-                if strcmp(nodeData.splitParam, 'sessionId')
-                    if isfield(nodeData.analysisData, 'value')
-                        figure(13);clf;
-                        analysisData = nodeData.analysisData.value;
-                        plotShapeData(analysisData, 'temporalAlignment');
-                    end
-                end
-            end
-        end       
+%         function plotTemporalAlignment(node, ~)
+%             
+%             nodeData = node.get(1);
+%                         
+%             if isfield(nodeData, 'splitParam')
+%                 if strcmp(nodeData.splitParam, 'sessionId')
+%                     if isfield(nodeData.analysisData, 'value')
+%                         figure(13);clf;
+%                         analysisData = nodeData.analysisData.value;
+%                         plotShapeData(analysisData, 'temporalAlignment');
+%                     end
+%                 end
+%             end
+%         end       
 
         function plotSpatialDiagnostics(node, ~)
             
@@ -157,7 +157,7 @@ classdef AutoCenterAnalysis < AnalysisTree
         end      
         
         
-        function plotTemporalResponses(node, ~)
+        function plot2TemporalResponses(node, ~)
             
             nodeData = node.get(1);
                         
@@ -188,7 +188,7 @@ classdef AutoCenterAnalysis < AnalysisTree
         end         
         
         
-        function plotResponsesByPosition(node, ~)
+        function plot3ResponsesByPosition(node, ~)
             
             nodeData = node.get(1);
                         
@@ -262,7 +262,20 @@ classdef AutoCenterAnalysis < AnalysisTree
                 end
             end
         end          
-        
+
+        function plotTemporalComponents(node, ~)
+            nodeData = node.get(1);
+                        
+            if isfield(nodeData, 'splitParam')
+                if strcmp(nodeData.splitParam, 'sessionId')
+                    if isfield(nodeData.analysisData, 'value')
+                        figure(20);clf;
+                        analysisData = nodeData.analysisData.value;
+                        plotShapeData(analysisData, 'temporalComponents');
+                    end
+                end
+            end
+        end          
         
     end
 end
