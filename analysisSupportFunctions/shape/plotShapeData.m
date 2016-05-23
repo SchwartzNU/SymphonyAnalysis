@@ -69,7 +69,7 @@ elseif strncmp(mode, 'plotSpatial', 11)
             axes(ha(a));
 
             if posIndex >= 3
-                plotSpatial(goodPositions, vals, sprintf('%s at V = %d mV, intensity = %f', smode, voltage, intensity), 1, sign(voltage), ad.positionOffset);
+                plotSpatial(goodPositions, vals, sprintf('%s at V = %d mV, intensity = %f', smode, voltage, intensity), 1, sign(voltage));
     %             caxis([0, max(vals)]);
     %             colormap(flipud(colormap))
             end
@@ -148,7 +148,7 @@ elseif strcmp(mode, 'subunit')
         
         if ~isempty(goodPositions)
             figure(99)
-            plotSpatial(goodPositions, goodSlopes, 'intensity response slope', 1, 0, ad.positionOffset)
+            plotSpatial(goodPositions, goodSlopes, 'intensity response slope', 1, 0)
         end
         
 %         set(ha(1:end-dim2),'XTickLabel','');
@@ -299,7 +299,7 @@ elseif strcmp(mode, 'temporalComponents')
     num_positions = size(ad.positions,1);
 
     for vi = 1:length(voltages)
-        v = voltages(vi);
+        v = voltages(vi)
 
         signalsByPosition = cell(num_positions,1);
         for poi = 1:num_positions
@@ -335,13 +335,13 @@ elseif strcmp(mode, 'temporalComponents')
         varByV = varByV / max(varByV);
         
 %         axes(ha((vi - 1) * 2 + 1))    
-        axes(ha(vi));
+%         axes(ha(vi));
         t = (1:length(signalByV)) / ad.sampleRate - 1/ad.sampleRate;
-        plot(t, signalByV ./ max(abs(signalByV)))
-        hold on
-        plot(t, varByV)
-        title(v)
-        legend('mean','variance');
+%         plot(t, signalByV ./ max(abs(signalByV)))
+%         hold on
+%         plot(t, varByV)
+%         title(v)
+%         legend('mean','variance');
         
 %         axes(ha(vi * 2))
 
@@ -350,29 +350,34 @@ elseif strcmp(mode, 'temporalComponents')
         % ah, now that's nice, you like magic numbers, so good, have some more, here they are
         [~, peakIndices] = findpeaks(smooth(varByV,30), 'MinPeakProminence',.05,'Annotate','extents','MinPeakDistance',0.08);
 
-        plot(t(peakIndices), varByV(peakIndices), 'ro')
-        hold off
+%         plot(t(peakIndices), varByV(peakIndices), 'ro')
+%         hold off
         
         
         %% now, with the peak locations in hand, we can pull out the components
-%         num_components = length(peakIndices);
-%         componentWidth = 0.1;
-%         for ci = 1:num_components
-%             mn = t(peakIndices(ci));
-%             basis = 1/sqrt(2*pi)/componentWidth*exp(-(t-mn).^2/2/componentWidth/componentWidth);
-%             plot(basis)
-%             for poi = 1:num_positions
-% %                 pos = ad.positions(poi,:);
-%                 signal = signalsByPosition{poi,1};
-%                 signal(isnan(signal)) = [];
-%                 basisCropped = basis(1:length(signal));
-%                 
-%                 size(signal)
-%                 size(basis)
-%                 val = signal \ basis
-%                 
-%             end
-%         end            
+        num_components = length(peakIndices);
+        componentWidth = 0.1;
+        valuesByComponent = nan * zeros(num_positions, num_components);
+        for ci = 1:num_components
+            basisCenterTime = t(peakIndices(ci))
+            basis = 1/sqrt(2*pi)/componentWidth*exp(-(t-basisCenterTime).^2/2/componentWidth/componentWidth);
+            for poi = 1:num_positions
+                %                 pos = ad.positions(poi,:);
+                signal = signalsByPosition{poi,1};
+                signal(isnan(signal)) = [];
+                basisCropped = basis(1:length(signal));
+                
+                val = regress(signal', basisCropped');
+                valuesByComponent(poi, ci) = val;
+                
+            end
+            %         dim2 = length(voltages);,
+            %         subplot(num_components, dim2, 1 + dim2 * (ci-1))
+            p = 2 * (ci-1) + vi;
+            axes(ha(p));
+            plotSpatial(ad.positions, valuesByComponent(:,ci), sprintf('v %d component %d', v, ci), 1, 0);
+        end
+        
     end
     
     
@@ -513,17 +518,17 @@ elseif strcmp(mode, 'wholeCell')
 
     % EX
     axes(ha(1))
-    plotSpatial(goodPositions, r_ex, sprintf('Excitatory conductance: %d mV', v_ex), 1, 0, ad.positionOffset);
+    plotSpatial(goodPositions, r_ex, sprintf('Excitatory conductance: %d mV', v_ex), 1, 0);
 %     caxis([min_, max_]);
     
     % IN
     axes(ha(2))
-    plotSpatial(goodPositions, r_in, sprintf('Inhibitory conductance: %d mV', v_in), 1, 0, ad.positionOffset);
+    plotSpatial(goodPositions, r_in, sprintf('Inhibitory conductance: %d mV', v_in), 1, 0);
 %     caxis([min_, max_]);
     
     % Ratio    
     axes(ha(3))
-    plotSpatial(goodPositions, r_exinrat, 'Ex/In difference', 1, 0, ad.positionOffset)
+    plotSpatial(goodPositions, r_exinrat, 'Ex/In difference', 1, 0)
     
 elseif strcmp(mode, 'spatialOffset')
     
@@ -568,12 +573,12 @@ elseif strcmp(mode, 'spatialOffset')
 
     % EX
     axes(ha(1))
-    g_ex = plotSpatial(goodPositions_ex, r_ex, sprintf('Excitatory conductance: %d mV', v_ex), 1, -1, ad.positionOffset);
+    g_ex = plotSpatial(goodPositions_ex, r_ex, sprintf('Excitatory conductance: %d mV', v_ex), 1, -1);
 %     caxis([min_, max_]);
     
     % IN
     axes(ha(2))
-    g_in = plotSpatial(goodPositions_in, r_in, sprintf('Inhibitory conductance: %d mV', v_in), 1, 1, ad.positionOffset);
+    g_in = plotSpatial(goodPositions_in, r_in, sprintf('Inhibitory conductance: %d mV', v_in), 1, 1);
 %     caxis([min_, max_]);
         
     offsetDist = sqrt((g_in('centerX') - g_ex('centerX')).^2) + sqrt((g_in('centerY') - g_ex('centerY')).^2);
@@ -625,7 +630,7 @@ elseif strcmp(mode, 'spatialDiagnostics')
             vals(poi,1) = std(obs(obs_sel,5),1) / mean(obs(obs_sel,5),1);
         end    
         axes(ha(vi));
-        plotSpatial(ad.positions, vals, sprintf('STD/mean at V = %d mV', voltage), 1, 0, ad.positionOffset)
+        plotSpatial(ad.positions, vals, sprintf('STD/mean at V = %d mV', voltage), 1, 0)
 %         caxis([0, max(vals)]);
     end
     
@@ -724,7 +729,7 @@ else
     disp('incorrect plot type')
 end
 
-    function gfit = plotSpatial(positions, values, titl, addcolorbar, gaussianfit, positionOffset)
+    function gfit = plotSpatial(positions, values, titl, addcolorbar, gaussianfit)
 %         positions = bsxfun(@plus, positions, positionOffset);
         largestDistanceOffset = max(abs(positions(:)));
         X = linspace(-1*largestDistanceOffset, largestDistanceOffset, 100);

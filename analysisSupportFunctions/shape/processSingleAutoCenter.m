@@ -31,15 +31,16 @@ end
 % figure(8);clf;
 % plotShapeData(analysisData, 'spatial');
 
-%
-% figure(9);clf;
-% plotShapeData(analysisData, 'temporalAlignment');
+%%
+figure(9);clf;
+plotShapeData(analysisData, 'temporalComponents');
 
 % figure(11);clf;
 % plotShapeData(analysisData, 'subunit');
 
+%%
 figure(10);clf;
-plotShapeData(analysisData, 'plotSpatial_mean');
-
-figure(11);clf;
-plotShapeData(analysisData, 'temporalResponses');
+% plotShapeData(analysisData, 'plotSpatial_mean');
+% 
+% figure(11);clf;
+% plotShapeData(analysisData, 'temporalResponses');
