@@ -291,15 +291,22 @@ elseif strcmp(mode, 'temporalResponses')
 
 elseif strcmp(mode, 'temporalComponents')
     
+    warning('off', 'stats:regress:RankDefDesignMat')
+    
     % start with finding the times with highest variance, by voltage
     obs = ad.observations;
     voltages = sort(unique(obs(:,4)));
 
-    ha = tight_subplot(length(voltages), 2, .03, .03);
+    ha = tight_subplot(length(voltages), 1, .03, .03);
+    
     num_positions = size(ad.positions,1);
+    signalsByVoltageByPosition = {};
+    peakIndicesByVoltage = {};
+    basisByVoltageComp = {};
+    maxComponents = 0;
 
     for vi = 1:length(voltages)
-        v = voltages(vi)
+        v = voltages(vi);
 
         signalsByPosition = cell(num_positions,1);
         for poi = 1:num_positions
@@ -334,14 +341,16 @@ elseif strcmp(mode, 'temporalComponents')
         varByV = nanvar(a, 1);
         varByV = varByV / max(varByV);
         
+        signalsByVoltageByPosition{vi,1} = signalsByPosition;
+        
 %         axes(ha((vi - 1) * 2 + 1))    
-%         axes(ha(vi));
+        axes(ha(vi));
         t = (1:length(signalByV)) / ad.sampleRate - 1/ad.sampleRate;
-%         plot(t, signalByV ./ max(abs(signalByV)))
-%         hold on
-%         plot(t, varByV)
-%         title(v)
-%         legend('mean','variance');
+        plot(t, signalByV ./ max(abs(signalByV)))
+        hold on
+        plot(t, varByV)
+        title(sprintf('voltage: %d', v))
+        legend('mean','variance');
         
 %         axes(ha(vi * 2))
 
@@ -349,20 +358,36 @@ elseif strcmp(mode, 'temporalComponents')
         % nice, arbitrary, need to be changed, overfitted magic numbers, right here for you
         % ah, now that's nice, you like magic numbers, so good, have some more, here they are
         [~, peakIndices] = findpeaks(smooth(varByV,30), 'MinPeakProminence',.05,'Annotate','extents','MinPeakDistance',0.08);
-
-%         plot(t(peakIndices), varByV(peakIndices), 'ro')
-%         hold off
+        maxComponents = max([maxComponents, length(peakIndices)]);
+        peakIndicesByVoltage{vi,1} = peakIndices;
+        plot(t(peakIndices), varByV(peakIndices), 'ro')
         
+        componentWidth = 0.05; % hey, have another one!       
+        
+        for ci = 1:length(peakIndices)
+            basisCenterTime = t(peakIndices(ci));
+            basis = 1/sqrt(2*pi)/componentWidth*exp(-(t-basisCenterTime).^2/2/componentWidth/componentWidth);            
+            plot(t, basis ./ max(basis) .* varByV(peakIndices(ci)));
+            basisByVoltageComp{vi,ci} = basis;
+        end
+
+    end
+    
+    
+    figure(21);clf;
+    hb = tight_subplot(length(voltages), maxComponents, .03, .03);
+
+    for vi = 1:length(voltages)
         
         %% now, with the peak locations in hand, we can pull out the components
+        peakIndices = peakIndicesByVoltage{vi,1};
         num_components = length(peakIndices);
-        componentWidth = 0.1;
         valuesByComponent = nan * zeros(num_positions, num_components);
+        signalsByPosition = signalsByVoltageByPosition{vi,1};
         for ci = 1:num_components
-            basisCenterTime = t(peakIndices(ci))
-            basis = 1/sqrt(2*pi)/componentWidth*exp(-(t-basisCenterTime).^2/2/componentWidth/componentWidth);
+            basis = basisByVoltageComp{vi,ci};
             for poi = 1:num_positions
-                %                 pos = ad.positions(poi,:);
+
                 signal = signalsByPosition{poi,1};
                 signal(isnan(signal)) = [];
                 basisCropped = basis(1:length(signal));
@@ -371,10 +396,9 @@ elseif strcmp(mode, 'temporalComponents')
                 valuesByComponent(poi, ci) = val;
                 
             end
-            %         dim2 = length(voltages);,
-            %         subplot(num_components, dim2, 1 + dim2 * (ci-1))
-            p = 2 * (ci-1) + vi;
-            axes(ha(p));
+
+            p = maxComponents * (vi-1) + ci;
+            axes(hb(p));
             plotSpatial(ad.positions, valuesByComponent(:,ci), sprintf('v %d component %d', v, ci), 1, 0);
         end
         
@@ -392,17 +416,27 @@ elseif strcmp(mode, 'responsesByPosition')
     
     colors = hsv(num_options);
     
-    num_positions = size(ad.positions,1);
+    % only use positions with observations (ignore 0,0)
+    positions = [];
+    i = 1;
+    for pp = 1:size(ad.positions,1)
+        pos = ad.positions(pp,1:2);
+        if any(ismember(obs(:,1:2), pos, 'rows'))
+            positions(i,1:2) = pos;
+            i = i + 1;
+        end
+    end
+    num_positions = size(positions,1);
     dim1 = floor(sqrt(num_positions));
     dim2 = ceil(num_positions / dim1);
 
-    ha = tight_subplot(dim1, dim2, .015, .015);
+    ha = tight_subplot(dim1, dim2, .004, .004, .004);
     
     max_value = -inf;
     min_value = inf;
     
     % nice way of displaying plots with an aligned-to-grid location using percentiles
-    pos_sorted = flipud(sortrows(ad.positions, 2));
+    pos_sorted = flipud(sortrows(positions, 2));
     for i = 1:dim1 % chunk positions by display rows
         l = ((i-1) * dim2) + (1:dim2);
         l(l > num_positions) = [];
@@ -466,7 +500,7 @@ elseif strcmp(mode, 'responsesByPosition')
         zline = line([0,max(t)],[0,0], 'Parent', ha(poi), 'color', 'k');
         set(get(get(zline,'Annotation'),'LegendInformation'),'IconDisplayStyle','off');
 
-        title(ha(poi), sprintf('%d,%d', round(pos)));
+%         title(ha(poi), sprintf('%d,%d', round(pos)));
         
     end
     set(ha(1),'YTickLabelMode','auto');
@@ -711,12 +745,12 @@ elseif strcmp(mode, 'adaptationRegion')
 %             legend('off','on')
         end
         ha = tight_subplot(1,3);
-        maxv = max(spatialValues(:));
-        minv = min(spatialValues(:));
+        maxv = max(spatialValues(:))
+        minv = min(spatialValues(:))
         spatialValues(:,3) = diff(spatialValues, 1, 2);
         for a = 1:3
             axes(ha(a))
-            plotSpatial(spatialPositions, spatialValues(:,a), '', 1, 0, -1 * thisAdaptPos)
+            plotSpatial(spatialPositions, spatialValues(:,a), '', 1, 0)
             caxis([minv, maxv]);
         end
         title(ha(1), 'before adaptation');
