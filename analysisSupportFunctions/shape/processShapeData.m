@@ -122,12 +122,12 @@ for p = 1:num_epochs
         
         % get region of light spot on
         tRegion = e.t > startTime(si) & e.t < endTime(si);
+        riseLen = 20; % msec
 
         totalLen = sum(tRegion);
-        if totalLen > 0
+        if totalLen > riseLen
 
             responseShape = linspace(1, 0, totalLen);
-            riseLen = 20; % msec
             responseShape(1:riseLen) = linspace(0,responseShape(riseLen),riseLen);
 
             e.signalLightOn(tRegion) = responseShape' * intensities(si);

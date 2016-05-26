@@ -178,14 +178,17 @@ elseif strcmp(mode, 'temporalResponses')
 %         end
         
         % display original and shifted light On signal
-        plot(ha(ei), t, resp);
+        plot(ha(ei), t, resp,'b');
         hold(ha(ei), 'on');
         light = ad.epochData{ei}.signalLightOn;
         if abs(min(resp)) > abs(max(resp))
             light = light * -1;
         end
         light = light * max(abs(resp)) * 0.5;
-        plot(ha(ei), ad.epochData{ei}.timeOffset + t, light)
+        plot(ha(ei), ad.epochData{ei}.timeOffset + t, light,'r')
+        
+%         resp = smooth(resp, 20);
+%         plot(ha(ei), t, resp,'g');
         hold(ha(ei), 'off');
         
         
@@ -194,7 +197,7 @@ elseif strcmp(mode, 'temporalResponses')
 %         plot(ha(ei), t, resp - expFit);
 %         hold(ha(ei), 'off');
         
-        title(ha(ei), sprintf('Epoch %d', ei))
+        title(ha(ei), sprintf('Epoch %d at %d mV, time offset %d msec', ei, ad.epochData{ei}.ampVoltage, round(1000 * ad.epochData{ei}.timeOffset)))
 %         disp('Normalization parameters:');
 %         disp(ad.epochData{ei}.signalNormalizationParameters)
     end
@@ -498,14 +501,14 @@ elseif strcmp(mode, 'responsesByPosition')
         
         grid(ha(poi), 'on')
         zline = line([0,max(t)],[0,0], 'Parent', ha(poi), 'color', 'k');
-        set(get(get(zline,'Annotation'),'LegendInformation'),'IconDisplayStyle','off');
+        set(get(get(zline,'Annotation'),'LegendInformation'),'IconDisplayStyle','off'); % only display one legend per type
 
 %         title(ha(poi), sprintf('%d,%d', round(pos)));
         
     end
     set(ha(1),'YTickLabelMode','auto');
     set(ha(1),'XTickLabelMode','auto');
-    legend(ha(1),legends)
+    legend(ha(1),legends,'location','best')
 
     linkaxes(ha)
     ylim(ha(1), [min_value, max_value]);
@@ -699,65 +702,136 @@ elseif strcmp(mode, 'positionDifferenceAnalysis')
 elseif strcmp(mode, 'adaptationRegion')
     obs = ad.observations;
     
-    % get list of adaptation points
-    adaptationPositions = unique(obs(:,[12,13]), 'rows');
-    num_adapt = size(adaptationPositions, 1);
+%     % get list of adaptation points
+%     adaptationPositions = unique(obs(:,[12,13]), 'rows');
+%     if ~any(~isnan(adaptationPositions(:)))
+%         disp('No adaptation data found');
+%         return
+%     end
+%     num_adapt = size(adaptationPositions, 1);
+%     maxIntensity = max(obs(:,3));
+%     
+%     for ai = 1:num_adapt
+%         thisAdaptPos = adaptationPositions(ai,:);
+%         probesThisAdapt = obs(:,12) == thisAdaptPos(1) & obs(:,13) == thisAdaptPos(2);
+%         probeDataThisAdapt = obs(probesThisAdapt, :);
+%         % make a figure
+%         figure(110 + ai)
+%         spatialPositions = [];
+%         spatialValues = [];
+%         spatialIndex = 0;
+%         intensity = maxIntensity;
+%         
+%         % make a subplot for each probe
+%         probePositions = unique(probeDataThisAdapt(:,[1,2]), 'rows');
+%         numProbes = size(probePositions, 1);
+% %         dim1 = floor(sqrt(numProbes));
+% %         dim2 = ceil(numProbes / dim1);
+%         clf;
+% %         ha = tight_subplot(dim1,dim2);
+%         for pri = 1:numProbes
+% %             axes(ha(pri));
+%             
+% %             hold on;
+%             
+%             pos = probePositions(pri,:);
+%             spatialIndex = spatialIndex + 1;
+%             spatialPositions(spatialIndex, :) = pos;
+%             for adaptOn = 0:1
+%                 
+%                 obs_sel = ismember(probeDataThisAdapt(:,1:2), pos, 'rows');
+%                 obs_sel = obs_sel & probeDataThisAdapt(:,14) == adaptOn & probeDataThisAdapt(:,3) == intensity;
+%                 
+% %                 ints = probeDataThisAdapt(obs_sel, 3);
+%                 vals = probeDataThisAdapt(obs_sel, 5);
+% %                 plot(ints, vals, '-o');
+%                 spatialValues(spatialIndex, adaptOn + 1) = mean(vals);
+%             end
+%             
+%             
+% %             legend('off','on')
+%         end
+%         
+%         ha = tight_subplot(1,3);
+%         maxv = max(spatialValues(:));
+%         minv = min(spatialValues(:));
+%         spatialValues(:,3) = diff(spatialValues, 1, 2);
+%         for a = 1:3
+%             axes(ha(a))
+%             plotSpatial(spatialPositions, spatialValues(:,a), '', 1, 0)
+%             caxis([minv, maxv]);
+%         end
+%         title(ha(1), 'before adaptation');
+%         title(ha(2), 'during adaptation');
+%         title(ha(3), 'difference');
+%     end
     
+    %% do plot of response/intensity by position
+%     figure(90);
+    clf;
+    obs = ad.observations;
+    voltage = max(unique(obs(:,4)));
+    intensities = sort(unique(obs(:,3)));
+       
+    % only use positions with observations (ignore 0,0)
+    positions = [];
+    i = 1;
+    for pp = 1:size(ad.positions,1)
+        pos = ad.positions(pp,1:2);
+        if any(ismember(obs(:,1:2), pos, 'rows'))
+            positions(i,1:2) = pos;
+            i = i + 1;
+        end
+    end
+    num_positions = size(positions,1);
+    dim1 = floor(sqrt(num_positions));
+    dim2 = ceil(num_positions / dim1);
+    max_value = -inf;
+    min_value = inf;
+
+    ha = tight_subplot(dim1, dim2, .05, .05, .05);
     
-    for ai = 1:num_adapt
-        thisAdaptPos = adaptationPositions(ai,:);
-        probesThisAdapt = obs(:,12) == thisAdaptPos(1) & obs(:,13) == thisAdaptPos(2);
-        probeDataThisAdapt = obs(probesThisAdapt, :);
-        % make a figure
-        figure(110 + ai)
-        spatialPositions = [];
-        spatialValues = [];
-        spatialIndex = 0;
-        intensity = 0.3;
-        
-        % make a subplot for each probe
-        probePositions = unique(probeDataThisAdapt(:,[1,2]), 'rows');
-        numProbes = size(probePositions, 1);
-%         dim1 = floor(sqrt(numProbes));
-%         dim2 = ceil(numProbes / dim1);
-        clf;
-%         ha = tight_subplot(dim1,dim2);
-        for pri = 1:numProbes
-%             axes(ha(pri));
-            
-%             hold on;
-            
-            pos = probePositions(pri,:);
-            spatialIndex = spatialIndex + 1;
-            spatialPositions(spatialIndex, :) = pos;
-            for adaptOn = 0:1
-                
-                obs_sel = ismember(probeDataThisAdapt(:,1:2), pos, 'rows');
-                obs_sel = obs_sel & probeDataThisAdapt(:,14) == adaptOn & probeDataThisAdapt(:,3) == intensity;
-                
-%                 ints = probeDataThisAdapt(obs_sel, 3);
-                vals = probeDataThisAdapt(obs_sel, 5);
-%                 plot(ints, vals, '-o');
-                spatialValues(spatialIndex, adaptOn + 1) = mean(vals);
-            end
-            
-            
-%             legend('off','on')
-        end
-        ha = tight_subplot(1,3);
-        maxv = max(spatialValues(:))
-        minv = min(spatialValues(:))
-        spatialValues(:,3) = diff(spatialValues, 1, 2);
-        for a = 1:3
-            axes(ha(a))
-            plotSpatial(spatialPositions, spatialValues(:,a), '', 1, 0)
-            caxis([minv, maxv]);
-        end
-        title(ha(1), 'before adaptation');
-        title(ha(2), 'during adaptation');
-        title(ha(3), 'difference');
+    % nice way of displaying plots with an aligned-to-grid location using percentiles
+    pos_sorted = flipud(sortrows(positions, 2));
+    for i = 1:dim1 % chunk positions by display rows
+        l = ((i-1) * dim2) + (1:dim2);
+        l(l > num_positions) = [];
+        pos_sorted(l,:) = sortrows(pos_sorted(l,:), 1);
     end
     
+    for poi = 1:num_positions
+        
+        pos = pos_sorted(poi,:);
+        axes(ha(poi))
+        hold on
+        for adaptstate = 0:1
+            responses = [];
+            for inti = 1:length(intensities)
+                obs_sel = ismember(obs(:,1:2), pos, 'rows');
+                obs_sel = obs_sel & obs(:,3) == intensities(inti) & obs(:,4) == voltage & obs(:,14) == adaptstate;
+                
+                responses(inti) = mean(obs(obs_sel,5));
+                adaptPos = mean(obs(obs_sel, [12,13]));
+            end
+            plot(intensities, responses, 'o-')
+            max_value = max(max_value, max(responses));
+            min_value = min(min_value, min(responses));
+            
+        end
+        distFromAdapt = sqrt(sum((pos - adaptPos).^2));
+        title(sprintf('dist: %d um', round(distFromAdapt)));
+        hold off
+        set(gca, 'XTickMode', 'auto', 'XTickLabelMode', 'auto')
+        set(gca, 'YTickMode', 'auto', 'YTickLabelMode', 'auto')
+        if poi == 1
+            legend({'before','after'},'location','best')
+        end
+    end
+    for poi = 1:num_positions
+        ylim(ha(poi), [min_value, max_value])
+    end
+
+
 else
     disp(mode)
     disp('incorrect plot type')
