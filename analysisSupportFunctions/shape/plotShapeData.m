@@ -14,6 +14,8 @@ if strcmp(mode, 'printParameters')
 
     disp(ad);
     
+    disp(ad.epochData{end})
+    
 elseif strncmp(mode, 'plotSpatial', 11)
 % elseif strcmp(mode, 'plotSpatial_tHalfMax')
     if strfind(mode, 'mean')
@@ -610,12 +612,12 @@ elseif strcmp(mode, 'spatialOffset')
 
     % EX
     axes(ha(1))
-    g_ex = plotSpatial(goodPositions_ex, r_ex, sprintf('Excitatory conductance: %d mV', v_ex), 1, -1);
+    g_ex = plotSpatial(goodPositions_ex, r_ex, sprintf('Excitatory current: %d mV', v_ex), 1, -1);
 %     caxis([min_, max_]);
     
     % IN
     axes(ha(2))
-    g_in = plotSpatial(goodPositions_in, r_in, sprintf('Inhibitory conductance: %d mV', v_in), 1, 1);
+    g_in = plotSpatial(goodPositions_in, r_in, sprintf('Inhibitory current: %d mV', v_in), 1, 1);
 %     caxis([min_, max_]);
         
     offsetDist = sqrt((g_in('centerX') - g_ex('centerX')).^2) + sqrt((g_in('centerY') - g_ex('centerY')).^2);
