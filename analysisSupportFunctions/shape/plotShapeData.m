@@ -1,5 +1,15 @@
 function [] = plotShapeData(ad, mode)
 
+if ~isfield(ad,'observations')
+    disp('no observations');
+    return 
+end
+obs = ad.observations;
+if isempty(obs)
+    disp('empty observations')
+    return
+end
+
 
 if strcmp(mode, 'printParameters')
     firstEpoch = ad.epochData{1};
@@ -15,9 +25,12 @@ if strcmp(mode, 'printParameters')
     disp(ad);
     
     disp(ad.epochData{end})
+   
+    
     
 elseif strncmp(mode, 'plotSpatial', 11)
 % elseif strcmp(mode, 'plotSpatial_tHalfMax')
+
     if strfind(mode, 'mean')
         mode_col = 5;
         smode = 'mean';
@@ -27,21 +40,19 @@ elseif strncmp(mode, 'plotSpatial', 11)
     elseif strfind(mode, 'tHalfMax')
         mode_col = 7;
         smode = 't half max';
+    elseif strfind(mode, 'saveMaps')
+        mode_col = 5;
+        smode = 'saveMaps';        
     end
+   
     
-    if ~isfield(ad,'observations')
-        return
-    end
-    obs = ad.observations;
-    if isempty(obs)
-        return
-    end
-    
-    voltages = unique(obs(:,4));
+    voltages = sort(unique(obs(:,4)));
     num_voltages = length(voltages);
         
-    intensities = unique(obs(:,3));
+    intensities = sort(unique(obs(:,3)));
     num_intensities = length(intensities);
+    
+    data = cell(num_voltages, num_intensities, 2);
     
     ha = tight_subplot(num_intensities, num_voltages);
     for vi = 1:num_voltages
@@ -75,7 +86,14 @@ elseif strncmp(mode, 'plotSpatial', 11)
     %             caxis([0, max(vals)]);
     %             colormap(flipud(colormap))
             end
+            
+            data(vi, ii, 1:2) = {goodPositions, vals};
         end
+    end
+    
+    if strcmp(smode, 'saveMaps')
+        save('savedMaps.mat', 'data','voltages','intensities');
+        disp('saved maps to savedMaps.mat');
     end
     
     
