@@ -29,8 +29,8 @@ s_voltageLegend{end+1} = 'Combined';
 
 
 sim_endTime = 1.0;
-sim_timeStep = 0.001;
-sim_spaceResolution = 5; % um per point
+sim_timeStep = 0.01;
+sim_spaceResolution = 4; % um per point
 cell_radius = 250;%max(cell_rfPositions);
 
 T = 0:sim_timeStep:sim_endTime;
@@ -74,39 +74,52 @@ for vi = 1:e_numVoltages
 end
 
 
+%% Filter from cell
+filter_resampledOn = {};
+for vi = 1:e_numVoltages
+    filter_resampledOn{vi} = normg(resample(filterOn{vi}, round(1/sim_timeStep), 1000));
+end
 
-% subunit locations, using generate positions
+%% subunit locations, using generate positions
 
-% c_subunitSpacing = 40;
-% c_subunitSigma = 10;
-% cell_subunitCenters = generatePositions('triangular', [cell_radius, c_subunitSpacing, 0]);
-% cell_numSubunits = size(cell_subunitCenters,1);
+c_subunitSpacing = 100;
+c_subunitSigma = 50;
+c_subunitCenters = generatePositions('triangular', [100, c_subunitSpacing, 0]);
+c_numSubunits = size(c_subunitCenters,1);
 
 % subunit RF profile, using gaussian w/ set radius (function)
+c_subunitRf = zeros(sim_dims(2), sim_dims(3), c_numSubunits);
+for si = 1:c_numSubunits
+%     rf = zeros(sim_dims(2), sim_dims(3));
+    
+    center = c_subunitCenters(si,:);
+    dmap = sqrt((mapX - center(1)).^2 + (mapY - center(2)).^2);
+    rf = exp(-dmap ./ c_subunitSigma);
+    c_subunitRf(:,:,si) = rf;
+end
 
-
+figure(195)
+imagesc(sum(c_subunitRf, 3))
+title('all subunits')
 
 %% Setup simulation
 
 
-% sim_space = meshgrid
-% convert RF maps to this simulation grid
-
 %% Main stimulus change loop
 
-stim_mode = 'movingBar';
-numAngles = 8;
-stim_barDirection = linspace(0,360,numAngles+1);
-stim_barDirection(end) = [];
-stim_numOptions = length(stim_barDirection);
+% stim_mode = 'movingBar';
+% numAngles = 12;
+% stim_barDirection = linspace(0,360,numAngles+1);
+% stim_barDirection(end) = [];
+% stim_numOptions = length(stim_barDirection);
 
 % stim_mode = 'flashedSpot';
 % numSizes = 10;
 % stim_spotDiams = logspace(log10(20), log10(1000), numSizes);
 % stim_numOptions = length(stim_spotDiams);
 
-% stim_mode = 'flashedSpot';
-% stim_numOptions = 1;
+stim_mode = 'flashedSpot';
+stim_numOptions = 1;
 
 
 figure(102);clf;
@@ -130,8 +143,7 @@ for optionIndex = 1:stim_numOptions
         stim_spotDuration = 0.4;
         stim_spotStart = 0.1;
         stim_intensity = 0.5;
-        stim_spotPosition = [100,100];
-
+        stim_spotPosition = [0,0];
 
         pos = stim_spotPosition + center;
         for ti = 1:sim_dims(1)
@@ -156,13 +168,11 @@ for optionIndex = 1:stim_numOptions
         end
 
 
-
-
     elseif strcmp(stim_mode, 'movingBar')
 
         stim_barSpeed = 1000;
         stim_barLength = 300;
-        stim_barWidth = 100;
+        stim_barWidth = 150;
 %         stim_barDirection = 60; % degrees
         stim_moveTime = 0.8;
         stim_intensity = 0.5;
@@ -197,86 +207,110 @@ for optionIndex = 1:stim_numOptions
     sim_lightIntensity = [];
 
     %% Main loop
+    disp('illum T loop')
+    sim_lightSubunit = [];
+    
     for ti = 1:length(T)
         curTime = T(ti);
 
+        
     %% Calculate illumination for each subunit
-    %     for si = 1:cell_numSubunits
-    %         subunitCenter = cell_subunitCenters(si,:);        
+        for si = 1:c_numSubunits
 
-        sim_light = squeeze(stim_lightMatrix(ti, :, :));
+            sim_light = squeeze(stim_lightMatrix(ti, :, :));
+            sim_lightSubunit(si,ti) = sum(sum(sim_light .* c_subunitRf(:,:,si)));
 
-%         figure(101);
-%         imgDisplay(X,Y,sim_light);
-%         colormap gray
-%         caxis([0,1])
-%         colorbar
-%         title(sprintf('stimulus at %.3f sec', curTime));
-%         drawnow
+%             figure(101);
+%             subplot(2,1,1)
+%             imgDisplay(X,Y,sim_light);
+%             colormap gray
+%             caxis([0,1])
+%             colorbar
+%             title(sprintf('stimulus at %.3f sec', curTime));
+%             
+%             subplot(2,1,2)
+%             imagesc(c_subunitRf(:,:,si))
+%             title(sim_lightSubunit(si,ti));
+%             
+%             drawnow
+%             pause(.01)
 
-        %% Determine rf response
-
-        for vi = 1:e_numVoltages
-            % multiply rf map by stim
-            % time filter here later
-            rfmap = e_map(:,:,vi);
-
-            sim_lightIntensity(ti, vi) = sum(sum(sim_light .* rfmap));
         end
-
-
-        %% Combine subunit responses
-
     end
     % end time loop
-
     
-    %% output temporal filter
+    %% temporal filter each subunit individually
 %     figure(103)
-    sim_response = [];
-    for vi = 1:e_numVoltages
-%         sim_current(vi,:) = 
+    disp('temporal filter')
+    sim_responseSubunit = [];
+    for si = 1:c_numSubunits
 
-        
-        a = sim_lightIntensity(:,vi);
+        a = sim_lightSubunit(si,:);
         d = diff(a);
         d(end+1) = 0;
         d(d < 0) = 0;
         lightOnNess = cumsum(d);
+
+        for vi = 1:e_numVoltages
+
+            r = conv(lightOnNess, filter_resampledOn{vi});
+            sim_responseSubunit(si,vi,:) = r(1:sim_dims(1));
+            
+            % nonlinear effects could go here
+
+%             subplot(2,c_numSubunits,si * 2 + vi)
+%             hold on
+%             plot(normg(sim_lightIntensity(:,vi)));
+%             plot(normg(lightOnNess))       
+%             plot(normg(filter_resampled))
+%             plot(normg(sim_response(vi,:)));
+%             title(sprintf('light convolved with filter v = %d', e_voltages(vi)))
+%             hold off
+%             legend('light','light On','filter','filtered')
+        end
         
-        
-        filter_resampled = resample(filterOn{vi}, round(1/sim_timeStep), 1000);
-        r = conv(lightOnNess, filter_resampled);
-        sim_response(vi,:) = r(1:length(lightOnNess));
-        
-%         subplot(2,1,vi)
-%         hold on
-%         plot(normg(sim_lightIntensity(:,vi)));
-%         plot(normg(lightOnNess))       
-%         plot(normg(filter_resampled))
-%         plot(normg(sim_response(vi,:)));
-%         title(sprintf('light convolved with filter v = %d', e_voltages(vi)))
-%         hold off
-%         legend('light','light On','filter','filtered')
-        
+    end
+    
+    
+    %% Multiply subunit response by RF strength (connection subunit to RGC)
+    disp('rf strength mult')
+    sim_responseSubunitScaledByRf = zeros(size(sim_responseSubunit));
+    for vi = 1:e_numVoltages
+        for si = 1:c_numSubunits
+
+            rfmap = e_map(:,:,vi);
+            sumap = c_subunitRf(:,:,si);
+            [~,I] = max(sumap(:));
+            [x,y] = ind2sub([sim_dims(2), sim_dims(3)], I);
+            strength = e_map(x,y);
+
+            sim_responseSubunitScaledByRf(si,vi,:) = strength * sim_responseSubunit(si,vi,:);
+        end
     end
     
 
+    %% combine current across subunits
+    sim_responseSubunitsCombined = [];
+    for vi = 1:e_numVoltages
+        sim_responseSubunitsCombined(vi,:) = sum(sim_responseSubunitScaledByRf(:,vi,:), 1);
+    end
+    
     %% Output scale
-    sim_responseScaled = sim_response;
+    sim_responseSubunitsCombinedScaled = sim_responseSubunitsCombined;
     for vi = 1:e_numVoltages
         v = e_voltages(vi);
         if v == -60
-            M = 7;
+            M = 3;
         else
             M = 1;
         end
-        sim_responseScaled(vi,:) = M * sim_response(vi,:);
+        sim_responseSubunitsCombinedScaled(vi,:) = M * sim_responseSubunitsCombined(vi,:);
     end
     
     
-    %% combine Ex and In
-    sim_responseCombined = sum(sim_responseScaled,1);
+    %% Combine Ex and In
+    
+    sim_response = sum(sim_responseSubunitsCombinedScaled, 1);
     
     out_valsByOptions(optionIndex) = -1*sum(sim_responseCombined(sim_responseCombined < 0));
 
@@ -286,10 +320,10 @@ for optionIndex = 1:stim_numOptions
     figure(102)
     axes(outputAxes(optionIndex));
 
-    plot(T, sim_responseScaled)
+    plot(T, sim_response)
 
     hold on
-    plot(T, sim_responseCombined);
+    plot(T, sim_responseSubunitsCombinedScaled);
     hold off
 
 %     title('Whole cell Response')
