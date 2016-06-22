@@ -3,6 +3,7 @@
 
 
 imgDisplay = @(X,Y,d) imagesc(X,Y,flipud(d'));
+normg = @(a) (a / max(abs(a(:))));
 
 %% Setup cell data from ephys
 
@@ -27,8 +28,8 @@ s_voltageLegend = {'ex','in'};
 s_voltageLegend{end+1} = 'Combined';
 
 
-sim_endTime = 0.8;
-sim_timeStep = 0.02;
+sim_endTime = 1.0;
+sim_timeStep = 0.001;
 sim_spaceResolution = 5; % um per point
 cell_radius = 250;%max(cell_rfPositions);
 
@@ -59,11 +60,13 @@ for vi = 1:e_numVoltages
     
     F = scatteredInterpolant(e_positions{vi, ii}(:,1), e_positions{vi, ii}(:,2), e_vals{vi,ii,:},...
         'linear','nearest');
-    e_map(:,:,vi) = F(mapX, mapY);
+    e_map(:,:,vi) = F(mapX, mapY) * sign(e_voltages(vi));
+    e_map(:,:,vi) = e_map(:,:,vi) - min(min(e_map(:,:,vi)));
     
     axes(ha(vi))
     imgDisplay(X,Y,e_map(:,:,vi))
-    title(e_voltages(vi));
+    title(s_voltageLegend{vi});
+    colormap parula
     colorbar
     axis equal
 %     surface(mapX, mapY, zeros(size(mapX)), c)
@@ -97,12 +100,22 @@ stim_barDirection = linspace(0,360,numAngles+1);
 stim_barDirection(end) = [];
 stim_numOptions = length(stim_barDirection);
 
+% stim_mode = 'flashedSpot';
+% numSizes = 10;
+% stim_spotDiams = logspace(log10(20), log10(1000), numSizes);
+% stim_numOptions = length(stim_spotDiams);
+
+% stim_mode = 'flashedSpot';
+% stim_numOptions = 1;
+
+
 figure(102);clf;
 outputAxes = tight_subplot(stim_numOptions, 1);
 
 out_valsByOptions = [];
 
 for optionIndex = 1:stim_numOptions
+    fprintf('Running option %d of %d\n', optionIndex, stim_numOptions);
 
     %% Setup stimulus
     center = [0,0];
@@ -112,8 +125,9 @@ for optionIndex = 1:stim_numOptions
 
     if strcmp(stim_mode, 'flashedSpot')
         % flashed spot
+%         stim_spotDiam = stim_spotDiams(optionIndex);
         stim_spotDiam = 200;
-        stim_spotDuration = 0.2;
+        stim_spotDuration = 0.4;
         stim_spotStart = 0.1;
         stim_intensity = 0.5;
         stim_spotPosition = [100,100];
@@ -134,7 +148,7 @@ for optionIndex = 1:stim_numOptions
                         % circle shape
                         rad = sqrt((x - pos(1))^2 + (y - pos(2))^2);
                         if rad < stim_spotDiam / 2
-                            stim_lightMatrix(ti, xi, yi) = val;
+                            stim_lightMatrix(ti, xi, yi) = val; 
                         end
                     end
                 end
@@ -180,26 +194,25 @@ for optionIndex = 1:stim_numOptions
 
     %% Run simulation
 
-    figure(101);clf;
-    response = [];
-    scaled_response = [];
+    sim_lightIntensity = [];
 
     %% Main loop
     for ti = 1:length(T)
         curTime = T(ti);
 
-    %% Calculate illumination
+    %% Calculate illumination for each subunit
     %     for si = 1:cell_numSubunits
     %         subunitCenter = cell_subunitCenters(si,:);        
 
         sim_light = squeeze(stim_lightMatrix(ti, :, :));
 
-        imgDisplay(X,Y,sim_light);
-        colormap gray
-        caxis([0,1])
-        colorbar
-        title(sprintf('stimulus at %.3f sec', curTime));
-        drawnow
+%         figure(101);
+%         imgDisplay(X,Y,sim_light);
+%         colormap gray
+%         caxis([0,1])
+%         colorbar
+%         title(sprintf('stimulus at %.3f sec', curTime));
+%         drawnow
 
         %% Determine rf response
 
@@ -208,43 +221,75 @@ for optionIndex = 1:stim_numOptions
             % time filter here later
             rfmap = e_map(:,:,vi);
 
-            response(ti, vi) = sum(sum(sim_light .* rfmap));
-
-            v = e_voltages(vi);
-            if v == -60
-                M = 1;
-            else
-                M = .8;
-            end
-            scaled_response(ti, vi) = M * response(ti, vi);
-
+            sim_lightIntensity(ti, vi) = sum(sum(sim_light .* rfmap));
         end
-
-
 
 
         %% Combine subunit responses
 
-
-
     end
     % end time loop
 
-
-    %% Output nonlinearity
-
-    combinedResponse = sum(scaled_response,2);
     
-    out_valsByOptions(optionIndex) = sum(combinedResponse(combinedResponse > 0));
+    %% output temporal filter
+%     figure(103)
+    sim_response = [];
+    for vi = 1:e_numVoltages
+%         sim_current(vi,:) = 
 
+        
+        a = sim_lightIntensity(:,vi);
+        d = diff(a);
+        d(end+1) = 0;
+        d(d < 0) = 0;
+        lightOnNess = cumsum(d);
+        
+        
+        filter_resampled = resample(filterOn{vi}, round(1/sim_timeStep), 1000);
+        r = conv(lightOnNess, filter_resampled);
+        sim_response(vi,:) = r(1:length(lightOnNess));
+        
+%         subplot(2,1,vi)
+%         hold on
+%         plot(normg(sim_lightIntensity(:,vi)));
+%         plot(normg(lightOnNess))       
+%         plot(normg(filter_resampled))
+%         plot(normg(sim_response(vi,:)));
+%         title(sprintf('light convolved with filter v = %d', e_voltages(vi)))
+%         hold off
+%         legend('light','light On','filter','filtered')
+        
+    end
+    
+
+    %% Output scale
+    sim_responseScaled = sim_response;
+    for vi = 1:e_numVoltages
+        v = e_voltages(vi);
+        if v == -60
+            M = 7;
+        else
+            M = 1;
+        end
+        sim_responseScaled(vi,:) = M * sim_response(vi,:);
+    end
+    
+    
+    %% combine Ex and In
+    sim_responseCombined = sum(sim_responseScaled,1);
+    
+    out_valsByOptions(optionIndex) = -1*sum(sim_responseCombined(sim_responseCombined < 0));
+
+    % output nonlinearity
 
     %% Display output
+    figure(102)
     axes(outputAxes(optionIndex));
 
-    plot(T, scaled_response)
+    plot(T, sim_responseScaled)
 
     hold on
-    plot(T, combinedResponse);
+    plot(T, sim_responseCombined);
     hold off
 
 %     title('Whole cell Response')
@@ -263,6 +308,8 @@ p = out_valsByOptions ./ max(out_valsByOptions);
 a(end+1) = a(1);
 p(end+1) = p(1);
 polar(a, p)
+
+% plot(stim_spotDiams, out_valsByOptions)
 
 
 %% Cry
