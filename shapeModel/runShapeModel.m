@@ -28,8 +28,8 @@ s_voltageLegend = {'ex','in'};
 s_voltageLegend{end+1} = 'Combined';
 
 
-sim_endTime = 1.0;
-sim_timeStep = 0.01;
+sim_endTime = 1;
+sim_timeStep = 0.001;
 sim_spaceResolution = 4; % um per point
 cell_radius = 250;%max(cell_rfPositions);
 
@@ -82,9 +82,10 @@ end
 
 %% subunit locations, using generate positions
 
-c_subunitSpacing = 100;
-c_subunitSigma = 50;
-c_subunitCenters = generatePositions('triangular', [100, c_subunitSpacing, 0]);
+c_subunitSpacing = 30;
+c_subunitSigma = 15;
+c_subunitExtent = 80;
+c_subunitCenters = generatePositions('triangular', [c_subunitExtent, c_subunitSpacing, 0]);
 c_numSubunits = size(c_subunitCenters,1);
 
 % subunit RF profile, using gaussian w/ set radius (function)
@@ -107,19 +108,19 @@ title('all subunits')
 
 %% Main stimulus change loop
 
-% stim_mode = 'movingBar';
-% numAngles = 12;
-% stim_barDirection = linspace(0,360,numAngles+1);
-% stim_barDirection(end) = [];
-% stim_numOptions = length(stim_barDirection);
+stim_mode = 'movingBar';
+numAngles = 12;
+stim_barDirection = linspace(0,360,numAngles+1);
+stim_barDirection(end) = [];
+stim_numOptions = length(stim_barDirection);
 
 % stim_mode = 'flashedSpot';
-% numSizes = 10;
-% stim_spotDiams = logspace(log10(20), log10(1000), numSizes);
+% numSizes = 8;
+% stim_spotDiams = logspace(log10(30), log10(1000), numSizes);
 % stim_numOptions = length(stim_spotDiams);
 
-stim_mode = 'flashedSpot';
-stim_numOptions = 1;
+% stim_mode = 'flashedSpot';
+% stim_numOptions = 1;
 
 
 figure(102);clf;
@@ -138,8 +139,8 @@ for optionIndex = 1:stim_numOptions
 
     if strcmp(stim_mode, 'flashedSpot')
         % flashed spot
-%         stim_spotDiam = stim_spotDiams(optionIndex);
-        stim_spotDiam = 200;
+        stim_spotDiam = stim_spotDiams(optionIndex);
+%         stim_spotDiam = 200;
         stim_spotDuration = 0.4;
         stim_spotStart = 0.1;
         stim_intensity = 0.5;
@@ -208,16 +209,16 @@ for optionIndex = 1:stim_numOptions
 
     %% Main loop
     disp('illum T loop')
-    sim_lightSubunit = [];
-    
+    sim_lightSubunit = zeros(c_numSubunits, sim_dims(1));
+%     figure(107)
     for ti = 1:length(T)
-        curTime = T(ti);
-
+        sim_light = squeeze(stim_lightMatrix(ti, :, :));
+%         imagesc(sim_light)
+%         drawnow
         
     %% Calculate illumination for each subunit
         for si = 1:c_numSubunits
 
-            sim_light = squeeze(stim_lightMatrix(ti, :, :));
             sim_lightSubunit(si,ti) = sum(sum(sim_light .* c_subunitRf(:,:,si)));
 
 %             figure(101);
@@ -258,15 +259,15 @@ for optionIndex = 1:stim_numOptions
             
             % nonlinear effects could go here
 
-%             subplot(2,c_numSubunits,si * 2 + vi)
-%             hold on
-%             plot(normg(sim_lightIntensity(:,vi)));
-%             plot(normg(lightOnNess))       
-%             plot(normg(filter_resampled))
-%             plot(normg(sim_response(vi,:)));
-%             title(sprintf('light convolved with filter v = %d', e_voltages(vi)))
-%             hold off
-%             legend('light','light On','filter','filtered')
+            subplot(2, c_numSubunits, si * 2 + vi)
+            hold on
+            plot(normg(sim_lightIntensity(:,vi)));
+            plot(normg(lightOnNess))       
+            plot(normg(filter_resampled))
+            plot(normg(sim_response(vi,:)));
+            title(sprintf('light convolved with filter v = %d', e_voltages(vi)))
+            hold off
+            legend('light','light On','filter','filtered')
         end
         
     end
@@ -300,7 +301,7 @@ for optionIndex = 1:stim_numOptions
     for vi = 1:e_numVoltages
         v = e_voltages(vi);
         if v == -60
-            M = 3;
+            M = 2;
         else
             M = 1;
         end
@@ -312,7 +313,7 @@ for optionIndex = 1:stim_numOptions
     
     sim_response = sum(sim_responseSubunitsCombinedScaled, 1);
     
-    out_valsByOptions(optionIndex) = -1*sum(sim_responseCombined(sim_responseCombined < 0));
+    out_valsByOptions(optionIndex) = -1*sum(sim_response(sim_response < 0));
 
     % output nonlinearity
 
@@ -320,10 +321,10 @@ for optionIndex = 1:stim_numOptions
     figure(102)
     axes(outputAxes(optionIndex));
 
-    plot(T, sim_response)
+    plot(T, sim_responseSubunitsCombinedScaled)
 
     hold on
-    plot(T, sim_responseSubunitsCombinedScaled);
+    plot(T, sim_response);
     hold off
 
 %     title('Whole cell Response')
@@ -336,6 +337,8 @@ end
 %% display combined output over stim options
 
 figure(110);clf;
+
+
 a = deg2rad(stim_barDirection);
 p = out_valsByOptions ./ max(out_valsByOptions);
 
