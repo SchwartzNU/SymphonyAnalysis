@@ -3,7 +3,7 @@
 
 
 imgDisplay = @(X,Y,d) imagesc(X,Y,flipud(d'));
-normg = @(a) (a / max(abs(a(:))));
+normg = @(a) ((a+eps) / max(abs(a(:))+eps));
 
 %% Setup cell data from ephys
 
@@ -29,7 +29,7 @@ s_voltageLegend{end+1} = 'Combined';
 
 
 sim_endTime = 1;
-sim_timeStep = 0.001;
+sim_timeStep = 0.01;
 sim_spaceResolution = 4; % um per point
 cell_radius = 250;%max(cell_rfPositions);
 
@@ -47,7 +47,7 @@ for vi = 1:e_numVoltages
 end
 
 figure(90);clf;
-ha = tight_subplot(e_numVoltages, 1);
+axesSignalsBySubunit = tight_subplot(e_numVoltages, 1);
 
 
 X = linspace(-0.5 * sim_dims(2) * sim_spaceResolution, 0.5 * sim_dims(2) * sim_spaceResolution, sim_dims(2));
@@ -63,7 +63,7 @@ for vi = 1:e_numVoltages
     e_map(:,:,vi) = F(mapX, mapY) * sign(e_voltages(vi));
     e_map(:,:,vi) = e_map(:,:,vi) - min(min(e_map(:,:,vi)));
     
-    axes(ha(vi))
+    axes(axesSignalsBySubunit(vi))
     imgDisplay(X,Y,e_map(:,:,vi))
     title(s_voltageLegend{vi});
     colormap parula
@@ -82,7 +82,7 @@ end
 
 %% subunit locations, using generate positions
 
-c_subunitSpacing = 30;
+c_subunitSpacing = 40;
 c_subunitSigma = 15;
 c_subunitExtent = 80;
 c_subunitCenters = generatePositions('triangular', [c_subunitExtent, c_subunitSpacing, 0]);
@@ -109,10 +109,10 @@ title('all subunits')
 %% Main stimulus change loop
 
 stim_mode = 'movingBar';
-numAngles = 12;
-stim_barDirection = linspace(0,360,numAngles+1);
-stim_barDirection(end) = [];
-stim_numOptions = length(stim_barDirection);
+numAngles = 8;
+stim_barDirections = linspace(0,360,numAngles+1);
+stim_barDirections(end) = [];
+stim_numOptions = length(stim_barDirections);
 
 % stim_mode = 'flashedSpot';
 % numSizes = 8;
@@ -157,7 +157,7 @@ for optionIndex = 1:stim_numOptions
                         y = Y(yi);
 
                         val = stim_intensity;
-
+insert
                         % circle shape
                         rad = sqrt((x - pos(1))^2 + (y - pos(2))^2);
                         if rad < stim_spotDiam / 2
@@ -171,34 +171,85 @@ for optionIndex = 1:stim_numOptions
 
     elseif strcmp(stim_mode, 'movingBar')
 
-        stim_barSpeed = 1000;
+        stim_barSpeed = 800;
         stim_barLength = 300;
-        stim_barWidth = 150;
-%         stim_barDirection = 60; % degrees
+        stim_barWidth = 100;
+        stim_barDirection = stim_barDirections(optionIndex); % degrees
         stim_moveTime = 0.8;
         stim_intensity = 0.5;
+        
+        % make four corner points
+        l = stim_barLength / 2;
+        w = stim_barWidth / 2;
+        corners = [-l,w;l,w;l,-w;-l,-w];
+        
+        % rotate corners
+        theta = stim_barDirection; % not sure if this should be positive or negative... test to confirm
+        R = [cosd(theta) -sind(theta); sind(theta) cosd(theta)];
+        for p = 1:size(corners, 1);
+            corners(p,:) = (R * corners(p,:)')';
+        end
+
+        
+        % translate corners
 
         for ti = 1:sim_dims(1)
             t = T(ti);
 
-            movementVector = stim_barSpeed * [cosd(stim_barDirection(optionIndex)), sind(stim_barDirection(optionIndex))];
+            movementVector = stim_barSpeed * [cosd(stim_barDirection), sind(stim_barDirection)];
 
             barCenter = center + movementVector * (t - stim_moveTime / 2);
+            cornersTranslated = bsxfun(@plus, corners, barCenter);
 
-            for xi = 1:sim_dims(2)
-                x = X(xi);
-                for yi = 1:sim_dims(3)
-                    y = Y(yi);
+            % what a nice thing to find just the right MATLAB function
+            stim_lightMatrix(ti,:,:) = inpolygon(mapX, mapY, cornersTranslated(:,1), cornersTranslated(:,2));
+            
+%             
+%             for xi = 1:sim_dims(2)
+%                 x = X(xi);
+%                 for yi = 1:sim_dims(3)
+%                     y = Y(yi);
+% 
+%                     val = stim_intensity;
+% 
+%                     % circle shape
+%                     rad = sqrt((x - barCenter(1))^2 + (y - barCenter(2))^2);
+%                     if rad < stim_barWidth / 2
+%                         stim_lightMatrix(ti, xi, yi) = val;
+%                     end
+%                     
+%                     % rectangle shape
+% %                     a = cornersTranslated(1,:);
+% %                     b = cornersTranslated(2,:);
+% %                     c = cornersTranslated(3,:);
+% %                     d = cornersTranslated(4,:);
+% %                     if x > a(1) && x < c(1)
+% %                         if y > d(2) && y < b(2)
+% %                             stim_lightMatrix(ti, xi, yi) = val;
+% %                         end
+% %                     end
+%                     
+%                     
+%                 end
+%             end
+        end
+    end
+    
+    % plot movie of stimulus
+    if 0
+        figure(101);
+        clf;
+        for ti = 1:length(T)
+            sim_light = squeeze(stim_lightMatrix(ti, :, :));
+            imgDisplay(X,Y,sim_light);
+            colormap gray
+            caxis([0,1])
+            colorbar
+            title(sprintf('stimulus at %.3f sec', T(ti)));
 
-                    val = stim_intensity;
+            drawnow
+%             pause(sim_timeStep)
 
-                    % circle shape
-                    rad = sqrt((x - barCenter(1))^2 + (y - barCenter(2))^2);
-                    if rad < stim_barWidth / 2
-                        stim_lightMatrix(ti, xi, yi) = val;
-                    end
-                end
-            end
         end
     end
 
@@ -241,36 +292,53 @@ for optionIndex = 1:stim_numOptions
     % end time loop
     
     %% temporal filter each subunit individually
-%     figure(103)
+    
+%     figure(103);clf;
+%     axesSignalsBySubunit = tight_subplot(c_numSubunits, 2);
+
+
     disp('temporal filter')
     sim_responseSubunit = [];
     for si = 1:c_numSubunits
 
-        a = sim_lightSubunit(si,:);
-        d = diff(a);
-        d(end+1) = 0;
-        d(d < 0) = 0;
-        lightOnNess = cumsum(d);
+%         a = sim_lightSubunit(si,:);
+%         d = diff(a);
+%         d(end+1) = 0;
+%         d(d < 0) = 0;
+%         lightOnNess = cumsum(d);
 
         for vi = 1:e_numVoltages
-
-            r = conv(lightOnNess, filter_resampledOn{vi});
-            sim_responseSubunit(si,vi,:) = r(1:sim_dims(1));
+            % linear convolution
+            convolved = conv(sim_lightSubunit(si,:), filter_resampledOn{vi});
             
-            % nonlinear effects could go here
+            % nonlinear effects
+%             sel = [];
+            if e_voltages(vi) < 0
+                sel = convolved > 0;
+            else
+                sel = convolved < 0;
+            end
+            
+            rectified = convolved;
+            rectified(sel) = 0;
 
-            subplot(2, c_numSubunits, si * 2 + vi)
-            hold on
-            plot(normg(sim_lightIntensity(:,vi)));
-            plot(normg(lightOnNess))       
-            plot(normg(filter_resampled))
-            plot(normg(sim_response(vi,:)));
-            title(sprintf('light convolved with filter v = %d', e_voltages(vi)))
-            hold off
-            legend('light','light On','filter','filtered')
+            sim_responseSubunit(si,vi,:) = rectified(1:sim_dims(1));
+            
+%             % plot individual subunit inputs and outputs
+%             axes(axesSignalsBySubunit(((si - 1) * 2 + vi)))
+%             hold on
+%             plot(normg(sim_lightSubunit(si,:)));
+% %             plot(normg(lightOnNess))       
+%             plot(normg(filter_resampledOn{vi}))
+%             plot(normg(convolved));
+%             plot(normg(rectified));
+%             title(sprintf('subunit %d light convolved with filter v = %d', si, e_voltages(vi)))
+%             hold off
+%             legend('light','filter','filtered', 'rectified')
         end
         
     end
+    drawnow
     
     
     %% Multiply subunit response by RF strength (connection subunit to RGC)
@@ -301,7 +369,7 @@ for optionIndex = 1:stim_numOptions
     for vi = 1:e_numVoltages
         v = e_voltages(vi);
         if v == -60
-            M = 2;
+            M = 5;
         else
             M = 1;
         end
@@ -339,7 +407,7 @@ end
 figure(110);clf;
 
 
-a = deg2rad(stim_barDirection);
+a = deg2rad(stim_barDirections);
 p = out_valsByOptions ./ max(out_valsByOptions);
 
 a(end+1) = a(1);
