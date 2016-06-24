@@ -73,6 +73,7 @@ for vi = 1:e_numVoltages
         'linear','nearest');
     m = F(mapX, mapY) * sign(e_voltages(vi));
     m(m < 0) = 0;
+    m = m ./ max(m(:));
     e_map(:,:,vi) = m;
 %     e_map(:,:,vi) = e_map(:,:,vi) - min(min(e_map(:,:,vi)));
 
@@ -83,7 +84,6 @@ for vi = 1:e_numVoltages
         imgDisplay(X,Y,e_map(:,:,vi))
         title(s_voltageLegend{vi});
         colormap parula
-        colorbar
         axis equal
     %     surface(mapX, mapY, zeros(size(mapX)), c)
     end
@@ -109,11 +109,10 @@ c_numSubunits = size(c_subunitCenters,1);
 % subunit RF profile, using gaussian w/ set radius (function)
 c_subunitRf = zeros(sim_dims(2), sim_dims(3), c_numSubunits);
 for si = 1:c_numSubunits
-%     rf = zeros(sim_dims(2), sim_dims(3));
-    
     center = c_subunitCenters(si,:);
     dmap = sqrt((mapX - center(1)).^2 + (mapY - center(2)).^2);
     rf = exp(-dmap ./ c_subunitSigma);
+    rf = rf ./ max(rf(:));
     c_subunitRf(:,:,si) = rf;
 end
 
@@ -142,7 +141,6 @@ if plotSpatialGraphs
         end
         imgDisplay(X,Y,d)
         axis equal
-        colorbar
         title('all subunits scaled by maps')
     end
 end
@@ -214,11 +212,11 @@ insert
 
     elseif strcmp(stim_mode, 'movingBar')
 
-        stim_barSpeed = 1000;
+        stim_barSpeed = 500;
         stim_barLength = 300;
-        stim_barWidth = 120;
+        stim_barWidth = 150;
         stim_barDirection = stim_barDirections(optionIndex); % degrees
-        stim_moveTime = 1;
+        stim_moveTime = 1.0;
         stim_intensity = 0.5;
         
         % make four corner points
@@ -326,6 +324,7 @@ insert
             rectified = convolved;
             rectified(sel) = 0;
 %             rectified = rectified.^2 * s;
+            rectified(rectified > 1) = rectified(rectified > 1) * 2;
 
             s_responseSubunit(si,vi,:) = rectified(1:sim_dims(1));
             
@@ -410,6 +409,9 @@ for optionIndex = 1:stim_numOptions
 
         hold on
         plot(T, sim_response);
+        sim_response_justTheSpikes = sim_response;
+        sim_response_justTheSpikes(sim_response_justTheSpikes > 0) = 0;
+        area(T, sim_response_justTheSpikes, 'LineStyle','none')
         hold off
 
     %     title('Whole cell Response')

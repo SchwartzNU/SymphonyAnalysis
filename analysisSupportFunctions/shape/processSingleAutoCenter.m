@@ -6,7 +6,7 @@
 % load('/Users/sam/analysis/cellData/032416Ac9.mat')
 % sessionId = 2016324173256;
 
-load('/Users/sam/analysis/cellData/051216Ac9.mat')
+load('/Users/sam/analysis/cellData/060216Ac2.mat')
 sessionId = 2016512181624;
 
 % process
@@ -31,11 +31,18 @@ else
     return
 end
 
-% figure(8);clf;
-% plotShapeData(analysisData, 'spatial');
 
-%%
-% figure(9);clf;
+%% normal plots
+figure(10);clf;
+plotShapeData(analysisData, 'plotSpatial_mean');
+% 
+% figure(11);clf;
+% plotShapeData(analysisData, 'temporalResponses');
+
+
+
+%% new plots
+figure(9);clf;
 plotShapeData(analysisData, 'adaptationRegion');
 
 % plotShapeData(analysisData, 'temporalComponents');
@@ -43,9 +50,8 @@ plotShapeData(analysisData, 'adaptationRegion');
 % figure(11);clf;
 % plotShapeData(analysisData, 'subunit');
 
-%%
-% figure(10);clf;
-% plotShapeData(analysisData, 'plotSpatial_mean');
-% 
-% figure(11);clf;
-% plotShapeData(analysisData, 'temporalResponses');
+
+
+%% save maps
+
+plotShapeData(analysisData, 'plotSpatial_saveMaps');

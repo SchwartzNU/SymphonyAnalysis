@@ -90,7 +90,11 @@ classdef LabDataGUI < handle
             
             obj.buildUIComponents();
             obj.loadCellNames();
-            obj.loadTree();
+            try % this will error when 
+                obj.loadTree();
+            catch
+                disp('loadTree stumbled on multi-display configuration. Resize the window to continue');
+            end
             obj.initializeEpochFilterTable();
             obj.initializeCellFilterTable();
             obj.initializeCellTypeAndAnalysisMenus();
@@ -99,7 +103,7 @@ classdef LabDataGUI < handle
         function buildUIComponents(obj)
             bounds = screenBounds;
             obj.fig = figure( ...
-                'Name',         ['LabDataGUI: ' obj.cellData_folder], ...
+                'Name',         ['LabDataGUI: ' obj.projFolder], ...
                 'NumberTitle',  'off', ...
                 'ToolBar',      'none',...
                 'Menubar',      'none', ...
@@ -459,10 +463,11 @@ classdef LabDataGUI < handle
         function initializeCellTypeAndAnalysisMenus(obj)
             global ANALYSIS_CODE_FOLDER;
             global PREFERENCE_FILES_FOLDER;
-            analysisClassesFolder = [ANALYSIS_CODE_FOLDER filesep 'analysisTreeClasses'];
+            analysisClassesFolder = [ANALYSIS_CODE_FOLDER 'analysisTreeClasses'];
             d = dir(analysisClassesFolder);
             analysisClasses = {};
             z = 1;
+            
             for i=1:length(d)
                 if ~isempty(strfind(d(i).name, '.m')) && ~strcmp(d(i).name, 'AnalysisTree.m')
                     analysisClasses{z} = strtok(d(i).name, '.');

@@ -15,10 +15,7 @@ classdef ShapeObservation < handle
         flickerFrequency
         
         % results
-        respMean
-        respPeak
-        tHalfMax
-        distFromPrev
+        resultMap
         
         adaptSpotX
         adaptSpotY
@@ -32,8 +29,9 @@ classdef ShapeObservation < handle
         end
         
         function extractResults(obj, resp)
-            obj.respMean = mean(resp);
-            obj.respPeak = max(resp);
+            obj.resultMap = containers.Map;
+            obj.resultMap('mean') = mean(resp);
+            obj.resultMap('peak') = max(resp);
             if obj.respPeak > 0
                 timeToPeak = find(resp > pk / 2.0, 1, 'first') / .sampleRate;
             else

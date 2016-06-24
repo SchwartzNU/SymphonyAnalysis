@@ -1,4 +1,5 @@
 load analysisData.mat
+
 for vi = 1:2
     e = analysisData.epochData{vi};
     [response, t] = resample(e.response, e.t, 1000);
