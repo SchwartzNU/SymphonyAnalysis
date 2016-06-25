@@ -1,6 +1,8 @@
 %% SHAPE MODEL
 % Sam Cooler 2016
 
+disp('Running full simulation');
+
 
 imgDisplay = @(X,Y,d) imagesc(X,Y,flipud(d'));
 normg = @(a) ((a+eps) / max(abs(a(:))+eps));
@@ -10,6 +12,7 @@ plotSubunits = 0;
 plotSpatialGraphs = 1;
 plotStimulus = 0;
 plotOutputCurrents = 1;
+plotCellResponses = 1;
 
 %% Setup cell data from ephys
 
@@ -34,11 +37,11 @@ s_voltageLegend = {'ex','in'};
 s_voltageLegend{end+1} = 'Combined';
 
 
-sim_endTime = 1.0;
-sim_timeStep = 0.002;
-sim_spaceResolution = 2; % um per point
-s_edgelength = 400;%max(cell_rfPositions);
-c_extent = 0;
+sim_endTime = 2.0;
+sim_timeStep = 0.0025;
+sim_spaceResolution = 5; % um per point
+s_edgelength = 350;%max(cell_rfPositions);
+c_extent = 0; % start and make in loop:
 
 T = 0:sim_timeStep:sim_endTime;
 
@@ -64,14 +67,22 @@ Y = linspace(-0.5 * sim_dims(3) * sim_spaceResolution, 0.5 * sim_dims(3) * sim_s
 [mapY, mapX] = meshgrid(Y,X);
 distanceFromCenter = sqrt(mapY.^2 + mapX.^2);
 
+                    %  ex  in
+shiftsByDimVoltage = [-30,-30;  % x
+                      -30,-30]; % y
+
 for vi = 1:e_numVoltages
     
 %     c = griddata(e_positions{vi, ii}(:,1), e_positions{vi, ii}(:,2), e_vals{vi,ii,:}, mapX, mapY);
 %     e_map(:,:,vi) = c;
     
-    F = scatteredInterpolant(e_positions{vi, ii}(:,1), e_positions{vi, ii}(:,2), e_vals{vi,ii,:},...
+    % add null corners to ground the spatial map at edges
+    positions = vertcat(e_positions{vi, ii}, [X(1),Y(1);X(end),Y(1);X(end),Y(end);X(1),Y(end)]);
+    vals = vertcat(e_vals{vi,ii,:}, [0,0,0,0]');
+    F = scatteredInterpolant(positions(:,1), positions(:,2), vals,...
         'linear','nearest');
-    m = F(mapX, mapY) * sign(e_voltages(vi));
+    
+    m = F(mapX + shiftsByDimVoltage(1,vi), mapY + shiftsByDimVoltage(2,vi)) * sign(e_voltages(vi));
     m(m < 0) = 0;
     m = m ./ max(m(:));
     e_map(:,:,vi) = m;
@@ -92,18 +103,17 @@ end
 
 
 
-%% Filter from cell
+% Filter from cell
 filter_resampledOn = {};
 for vi = 1:e_numVoltages
     filter_resampledOn{vi} = normg(resample(filterOn{vi}, round(1/sim_timeStep), 1000));
 end
 
-%% subunit locations, using generate positions
+% subunit locations, using generate positions
 
-c_subunitSpacing = 15;
-c_subunitSigma = 10;
-c_subunitExtent = 120;
-c_subunitCenters = generatePositions('triangular', [c_subunitExtent, c_subunitSpacing, 0]);
+c_subunitSpacing = 14;
+c_subunitSigma = 12;
+c_subunitCenters = generatePositions('triangular', [c_extent, c_subunitSpacing, 0]);
 c_numSubunits = size(c_subunitCenters,1);
 
 % subunit RF profile, using gaussian w/ set radius (function)
@@ -129,7 +139,12 @@ for vi = 1:e_numVoltages
     end
 end
 
+% remove unconnected subunits
+nullSubunits = sum(s_subunitStrength) < eps;
 
+c_subunitRf(:,:,nullSubunits) = [];
+s_subunitStrength(:,nullSubunits) = [];
+c_numSubunits = size(s_subunitStrength,2);
 
 if plotSpatialGraphs
     for vi = 1:e_numVoltages
@@ -156,10 +171,16 @@ sim_responseSubunitsCombinedByOption = {};
 %% Main stimulus change loop
 
 stim_mode = 'movingBar';
-numAngles = 12;
+numAngles = 6;
 stim_barDirections = linspace(0,360,numAngles+1);
 stim_barDirections(end) = [];
 stim_numOptions = length(stim_barDirections);
+
+stim_barSpeed = 500;
+stim_barLength = 300;
+stim_barWidth = 150;
+stim_moveTime = sim_endTime;
+stim_intensity = 0.5;
 
 % stim_mode = 'flashedSpot';
 % numSizes = 8;
@@ -168,6 +189,12 @@ stim_numOptions = length(stim_barDirections);
 
 % stim_mode = 'flashedSpot';
 % stim_numOptions = 1;
+
+%         stim_spotDiam = 200;
+% stim_spotDuration = 0.4;
+% stim_spotStart = 0.1;
+% stim_intensity = 0.5;
+% stim_spotPosition = [0,0];
 
 parfor optionIndex = 1:stim_numOptions
     fprintf('Running option %d of %d\n', optionIndex, stim_numOptions);
@@ -181,11 +208,7 @@ parfor optionIndex = 1:stim_numOptions
     if strcmp(stim_mode, 'flashedSpot')
         % flashed spot
         stim_spotDiam = stim_spotDiams(optionIndex);
-%         stim_spotDiam = 200;
-        stim_spotDuration = 0.4;
-        stim_spotStart = 0.1;
-        stim_intensity = 0.5;
-        stim_spotPosition = [0,0];
+
 
         pos = stim_spotPosition + center;
         for ti = 1:sim_dims(1)
@@ -212,12 +235,8 @@ insert
 
     elseif strcmp(stim_mode, 'movingBar')
 
-        stim_barSpeed = 500;
-        stim_barLength = 300;
-        stim_barWidth = 150;
         stim_barDirection = stim_barDirections(optionIndex); % degrees
-        stim_moveTime = 1.0;
-        stim_intensity = 0.5;
+
         
         % make four corner points
         l = stim_barLength / 2;
@@ -269,13 +288,15 @@ insert
 
     %% Main loop
     s_lightSubunit = zeros(c_numSubunits, sim_dims(1));
+    area = (sim_dims(2) * sim_dims(3));
     for ti = 1:length(T)
         sim_light = squeeze(stim_lightMatrix(ti, :, :));
         
         %% Calculate illumination for each subunit
         for si = 1:c_numSubunits
 
-            s_lightSubunit(si,ti) = sum(sum(sim_light .* c_subunitRf(:,:,si)));
+            lightIntegral = sum(sum(sim_light .* c_subunitRf(:,:,si))) / area;
+            s_lightSubunit(si,ti) = lightIntegral;
 
 %             figure(101);
 %             subplot(2,1,1)
@@ -323,24 +344,37 @@ insert
             
             rectified = convolved;
             rectified(sel) = 0;
-%             rectified = rectified.^2 * s;
-            rectified(rectified > 1) = rectified(rectified > 1) * 2;
+            
+            rectThresh = .005;
+            rectMult = 1;
+            sel = abs(rectified) > rectThresh;
+            nonlin = rectified;
+            nonlin(sel) = nonlin(sel) * rectMult;
+            
+%             figure(109)
+%             plot(rectified)
+%             hold on
+%             plot(nonlin)
+%             hold off            
+%             pause(0.2)
 
-            s_responseSubunit(si,vi,:) = rectified(1:sim_dims(1));
+            s_responseSubunit(si,vi,:) = nonlin(1:sim_dims(1));
             
             if plotSubunits
                 % plot individual subunit inputs and outputs
                 figure(103);
-                axes(axesSignalsBySubunit(((si - 1) * 2 + vi)))
+                clf;
+%                 axes(axesSignalsBySubunit(((si - 1) * 2 + vi)))
                 hold on
                 plot(normg(s_lightSubunit(si,:)));
     %             plot(normg(lightOnNess))       
                 plot(normg(filter_resampledOn{vi}))
                 plot(normg(convolved));
                 plot(normg(rectified));
+                plot(normg(nonlin));
                 title(sprintf('subunit %d light convolved with filter v = %d', si, e_voltages(vi)))
                 hold off
-                legend('light','filter','filtered', 'rectified')
+                legend('light','filter','filtered', 'rectified', 'nonlinear')
             end
         end
         
@@ -373,67 +407,112 @@ end % end of options and response generation
 if plotOutputCurrents
     figure(102);clf;
     set(gcf, 'Name','Output Currents','NumberTitle','off');
-    outputAxes = tight_subplot(stim_numOptions, 1);
+    outputAxes = tight_subplot(stim_numOptions, 1, .01, .001);
 end
 
 out_valsByOptions = [];
 
+plot_timeLims = [0.5, 1.7];
+ephysScale = 1/750;
+combineScale = [4, 1, -.1]; % ex, in, spikes (don't get combined)
+% displayScale = [5,2.2];
+
 for optionIndex = 1:stim_numOptions
-    %% Output scale
+    
+    ang = stim_barDirections(optionIndex);
+    % Output scale
     sim_responseSubunitsCombinedScaled = sim_responseSubunitsCombinedByOption{optionIndex};
     for vi = 1:e_numVoltages
-        v = e_voltages(vi);
-        if v == -60
-            M = 4;
-        else
-            M = 1;
-        end
-        sim_responseSubunitsCombinedScaled(vi,:) = M * sim_responseSubunitsCombinedScaled(vi,:);
+        sim_responseSubunitsCombinedScaled(vi,:) = combineScale(vi) * sim_responseSubunitsCombinedScaled(vi,:);
     end
     
     
-    %% Combine Ex and In
+    % Combine Ex and In
     
-    sim_response = sum(sim_responseSubunitsCombinedScaled, 1);
+    sim_responseCurrent = sum(sim_responseSubunitsCombinedScaled, 1);
     
-    out_valsByOptions(optionIndex) = -1*sum(sim_response(sim_response < 0));
+    out_valsByOptions(optionIndex, 1) = -1*sum(sim_responseCurrent(sim_responseCurrent < 0)) / sim_dims(1);
+
 
     % output nonlinearity
 
-    %% Display output
+    % Display output
+    
+    timeOffsetSim = 0.15;
+    timeOffsetSpikes = -0.4;
     if plotOutputCurrents
-        figure(102)
         axes(outputAxes(optionIndex));
-
-        plot(T, sim_responseSubunitsCombinedScaled)
+        
+        Tsim = T+timeOffsetSim;
+        sel = Tsim > plot_timeLims(1) & Tsim < plot_timeLims(2);
+        plot(Tsim(sel), sim_responseSubunitsCombinedScaled(:,sel))
 
         hold on
-        plot(T, sim_response);
-        sim_response_justTheSpikes = sim_response;
-        sim_response_justTheSpikes(sim_response_justTheSpikes > 0) = 0;
-        area(T, sim_response_justTheSpikes, 'LineStyle','none')
+        % combined sim
+        plot(Tsim(sel), sim_responseCurrent(sel));
+
+        %         sim_response_justTheSpikes = sim_response;
+%         sim_response_justTheSpikes(sim_response_justTheSpikes > 0) = 0;
+%         area(T+timeOffset, sim_response_justTheSpikes, 'LineStyle','none')
+        
+        
+        % ephys responses (ex, in, spikes)
+        if plotCellResponses
+            Esel = T > plot_timeLims(1) & T < plot_timeLims(2);
+            cell_responses = [];
+            for vi = 1:3
+                mn = ephysScale * c_responses{vi, c_angles == ang}.mean;
+                
+                mn = combineScale(vi) * resample(mn, round(1/sim_timeStep), 10000);
+                cell_responses(vi,:) = mn;
+                if vi < 3
+                    plot(T(Esel), mn(Esel))
+                else
+                    plot(T(Esel) + timeOffsetSpikes, mn(Esel));
+                end
+            end
+        end
+        % ephys combined values
+        cell_responsesCombined = sum(cell_responses(1:2,:));
+        
+        plot(T(Esel), cell_responsesCombined(Esel));
+        
+        title(ang)
+    %     xlabel('time')
+        xlim(plot_timeLims);
+        legend('ex_s','in_s','comb_s','ex_e','in_e','spike_e','comb_e');
+%         legend('ex_s','in_s','ex_e','in_e'); 
+        
         hold off
 
-    %     title('Whole cell Response')
-    %     xlabel('time')
-        xlim([min(T), max(T)]);
-        legend(s_voltageLegend);
+        out_valsByOptions(optionIndex, 2) = -1*sum(cell_responsesCombined(cell_responsesCombined < 0)) / sim_dims(1);        
+        out_valsByOptions(optionIndex, 3) = -1*sum(cell_responses(3,:)) / sim_dims(1);
     end
     
 end
+linkaxes(outputAxes)
+ylim([-1,.6]*1)
 
 % display combined output over stim options
 
 figure(110);clf;
 set(gcf, 'Name','Processed outputs over options','NumberTitle','off');
+ordering = [2,3,1];
+for ti = ordering
+    a = deg2rad(stim_barDirections)';
 
-a = deg2rad(stim_barDirections);
-p = out_valsByOptions ./ max(out_valsByOptions);
+%     a = stim_barDirections';
+    p = out_valsByOptions(:,ti) / max(out_valsByOptions(:));
+    p = p ./ mean(p);
 
-a(end+1) = a(1);
-p(end+1) = p(1);
-polar(a, p)
-
+    a(end+1) = a(1);
+    p(end+1) = p(1);
+    polar(a, p)
+    hold on
+end
+hold off
+legs = {'sim currents','ephys currents','ephys spikes'};
+legend(legs(ordering))
 % plot(stim_spotDiams, out_valsByOptions)
 
 
