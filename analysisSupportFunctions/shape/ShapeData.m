@@ -191,7 +191,7 @@ classdef ShapeData < handle
                     obj.spikes = [];
                 else % whole cell
                     obj.spikes = [];
-                    obj.setResponse(epoch.getData('Amplifier_Ch1'));
+                    obj.setResponse(epoch.getData('Amplifier_Ch1')); %get whole cell response
                     obj.processWholeCell()
                 end
             else
