@@ -1,7 +1,7 @@
-load analysisData.mat
+load(sprintf('analysisData_%s_%s.mat', cellName, acName));
 
 for vi = 1:2
-    e = analysisData.epochData{vi};
+    e = analysisData.epochData{vi}; % using E/I alignment step here
     [response, t] = resample(e.response, e.t, 1000);
     response = smooth(response,10);
 

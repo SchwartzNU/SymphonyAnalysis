@@ -2,11 +2,16 @@
 % Sam Cooler 2016
 
 disp('Running full simulation');
+% cellName = '060716Ac2';
+% acName = '348';
 
+cellName = '060216Ac2';
+acName = '1032';
 
 imgDisplay = @(X,Y,d) imagesc(X,Y,flipud(d'));
+% imgDisplay2 = @(mapX, mapY, d) (surface(mapX, mapY, zeros(size(mapY)), d), grid off);
 normg = @(a) ((a+eps) / max(abs(a(:))+eps));
-plotGrid = @(row, col, cols) ((row - 1) * cols + col);
+plotGrid = @(row, col, numcols) ((row - 1) * numcols + col);
 
 plotSubunits = 0;
 plotSpatialGraphs = 1;
@@ -19,7 +24,7 @@ plotCellResponses = 1;
 % generate RF map for EX and IN
 % import completed maps
 
-load rfmaps_060216Ac2_1032.mat
+load(sprintf('rfmaps_%s_%s.mat', cellName, acName));
 ephys_data_raw = data;
 
 e_positions = {};
@@ -38,8 +43,8 @@ s_voltageLegend{end+1} = 'Combined';
 
 
 sim_endTime = 2.0;
-sim_timeStep = 0.0025;
-sim_spaceResolution = 5; % um per point
+sim_timeStep = 0.002;
+sim_spaceResolution = 1; % um per point
 s_edgelength = 350;%max(cell_rfPositions);
 c_extent = 0; % start and make in loop:
 
@@ -68,8 +73,9 @@ Y = linspace(-0.5 * sim_dims(3) * sim_spaceResolution, 0.5 * sim_dims(3) * sim_s
 distanceFromCenter = sqrt(mapY.^2 + mapX.^2);
 
                     %  ex  in
-shiftsByDimVoltage = [-30,-30;  % x
-                      -30,-30]; % y
+% shiftsByDimVoltage = [-30,-30;  % x
+%                       -30,-30]; % y
+shiftsByDim = analysisData.positionOffset;
 
 for vi = 1:e_numVoltages
     
@@ -77,12 +83,15 @@ for vi = 1:e_numVoltages
 %     e_map(:,:,vi) = c;
     
     % add null corners to ground the spatial map at edges
-    positions = vertcat(e_positions{vi, ii}, [X(1),Y(1);X(end),Y(1);X(end),Y(end);X(1),Y(end)]);
-    vals = vertcat(e_vals{vi,ii,:}, [0,0,0,0]');
+    positions = e_positions{vi, ii};
+    vals = e_vals{vi,ii,:};
+%     positions = vertcat(positions, [X(1),Y(1);X(end),Y(1);X(end),Y(end);X(1),Y(end)]);
+%     vals = vertcat(vals, [0,0,0,0]');
     F = scatteredInterpolant(positions(:,1), positions(:,2), vals,...
-        'linear','nearest');
+        'linear','none');
     
-    m = F(mapX + shiftsByDimVoltage(1,vi), mapY + shiftsByDimVoltage(2,vi)) * sign(e_voltages(vi));
+    m = F(mapX + shiftsByDim(1), mapY + shiftsByDim(2)) * sign(e_voltages(vi));
+    m(isnan(m)) = 0;
     m(m < 0) = 0;
     m = m ./ max(m(:));
     e_map(:,:,vi) = m;
@@ -92,7 +101,8 @@ for vi = 1:e_numVoltages
     
     if plotSpatialGraphs
         axes(axesSpatialData((vi-1)*2+1))
-        imgDisplay(X,Y,e_map(:,:,vi))
+%         imgDisplay(X,Y,e_map(:,:,vi))
+        plotSpatialData(mapX,mapY,e_map(:,:,vi))
         title(s_voltageLegend{vi});
         colormap parula
         axis equal
@@ -111,8 +121,9 @@ end
 
 % subunit locations, using generate positions
 
-c_subunitSpacing = 14;
-c_subunitSigma = 12;
+c_subunitSpacing = 20;
+c_subunit2Sigma = 40;
+c_subunitSigma = c_subunit2Sigma / 2;
 c_subunitCenters = generatePositions('triangular', [c_extent, c_subunitSpacing, 0]);
 c_numSubunits = size(c_subunitCenters,1);
 
@@ -120,8 +131,8 @@ c_numSubunits = size(c_subunitCenters,1);
 c_subunitRf = zeros(sim_dims(2), sim_dims(3), c_numSubunits);
 for si = 1:c_numSubunits
     center = c_subunitCenters(si,:);
-    dmap = sqrt((mapX - center(1)).^2 + (mapY - center(2)).^2);
-    rf = exp(-dmap ./ c_subunitSigma);
+    dmap = (mapX - center(1)).^2 + (mapY - center(2)).^2; % no sqrt, so
+    rf = exp(-(dmap / (2 * c_subunitSigma .^ 2))); % no square
     rf = rf ./ max(rf(:));
     c_subunitRf(:,:,si) = rf;
 end
@@ -141,11 +152,12 @@ end
 
 % remove unconnected subunits
 nullSubunits = sum(s_subunitStrength) < eps;
-
 c_subunitRf(:,:,nullSubunits) = [];
 s_subunitStrength(:,nullSubunits) = [];
+c_subunitCenters(nullSubunits',:) = [];
 c_numSubunits = size(s_subunitStrength,2);
 
+% plot the spatial graphs
 if plotSpatialGraphs
     for vi = 1:e_numVoltages
         axes(axesSpatialData((vi - 1) * 2 + 2))
@@ -154,9 +166,12 @@ if plotSpatialGraphs
         for si = 1:c_numSubunits
             d = d + c_subunitRf(:,:,si) * s_subunitStrength(vi,si);
         end
-        imgDisplay(X,Y,d)
+        plotSpatialData(mapX,mapY,d)
         axis equal
         title('all subunits scaled by maps')
+        hold on
+        % plot points at the centers of subunits
+        plot(c_subunitCenters(:,1), c_subunitCenters(:,2),'r.')
     end
 end
 
@@ -168,18 +183,18 @@ if plotSubunits
 end
 sim_responseSubunitsCombinedByOption = {};
 
-%% Main stimulus change loop
+% Main stimulus change loop
 
 stim_mode = 'movingBar';
-numAngles = 6;
+numAngles = 12;
 stim_barDirections = linspace(0,360,numAngles+1);
 stim_barDirections(end) = [];
 stim_numOptions = length(stim_barDirections);
 
 stim_barSpeed = 500;
-stim_barLength = 300;
-stim_barWidth = 150;
-stim_moveTime = sim_endTime;
+stim_barLength = 1000;
+stim_barWidth = 200;
+stim_moveTime = sim_endTime + 1;
 stim_intensity = 0.5;
 
 % stim_mode = 'flashedSpot';
@@ -409,13 +424,21 @@ if plotOutputCurrents
     set(gcf, 'Name','Output Currents','NumberTitle','off');
     outputAxes = tight_subplot(stim_numOptions, 1, .01, .001);
 end
+warning('off','MATLAB:legend:IgnoringExtraEntries')
 
 out_valsByOptions = [];
 
-plot_timeLims = [0.5, 1.7];
-ephysScale = 1/750;
+plot_timeLims = [00, 2];
+timeOffsetSim = 0.36;
+timeOffsetSpikes = 0;
+ephysScale = .002;
 combineScale = [4, 1, -.1]; % ex, in, spikes (don't get combined)
 % displayScale = [5,2.2];
+plotYLimsScale = 1;
+
+nonLinearCell = {[],[]};
+nonLinearSim = {[],[]};
+nonLinearFit = {};
 
 for optionIndex = 1:stim_numOptions
     
@@ -434,22 +457,17 @@ for optionIndex = 1:stim_numOptions
     out_valsByOptions(optionIndex, 1) = -1*sum(sim_responseCurrent(sim_responseCurrent < 0)) / sim_dims(1);
 
 
-    % output nonlinearity
-
-    % Display output
-    
-    timeOffsetSim = 0.15;
-    timeOffsetSpikes = -0.4;
     if plotOutputCurrents
-        axes(outputAxes(optionIndex));
+        axes(outputAxes(plotGrid(optionIndex, 1, 1)));
         
         Tsim = T+timeOffsetSim;
         sel = Tsim > plot_timeLims(1) & Tsim < plot_timeLims(2);
         plot(Tsim(sel), sim_responseSubunitsCombinedScaled(:,sel))
+%         plot(Tsim(sel), polyval(pfit,sim_responseSubunitsCombinedScaled(:,sel)))
 
         hold on
         % combined sim
-        plot(Tsim(sel), sim_responseCurrent(sel));
+%         plot(Tsim(sel), sim_responseCurrent(sel));
 
         %         sim_response_justTheSpikes = sim_response;
 %         sim_response_justTheSpikes(sim_response_justTheSpikes > 0) = 0;
@@ -471,33 +489,68 @@ for optionIndex = 1:stim_numOptions
                     plot(T(Esel) + timeOffsetSpikes, mn(Esel));
                 end
             end
+            % ephys combined values
+            cell_responsesCombined = sum(cell_responses(1:2,:));
+%             plot(T(Esel), cell_responsesCombined(Esel));
+            
+            % extract values for comparison plot
+            out_valsByOptions(optionIndex, 2) = -1*sum(cell_responsesCombined(cell_responsesCombined < 0)) / sim_dims(1);        
+            out_valsByOptions(optionIndex, 3) = -1*sum(cell_responses(3,:)) / sim_dims(1);            
         end
-        % ephys combined values
-        cell_responsesCombined = sum(cell_responses(1:2,:));
-        
-        plot(T(Esel), cell_responsesCombined(Esel));
         
         title(ang)
     %     xlabel('time')
         xlim(plot_timeLims);
-        legend('ex_s','in_s','comb_s','ex_e','in_e','spike_e','comb_e');
+        legend('ex_s','in_s','comb_s','ex_e','in_e','spike_e','comb_e','Location','Best');
 %         legend('ex_s','in_s','ex_e','in_e'); 
         
         hold off
 
-        out_valsByOptions(optionIndex, 2) = -1*sum(cell_responsesCombined(cell_responsesCombined < 0)) / sim_dims(1);        
-        out_valsByOptions(optionIndex, 3) = -1*sum(cell_responses(3,:)) / sim_dims(1);
+        % investigate nonlinearities relative to the ephys data
+        for vi = 1:2
+            simShift = timeOffsetSim / sim_timeStep;
+
+            rsim = sim_responseSubunitsCombinedScaled(vi,sel);
+            rcell = cell_responses(vi,Esel);
+            rcell = rcell(simShift:end);
+            nonLinearCell{vi} = horzcat(nonLinearCell{vi}, rcell);
+            nonLinearSim{vi} = horzcat(nonLinearSim{vi}, rsim);
+            
+%             axes(outputAxes(plotGrid(optionIndex, vi + 1, 3)));            
+%             plot(rsim,rcell,'.')
+%             hold on
+%             plot(rcell)
+%             hold off
+        end
     end
     
 end
-linkaxes(outputAxes)
-ylim([-1,.6]*1)
+
+figure(114)
+set(gcf, 'Name','Nonlinearity view','NumberTitle','off');
+for vi = 1:2
+    subplot(2,1,vi)
+    plot(nonLinearSim{vi}, nonLinearCell{vi},'.')
+    % sigValues = abs(nonLinearSim) + abs(nonLinearCell) > .2 * max(abs(nonLinearSim));
+    nonLinearFit{vi} = polyfit(nonLinearSim{vi}, nonLinearCell{vi}, 2);
+    hold on
+    plot(nonLinearSim{vi}, polyval(nonLinearFit{vi}, nonLinearSim{vi}))
+    hold off
+    title(e_voltages(vi))
+    grid on
+    xlabel('Simulation')
+    ylabel('Cell ephys')
+end
+
+% linkaxes(outputAxes)
+% ylim([-1,.6]*.001)
 
 % display combined output over stim options
 
 figure(110);clf;
 set(gcf, 'Name','Processed outputs over options','NumberTitle','off');
 ordering = [2,3,1];
+% ordering = 1;
 for ti = ordering
     a = deg2rad(stim_barDirections)';
 
