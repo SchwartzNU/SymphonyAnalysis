@@ -1,6 +1,7 @@
 %% load cellData responses for model comparison
 
-load('/Users/sam/analysis/cellData/060216Ac2.mat')
+load(sprintf('/Users/sam/analysis/cellData/%s.mat', cellName));
+
 
 %%
 % ex:
@@ -8,15 +9,29 @@ load('/Users/sam/analysis/cellData/060216Ac2.mat')
 tEnd = 2.0;
 
 for vi = 1:3;
-    if vi == 1
-        startEpoch = 343;
-        endEpoch = 368;
-    elseif vi == 2;
-        startEpoch = 369;
-        endEpoch = 390;
-    else
-        startEpoch = 103;
-        endEpoch = 115;
+    if strcmp(cellName, '060216Ac2')
+        if vi == 1 % ex
+            startEpoch = 343;
+            endEpoch = 368;
+        elseif vi == 2 %in
+            startEpoch = 369;
+            endEpoch = 390;
+        else % spikes
+            startEpoch = 103;
+            endEpoch = 115;
+        end
+    elseif strcmp(cellName, '060716Ac2')
+        % width 200, speed 1000
+        if vi == 1 % ex
+            startEpoch = 470;
+            endEpoch = 494;
+        elseif vi == 2 %in
+            startEpoch = 495;
+            endEpoch = 518;
+        else % spikes
+            startEpoch = 69;
+            endEpoch = 81;
+        end        
     end
     
     epochIds = startEpoch:endEpoch;
