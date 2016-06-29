@@ -44,7 +44,7 @@ s_voltageLegend{end+1} = 'Combined';
 
 sim_endTime = 2.0;
 sim_timeStep = 0.002;
-sim_spaceResolution = 1; % um per point
+sim_spaceResolution = 3; % um per point
 s_edgelength = 350;%max(cell_rfPositions);
 c_extent = 0; % start and make in loop:
 
@@ -189,6 +189,7 @@ stim_mode = 'movingBar';
 numAngles = 12;
 stim_barDirections = linspace(0,360,numAngles+1);
 stim_barDirections(end) = [];
+% stim_barDirections = [210];
 stim_numOptions = length(stim_barDirections);
 
 stim_barSpeed = 500;
@@ -211,7 +212,7 @@ stim_intensity = 0.5;
 % stim_intensity = 0.5;
 % stim_spotPosition = [0,0];
 
-parfor optionIndex = 1:stim_numOptions
+for optionIndex = 1:stim_numOptions
     fprintf('Running option %d of %d\n', optionIndex, stim_numOptions);
 
     %% Setup stimulus
@@ -362,9 +363,11 @@ insert
             
             rectThresh = .005;
             rectMult = 1;
+%             saturThresh = .04;
             sel = abs(rectified) > rectThresh;
             nonlin = rectified;
             nonlin(sel) = nonlin(sel) * rectMult;
+%             nonlin(abs(nonlin) > saturThresh) = sign(nonlin(abs(nonlin) > saturThresh)) * saturThresh;
             
 %             figure(109)
 %             plot(rectified)
@@ -397,7 +400,7 @@ insert
     drawnow
     
     
-    %% Multiply subunit response by RF strength (connection subunit to RGC)
+    % Multiply subunit response by RF strength (connection subunit to RGC)
     sim_responseSubunitScaledByRf = zeros(size(s_responseSubunit));
     for vi = 1:e_numVoltages
         for si = 1:c_numSubunits
@@ -407,7 +410,7 @@ insert
     end
     
 
-    %% combine current across subunits
+    % combine current across subunits
     sim_responseSubunitsCombined = [];
     for vi = 1:e_numVoltages
         sim_responseSubunitsCombined(vi,:) = sum(sim_responseSubunitScaledByRf(:,vi,:), 1);
@@ -416,6 +419,8 @@ insert
     sim_responseSubunitsCombinedByOption{optionIndex} = sim_responseSubunitsCombined;
     
 end % end of options and response generation
+
+nonLinearFit = {};
 
 %% Rescale currents and combine, then extract parameters
 
@@ -430,15 +435,14 @@ out_valsByOptions = [];
 
 plot_timeLims = [00, 2];
 timeOffsetSim = 0.36;
-timeOffsetSpikes = 0;
+timeOffsetSpikes = -.35;
 ephysScale = .002;
-combineScale = [4, 1, -.1]; % ex, in, spikes (don't get combined)
+combineScale = [2.5, 1, -.1]; % ex, in, spikes (don't get combined)
 % displayScale = [5,2.2];
 plotYLimsScale = 1;
 
 nonLinearCell = {[],[]};
 nonLinearSim = {[],[]};
-nonLinearFit = {};
 
 for optionIndex = 1:stim_numOptions
     
@@ -463,11 +467,13 @@ for optionIndex = 1:stim_numOptions
         Tsim = T+timeOffsetSim;
         sel = Tsim > plot_timeLims(1) & Tsim < plot_timeLims(2);
         plot(Tsim(sel), sim_responseSubunitsCombinedScaled(:,sel))
-%         plot(Tsim(sel), polyval(pfit,sim_responseSubunitsCombinedScaled(:,sel)))
 
         hold on
+        
+%         plot(Tsim(sel), polyval(nonLinearFit{vi}, sim_responseSubunitsCombinedScaled(:,sel)))
+        
         % combined sim
-%         plot(Tsim(sel), sim_responseCurrent(sel));
+        plot(Tsim(sel), sim_responseCurrent(sel));
 
         %         sim_response_justTheSpikes = sim_response;
 %         sim_response_justTheSpikes(sim_response_justTheSpikes > 0) = 0;
@@ -491,7 +497,7 @@ for optionIndex = 1:stim_numOptions
             end
             % ephys combined values
             cell_responsesCombined = sum(cell_responses(1:2,:));
-%             plot(T(Esel), cell_responsesCombined(Esel));
+            plot(T(Esel), cell_responsesCombined(Esel));
             
             % extract values for comparison plot
             out_valsByOptions(optionIndex, 2) = -1*sum(cell_responsesCombined(cell_responsesCombined < 0)) / sim_dims(1);        
@@ -549,7 +555,13 @@ end
 
 figure(110);clf;
 set(gcf, 'Name','Processed outputs over options','NumberTitle','off');
-ordering = [2,3,1];
+
+% compare combined current to spikes to get an RGC output nonlinearity
+out_valsByOptions = out_valsByOptions ./ max(out_valsByOptions(:));
+nonlinOutput = polyfit(out_valsByOptions(:,1), out_valsByOptions(:,3),1);
+out_valsByOptions(:,4) = polyval(nonlinOutput, out_valsByOptions(:,1));
+
+ordering = [3,1,4];
 % ordering = 1;
 for ti = ordering
     a = deg2rad(stim_barDirections)';
@@ -564,9 +576,17 @@ for ti = ordering
     hold on
 end
 hold off
-legs = {'sim currents','ephys currents','ephys spikes'};
+legs = {'sim currents','ephys currents','ephys spikes','sim curr nonlin'};
 legend(legs(ordering))
 % plot(stim_spotDiams, out_valsByOptions)
+
+
+% output spiking nonlinearity maybe
+%
+figure(160)
+plot(out_valsByOptions(:,1), out_valsByOptions(:,4),'o');
+
+sum((out_valsByOptions(:,4) - out_valsByOptions(:,3)).^2)
 
 
 %% Cry
