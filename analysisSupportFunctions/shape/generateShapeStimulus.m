@@ -57,24 +57,26 @@ function runConfig = generateTemporalAlignment(parameters, runConfig)
 
     runConfig.epochMode = 'temporalAlignment';
     runConfig.numShapes = 1;
-    durations = [1, 0.6, 0.4];
-%     durations = [8];
-    numSpotsPerRate = 1;
+    durations = [1, 0.6, 0.4]; % full durations, and the spot is on for 1/3 of that time
     runConfig.shapeDataMatrix = [];
 
-    tim = 0;
-    for si = 1:numSpotsPerRate
-        for dur = durations
-            shape = [0, 0, parameters.valueMax, tim, tim + dur / 3, parameters.alignmentSpotDiameter, 0];
-            runConfig.shapeDataMatrix = vertcat(runConfig.shapeDataMatrix, shape);
-            tim = tim + dur;
-        end
-        tim = tim + 0.5;
+    curtime = 0;
+    for dur = durations
+        shape = [0, 0, parameters.valueMax, curtime, curtime + dur / 3, parameters.alignmentSpotDiameter, 0];
+        runConfig.shapeDataMatrix = vertcat(runConfig.shapeDataMatrix, shape);
+        curtime = curtime + dur;
     end
-    %                 obj.stimTimeSaved = round(1000 * (1.0 + tim));
+    
+    % then add smaller spot, long ON, long OFF
+    temporalFilterSpotDiam = 100;
+    temporalFilterSpotOnTime = 1.5;
+    temporalFilterSpotOffTime = 1.5;
+    shape = [0, 0, parameters.valueMax, curtime, curtime + temporalFilterSpotOnTime, temporalFilterSpotDiam, 0];
+    runConfig.shapeDataMatrix = vertcat(runConfig.shapeDataMatrix, shape);
+    curtime = curtime + temporalFilterSpotOnTime + temporalFilterSpotOffTime;
+    
     runConfig.shapeDataColumns = {'X','Y','intensity','startTime','endTime','diameter', 'flickerFrequency'};
-    runConfig.stimTime = round(1e3 * (1 + tim));
-    %                 disp(obj.shapeDataMatrix)
+    runConfig.stimTime = round(1e3 * (0.5 + curtime)); % add a half second on for fun
     
 end
 
