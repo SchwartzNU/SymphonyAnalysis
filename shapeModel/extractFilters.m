@@ -1,9 +1,10 @@
 load(sprintf('analysisData_%s_%s.mat', cellName, acName));
+filterOn = {};
 
 for vi = 1:2
     e = analysisData.epochData{vi}; % using E/I alignment step here
     [response, t] = resample(e.response, e.t, 1000);
-    response = smooth(response,10);
+    response = smooth(response, 10);
 
     % The goals:
     % filterOn = {}; % by vi
@@ -23,8 +24,9 @@ for vi = 1:2
     %% ON Segments (from just before this ON to the next OFF)
     figure(120+vi-1)
     clf;
-    ha = tight_subplot(e.totalNumSpots, 2);
-    for si = 1:e.totalNumSpots
+    numSpots = e.totalNumSpots;
+    ha = tight_subplot(numSpots, 2);
+    for si = 1:numSpots
 
         thisStart = find(t > startTime(si) - 0.2, 1);
         thisEnd = find(t > (endTime(si) + e.timeOffset), 1);
@@ -42,18 +44,28 @@ for vi = 1:2
     %         nextStart = length(e.t);
     %     end
 
+        thisRespExpanded = thisResp;
+%         plot(thisT, thisResp)
+        fitT = (0:200)/1000; 
+%         fitT = thisT(end-99:end)';
+%         efit = fit(fitT', thisResp(end-99:end), 'exp1');
+%         expansion = 
+%         thisRespExpanded = vertcat(thisRespExpanded, linspace(mean(thisRespExpanded(end-20:end)), 0, 1000)');
+        startValue = mean(thisRespExpanded(end-20:end));
+        thisRespExpanded = vertcat(thisResp, startValue * exp(-fitT / .1)');
+    
         tDisplay = thisT - startTime(si);
         axes(ha(si * 2 - 1))
-        plot(tDisplay, thisResp ./ max(abs(thisResp)))
+        plot(thisRespExpanded ./ max(abs(thisRespExpanded)))
         hold on
-        plot(tDisplay, light)
+        plot(light)
         hold off
 
 
-        responseDiff = diff(thisResp);
-
-        fLight = fft(light);
-        fResp = fft(thisResp);
+        responseDiff = diff(thisRespExpanded);
+% 
+%         fLight = fft(light);
+%         fResp = fft(thisResp);
 
 
         axes(ha(si * 2))
@@ -61,23 +73,24 @@ for vi = 1:2
 
         if si == 2
             tFilterOn = tDisplay(1:end-1);
-            filterOn{vi} = responseDiff(tFilterOn > 0);
+            filterOn{vi} = responseDiff;%(tFilterOn > 0);
         end
 
     end
     % filterOn(end) = 0;
 
     % Now, apply the filters
-    figure(125+vi-1);clf;
+    figure(130+vi-1);clf;
     subplot(2,1,1)
     plot(filterOn{vi})
+    title('selected filter')
 
     % make the light onset signal
 
     lightOn = zeros(size(t));
     for si = 1:e.totalNumSpots
 
-        start = find(t - .18 > startTime(si), 1);
+        start = find(t - .25 > startTime(si), 1);
         lightOn(start) = intensities(si);
 
     end
@@ -85,13 +98,17 @@ for vi = 1:2
     lightOn = cumsum(lightOn);
 
     subplot(2,1,2)
-    plot(lightOn)
-
-    filterOn{vi}(end) = -1*sum(filterOn{vi}(1:end-1));
-
-    plot(conv(lightOn, filterOn{vi}, 'valid'))
+    lightSignal = (e.signalLightOn > 0)*1;
+    plot(lightSignal*200)
     hold on
+
+%     filterOn{vi}(end) = -1*sum(filterOn{vi}(1:end-1));
+
+    plot(conv(lightOn, filterOn{vi}))
+    title('filtered epoch for check')
+    
     plot(e.response)
+    hold off
 end
 
 
