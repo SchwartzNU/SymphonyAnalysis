@@ -132,6 +132,7 @@ for p = 1:num_epochs
 
             e.signalLightOn(tRegion) = responseShape' * intensities(si);
         end
+%         e.signalLightOn(tRegion) = intensities(si); % square wave for plotting
     end
     
     

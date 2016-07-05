@@ -11,10 +11,10 @@ end
 out_valsByOptions = [];
 
 plot_timeLims = [0, 2];
-timeOffsetSim = 0.14;
+timeOffsetSim = -0.21;
 timeOffsetSpikes = -.35;
-ephysScale = .002;
-simScale = [1, .4];
+ephysScale = .0015;
+simScale = [1, .5];
 combineScale = [2.5, 1, -.1]; % ex, in, spikes (don't get combined)
 % displayScale = [5,2.2];
 plotYLimsScale = 1;
@@ -66,13 +66,17 @@ for optionIndex = 1:stim_numOptions
             Esel = T > plot_timeLims(1) & T < plot_timeLims(2);
             simShift = timeOffsetSim / sim_timeStep;
             cell_responses = [];
-            for vi = 1:2%3 %enables spikes
+            for vi = 1:3%3 %enables spikes
                 mn = ephysScale * c_responses{vi, c_angles == ang}.mean;
                 
                 mn = combineScale(vi) * resample(mn, round(1/sim_timeStep), 10000);
                 cell_responses(vi,:) = mn;
                 rcell = cell_responses(vi,Esel);
-                outputSignals(end+1,:) = rcell(simShift:end);
+                if simShift >= 0
+                    outputSignals(end+1,:) = rcell(simShift:end);
+                else
+                    outputSignals(end+1,:) = [zeros(1,-simShift), rcell(1:end+2*simShift+1)];
+                end
                 l = {'ex_e','in_e','spike_e'};
                 outputLabels{end+1} = l{vi};
 
@@ -87,7 +91,11 @@ for optionIndex = 1:stim_numOptions
             % ephys combined values
             cell_responsesCombined = sum(cell_responses(1:2,:));
             rcell = cell_responsesCombined(Esel);
-            outputSignals(end+1,:) = rcell(simShift:end);
+            if simShift >= 0
+                outputSignals(end+1,:) = rcell(simShift:end);
+            else
+                outputSignals(end+1,:) = [zeros(1,-simShift), rcell(1:end+2*simShift+1)];
+            end            
             outputLabels{end+1} = 'comb_e';
             
             % extract values for comparison plot
@@ -102,7 +110,7 @@ for optionIndex = 1:stim_numOptions
         xlim(plot_timeLims);
         
         
-        fitAnalysisWindow = Tsim > 0.6 & Tsim < 1.4;
+        fitAnalysisWindow = Tsim > 0.5 & Tsim < 1.5;
         for oi = 1:3
             fitnessScoreByOptionCurrent(optionIndex,oi) = rsquare(outputSignals(3+oi,fitAnalysisWindow),outputSignals(oi,fitAnalysisWindow));
         end
@@ -113,24 +121,34 @@ for optionIndex = 1:stim_numOptions
 
 
         % investigate nonlinearities relative to the ephys data
-        for vi = 1:2
-            simShift = timeOffsetSim / sim_timeStep;
-
-            rsim = sim_responseSubunitsCombinedScaled(vi,sel);
-            rcell = cell_responses(vi,Esel);
-            rcell = rcell(simShift:end);
-            nonLinearCell{vi} = horzcat(nonLinearCell{vi}, rcell);
-            nonLinearSim{vi} = horzcat(nonLinearSim{vi}, rsim);
-            
-%             axes(outputAxes(plotGrid(optionIndex, vi + 1, 3)));            
-%             plot(rsim,rcell,'.')
-%             hold on
-%             plot(rcell)
-%             hold off
+%         for vi = 1:2
+%             simShift = timeOffsetSim / sim_timeStep;
+% 
+%             rsim = sim_responseSubunitsCombinedScaled(vi,sel);
+%             rcell = cell_responses(vi,Esel);
+%             rcell = rcell(simShift:end);
+%             nonLinearCell{vi} = horzcat(nonLinearCell{vi}, rcell);
+%             nonLinearSim{vi} = horzcat(nonLinearSim{vi}, rsim);
+%             
+% %             axes(outputAxes(plotGrid(optionIndex, vi + 1, 3)));
+% %             plot(rsim,rcell,'.')
+% %             hold on
+% %             plot(rcell)
+% %             hold off
+%         end
+    end
+    if saveOutputSignalsToHDF5
+        outputStruct.t = Tsim;
+        for i=1:length(outputLabels)
+            outputStruct.(sprintf('a%d_%s', ang, outputLabels{i})) = outputSignals(i,:);
         end
     end
-    
 end
+
+linkaxes(outputAxes)
+ylim(outputAxes(1), 1.4*[min(outputSignals(:)), max(outputSignals(:))])
+
+    
 
 if plotOutputNonlinearity
 
@@ -162,10 +180,10 @@ if plotResultsByOptions
 
     % compare combined current to spikes to get an RGC output nonlinearity
     out_valsByOptions = out_valsByOptions ./ max(out_valsByOptions(:));
-    nonlinOutput = polyfit(out_valsByOptions(:,1), out_valsByOptions(:,3),1);
-    out_valsByOptions(:,4) = polyval(nonlinOutput, out_valsByOptions(:,1));
+%     nonlinOutput = polyfit(out_valsByOptions(:,1), out_valsByOptions(:,3),1);
+%     out_valsByOptions(:,4) = polyval(nonlinOutput, out_valsByOptions(:,1));
 
-    ordering = [3,1,4];
+    ordering = [3,1];
     % ordering = 1;
     for ti = ordering
         a = deg2rad(stim_barDirections)';

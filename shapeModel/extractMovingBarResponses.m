@@ -8,7 +8,11 @@ load(sprintf('/Users/sam/analysis/cellData/%s.mat', cellName));
 
 tEnd = 2.0;
 
-for vi = 1:2;
+barOrEdge = 1;
+
+% ha = tight_subplot(12, 4);
+
+for vi = 1:4;
     if strcmp(cellName, '060216Ac2')
         if vi == 1 % ex
             startEpoch = 343;
@@ -33,18 +37,45 @@ for vi = 1:2;
             endEpoch = 81;
         end        
     elseif strcmp(cellName, '033116Ac2')
+        if barOrEdge == 1
+            % width 200, speed 1000, length = 60
+            if vi == 1 % ex
+                startEpoch = 177;
+                endEpoch = 196;
+            elseif vi == 2 %in
+                startEpoch = 251;
+                endEpoch = 271;
+            else % spikes
+                startEpoch = 1; % missing data makes sam dissapointed in themself
+                endEpoch = 1;
+            end
+        else % width = 1500
+            if vi == 1 % ex
+                startEpoch = 151;
+                endEpoch = 176;
+            elseif vi == 2 %in
+                startEpoch = 272;
+                endEpoch = 299;
+            else % spikes
+                startEpoch = 93;
+                endEpoch = 121;
+            end
+        end
+    elseif strcmp(cellName, '051216Ac9') % on alpha-like
         % width 200, speed 1000
         if vi == 1 % ex
-            startEpoch = 177;
-            endEpoch = 196;
+            startEpoch = 115;
+            endEpoch = 137;
         elseif vi == 2 %in
-            startEpoch = 251;
-            endEpoch = 271;
+            startEpoch = 138;
+            endEpoch = 161;
         else % spikes
-            startEpoch = 69;
-            endEpoch = 81;
-        end        
-    end    
+            startEpoch = 11;
+            endEpoch = 34;
+        end
+    end
+    
+    
     epochIds = startEpoch:endEpoch;
     epochAngles = [];
 
@@ -87,6 +118,7 @@ for vi = 1:2;
     % c_responses = {};
 
     for ai = 1:length(c_angles)
+        
         epochIndices = find(epochAngles == c_angles(ai));
         mn = mean(responses(epochIndices,:), 1);
         mn = smooth(mn, 30);

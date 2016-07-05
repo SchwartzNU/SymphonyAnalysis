@@ -14,7 +14,7 @@ stim_barDirections(end) = [];
 % stim_barDirections = [210];
 stim_numOptions = length(stim_barDirections);
 
-stim_barSpeed = 500;
+stim_barSpeed = 1000;
 stim_barLength = 1000;
 stim_barWidth = 200;
 stim_moveTime = sim_endTime + 1;
@@ -27,14 +27,22 @@ stim_intensity = 0.5;
 
 % stim_mode = 'flashedSpot';
 % stim_numOptions = 1;
-
-%         stim_spotDiam = 200;
+% 
+% stim_spotDiam = 200;
 % stim_spotDuration = 0.4;
 % stim_spotStart = 0.1;
 % stim_intensity = 0.5;
 % stim_spotPosition = [0,0];
 
-parfor optionIndex = 1:stim_numOptions
+if runInParallelPool
+    parforArg = Inf;
+else
+    parforArg = 0;
+end
+
+parfor (optionIndex = 1:stim_numOptions, parforArg)
+% for (optionIndex = 1:stim_numOptions)
+
     fprintf('Running option %d of %d\n', optionIndex, stim_numOptions);
 
     %% Setup stimulus
@@ -45,7 +53,7 @@ parfor optionIndex = 1:stim_numOptions
 
     if strcmp(stim_mode, 'flashedSpot')
         % flashed spot
-        stim_spotDiam = stim_spotDiams(optionIndex);
+%         stim_spotDiam = stim_spotDiams(optionIndex);
 
 
         pos = stim_spotPosition + center;
@@ -59,7 +67,6 @@ parfor optionIndex = 1:stim_numOptions
                         y = Y(yi);
 
                         val = stim_intensity;
-insert
                         % circle shape
                         rad = sqrt((x - pos(1))^2 + (y - pos(2))^2);
                         if rad < stim_spotDiam / 2
@@ -109,12 +116,12 @@ insert
         clf;
         for ti = 1:length(T)
             sim_light = squeeze(stim_lightMatrix(ti, :, :));
-            imgDisplay(X,Y,sim_light);
+            plotSpatialData(mapX,mapY,sim_light);
             colormap gray
             caxis([0,1])
             colorbar
             title(sprintf('stimulus at %.3f sec', T(ti)));
-
+            axis tight
             drawnow
 %             pause(sim_timeStep)
 
@@ -157,6 +164,7 @@ insert
         for vi = 1:e_numVoltages
             % linear convolution
             temporalFiltered = conv(s_lightSubunit(si,:), filter_resampledOn{vi});
+            temporalFiltered = temporalFiltered(1:length(s_lightSubunit(si,:)));
             
             % nonlinear effects
 %             sel = [];
@@ -195,12 +203,12 @@ insert
             if plotSubunitCurrents
                 % plot individual subunit inputs and outputs
                 figure(103);
-                clf;
+                subplot(2,1,vi);
 %                 axes(axesSignalsBySubunit(((si - 1) * 2 + vi)))
-                hold on
                 plot(normg(s_lightSubunit(si,:)));
+                hold on               
     %             plot(normg(lightOnNess))       
-                plot(normg(filter_resampledOn{vi}))
+                plot(normg(filter_resampledOn{vi}) - 0.5)
 %                 plot(normg(filter_subunitTemporalDecay));                
                 plot(normg(temporalFiltered));
                 plot(normg(rectified));

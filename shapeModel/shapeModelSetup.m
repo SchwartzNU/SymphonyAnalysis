@@ -25,15 +25,15 @@ s_voltageLegend{end+1} = 'Combined';
 
 
 sim_endTime = 2.0;
-sim_timeStep = 0.002;
+sim_timeStep = 0.005;
 sim_spaceResolution = 3; % um per point
-s_edgelength = 350;%max(cell_rfPositions);
+s_sidelength = 380;%max(cell_rfPositions);
 c_extent = 0; % start and make in loop:
 
 T = 0:sim_timeStep:sim_endTime;
 
 % dims for: time, X, Y
-sim_dims = round([length(T), s_edgelength / sim_spaceResolution, s_edgelength / sim_spaceResolution]);
+sim_dims = round([length(T), s_sidelength / sim_spaceResolution, s_sidelength / sim_spaceResolution]);
 e_map = nan * zeros(sim_dims(2), sim_dims(3), e_numVoltages);
 
 ii = 1; % just use first intensity for now
@@ -57,7 +57,8 @@ distanceFromCenter = sqrt(mapY.^2 + mapX.^2);
                     %  ex  in
 % shiftsByDimVoltage = [-30,-30;  % x
 %                       -30,-30]; % y
-shiftsByDim = analysisData.positionOffset;
+% shiftsByDim = analysisData.positionOffset;
+shiftsByDim = [0,50];
 
 for vi = 1:e_numVoltages
     
@@ -66,13 +67,14 @@ for vi = 1:e_numVoltages
     
     % add null corners to ground the spatial map at edges
     positions = e_positions{vi, ii};
+    positions = bsxfun(@plus, positions, shiftsByDim);
     vals = e_vals{vi,ii,:};
 %     positions = vertcat(positions, [X(1),Y(1);X(end),Y(1);X(end),Y(end);X(1),Y(end)]);
 %     vals = vertcat(vals, [0,0,0,0]');
     F = scatteredInterpolant(positions(:,1), positions(:,2), vals,...
         'linear','none');
     
-    m = F(mapX + shiftsByDim(1), mapY + shiftsByDim(2)) * sign(e_voltages(vi));
+    m = F(mapX, mapY) * sign(e_voltages(vi));
     m(isnan(m)) = 0;
     m(m < 0) = 0;
     m = m ./ max(m(:));
@@ -106,7 +108,7 @@ end
 c_subunitSpacing = 20;
 c_subunit2SigmaWidth = 40;
 c_subunit2SigmaWidth_surround = 80;
-c_subunitSurroundRatio = 0.0;
+c_subunitSurroundRatio = 0.05;
 
 c_subunitSigma = c_subunit2SigmaWidth / 2;
 c_subunitSigma_surround = c_subunit2SigmaWidth_surround / 2;

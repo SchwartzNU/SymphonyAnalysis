@@ -46,13 +46,13 @@ for vi = 1:2
 
         thisRespExpanded = thisResp;
 %         plot(thisT, thisResp)
-        fitT = (0:200)/1000; 
+        fitT = (0:300)/1000; 
 %         fitT = thisT(end-99:end)';
 %         efit = fit(fitT', thisResp(end-99:end), 'exp1');
 %         expansion = 
 %         thisRespExpanded = vertcat(thisRespExpanded, linspace(mean(thisRespExpanded(end-20:end)), 0, 1000)');
-        startValue = mean(thisRespExpanded(end-20:end));
-        thisRespExpanded = vertcat(thisResp, startValue * exp(-fitT / .1)');
+        startValue = mean(thisRespExpanded(end-10:end));
+        thisRespExpanded = vertcat(thisResp, startValue * exp(-fitT / .2)');
     
         tDisplay = thisT - startTime(si);
         axes(ha(si * 2 - 1))
@@ -60,22 +60,27 @@ for vi = 1:2
         hold on
         plot(light)
         hold off
-
-
+        
+        
         responseDiff = diff(thisRespExpanded);
-% 
-%         fLight = fft(light);
-%         fResp = fft(thisResp);
-
-
+        %
+        %         fLight = fft(light);
+        %         fResp = fft(thisResp);
+        
+        
         axes(ha(si * 2))
         plot(responseDiff)
-
+        
         if si == 2
             tFilterOn = tDisplay(1:end-1);
             filterOn{vi} = responseDiff;%(tFilterOn > 0);
+            
+%             temporalFilter.T = tDisplay;
+%             temporalFilter.Light = light;
+%             temporalFilter.Response = thisRespExpanded;
+%             temporalFilter.Filter = responseDiff;
         end
-
+        
     end
     % filterOn(end) = 0;
 
