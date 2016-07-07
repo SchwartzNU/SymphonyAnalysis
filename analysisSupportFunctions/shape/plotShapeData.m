@@ -530,9 +530,13 @@ elseif strcmp(mode, 'responsesByPosition')
     set(ha(1),'XTickLabelMode','auto');
     legend(ha(1),legends,'location','best')
 
-    linkaxes(ha)
+    linkaxes(ha);
+%     for i = 1:length(ha)
+%         i
+%         min_value
     ylim(ha(1), [min_value, max_value]);
     xlim(ha(1), [0, max(t)])
+%     end
     
 elseif strcmp(mode, 'wholeCell')
     obs = ad.observations;
@@ -626,16 +630,16 @@ elseif strcmp(mode, 'spatialOffset')
         end
     end
 
-    ha = tight_subplot(1,3);
+    ha = tight_subplot(1,3, .03);
 
     % EX
     axes(ha(1))
-    g_ex = plotSpatial(goodPositions_ex, r_ex, sprintf('Excitatory current: %d mV', v_ex), 1, -1);
+    g_ex = plotSpatial(goodPositions_ex, -r_ex, sprintf('Exc. current (pA)'), 1, 1);
 %     caxis([min_, max_]);
     
     % IN
     axes(ha(2))
-    g_in = plotSpatial(goodPositions_in, r_in, sprintf('Inhibitory current: %d mV', v_in), 1, 1);
+    g_in = plotSpatial(goodPositions_in, r_in, sprintf('Inh. current (pA)'), 1, 1);
 %     caxis([min_, max_]);
         
     offsetDist = sqrt((g_in('centerX') - g_ex('centerX')).^2) + sqrt((g_in('centerY') - g_ex('centerY')).^2);
@@ -646,11 +650,11 @@ elseif strcmp(mode, 'spatialOffset')
     
     axes(ha(3))
     hold on
-    ellipse(g_ex('sigma2X'), g_ex('sigma2Y'), -g_ex('angle'), g_ex('centerX'), g_ex('centerY'), 'red');
+    ellipse(g_ex('sigma2X'), g_ex('sigma2Y'), -g_ex('angle'), g_ex('centerX'), g_ex('centerY'), 'magenta');
     
-    ellipse(g_in('sigma2X'), g_in('sigma2Y'), -g_in('angle'), g_in('centerX'), g_in('centerY'), 'blue');
+    ellipse(g_in('sigma2X'), g_in('sigma2Y'), -g_in('angle'), g_in('centerX'), g_in('centerY'), 'cyan');
     
-    legend('ex','in')
+    legend('Exc','Inh')
     
     plot(g_ex('centerX'), g_ex('centerY'),'red','MarkerSize',20, 'Marker','+')
     plot(g_in('centerX'), g_in('centerY'),'blue','MarkerSize',20, 'Marker','+')
@@ -659,10 +663,13 @@ elseif strcmp(mode, 'spatialOffset')
     axis equal
     largestDistanceOffset = max(abs(ad.positions(:)));
     axis(largestDistanceOffset * [-1 1 -1 1])
-    set(gca, 'XTickMode', 'auto', 'XTickLabelMode', 'auto')
-    set(gca, 'YTickMode', 'auto', 'YTickLabelMode', 'auto')
-    title('regions together')
+%     set(gca, 'XTickMode', 'auto', 'XTickLabelMode', 'auto')
+%     set(gca, 'YTickMode', 'auto', 'YTickLabelMode', 'auto')
+        set(gca, 'XTick', [], 'XColor', 'none')
+        set(gca, 'YTick', [], 'YColor', 'none')    
+    title('Gaussian 2\sigma Fits Overlaid')
     colorbar
+    linkaxes(ha)
     
 elseif strcmp(mode, 'spatialDiagnostics')
     obs = ad.observations;
@@ -865,7 +872,7 @@ end
         c = griddata(positions(:,1), positions(:,2), values, xq, yq);
         surface(xq, yq, zeros(size(xq)), c)
         hold on
-        plot(positions(:,1), positions(:,2), '.r');
+%         plot(positions(:,1), positions(:,2), '.r');
         hold off
         title(titl)
         grid off
@@ -890,8 +897,8 @@ end
             gfit = fit2DGaussian(positions, fitValues);
             fprintf('gaussian fit center: %d um, %d um\n', round(gfit('centerX')), round(gfit('centerY')))
             v = fitValues - min(fitValues);
-            centerOfMass = mean(bsxfun(@times, positions, v ./ mean(v)), 1);
-            plot(centerOfMass(1), centerOfMass(2),'green','MarkerSize',20, 'Marker','+')
+%             centerOfMass = mean(bsxfun(@times, positions, v ./ mean(v)), 1);
+%             plot(centerOfMass(1), centerOfMass(2),'green','MarkerSize',20, 'Marker','+')
             plot(gfit('centerX'), gfit('centerY'),'red','MarkerSize',20, 'Marker','+')
             ellipse(gfit('sigma2X'), gfit('sigma2Y'), -gfit('angle'), gfit('centerX'), gfit('centerY'), 'red');
             hold off
@@ -900,13 +907,17 @@ end
         end
         
         % draw soma
-        rectangle('Position',0.05 * largestDistanceOffset * [-.5, -.5, 1, 1],'Curvature',1,'FaceColor',[1 1 1]);
+%         rectangle('Position',0.05 * largestDistanceOffset * [-.5, -.5, 1, 1],'Curvature',1,'FaceColor',[1 1 1]);
         
         % set axis limits
         axis(largestDistanceOffset * [-1 1 -1 1])
         
-        set(gca, 'XTickMode', 'auto', 'XTickLabelMode', 'auto')
-        set(gca, 'YTickMode', 'auto', 'YTickLabelMode', 'auto')
+%         set(gca, 'XTickMode', 'auto', 'XTickLabelMode', 'auto')
+%         set(gca, 'YTickMode', 'auto', 'YTickLabelMode', 'auto')
+        
+        % plot with no axis labels
+        set(gca, 'XTick', [], 'XColor', 'none')
+        set(gca, 'YTick', [], 'YColor', 'none')
     end
 
 end

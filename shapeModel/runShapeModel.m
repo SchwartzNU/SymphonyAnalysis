@@ -1,15 +1,13 @@
 %% SHAPE MODEL
 % Sam Cooler 2016
 
-disp('Running full simulation');
-
 % cellName = '060716Ac2';
 % acName = '348';
 
 % cellName = '060216Ac2'; % original good WFDS
 % acName = '1032';
 
-cellName = '033116Ac2';
+cellName = '033116Ac2'; % nice RF with edges and bars, but missing bars spikes and inhibitory temporal align
 acName = '263';
 
 
@@ -29,13 +27,16 @@ plotSubunitCurrents = 0;
 plotOutputCurrents = 1;
 plotCellResponses = 1;
 plotOutputNonlinearity = 0;
-plotResultsByOptions = 0;
+plotResultsByOptions = 1;
 
 runInParallelPool = 1;
 
 saveOutputSignalsToHDF5 = 0;
 outputHDF5Name = sprintf('shapeModelOutput_%s.h5', cellName);
 outputStruct = struct();
+
+%%
+disp('Running full simulation');
 
 %% Setup
 shapeModelSetup
@@ -47,5 +48,7 @@ shapeModelStimAndSim
 shapeModelAnalyzeOutput
 
 %% Save HDF5 file
-delete(outputHDF5Name);
-exportStructToHDF5(outputStruct, outputHDF5Name, '/');
+if saveOutputSignalsToHDF5
+    delete(outputHDF5Name);
+    exportStructToHDF5(outputStruct, outputHDF5Name, '/');
+end

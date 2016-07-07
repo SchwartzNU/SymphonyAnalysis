@@ -1,6 +1,8 @@
 load(sprintf('analysisData_%s_%s.mat', cellName, acName));
 filterOn = {};
 
+filterDelays = [0,0.0]; % .05 for 033116Ac2
+
 for vi = 1:2
     e = analysisData.epochData{vi}; % using E/I alignment step here
     [response, t] = resample(e.response, e.t, 1000);
@@ -73,12 +75,14 @@ for vi = 1:2
         
         if si == 2
             tFilterOn = tDisplay(1:end-1);
-            filterOn{vi} = responseDiff;%(tFilterOn > 0);
+            filterOn{vi} = vertcat(zeros(filterDelays(vi) * 1000,1), responseDiff);
+                
             
-%             temporalFilter.T = tDisplay;
-%             temporalFilter.Light = light;
-%             temporalFilter.Response = thisRespExpanded;
-%             temporalFilter.Filter = responseDiff;
+            temporalFilter.(sprintf('TFilter_%d',vi)) = tDisplay;
+            temporalFilter.(sprintf('LightSignal_%d',vi)) = light;
+            temporalFilter.(sprintf('LightResponse_%d',vi)) = thisRespExpanded;
+            temporalFilter.(sprintf('Filter_%d',vi)) = responseDiff;
+            plot(thisRespExpanded)
         end
         
     end

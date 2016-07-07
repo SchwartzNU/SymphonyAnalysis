@@ -13,16 +13,19 @@ out_valsByOptions = [];
 plot_timeLims = [0, 2];
 timeOffsetSim = -0.21;
 timeOffsetSpikes = -.35;
-ephysScale = .0015;
-simScale = [1, .5];
-combineScale = [2.5, 1, -.1]; % ex, in, spikes (don't get combined)
+ephysScale = 1;
+simScale = [1, .5] * 1000;
+combineScale = [1.5, 1, -.1]; % ex, in, spikes (don't get combined)
 % displayScale = [5,2.2];
 plotYLimsScale = 1;
+fitAnalysisLimits = [.2, 1.5];
 
 nonLinearCell = {[],[]};
 nonLinearSim = {[],[]};
 
 fitnessScoreByOptionCurrent = [];
+
+outputSignalsByOption = {};
 
 for optionIndex = 1:stim_numOptions
     outputSignals = [];
@@ -37,7 +40,7 @@ for optionIndex = 1:stim_numOptions
     
     % Combine Ex and In
     sim_responseCurrent = sum(sim_responseSubunitsCombinedScaled, 1);
-    out_valsByOptions(optionIndex, 1) = -1*sum(sim_responseCurrent(sim_responseCurrent < 0)) / sim_dims(1);
+%     out_valsByOptions(optionIndex, 1) = -1*sum(sim_responseCurrent(sim_responseCurrent < 0)) / sim_dims(1);
 
 
     if plotOutputCurrents
@@ -99,18 +102,18 @@ for optionIndex = 1:stim_numOptions
             outputLabels{end+1} = 'comb_e';
             
             % extract values for comparison plot
-            out_valsByOptions(optionIndex, 2) = -1*sum(cell_responsesCombined(cell_responsesCombined < 0)) / sim_dims(1);        
+%             out_valsByOptions(optionIndex, 2) = -1*sum(cell_responsesCombined(cell_responsesCombined < 0)) / sim_dims(1);        
 %             out_valsByOptions(optionIndex, 3) = -1*sum(cell_responses(3,:)) / sim_dims(1);            
         end
         
         % then plot all the signals together
-        plotSelect = logical([1,1,0,1,1,0]);
+        plotSelect = logical([1,1,1,1,1,0,1]);
         plot(Tsim, outputSignals(plotSelect,:)');
         legend(outputLabels(plotSelect),'Location','Best');
         xlim(plot_timeLims);
         
         
-        fitAnalysisWindow = Tsim > 0.5 & Tsim < 1.5;
+        fitAnalysisWindow = Tsim > fitAnalysisLimits(1) & Tsim < fitAnalysisLimits(2);
         for oi = 1:3
             fitnessScoreByOptionCurrent(optionIndex,oi) = rsquare(outputSignals(3+oi,fitAnalysisWindow),outputSignals(oi,fitAnalysisWindow));
         end
@@ -137,7 +140,12 @@ for optionIndex = 1:stim_numOptions
 % %             hold off
 %         end
     end
+    
+    outputSignalsByOption{optionIndex} = outputSignals;
+    
+    
     if saveOutputSignalsToHDF5
+        outputStruct.angles = stim_barDirections;
         outputStruct.t = Tsim;
         for i=1:length(outputLabels)
             outputStruct.(sprintf('a%d_%s', ang, outputLabels{i})) = outputSignals(i,:);
@@ -179,27 +187,32 @@ if plotResultsByOptions
     set(gcf, 'Name','Processed outputs over options','NumberTitle','off');
 
     % compare combined current to spikes to get an RGC output nonlinearity
-    out_valsByOptions = out_valsByOptions ./ max(out_valsByOptions(:));
+%     out_valsByOptions = out_valsByOptions ./ max(out_valsByOptions(:));
 %     nonlinOutput = polyfit(out_valsByOptions(:,1), out_valsByOptions(:,3),1);
 %     out_valsByOptions(:,4) = polyval(nonlinOutput, out_valsByOptions(:,1));
 
-    ordering = [3,1];
+    ordering = 1:7;
     % ordering = 1;
     for ti = ordering
         a = deg2rad(stim_barDirections)';
-
-    %     a = stim_barDirections';
-        p = out_valsByOptions(:,ti) / max(out_valsByOptions(:));
-        p = p ./ mean(p);
-
-        a(end+1) = a(1);
-        p(end+1) = p(1);
-        polar(a, p)
+        p = [];
+        for oi = 1:stim_numOptions
+            signals = outputSignalsByOption{oi};
+            p(oi,1) = -sum(signals(ti,signals(ti,:) < 0)) * sim_timeStep;
+        end
+        
+        outputStruct.(sprintf('byang_%s',outputLabels{ti})) = p;
+        
+%         a(end+1) = a(1);
+%         p(end+1) = p(1);
+        plot(a, p)
         hold on
+        
     end
     hold off
-    legs = {'sim currents','ephys currents','ephys spikes','sim curr nonlin'};
-    legend(legs(ordering))
+%     legs = {'sim currents','ephys currents','ephys spikes','sim curr nonlin'};
+    legend(outputLabels(ordering))
+    
     % plot(stim_spotDiams, out_valsByOptions)
 end
 

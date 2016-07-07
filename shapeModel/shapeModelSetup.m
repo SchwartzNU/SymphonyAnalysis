@@ -1,5 +1,16 @@
 % shapeModelSetup
 
+sim_endTime = 2.0;
+sim_timeStep = 0.005;
+sim_spaceResolution = 3; % um per point
+s_sidelength = 350;%max(cell_rfPositions);
+c_extent = 0; % start and make in loop:
+
+% subunit locations, to generate positions
+c_subunitSpacing = [20, 40];
+c_subunit2SigmaWidth = [40, 60];
+c_subunit2SigmaWidth_surround = [80, 120];
+c_subunitSurroundRatio = [0.15, 0.0];
 
 %% Setup cell data from ephys
 
@@ -23,13 +34,6 @@ end
 s_voltageLegend = {'ex','in'};
 s_voltageLegend{end+1} = 'Combined';
 
-
-sim_endTime = 2.0;
-sim_timeStep = 0.005;
-sim_spaceResolution = 3; % um per point
-s_sidelength = 380;%max(cell_rfPositions);
-c_extent = 0; % start and make in loop:
-
 T = 0:sim_timeStep:sim_endTime;
 
 % dims for: time, X, Y
@@ -46,7 +50,7 @@ end
 if plotSpatialGraphs
     figure(90);clf;
     set(gcf, 'Name','Spatial Graphs','NumberTitle','off');
-    axesSpatialData = tight_subplot(e_numVoltages, 2);
+    axesSpatialData = tight_subplot(e_numVoltages, 2, .05, .15);
 end
 
 X = linspace(-0.5 * sim_dims(2) * sim_spaceResolution, 0.5 * sim_dims(2) * sim_spaceResolution, sim_dims(2));
@@ -58,7 +62,7 @@ distanceFromCenter = sqrt(mapY.^2 + mapX.^2);
 % shiftsByDimVoltage = [-30,-30;  % x
 %                       -30,-30]; % y
 % shiftsByDim = analysisData.positionOffset;
-shiftsByDim = [0,50];
+shiftsByDim = [-5,55];
 
 for vi = 1:e_numVoltages
     
@@ -87,9 +91,13 @@ for vi = 1:e_numVoltages
         axes(axesSpatialData((vi-1)*2+1))
 %         imgDisplay(X,Y,e_map(:,:,vi))
         plotSpatialData(mapX,mapY,e_map(:,:,vi))
-        title(s_voltageLegend{vi});
+%         title(s_voltageLegend{vi});
         colormap parula
+        colorbar
         axis equal
+        axis tight
+%         xlabel('µm')
+%         ylabel('µm')
     %     surface(mapX, mapY, zeros(size(mapX)), c)
     end
     
@@ -103,50 +111,56 @@ for vi = 1:e_numVoltages
     filter_resampledOn{vi}(end) = -1*sum(filter_resampledOn{vi}(1:end-1));
 end
 
-
-% subunit locations, using generate positions
-c_subunitSpacing = 20;
-c_subunit2SigmaWidth = 40;
-c_subunit2SigmaWidth_surround = 80;
-c_subunitSurroundRatio = 0.05;
-
 c_subunitSigma = c_subunit2SigmaWidth / 2;
 c_subunitSigma_surround = c_subunit2SigmaWidth_surround / 2;
-c_subunitCenters = generatePositions('triangular', [c_extent, c_subunitSpacing, 0]);
-c_numSubunits = size(c_subunitCenters,1);
+c_subunitCenters = {};
+for vi = 1:2
+    c_subunitCenters{vi} = generatePositions('triangular', [c_extent, c_subunitSpacing(vi), 0]);
+    c_numSubunits(vi) = size(c_subunitCenters{vi},1);
+end
 
 % subunit RF profile, using gaussian w/ set radius (function)
-c_subunitRf = zeros(sim_dims(2), sim_dims(3), c_numSubunits);
-for si = 1:c_numSubunits
-    center = c_subunitCenters(si,:);
-    dmap = (mapX - center(1)).^2 + (mapY - center(2)).^2; % no sqrt, so
-    rf_c = exp(-(dmap / (2 * c_subunitSigma .^ 2))); % no square
-    rf_s = exp(-(dmap / (2 * c_subunitSigma_surround .^ 2))); % no square
+c_subunitRf = {};
+for vi = 1:2
+    c_subunitRf{vi} = zeros(sim_dims(2), sim_dims(3), c_numSubunits(vi));
+    for si = 1:c_numSubunits(vi)
+        center = c_subunitCenters{vi}(si,:);
+        dmap = (mapX - center(1)).^2 + (mapY - center(2)).^2; % no sqrt, so
+        rf_c = exp(-(dmap / (2 * c_subunitSigma(vi) .^ 2))); % no square
+        rf_s = exp(-(dmap / (2 * c_subunitSigma_surround(vi) .^ 2))); % no square
 
-    rf = rf_c - c_subunitSurroundRatio * rf_s;
-    rf = rf ./ max(rf(:));
-    c_subunitRf(:,:,si) = rf;
+        rf = rf_c - c_subunitSurroundRatio(vi) * rf_s;
+        rf = rf ./ max(rf(:));
+        c_subunitRf{vi}(:,:,si) = rf;
+    end
 end
 
 % calculate connection strength for each subunit, for each voltage
-s_subunitStrength = zeros(e_numVoltages, c_numSubunits);
+s_subunitStrength = {};
 for vi = 1:e_numVoltages
-    for si = 1:c_numSubunits
+    s_subunitStrength{vi} = zeros(c_numSubunits(vi),1);
+    for si = 1:c_numSubunits(vi)
 
         rfmap = e_map(:,:,vi);
-        sumap = c_subunitRf(:,:,si);
+        sumap = c_subunitRf{vi}(:,:,si);
         [~,I] = max(sumap(:));
         [x,y] = ind2sub([sim_dims(2), sim_dims(3)], I);
-        s_subunitStrength(vi,si) = rfmap(x,y);
+        
+        s_subunitStrength{vi}(si) = rfmap(x,y);
+        
+%         todo: change it to a regression between map and each subunit as a predictor
+%         s_subunitStrength{vi}(si) = sum(rfmap(:) ./ sumap(:));
     end
 end
 
 % remove unconnected subunits
-nullSubunits = sum(s_subunitStrength) < eps;
-c_subunitRf(:,:,nullSubunits) = [];
-s_subunitStrength(:,nullSubunits) = [];
-c_subunitCenters(nullSubunits',:) = [];
-c_numSubunits = size(s_subunitStrength,2);
+for vi = 1:e_numVoltages
+    nullSubunits = s_subunitStrength{vi} < eps;
+    c_subunitRf{vi}(:,:,nullSubunits) = [];
+    s_subunitStrength{vi}(nullSubunits) = [];
+    c_subunitCenters{vi}(nullSubunits',:) = [];
+    c_numSubunits(vi) = size(s_subunitStrength{vi},1);
+end
 
 % plot the spatial graphs
 if plotSpatialGraphs
@@ -154,15 +168,19 @@ if plotSpatialGraphs
         axes(axesSpatialData((vi - 1) * 2 + 2))
     %     imagesc(sum(c_subunitRf, 3))
         d = zeros(sim_dims(2), sim_dims(3));
-        for si = 1:c_numSubunits
-            d = d + c_subunitRf(:,:,si) * s_subunitStrength(vi,si);
+        for si = 1:c_numSubunits(vi)
+            d = d + c_subunitRf{vi}(:,:,si) * s_subunitStrength{vi}(si);
         end
         plotSpatialData(mapX,mapY,d)
         axis equal
-        title('all subunits scaled by maps')
+        axis tight
+%         title('all subunits scaled by maps')
         hold on
+%         xlabel('µm')
+%         ylabel('µm')        
         % plot points at the centers of subunits
-        plot(c_subunitCenters(:,1), c_subunitCenters(:,2),'r.')
+        plot(c_subunitCenters{vi}(:,1), c_subunitCenters{vi}(:,2),'r.')
         
     end
 end
+drawnow

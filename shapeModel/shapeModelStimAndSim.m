@@ -27,7 +27,7 @@ stim_intensity = 0.5;
 
 % stim_mode = 'flashedSpot';
 % stim_numOptions = 1;
-% 
+%
 % stim_spotDiam = 200;
 % stim_spotDuration = 0.4;
 % stim_spotStart = 0.1;
@@ -42,46 +42,46 @@ end
 
 parfor (optionIndex = 1:stim_numOptions, parforArg)
 % for (optionIndex = 1:stim_numOptions)
-
+    
     fprintf('Running option %d of %d\n', optionIndex, stim_numOptions);
-
+    
     %% Setup stimulus
     center = [0,0];
-
+    
     stim_lightMatrix = zeros(sim_dims);
-
-
+    
+    
     if strcmp(stim_mode, 'flashedSpot')
         % flashed spot
-%         stim_spotDiam = stim_spotDiams(optionIndex);
-
-
+        %         stim_spotDiam = stim_spotDiams(optionIndex);
+        
+        
         pos = stim_spotPosition + center;
         for ti = 1:sim_dims(1)
             t = T(ti);
             if t > stim_spotStart && t < stim_spotStart + stim_spotDuration
-
+                
                 for xi = 1:sim_dims(2)
                     x = X(xi);
                     for yi = 1:sim_dims(3)
                         y = Y(yi);
-
+                        
                         val = stim_intensity;
                         % circle shape
                         rad = sqrt((x - pos(1))^2 + (y - pos(2))^2);
                         if rad < stim_spotDiam / 2
-                            stim_lightMatrix(ti, xi, yi) = val; 
+                            stim_lightMatrix(ti, xi, yi) = val;
                         end
                     end
                 end
             end
         end
-
-
+        
+        
     elseif strcmp(stim_mode, 'movingBar')
-
+        
         stim_barDirection = stim_barDirections(optionIndex); % degrees
-
+        
         
         % make four corner points
         l = stim_barLength / 2;
@@ -94,15 +94,15 @@ parfor (optionIndex = 1:stim_numOptions, parforArg)
         for p = 1:size(corners, 1);
             corners(p,:) = (R * corners(p,:)')';
         end
-
+        
         
         % translate corners
         movementVector = stim_barSpeed * [cosd(stim_barDirection), sind(stim_barDirection)];
         for ti = 1:sim_dims(1)
-
+            
             barCenter = center + movementVector * (T(ti) - stim_moveTime / 2);
             cornersTranslated = bsxfun(@plus, corners, barCenter);
-
+            
             % what a nice thing to find just the right MATLAB function #blessed
             stim_lightMatrix(ti,:,:) = inpolygon(mapX, mapY, cornersTranslated(:,1), cornersTranslated(:,2));
             
@@ -123,51 +123,60 @@ parfor (optionIndex = 1:stim_numOptions, parforArg)
             title(sprintf('stimulus at %.3f sec', T(ti)));
             axis tight
             drawnow
-%             pause(sim_timeStep)
-
+            %             pause(sim_timeStep)
+            
         end
     end
-
-
+    
+    
     %% Simulation starts here
-
+    
     %% Run through time to calculate light input signals to each subunit
-    s_lightSubunit = zeros(c_numSubunits, sim_dims(1));
+    %     s_lightSubunit = zeros(c_numSubunits, sim_dims(1));
+    s_lightSubunit = {};
     area = (sim_dims(2) * sim_dims(3));
     for ti = 1:length(T)
         sim_light = squeeze(stim_lightMatrix(ti, :, :));
         
         %% Calculate illumination for each subunit
-        for si = 1:c_numSubunits
-
-            lightIntegral = sum(sum(sim_light .* c_subunitRf(:,:,si))) / area;
-            s_lightSubunit(si,ti) = lightIntegral;
-
+        for vi = 1:e_numVoltages
+            for si = 1:c_numSubunits(vi)
+                
+                lightIntegral = sum(sum(sim_light .* c_subunitRf{vi}(:,:,si))) / area;
+                s_lightSubunit{vi}(si,ti) = lightIntegral;
+                
+            end
         end
     end
     
     %% temporal filter each subunit individually
     
-    % loop through subunits
-    s_responseSubunit = [];
-    for si = 1:c_numSubunits
-
-%         a = sim_lightSubunit(si,:);
-%         d = diff(a);
-%         d(end+1) = 0;
-%         d(d < 0) = 0;
-%         lightOnNess = cumsum(d);
-
-%%      for each subunit & voltage, do a bunch of signal processing
-
-        % todo: swith to different sets of subunits for each input type
-        for vi = 1:e_numVoltages
+    
+    
+    %         a = sim_lightSubunit(si,:);
+    %         d = diff(a);
+    %         d(end+1) = 0;
+    %         d(d < 0) = 0;
+    %         lightOnNess = cumsum(d);
+    
+    %%      for each subunit & voltage, do a bunch of signal processing
+    
+    s_responseSubunitScaledByRf = {};
+    sim_responseSubunitsCombined = [];
+    for vi = 1:e_numVoltages
+        
+        % loop through subunits
+        s_responseSubunit = [];
+        s_responseSubunitScaledByRf{vi} = [];
+        
+        for si = 1:c_numSubunits(vi)
+            
             % linear convolution
-            temporalFiltered = conv(s_lightSubunit(si,:), filter_resampledOn{vi});
-            temporalFiltered = temporalFiltered(1:length(s_lightSubunit(si,:)));
+            temporalFiltered = conv(s_lightSubunit{vi}(si,:), filter_resampledOn{vi});
+            temporalFiltered = temporalFiltered(1:length(s_lightSubunit{vi}(si,:)));
             
             % nonlinear effects
-%             sel = [];
+            %             sel = [];
             if e_voltages(vi) < 0
                 sel = temporalFiltered > 0;
                 s = -1;
@@ -182,62 +191,53 @@ parfor (optionIndex = 1:stim_numOptions, parforArg)
             
             rectThresh = .005;
             rectMult = 1;
-%             saturThresh = .04;
+            %             saturThresh = .04;
             sel = abs(rectified) > rectThresh;
             nonlin = rectified;
             nonlin(sel) = nonlin(sel) * rectMult;
-%             nonlin(abs(nonlin) > saturThresh) = sign(nonlin(abs(nonlin) > saturThresh)) * saturThresh;
+            %             nonlin(abs(nonlin) > saturThresh) = sign(nonlin(abs(nonlin) > saturThresh)) * saturThresh;
             
-%             filterTimeConstant = 0.17;
-%             filterLength = 0.4; %sec
-%             tFilt = 0:sim_timeStep:filterLength;
-%             filter_subunitTemporalDecay = exp(-tFilt/tau);
-%             filter_subunitTemporalDecay = filter_subunitTemporalDecay ./ sum(filter_subunitTemporalDecay);
-%             decayed = conv(nonlin, filter_subunitTemporalDecay, 'same');
-%     
-
-            s_responseSubunit(si,vi,:) = nonlin(1:sim_dims(1));
+            %             filterTimeConstant = 0.17;
+            %             filterLength = 0.4; %sec
+            %             tFilt = 0:sim_timeStep:filterLength;
+            %             filter_subunitTemporalDecay = exp(-tFilt/tau);
+            %             filter_subunitTemporalDecay = filter_subunitTemporalDecay ./ sum(filter_subunitTemporalDecay);
+            %             decayed = conv(nonlin, filter_subunitTemporalDecay, 'same');
+            %
+            
+            s_responseSubunit(si,:) = nonlin(1:sim_dims(1));
             
             warning('off','MATLAB:legend:IgnoringExtraEntries')
-
+            
             if plotSubunitCurrents
                 % plot individual subunit inputs and outputs
                 figure(103);
                 subplot(2,1,vi);
-%                 axes(axesSignalsBySubunit(((si - 1) * 2 + vi)))
+                %                 axes(axesSignalsBySubunit(((si - 1) * 2 + vi)))
                 plot(normg(s_lightSubunit(si,:)));
-                hold on               
-    %             plot(normg(lightOnNess))       
+                hold on
+                %             plot(normg(lightOnNess))
                 plot(normg(filter_resampledOn{vi}) - 0.5)
-%                 plot(normg(filter_subunitTemporalDecay));                
+                %                 plot(normg(filter_subunitTemporalDecay));
                 plot(normg(temporalFiltered));
                 plot(normg(rectified));
                 plot(normg(nonlin));
-%                 plot(normg(decayed));
+                %                 plot(normg(decayed));
                 title(sprintf('subunit %d light convolved with filter v = %d', si, e_voltages(vi)))
                 hold off
                 legend('light','temporalFilter', 'filtered', 'rectified', 'nonlinear')
             end
+            
+            
+            % Multiply subunit response by RF strength (connection subunit to RGC)
+            
+            strength = s_subunitStrength{vi}(si);
+            s_responseSubunitScaledByRf{vi}(si,:) = strength * s_responseSubunit(si,:);
+            
         end
-        
-    end
-    drawnow
-    
-    
-    % Multiply subunit response by RF strength (connection subunit to RGC)
-    sim_responseSubunitScaledByRf = zeros(size(s_responseSubunit));
-    for vi = 1:e_numVoltages
-        for si = 1:c_numSubunits
-            strength = s_subunitStrength(vi,si);
-            sim_responseSubunitScaledByRf(si,vi,:) = strength * s_responseSubunit(si,vi,:);
-        end
-    end
-    
-
-    % combine current across subunits
-    sim_responseSubunitsCombined = [];
-    for vi = 1:e_numVoltages
-        sim_responseSubunitsCombined(vi,:) = sum(sim_responseSubunitScaledByRf(:,vi,:), 1);
+            
+        % combine current across subunits for this voltage
+        sim_responseSubunitsCombined(vi,:) = sum(s_responseSubunitScaledByRf{vi}, 1);
     end
     
     sim_responseSubunitsCombinedByOption{optionIndex} = sim_responseSubunitsCombined;
