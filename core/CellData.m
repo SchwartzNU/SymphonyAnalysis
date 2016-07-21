@@ -19,6 +19,11 @@ classdef CellData < handle
     
     methods
         function obj = CellData(fname)
+            
+            if nargin < 1
+                return
+            end
+
             %creates CellData object from raw data file
             [~, obj.savedFileName, ~] = fileparts(fname);
             info = hdf5info(fname,'ReadAttributes',false);
