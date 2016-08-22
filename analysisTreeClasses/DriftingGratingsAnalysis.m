@@ -137,13 +137,13 @@ classdef DriftingGratingsAnalysis < AnalysisTree
          
         function plotLeaf(node, cellData)
             leafData = node.get(1);
-            %if isnan(leafData.cycleAvg_y)
-                %yField = leafData.cycleAvgPSTH_y;
-                %xField = leafData.cycleAvgPSTH_x;
-            %else
+            if ~isfield(leafData, 'cycleAvg_y')
+                yField = leafData.cycleAvgPSTH_y;
+                xField = leafData.cycleAvgPSTH_x;
+            else
                 yField = leafData.cycleAvg_y;
                 xField = leafData.cycleAvg_x;
-            %end
+            end
             xvals = xField.value;
             yvals = yField.value;
             plot (xvals,yvals);

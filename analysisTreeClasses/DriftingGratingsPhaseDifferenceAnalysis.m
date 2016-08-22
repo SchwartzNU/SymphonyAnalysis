@@ -85,9 +85,9 @@ classdef DriftingGratingsPhaseDifferenceAnalysis < AnalysisTree
                     meanSubtData = negVData(j,:,i) - mean(negVData(j,:,i));
                     [minVal,pos] = min(meanSubtData);
                     shift = (length(negVData)/2) - pos;
-                    if shift<0
-                        shift = -shift;
-                    end
+%                     if shift<0
+%                         shift = -shift;
+%                     end
                     meanSubtData = circshift(meanSubtData,shift,2);
                     diffValsShift = circshift(diffVals(j,:,i),shift,2);
                     
@@ -116,19 +116,19 @@ classdef DriftingGratingsPhaseDifferenceAnalysis < AnalysisTree
                 
             end 
             
-            for i=1:size(diffVals,3)
-                figure
-                for j=1:angles
-                    subplot(4,3,j)
-                    grid on
-                    plot(diffVals(j,:,i),negVData(j,:,i));
-                    xlabel('Inhibitory Current(pA)');
-                    ylabel('Gap junction current(pA)');
-                    axis([min(diffVals(j,:,:)) max(diffVals(j,:,:)) min(negVData(j,:,:)) max(negVData(j,:,:))]);
-                    title(['Grating Angle =', num2str(360*(j-1)/size(diffVals,1))]);
-                    %legend('Inhibition','Gap junction');
-                end
-            end
+%             for i=1:size(diffVals,3)
+%                 figure
+%                 for j=1:angles
+%                     subplot(4,3,j)
+%                     grid on
+%                     plot(diffVals(j,:,i),negVData(j,:,i));
+%                     xlabel('Inhibitory Current(pA)');
+%                     ylabel('Gap junction current(pA)');
+%                     axis([min(diffVals(j,:,:)) max(diffVals(j,:,:)) min(negVData(j,:,:)) max(negVData(j,:,:))]);
+%                     title(['Grating Angle =', num2str(360*(j-1)/size(diffVals,1))]);
+%                     %legend('Inhibition','Gap junction');
+%                 end
+%             end
             
             figure
             gratingAngle = linspace(0,330,12)';
