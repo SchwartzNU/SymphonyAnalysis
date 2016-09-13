@@ -46,7 +46,7 @@ function cell = symphony2Mapper(fname)
 
         e = EpochData;
         e.parentCell = cell;
-        e.attributes = parameterMap;
+        e.attributes = containers.Map(parameterMap.keys, parameterMap.values);
         e.dataLinks = getResponses(h5Epochs(index).Groups(3).Groups);
         epochData(i)= e;
 
@@ -94,7 +94,8 @@ function h5Epochs = flattenEpochs(epochGroups)
 
     function epochs = flattenByProtocol(protocols)
         epochs = arrayfun(@(p) p.Groups(1).Groups, protocols, 'UniformOutput', false);
-        epochs = cell2mat(epochs);
+        idx = find(~ cellfun(@isempty, epochs));
+        epochs = cell2mat(epochs(idx));
     end
 end
 
