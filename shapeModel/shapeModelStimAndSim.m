@@ -14,10 +14,10 @@ stim_barDirections(end) = [];
 % stim_barDirections = [210];
 stim_numOptions = length(stim_barDirections);
 
-stim_barSpeed = 1000;
-stim_barLength = 1000;
+stim_barSpeed = paramValues{paramSetIndex,col_barSpeed};
+stim_barLength = 300;
 stim_barWidth = 200;
-stim_moveTime = sim_endTime + 1;
+stim_moveTime = sim_endTime + 1.0;
 stim_intensity = 0.5;
 
 % stim_mode = 'flashedSpot';
@@ -43,7 +43,7 @@ end
 parfor (optionIndex = 1:stim_numOptions, parforArg)
 % for (optionIndex = 1:stim_numOptions)
     
-    fprintf('Running option %d of %d\n', optionIndex, stim_numOptions);
+%     fprintf('Running option %d of %d\n', optionIndex, stim_numOptions);
     
     %% Setup stimulus
     center = [0,0];
