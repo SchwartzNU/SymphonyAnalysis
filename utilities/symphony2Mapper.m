@@ -26,7 +26,7 @@ function cell = symphony2Mapper(fname)
 
     lastProtocolId = [];
     epochData = EpochData.empty(numel(h5Epochs), 0);
-    [protocolId, name, protocolPath] = getProtocolId(h5Epochs(1).Name);
+    [protocolId, name, protocolPath] = getProtocolId(h5Epochs(indices(1)).Name);
 
     for i = 1 : numel(h5Epochs)
 
@@ -35,12 +35,12 @@ function cell = symphony2Mapper(fname)
 
         if ~ strcmp(protocolId, lastProtocolId)
             % start of new protocol
-            parameterMap = mapAttributes(protocolPath, fname);
+            parameterMap = buildAttributes(protocolPath, fname);
             parameterMap('displayName') = name;
             lastProtocolId = protocolId;
         end
 
-        parameterMap = mapAttributes(h5Epochs(index).Groups(2), fname, parameterMap);
+        parameterMap = buildAttributes(h5Epochs(index).Groups(2), fname, parameterMap);
         parameterMap('epochNum') = i;
         parameterMap('epochStartTime') = sortedEpochTime(i);
 
@@ -99,3 +99,23 @@ function h5Epochs = flattenEpochs(epochGroups)
     end
 end
 
+function map = buildAttributes(h5group, fname, map)
+    if nargin < 3
+        map = containers.Map();
+    end
+    if ischar(h5group)
+        h5group = h5info(fname, h5group);
+    end
+    attributes = h5group.Attributes;
+
+    for i = 1 : length(attributes)
+        name = attributes(i).Name;
+        root = strfind(name, '/');
+        value = attributes(i).Value;
+
+        if ~ isempty(root)
+            name = attributes(i).Name(root(end) + 1 : end);
+        end
+        map(name) = value;
+    end
+end
