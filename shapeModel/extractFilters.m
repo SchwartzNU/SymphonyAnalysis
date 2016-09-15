@@ -1,7 +1,7 @@
 load(sprintf('analysisData_%s_%s.mat', cellName, acName));
 filterOn = {};
 
-filterDelays = [0,0.0]; % .05 for 033116Ac2
+filterDelays = [0.00,0.0]; % .05 for 033116Ac2
 
 for vi = 1:2
     e = analysisData.epochData{vi}; % using E/I alignment step here

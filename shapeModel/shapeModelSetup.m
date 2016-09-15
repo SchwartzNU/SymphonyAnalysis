@@ -7,18 +7,21 @@ s_sidelength = 350;%max(cell_rfPositions);
 c_extent = 0; % start and make in loop:
 
 % subunit locations, to generate positions
-c_subunitSpacing = [20, 40];
+c_subunitSpacing = [20, 35];
 c_subunit2SigmaWidth = [40, 60];
 c_subunit2SigmaWidth_surround = [80, 120];
 c_subunitSurroundRatio = [0.15, 0.0];
 
-%% Setup cell data from ephys
+positionOffsetByVoltage = [13,0];
 
 % generate RF map for EX and IN
-% import completed maps
+% import completed maps 
 
 load(sprintf('rfmaps_%s_%s.mat', cellName, acName));
 ephys_data_raw = data;
+    
+
+%% Setup cell data from ephys
 
 e_positions = {};
 e_voltages = sort(voltages);
@@ -62,7 +65,7 @@ distanceFromCenter = sqrt(mapY.^2 + mapX.^2);
 % shiftsByDimVoltage = [-30,-30;  % x
 %                       -30,-30]; % y
 % shiftsByDim = analysisData.positionOffset;
-shiftsByDim = [-5,55];
+% positionOffset = paramValues{paramSetIndex,col_positionOffset};
 
 for vi = 1:e_numVoltages
     
@@ -70,15 +73,20 @@ for vi = 1:e_numVoltages
 %     e_map(:,:,vi) = c;
     
     % add null corners to ground the spatial map at edges
-    positions = e_positions{vi, ii};
-    positions = bsxfun(@plus, positions, shiftsByDim);
-    vals = e_vals{vi,ii,:};
-%     positions = vertcat(positions, [X(1),Y(1);X(end),Y(1);X(end),Y(end);X(1),Y(end)]);
-%     vals = vertcat(vals, [0,0,0,0]');
-    F = scatteredInterpolant(positions(:,1), positions(:,2), vals,...
-        'linear','none');
+    if useRealRf
+        positions = e_positions{vi, ii};
+        positions = bsxfun(@plus, positions, [0,positionOffsetByVoltage(vi)]);
+        vals = e_vals{vi,ii,:};
+    %     positions = vertcat(positions, [X(1),Y(1);X(end),Y(1);X(end),Y(end);X(1),Y(end)]);
+    %     vals = vertcat(vals, [0,0,0,0]');
+        F = scatteredInterpolant(positions(:,1), positions(:,2), vals,...
+            'linear','none');
+        m = F(mapX, mapY) * sign(e_voltages(vi));    
+    else
+        d = sqrt((mapY-positionOffsetByVoltage(vi)).^2 + mapX.^2);
+        m = -20 + 100*exp(-d.^2 / 80^2);
+    end
     
-    m = F(mapX, mapY) * sign(e_voltages(vi));
     m(isnan(m)) = 0;
     m(m < 0) = 0;
     m = m ./ max(m(:));
@@ -155,7 +163,7 @@ end
 
 % remove unconnected subunits
 for vi = 1:e_numVoltages
-    nullSubunits = s_subunitStrength{vi} < eps;
+    nullSubunits = s_subunitStrength{vi} < eps+.1;
     c_subunitRf{vi}(:,:,nullSubunits) = [];
     s_subunitStrength{vi}(nullSubunits) = [];
     c_subunitCenters{vi}(nullSubunits',:) = [];
