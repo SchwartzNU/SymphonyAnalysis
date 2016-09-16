@@ -1,4 +1,4 @@
-function cell = symphony2Mapper(fname)
+function cells = symphony2Mapper(fname)
 
     % experiement (1)
     %   |__devices (1)
@@ -15,11 +15,21 @@ function cell = symphony2Mapper(fname)
     %                   |            |_data (1)
     %                   |_protocolParameters(2)
 
-    cell = CellData();
     info = h5info(fname);
-    
-    h5Epochs = flattenEpochs(info.Groups(1).Groups(2).Groups);
-    
+    epochsByCellMap = getEpochsByCellLabel(fname, info.Groups(1).Groups(2).Groups);
+    numberOfCells = numel(epochsByCellMap.keys);
+
+    cells = CellData.empty(numberOfCells, 0);
+    for i = 1 : numberOfCells
+        labels = epochsByCellMap.keys;
+        h5epochs =  epochsByCellMap(labels{i});
+        cells(i) = getCellData(fname, labels{i}, h5epochs);
+    end
+end
+
+function cell = getCellData(fname, cellLabel, h5Epochs)
+
+    cell = CellData();
     epochsTime = arrayfun(@(epoch) h5readatt(fname, epoch.Name, 'startTimeDotNetDateTimeOffsetTicks'), h5Epochs);
     [time, indices] = sort(epochsTime);
     sortedEpochTime = double(time - time(1)).* 1e-7;
@@ -56,8 +66,10 @@ function cell = symphony2Mapper(fname)
     cell.attributes = containers.Map();
     cell.epochs = epochData;
     cell.attributes('Nepochs') = numel(h5Epochs);
-    [~, cell.savedFileName, ~] = fileparts(fname);
-
+    cell.attributes('symphonyVersion') = 2.0;
+    [~, file, ~] = fileparts(fname);
+    cell.attributes('fname') = file;
+    cell.savedFileName = [file cellLabel];
 end
 
 function [id, name, path] = getProtocolId(epochPath)
@@ -73,23 +85,24 @@ function map = getResponses(responseGroups)
     map = containers.Map();
     
     for i = 1 : numel(responseGroups)
-        
         devicePath = responseGroups(i).Name;
         indices = strfind(devicePath, '/');
         id = devicePath(indices(end) + 1 : end);
         deviceArray = strsplit(id, '-');
         
-        name = deviceArray{1};
+        name = getMappedDeviceName(deviceArray{1});
         path = [devicePath, '/data'];
         map(name) = path;
     end
 end
 
-function h5Epochs = flattenEpochs(epochGroups)
-    h5Epochs = [];
-
+function epochGroupMap = getEpochsByCellLabel(fname, epochGroups)
+    epochGroupMap = containers.Map();
+    
     for i = 1 : numel(epochGroups)
-        h5Epochs = [h5Epochs; flattenByProtocol(epochGroups(i).Groups(1).Groups)];
+        h5Epochs = flattenByProtocol(epochGroups(i).Groups(1).Groups);
+        label = getSourceLabel(fname, epochGroups(i));
+        epochGroupMap = addToMap(epochGroupMap, label, h5Epochs);
     end
 
     function epochs = flattenByProtocol(protocols)
@@ -97,6 +110,18 @@ function h5Epochs = flattenEpochs(epochGroups)
         idx = find(~ cellfun(@isempty, epochs));
         epochs = cell2mat(epochs(idx));
     end
+end
+
+function label = getSourceLabel(fname, epochGroup)
+    % check if it is h5 Groups
+    % if not present it should be in links
+    
+    if numel(epochGroup.Groups) == 4
+        source = epochGroup.Groups(4).Name;
+    else
+        source = epochGroup.Links(2).Value{:};
+    end
+    label = h5readatt(fname, source, 'label');
 end
 
 function map = buildAttributes(h5group, fname, map)
@@ -117,5 +142,23 @@ function map = buildAttributes(h5group, fname, map)
             name = attributes(i).Name(root(end) + 1 : end);
         end
         map(name) = value;
+    end
+end
+
+function map  = addToMap(map, key, value)
+
+    if isKey(map, key)
+        map(key) = [map(key), value];
+    else
+        map(key) = value;
+    end
+end
+
+function mappedName = getMappedDeviceName(name)
+    switch name
+        case 'Amp1'
+            mappedName = 'Amplifier_Ch1';
+        case 'Amp2'
+            mappedName = 'Amplifier_Ch2';
     end
 end
