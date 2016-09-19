@@ -141,7 +141,7 @@ function map = buildAttributes(h5group, fname, map)
         if ~ isempty(root)
             name = attributes(i).Name(root(end) + 1 : end);
         end
-        map(name) = value;
+        map(getMappedAttribute(name)) = value;
     end
 end
 
@@ -160,5 +160,22 @@ function mappedName = getMappedDeviceName(name)
             mappedName = 'Amplifier_Ch1';
         case 'Amp2'
             mappedName = 'Amplifier_Ch2';
+        otherwise
+            mappedName = name;
+    end
+end
+
+function mappedAttr = getMappedAttribute(name)
+    switch name
+        case 'chan1Mode'
+            mappedAttr = 'ampMode';
+        case 'chan2Mode'
+            mappedAttr = 'amp2Mode';
+        case 'chan1Hold'
+            mappedAttr = 'ampHoldSignal';
+        case 'chan2Hold'
+            mappedAttr = 'amp2HoldSignal';
+        otherwise
+            mappedAttr = name;
     end
 end
