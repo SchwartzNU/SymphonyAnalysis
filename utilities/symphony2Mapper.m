@@ -46,7 +46,9 @@ function cell = getCellData(fname, cellLabel, h5Epochs)
         if ~ strcmp(protocolId, lastProtocolId)
             % start of new protocol
             parameterMap = buildAttributes(protocolPath, fname);
-            parameterMap('displayName') = name;
+            dn = strsplit(name,'.');
+            dn = convertDisplayName(dn{end});
+            parameterMap('displayName') = dn;
             lastProtocolId = protocolId;
         end
 
@@ -178,4 +180,16 @@ function mappedAttr = getMappedAttribute(name)
         otherwise
             mappedAttr = name;
     end
+end
+
+function hrn = convertDisplayName(n)
+    hrn = regexprep(n, '([A-Z][a-z]+)', ' $1');
+    hrn = regexprep(hrn, '([A-Z][A-Z]+)', ' $1');
+    hrn = regexprep(hrn, '([^A-Za-z ]+)', ' $1');
+    hrn = strtrim(hrn);
+    
+    % TODO: improve underscore handling, this really only works with lowercase underscored variables
+    hrn = strrep(hrn, '_', '');
+    
+    hrn(1) = upper(hrn(1));
 end

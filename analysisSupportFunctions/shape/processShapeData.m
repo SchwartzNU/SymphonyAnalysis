@@ -159,7 +159,7 @@ for p = 1:num_epochs
 
     %         this is to give it a bit of slack early in case some strong
     %         responses are making it delay too much
-            t_offset = t_offset - .01;
+            t_offset = t_offset - .05;
 
             alignmentTemporalOffset_by_v(e.ampVoltage) = t_offset;
     %         fprintf('temporal alignment gave offset of %1.3f for v = %d\n',t_offset,e.ampVoltage)
