@@ -10,3 +10,4 @@ shapeModel/shapeModel_v0.zip
 *.pdf
 
 *.h5
+lib/*
