@@ -139,6 +139,11 @@ function map = buildAttributes(h5group, fname, map)
         name = attributes(i).Name;
         root = strfind(name, '/');
         value = attributes(i).Value;
+        
+        % convert column vectors to row vectors
+        if size(value, 1) > 1
+            value = reshape(value, 1, []);
+        end
 
         if ~ isempty(root)
             name = attributes(i).Name(root(end) + 1 : end);
