@@ -3,8 +3,12 @@ global ANALYSIS_FOLDER;
 projectFolder = [ANALYSIS_FOLDER 'Projects' filesep expName '_temp'];
 eval(['!rm -rf ' projectFolder]);
 eval(['!mkdir ' projectFolder]);
-cellNames = ls([ANALYSIS_FOLDER 'cellData' filesep expName 'c*.mat']);
+cellNames = ls([ANALYSIS_FOLDER 'cellData' filesep expName '*.mat']);
+if ispc
+    cellNames = cellstr(cellNames);
+else
 cellNames = strsplit(cellNames); %this will be different on windows - see doc ls
+end
 fid = fopen([projectFolder filesep 'cellNames.txt'], 'w');
 
 cellBaseNames = cell(length(cellNames), 1);

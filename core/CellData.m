@@ -97,7 +97,7 @@ classdef CellData < handle
                 v = obj.epochs(epochInd(i)).get(paramName);
                 if isempty(v)
                     vals{i} = NaN;
-                elseif strcmp(v, '<null>') %temp hack: null string?
+                elseif strcmp(v, '<null>') || strcmp(v, 'null') %temp hack: null string?
                     vals{i} = nan;
                 else
                     vals{i} = v;
