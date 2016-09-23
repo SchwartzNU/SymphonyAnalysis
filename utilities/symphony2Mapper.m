@@ -71,7 +71,7 @@ function cell = getCellData(fname, cellLabel, h5Epochs)
     cell.attributes('symphonyVersion') = 2.0;
     [~, file, ~] = fileparts(fname);
     cell.attributes('fname') = file;
-    cell.savedFileName = [file cellLabel];
+    cell.savedFileName = file;
 end
 
 function [id, name, path] = getProtocolId(epochPath)
