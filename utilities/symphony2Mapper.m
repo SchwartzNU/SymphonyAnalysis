@@ -36,21 +36,21 @@ function cell = getCellData(fname, cellLabel, h5Epochs)
 
     lastProtocolId = [];
     epochData = EpochData.empty(numel(h5Epochs), 0);
-    [protocolId, name, protocolPath] = getProtocolId(h5Epochs(indices(1)).Name);
 
     for i = 1 : numel(h5Epochs)
 
         index = indices(i);
         epochPath = h5Epochs(index).Name;
+        [protocolId, name, protocolPath] = getProtocolId(epochPath);
 
         if ~ strcmp(protocolId, lastProtocolId)
             % start of new protocol
             parameterMap = buildAttributes(protocolPath, fname);
-            dn = strsplit(name,'.');
-            dn = convertDisplayName(dn{end});
-            parameterMap('displayName') = dn;
-            lastProtocolId = protocolId;
+            readableDisplayName = strsplit(name,'.');
+            readableDisplayName = convertDisplayName(readableDisplayName{end});
+            parameterMap('displayName') = readableDisplayName;
         end
+        lastProtocolId = protocolId;       
 
         parameterMap = buildAttributes(h5Epochs(index).Groups(2), fname, parameterMap);
         parameterMap('epochNum') = i;
@@ -61,8 +61,6 @@ function cell = getCellData(fname, cellLabel, h5Epochs)
         e.attributes = containers.Map(parameterMap.keys, parameterMap.values);
         e.dataLinks = getResponses(h5Epochs(index).Groups(3).Groups);
         epochData(i)= e;
-
-        [protocolId, name, protocolPath] = getProtocolId(epochPath);
     end
 
     cell.attributes = containers.Map();
