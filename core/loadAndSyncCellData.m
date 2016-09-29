@@ -22,11 +22,13 @@ if SYNC_TO_SERVER
         try
             fileinfo = dir([filesep 'Volumes' filesep 'SchwartzLab'  filesep 'CellDataMaster'  filesep cellDataName '.mat']);
             serverModDate = fileinfo.datenum;
+            fprintf('Local file is %g sec newer than server file\n',(localModDate - serverModDate) * 86400)
+
             if isempty(cellData_local)
                 disp([cellDataName ': Copying server version to local cellData folder.']);
                 do_server_to_local_copy = true;
-            elseif serverModDate > localModDate %server has newer version
-                disp([cellDataName ': Overwriting local version with newer server version.']);
+            elseif serverModDate > localModDate + 1.1 / 24 %server has newer version
+                disp([cellDataName ': Overwriting local version with newer server version (newer by more than 1 hr).']);
                 disp('A copy of old file will be placed in cellData_localCopies');
                 do_server_to_local_update = true;
             end
