@@ -1,10 +1,10 @@
 function cd = correctAngles(cd, cellName)
 
-%     if isKey(cd.attributes, 'anglesCorrected')
-%         fprintf('%s angles already corrected\n', cellName);
-%         cd = 1;
-%         return
-%     end
+    if isKey(cd.attributes, 'anglesCorrected')
+        fprintf('%s angles already corrected\n', cellName);
+        cd = 1;
+        return
+    end
 
     % calculate rig angle offset
     if strfind(cellName,'A')
@@ -75,6 +75,7 @@ function cd = correctAngles(cd, cellName)
             origAngle = 0;
 %             disp('add autocenter angle')
         end
+        epoch.attributes('originalAngle') = origAngle;
         epoch.attributes(angleName) = mod(origAngle + offset, 360);
     end
     
