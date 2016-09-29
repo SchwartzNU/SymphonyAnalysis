@@ -1,9 +1,9 @@
 function cellDataNames = cellNameToCellDataNames(cellName)
 
-if isempty(strfind(cellName, '-'))
-    cellDataNames = {cellName};
-    return
-end
+% if isempty(strfind(cellName, '-'))
+%     cellDataNames = {cellName};
+%     return
+% end
 
 cellDataNames = {};
 [curName, rem] = strtok(cellName, ',');
