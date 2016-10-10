@@ -69,7 +69,20 @@ function cell = getCellData(fname, cellLabel, h5Epochs)
     cell.attributes('symphonyVersion') = 2.0;
     [~, file, ~] = fileparts(fname);
     cell.attributes('fname') = file;
-    cell.savedFileName = file;
+    
+    
+    % Find where the cell number is listed in the name of the cell source, then reformat it for the filename
+    numPositionInLabel = regexp(cellLabel, '[0-9]+');
+    if numPositionInLabel == 1
+        savedFileName = [file 'c' cellLabel];
+    elseif numPositionInLabel == 2
+        savedFileName = [file cellLabel(2:end)];
+    elseif numPositionInLabel == 3
+        savedFileName = [file 'c' cellLabel(3:end)];
+    else 
+        savedFileName = file;
+    end
+    cell.savedFileName = savedFileName;
 end
 
 function [id, name, path] = getProtocolId(epochPath)
