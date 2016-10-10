@@ -82,11 +82,12 @@ elseif strncmp(mode, 'plotSpatial', 11)
             axes(ha(a));
 
             if posIndex >= 3
-                plotSpatial(goodPositions, vals, sprintf('%s at V = %d mV, intensity = %f', smode, voltage, intensity), 1, sign(voltage));
+                gfit = plotSpatial(goodPositions, vals, sprintf('%s at V = %d mV, intensity = %f', smode, voltage, intensity), 1, sign(voltage));
     %             caxis([0, max(vals)]);
     %             colormap(flipud(colormap))
             end
-            
+                disp(gfit.keys)
+                disp(cell2mat(gfit.values))
             data(vi, ii, 1:2) = {goodPositions, vals};
         end
     end
@@ -670,6 +671,10 @@ elseif strcmp(mode, 'spatialOffset')
     title('Gaussian 2\sigma Fits Overlaid')
     colorbar
     linkaxes(ha)
+    
+    disp(g_ex.keys)
+    disp(cell2mat(g_ex.values))
+    disp(cell2mat(g_in.values))
     
 elseif strcmp(mode, 'spatialDiagnostics')
     obs = ad.observations;
