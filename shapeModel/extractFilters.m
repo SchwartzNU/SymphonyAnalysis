@@ -1,7 +1,9 @@
 load(sprintf('analysisData_%s_%s.mat', cellName, acName));
-filterOn = {};
+filters = cell(2);
 
 filterDelays = [0.00,0.0]; % .05 for 033116Ac2
+
+lightResponses = {};
 
 for vi = 1:2
     e = analysisData.epochData{vi}; % using E/I alignment step here
@@ -30,7 +32,7 @@ for vi = 1:2
     ha = tight_subplot(numSpots, 2);
     for si = 1:numSpots
 
-        thisStart = find(t > startTime(si) - 0.2, 1);
+        thisStart = find(t > startTime(si), 1)
         thisEnd = find(t > (endTime(si) + e.timeOffset), 1);
 
         tRegion = thisStart:thisEnd;
@@ -46,6 +48,7 @@ for vi = 1:2
     %         nextStart = length(e.t);
     %     end
 
+        lightResponses{vi,1} = thisResp;
         thisRespExpanded = thisResp;
 %         plot(thisT, thisResp)
         fitT = (0:300)/1000; 
@@ -73,9 +76,9 @@ for vi = 1:2
         axes(ha(si * 2))
         plot(responseDiff)
         
-        if si == 2
+        if si == 2 % CHOOSE LIGHT FLASH
             tFilterOn = tDisplay(1:end-1);
-            filterOn{vi} = vertcat(zeros(filterDelays(vi) * 1000,1), responseDiff);
+            filters{vi,1} = vertcat(zeros(filterDelays(vi) * 1000,1), responseDiff);
                 
             
             temporalFilter.(sprintf('TFilter_%d',vi)) = tDisplay;
@@ -91,7 +94,7 @@ for vi = 1:2
     % Now, apply the filters
     figure(130+vi-1);clf;
     subplot(2,1,1)
-    plot(filterOn{vi})
+    plot(filters{vi,1})
     title('selected filter')
 
     % make the light onset signal
@@ -113,13 +116,17 @@ for vi = 1:2
 
 %     filterOn{vi}(end) = -1*sum(filterOn{vi}(1:end-1));
 
-    plot(conv(lightOn, filterOn{vi}))
+    plot(conv(lightOn, filters{vi,1}))
     title('filtered epoch for check')
     
     plot(e.response)
     hold off
 end
 
-
-
+% Export temporal filter from cell & resample
+c_filtersResampled = cell(2);
+for vi = 1:e_numVoltages
+    c_filtersResampled{vi,1} = normg(resample(filterOn{vi}, round(1/sim_timeStep), 1000));
+    c_filtersResampled{vi,1}(end) = -1*sum(c_filtersResampled{vi}(1:end-1));
+end
 

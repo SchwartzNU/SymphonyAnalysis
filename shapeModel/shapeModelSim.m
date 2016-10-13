@@ -1,38 +1,15 @@
-if plotSubunitCurrents
-    figure(103);clf;
-    set(gcf, 'Name','Subunit signals','NumberTitle','off');
-    axesSignalsBySubunit = tight_subplot(c_numSubunits, 2);
-end
+% if plotSubunitCurrents
+%     figure(103);clf;
+%     set(gcf, 'Name','Subunit signals','NumberTitle','off');
+%     if useSubunits
+%         axesSignalsBySubunit = tight_subplot(c_numSubunits, 2);
+%     end
+% end
+
+
 sim_responseSubunitsCombinedByOption = {};
 
 % Main stimulus change loop
-
-stim_mode = 'movingBar';
-numAngles = 12;
-stim_barDirections = linspace(0,360,numAngles+1);
-stim_barDirections(end) = [];
-% stim_barDirections = [210];
-stim_numOptions = length(stim_barDirections);
-
-stim_barSpeed = paramValues{paramSetIndex,col_barSpeed};
-stim_barLength = 300;
-stim_barWidth = 200;
-stim_moveTime = sim_endTime + 1.0;
-stim_intensity = 0.5;
-
-% stim_mode = 'flashedSpot';
-% numSizes = 8;
-% stim_spotDiams = logspace(log10(30), log10(1000), numSizes);
-% stim_numOptions = length(stim_spotDiams);
-
-% stim_mode = 'flashedSpot';
-% stim_numOptions = 1;
-%
-% stim_spotDiam = 200;
-% stim_spotDuration = 0.4;
-% stim_spotStart = 0.1;
-% stim_intensity = 0.5;
-% stim_spotPosition = [0,0];
 
 if runInParallelPool
     parforArg = Inf;
@@ -40,94 +17,12 @@ else
     parforArg = 0;
 end
 
-parfor (optionIndex = 1:stim_numOptions, parforArg)
-% for (optionIndex = 1:stim_numOptions)
+% parfor (optionIndex = 1:stim_numOptions, parforArg)
+for (optionIndex = 1:stim_numOptions)
     
 %     fprintf('Running option %d of %d\n', optionIndex, stim_numOptions);
     
-    %% Setup stimulus
-    center = [0,0];
-    
-    stim_lightMatrix = zeros(sim_dims);
-    
-    
-    if strcmp(stim_mode, 'flashedSpot')
-        % flashed spot
-        %         stim_spotDiam = stim_spotDiams(optionIndex);
-        
-        
-        pos = stim_spotPosition + center;
-        for ti = 1:sim_dims(1)
-            t = T(ti);
-            if t > stim_spotStart && t < stim_spotStart + stim_spotDuration
-                
-                for xi = 1:sim_dims(2)
-                    x = X(xi);
-                    for yi = 1:sim_dims(3)
-                        y = Y(yi);
-                        
-                        val = stim_intensity;
-                        % circle shape
-                        rad = sqrt((x - pos(1))^2 + (y - pos(2))^2);
-                        if rad < stim_spotDiam / 2
-                            stim_lightMatrix(ti, xi, yi) = val;
-                        end
-                    end
-                end
-            end
-        end
-        
-        
-    elseif strcmp(stim_mode, 'movingBar')
-        
-        stim_barDirection = stim_barDirections(optionIndex); % degrees
-        
-        
-        % make four corner points
-        l = stim_barLength / 2;
-        w = stim_barWidth / 2;
-        corners = [-l,w;l,w;l,-w;-l,-w];
-        
-        % rotate corners
-        theta = stim_barDirection; % not sure if this should be positive or negative... test to confirm
-        R = [cosd(theta) -sind(theta); sind(theta) cosd(theta)];
-        for p = 1:size(corners, 1);
-            corners(p,:) = (R * corners(p,:)')';
-        end
-        
-        
-        % translate corners
-        movementVector = stim_barSpeed * [cosd(stim_barDirection), sind(stim_barDirection)];
-        for ti = 1:sim_dims(1)
-            
-            barCenter = center + movementVector * (T(ti) - stim_moveTime / 2);
-            cornersTranslated = bsxfun(@plus, corners, barCenter);
-            
-            % what a nice thing to find just the right MATLAB function #blessed
-            stim_lightMatrix(ti,:,:) = inpolygon(mapX, mapY, cornersTranslated(:,1), cornersTranslated(:,2));
-            
-        end
-    end
-    
-    % plot movie of stimulus
-    if plotStimulus
-        figure(101);
-        set(gcf, 'Name','Stimulus Movie Display','NumberTitle','off');
-        clf;
-        for ti = 1:length(T)
-            sim_light = squeeze(stim_lightMatrix(ti, :, :));
-            plotSpatialData(mapX,mapY,sim_light);
-            colormap gray
-            caxis([0,1])
-            colorbar
-            title(sprintf('stimulus at %.3f sec', T(ti)));
-            axis tight
-            drawnow
-            %             pause(sim_timeStep)
-            
-        end
-    end
-    
+    stim_lightMatrix = stim_lightMatrix_byOption{optionIndex};
     
     %% Simulation starts here
     
@@ -172,7 +67,7 @@ parfor (optionIndex = 1:stim_numOptions, parforArg)
         for si = 1:c_numSubunits(vi)
             
             % linear convolution
-            temporalFiltered = conv(s_lightSubunit{vi}(si,:), filter_resampledOn{vi});
+            temporalFiltered = conv(s_lightSubunit{vi}(si,:), c_filtersResampled{vi,1});
             temporalFiltered = temporalFiltered(1:length(s_lightSubunit{vi}(si,:)));
             
             % nonlinear effects
@@ -212,12 +107,11 @@ parfor (optionIndex = 1:stim_numOptions, parforArg)
             if plotSubunitCurrents
                 % plot individual subunit inputs and outputs
                 figure(103);
-                subplot(2,1,vi);
                 %                 axes(axesSignalsBySubunit(((si - 1) * 2 + vi)))
-                plot(normg(s_lightSubunit(si,:)));
+                plot(normg(s_lightSubunit{vi}(si,:)));
                 hold on
                 %             plot(normg(lightOnNess))
-                plot(normg(filter_resampledOn{vi}) - 0.5)
+                plot(normg(c_filtersResampled{vi,1}) - 0.5)
                 %                 plot(normg(filter_subunitTemporalDecay));
                 plot(normg(temporalFiltered));
                 plot(normg(rectified));
@@ -226,6 +120,8 @@ parfor (optionIndex = 1:stim_numOptions, parforArg)
                 title(sprintf('subunit %d light convolved with filter v = %d', si, e_voltages(vi)))
                 hold off
                 legend('light','temporalFilter', 'filtered', 'rectified', 'nonlinear')
+                drawnow
+                pause
             end
             
             
