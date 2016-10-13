@@ -5,10 +5,6 @@ if ~isfield(ad,'observations')
     return 
 end
 obs = ad.observations;
-if isempty(obs)
-    disp('empty observations')
-    return
-end
 
 
 if strcmp(mode, 'printParameters')
@@ -30,6 +26,11 @@ if strcmp(mode, 'printParameters')
     
 elseif strncmp(mode, 'plotSpatial', 11)
 % elseif strcmp(mode, 'plotSpatial_tHalfMax')
+
+    if isempty(obs)
+        disp('empty observations')
+        return
+    end
 
     if strfind(mode, 'mean')
         mode_col = 5;
@@ -899,6 +900,7 @@ end
 %             hi = 20;%round(length(values) / 2);
 %             positions(hi,:)
 %             values(hi) = 1;
+            fitValues(fitValues < 0) = 0; % Interesting, maybe an improvement for fitting WC results
             gfit = fit2DGaussian(positions, fitValues);
             fprintf('gaussian fit center: %d um, %d um\n', round(gfit('centerX')), round(gfit('centerY')))
             v = fitValues - min(fitValues);
