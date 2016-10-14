@@ -1,9 +1,4 @@
 
-
-filterOn = {};
-filterOff = {};
-
-
 % polarity, delay, rise dur, hold dur, decay time constant
 filtParams = cell(2);
 
@@ -14,17 +9,20 @@ filtParams{1,1} = [-1, .065, .016, 0, .03];
 filtParams{2,1} = [1, .057, .03, .051, .055];
 
 % OFF EX
+filtParams{1,2} = [-1, .065, .016, 0, .03];
 
 % OFF IN
+filtParams{2,2} = [1, .057, .03, .051, .055];
+
 
 filters = cell(2);
 
 % clf
 % figure(55);
-% ha = tight_subplot(2,1);
+% ha = tight_subplot(2,2);
 
 for vi = 1:2
-    for oi = 1
+    for oi = 1:2
         
         p = filtParams{vi,oi};
         delay = zeros(1, round(p(2) / sim_timeStep));

@@ -9,7 +9,7 @@ acName = '1032';
 
 useRealRf = 0;
 useRealFilters = 0;
-useSubunits = 0;
+useSubunits = 1;
 
 % cellName = '033116Ac2'; % nice RF with edges and bars, but missing bars spikes and inhibitory temporal align
 % acName = '263';
@@ -26,13 +26,13 @@ plotGrid = @(row, col, numcols) ((row - 1) * numcols + col);
 calcDsi = @(angles, values) abs(sum(exp(sqrt(-1) * angles) .* values) / sum(values));
 
 
-plotSpatialGraphs = 1;
+plotSpatialGraphs = 0;
 plotStimulus = 0;
 plotSubunitCurrents = 0;
 plotOutputCurrents = 1;
 plotCellResponses = 1;
 plotOutputNonlinearity = 0;
-plotResultsByOptions = 0;
+plotResultsByOptions = 1;
 
 runInParallelPool = 1;
 

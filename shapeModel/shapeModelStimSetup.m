@@ -1,16 +1,16 @@
 
-% stim_mode = 'movingBar';
-% numAngles = 12;
-% stim_directions = linspace(0,360,numAngles+1);
-% stim_directions(end) = [];
-% % stim_directions = [210];
-% stim_numOptions = length(stim_directions);
-% 
-% stim_barSpeed = paramValues{paramSetIndex,col_barSpeed};
-% stim_barLength = 300;
-% stim_barWidth = 200;
-% stim_moveTime = sim_endTime + 1.0;
-% stim_intensity = 0.5;
+stim_mode = 'movingBar';
+numAngles = 12;
+stim_directions = linspace(0,360,numAngles+1);
+stim_directions(end) = [];
+% stim_directions = [210];
+stim_numOptions = length(stim_directions);
+
+stim_barSpeed = paramValues{paramSetIndex,col_barSpeed};
+stim_barLength = 300;
+stim_barWidth = 200;
+stim_moveTime = sim_endTime + 1.0;
+stim_intensity = 0.5;
 
 % SMS
 % stim_mode = 'flashedSpot';
@@ -19,17 +19,17 @@
 % stim_numOptions = length(stim_spotDiams);
 
 
-stim_mode = 'flashedSpot';
-stim_numOptions = 1;
-
-stim_spotDiam = 200;
-stim_spotDuration = 1;
-stim_spotStart = 0.5;
-stim_intensity = 0.5;
-stim_spotPosition = [0,0];
+% stim_mode = 'flashedSpot';
+% stim_numOptions = 1;
+% 
+% stim_spotDiam = 200;
+% stim_spotDuration = 1;
+% stim_spotStart = 0.5;
+% stim_intensity = 0.5;
+% stim_spotPosition = [0,0];
 
 % stim_mode = 'driftingTexture';
-% numAngles = 8;
+% numAngles = 9;
 % stim_directions = linspace(0,360,numAngles+1);
 % stim_directions(end) = [];
 % stim_numOptions = length(stim_directions);
@@ -45,7 +45,7 @@ stim_spotPosition = [0,0];
 
 stim_lightMatrix_byOption = {};
 
-parfor (optionIndex = 1:stim_numOptions)
+for (optionIndex = 1:stim_numOptions)
 
     %% Setup stimulus
     center = [0,0];
@@ -82,7 +82,7 @@ parfor (optionIndex = 1:stim_numOptions)
 
     elseif strcmp(stim_mode, 'movingBar')
 
-        stim_barDirection = stim_barDirections(optionIndex); % degrees
+        stim_barDirection = stim_directions(optionIndex); % degrees
 
 
         % make four corner points

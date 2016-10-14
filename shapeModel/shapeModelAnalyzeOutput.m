@@ -14,8 +14,9 @@ plot_timeLims = [0.0, sim_endTime];
 timeOffsetSim = -0.21;
 timeOffsetSpikes = -.35;
 ephysScale = 1;
-simScale = [1, 1] * 1000;
-combineScale = [2, 1, -.1]; % ex, in, spikes (don't get combined)
+simScale = [1, .5; 1, .5] * 1000; % scaling the sim relative to ephys
+combineScaleCurrents = [2, 2; 1, 1]; % voltages, ooi
+combineScaleSpikes = 1;
 % displayScale = [5,2.2];
 plotYLimsScale = 1;
 fitAnalysisLimits = [.2, 1.5];
@@ -35,11 +36,16 @@ for optionIndex = 1:stim_numOptions
     % Output scale
     sim_responseSubunitsCombinedScaled = sim_responseSubunitsCombinedByOption{optionIndex};
     for vi = 1:e_numVoltages
-        sim_responseSubunitsCombinedScaled(vi,:) = simScale(vi) * combineScale(vi) * sim_responseSubunitsCombinedScaled(vi,:);
+        for oi = 1:2
+            sim_responseSubunitsCombinedScaled(vi,oi,:) = simScale(vi, oi) * combineScaleCurrents(vi, oi) * sim_responseSubunitsCombinedScaled(vi,oi,:);
+        end
     end
     
     % Combine Ex and In
-    sim_responseCurrent = sum(sim_responseSubunitsCombinedScaled, 1);
+%     for oi = 1:2
+%         sim_responseCurrent_byPolarity[ = sum(sim_responseSubunitsCombinedScaled, 1);
+%     end
+    sim_responseCurrent = squeeze(sum(sum(sim_responseSubunitsCombinedScaled, 1), 2));
 %     out_valsByOptions(optionIndex, 1) = -1*sum(sim_responseCurrent(sim_responseCurrent < 0)) / sim_dims(1);
 
 
@@ -51,9 +57,14 @@ for optionIndex = 1:stim_numOptions
     sel = Tsim > plot_timeLims(1) & Tsim < plot_timeLims(2);
     Tsim = Tsim(sel);
 %         plot(Tsim(sel), sim_responseSubunitsCombinedScaled(:,sel))
-    outputSignals(end+[1:2],:) = sim_responseSubunitsCombinedScaled(:,sel);
-    outputLabels{end+1} = 'ex_s';
-    outputLabels{end+1} = 'in_s';
+    
+    labels = {'ex on','ex off'; 'in on','in off'};
+    for vi = 1:2
+        for oi = 1:2
+            outputSignals(end+1,:) = sim_responseSubunitsCombinedScaled(vi,oi,sel);
+            outputLabels{end+1} = sprintf('%s s',labels{vi,oi});
+        end
+    end
 
 %         if ~isempty(nonLinearFit)
 %             for vi = 1:e_numVoltages
@@ -69,6 +80,7 @@ for optionIndex = 1:stim_numOptions
     Esel = T > plot_timeLims(1) & T < plot_timeLims(2);
     simShift = timeOffsetSim / sim_timeStep;
     cell_responses = [];
+    
 %     for vi = 1:3 %3 %enables spikes
 %         mn = ephysScale * c_responses{vi, c_angles == ang}.mean;
 % 
@@ -115,7 +127,7 @@ for optionIndex = 1:stim_numOptions
     
     if plotCellResponses
         % then plot all the signals together
-        plotSelect = logical([1,1,1]);
+        plotSelect = logical([1,1,1,1,1]);
         plot(Tsim, outputSignals(plotSelect,:)');
         legend(outputLabels(plotSelect),'Location','Best');
         xlim(plot_timeLims);
@@ -198,7 +210,7 @@ if plotResultsByOptions
     ordering = [3];
     % ordering = 1;
     for ti = ordering
-        angles = deg2rad(stim_texDirections)';
+        angles = deg2rad(stim_directions)';
         values = [];
         for oi = 1:stim_numOptions
             signals = outputSignalsByOption{oi};

@@ -35,11 +35,18 @@ for (optionIndex = 1:stim_numOptions)
         
         %% Calculate illumination for each subunit
         for vi = 1:e_numVoltages
-            for si = 1:c_numSubunits(vi)
-                
-                lightIntegral = sum(sum(sim_light .* c_subunitRf{vi}(:,:,si))) / area;
-                s_lightSubunit{vi}(si,ti) = lightIntegral;
-                
+            for oi = 1:2
+                if oi == 1
+                    lightPolarity = 1;
+                else
+                    lightPolarity = -1;
+                end
+                for si = 1:c_numSubunits(vi)
+
+                    lightIntegral = sum(sum(sim_light .* c_subunitRf{vi,oi}(:,:,si))) / area;
+                    s_lightSubunit{vi,oi}(si,ti) = lightIntegral * lightPolarity;
+
+                end
             end
         end
     end
@@ -59,81 +66,82 @@ for (optionIndex = 1:stim_numOptions)
     s_responseSubunitScaledByRf = {};
     sim_responseSubunitsCombined = [];
     for vi = 1:e_numVoltages
-        
-        % loop through subunits
-        s_responseSubunit = [];
-        s_responseSubunitScaledByRf{vi} = [];
-        
-        for si = 1:c_numSubunits(vi)
-            
-            % linear convolution
-            temporalFiltered = conv(s_lightSubunit{vi}(si,:), c_filtersResampled{vi,1});
-            temporalFiltered = temporalFiltered(1:length(s_lightSubunit{vi}(si,:)));
-            
-            % nonlinear effects
-            %             sel = [];
-            if e_voltages(vi) < 0
-                sel = temporalFiltered > 0;
-                s = -1;
-            else
-                sel = temporalFiltered < 0;
-                s = 1;
+        for oi = 1:2
+
+            % loop through subunits
+            s_responseSubunit = [];
+            s_responseSubunitScaledByRf{vi,oi} = [];
+
+            for si = 1:c_numSubunits(vi,oi)
+
+                % linear convolution
+                temporalFiltered = conv(s_lightSubunit{vi,oi}(si,:), c_filtersResampled{vi,oi});
+                temporalFiltered = temporalFiltered(1:length(s_lightSubunit{vi,oi}(si,:)));
+
+                % nonlinear effects
+                %             sel = [];
+                if e_voltages(vi) < 0
+                    sel = temporalFiltered > 0;
+%                     s = -1;
+                else
+                    sel = temporalFiltered < 0;
+%                     s = 1;
+                end
+
+                % rectify and saturate (replace with a hill function)
+                rectified = temporalFiltered;
+                rectified(sel) = 0;
+
+                rectThresh = .005;
+                rectMult = 1;
+                %             saturThresh = .04;
+                sel = abs(rectified) > rectThresh;
+                nonlin = rectified;
+                nonlin(sel) = nonlin(sel) * rectMult;
+                %             nonlin(abs(nonlin) > saturThresh) = sign(nonlin(abs(nonlin) > saturThresh)) * saturThresh;
+
+                %             filterTimeConstant = 0.17;
+                %             filterLength = 0.4; %sec
+                %             tFilt = 0:sim_timeStep:filterLength;
+                %             filter_subunitTemporalDecay = exp(-tFilt/tau);
+                %             filter_subunitTemporalDecay = filter_subunitTemporalDecay ./ sum(filter_subunitTemporalDecay);
+                %             decayed = conv(nonlin, filter_subunitTemporalDecay, 'same');
+                %
+
+                s_responseSubunit(si,:) = nonlin(1:sim_dims(1));
+
+                warning('off','MATLAB:legend:IgnoringExtraEntries')
+
+                if plotSubunitCurrents
+                    % plot individual subunit inputs and outputs
+                    figure(103);
+                    %                 axes(axesSignalsBySubunit(((si - 1) * 2 + vi)))
+                    plot(normg(s_lightSubunit{vi,oi}(si,:)));
+                    hold on
+                    %             plot(normg(lightOnNess))
+                    plot(normg(c_filtersResampled{vi,oi}) - 0.5)
+                    %                 plot(normg(filter_subunitTemporalDecay));
+                    plot(normg(temporalFiltered));
+                    plot(normg(rectified));
+                    plot(normg(nonlin));
+                    %                 plot(normg(decayed));
+                    title(sprintf('subunit %d light convolved with filter v = %d on/off = %d', si, e_voltages(vi), oi))
+                    hold off
+                    legend('light','temporalFilter', 'filtered', 'rectified', 'nonlinear')
+                    drawnow
+                    pause
+                end
+
+
+                % Multiply subunit response by RF strength (connection subunit to RGC)
+
+                strength = s_subunitStrength{vi,oi}(si);
+                s_responseSubunitScaledByRf{vi,oi}(si,:) = strength * s_responseSubunit(si,:);
+
             end
-            
-            % rectify and saturate (replace with a hill function)
-            rectified = temporalFiltered;
-            rectified(sel) = 0;
-            
-            rectThresh = .005;
-            rectMult = 1;
-            %             saturThresh = .04;
-            sel = abs(rectified) > rectThresh;
-            nonlin = rectified;
-            nonlin(sel) = nonlin(sel) * rectMult;
-            %             nonlin(abs(nonlin) > saturThresh) = sign(nonlin(abs(nonlin) > saturThresh)) * saturThresh;
-            
-            %             filterTimeConstant = 0.17;
-            %             filterLength = 0.4; %sec
-            %             tFilt = 0:sim_timeStep:filterLength;
-            %             filter_subunitTemporalDecay = exp(-tFilt/tau);
-            %             filter_subunitTemporalDecay = filter_subunitTemporalDecay ./ sum(filter_subunitTemporalDecay);
-            %             decayed = conv(nonlin, filter_subunitTemporalDecay, 'same');
-            %
-            
-            s_responseSubunit(si,:) = nonlin(1:sim_dims(1));
-            
-            warning('off','MATLAB:legend:IgnoringExtraEntries')
-            
-            if plotSubunitCurrents
-                % plot individual subunit inputs and outputs
-                figure(103);
-                %                 axes(axesSignalsBySubunit(((si - 1) * 2 + vi)))
-                plot(normg(s_lightSubunit{vi}(si,:)));
-                hold on
-                %             plot(normg(lightOnNess))
-                plot(normg(c_filtersResampled{vi,1}) - 0.5)
-                %                 plot(normg(filter_subunitTemporalDecay));
-                plot(normg(temporalFiltered));
-                plot(normg(rectified));
-                plot(normg(nonlin));
-                %                 plot(normg(decayed));
-                title(sprintf('subunit %d light convolved with filter v = %d', si, e_voltages(vi)))
-                hold off
-                legend('light','temporalFilter', 'filtered', 'rectified', 'nonlinear')
-                drawnow
-                pause
-            end
-            
-            
-            % Multiply subunit response by RF strength (connection subunit to RGC)
-            
-            strength = s_subunitStrength{vi}(si);
-            s_responseSubunitScaledByRf{vi}(si,:) = strength * s_responseSubunit(si,:);
-            
+        % combine current across subunits for this voltage and polarity
+        sim_responseSubunitsCombined(vi,oi,:) = sum(s_responseSubunitScaledByRf{vi,oi}, 1);    
         end
-            
-        % combine current across subunits for this voltage
-        sim_responseSubunitsCombined(vi,:) = sum(s_responseSubunitScaledByRf{vi}, 1);
     end
     
     sim_responseSubunitsCombinedByOption{optionIndex} = sim_responseSubunitsCombined;
