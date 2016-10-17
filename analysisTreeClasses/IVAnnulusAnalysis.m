@@ -1,22 +1,22 @@
-classdef IVAnalysis < AnalysisTree
+classdef IVAnnulusAnalysis < AnalysisTree
     properties
         StartTime = 100;
         EndTime = 150;
     end
     
     methods
-        function obj = IVAnalysis(cellData, dataSetName, params)
+        function obj = IVAnnulusAnalysis(cellData, dataSetName, params)
             if nargin < 3
                 params.deviceName = 'Amplifier_Ch1';
             end
             
-            nameStr = [cellData.savedFileName ': ' dataSetName ': IVAnalysis'];
+            nameStr = [cellData.savedFileName ': ' dataSetName ': IVAnnulusAnalysis'];
             obj = obj.setName(nameStr);
             obj = obj.copyAnalysisParams(params);
             dataSet = cellData.savedDataSets(dataSetName);
             obj = obj.copyAnalysisParams(params);
             obj = obj.copyParamsFromSampleEpoch(cellData, dataSet, ...
-                {'RstarMean', 'RstarIntensity', 'spotSize', 'offsetX', 'offsetY'});
+                {'RstarMean', 'RstarIntensity', 'innerDiam', 'offsetX', 'offsetY'});
             obj = obj.buildCellTree(1, cellData, dataSet, {'holdSignal'}); %fix this for amp2holdSignal after protocol is fixed!
         end
         
@@ -52,36 +52,36 @@ classdef IVAnalysis < AnalysisTree
     end
     
     methods(Static)
-        %         function plotData(node, cellData)
-        %             rootData = node.get(1);
-        %             errorbar(rootData.holdSignal, rootData.respMean, rootData.respSEM);
-        %             xlabel('Hold signal (mV)');
-        %             ylabel('Peak current (pA)');
-        %         end
+%         function plotData(node, cellData)
+%             rootData = node.get(1);
+%             errorbar(rootData.holdSignal, rootData.respMean, rootData.respSEM);
+%             xlabel('Hold signal (mV)');
+%             ylabel('Peak current (pA)');
+%         end
         
-        function plot_holdSignalVsONSET_avgTracePeak(node, cellData)
-            rootData = node.get(1);
-            xvals = rootData.holdSignal;
-            yField = rootData.ONSET_avgTracePeak;
-            yvals = yField.value;
-            plot(xvals, yvals, 'bx-');
-            xlabel('holdSignal');
-            ylabel(['ONSET_avgTracePeak (' yField.units ')']);
-        end
+%         function plot_holdSignalVsONSET_avgTracePeak(node, cellData)
+%             rootData = node.get(1);
+%             xvals = rootData.holdSignal;
+%             yField = rootData.ONSET_avgTracePeak;
+%             yvals = yField.value;
+%             plot(xvals, yvals, 'bx-');
+%             xlabel('holdSignal');
+%             ylabel(['ONSET_avgTracePeak (' yField.units ')']);
+%         end
         
-        function plotMeanTraces(node, cellData)
-            rootData = node.get(1);
-            chInd = node.getchildren(1);
-            L = length(chInd);
-            ax = axes;
-            for i=1:L
-                hold(ax, 'on');
-                epochInd = node.get(chInd(i)).epochID;
-                cellData.plotMeanData(epochInd, true, [], rootData.deviceName, ax);
-            end
-            hold(ax, 'off');
-        end
-        
+%         function plotMeanTraces(node, cellData)
+%             rootData = node.get(1);
+%             chInd = node.getchildren(1);
+%             L = length(chInd);
+%             ax = axes;
+%             for i=1:L
+%                 hold(ax, 'on');
+%                 epochInd = node.get(chInd(i)).epochID;
+%                 cellData.plotMeanData(epochInd, true, [], rootData.deviceName, ax);
+%             end
+%             hold(ax, 'off');
+%         end
+%         
         function plot_holdSignalVsshortIntCurrent(node, cellData)
             rootData = node.get(1);
             xvals = rootData.holdSignal(2:end);

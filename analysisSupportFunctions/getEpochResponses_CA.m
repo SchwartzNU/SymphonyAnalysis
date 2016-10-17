@@ -157,6 +157,10 @@ for i=1:L
         outputStruct.OFFSET_ISI_full.type = 'combinedAcrossEpochs';
         outputStruct.OFFSET_ISI_full.value = [];
         
+        outputStruct.spikeCount_100ms_around_PSTH_peak.units = 'spikes';
+        outputStruct.spikeCount_100ms_around_PSTH_peak.type = 'byEpoch';
+        outputStruct.spikeCount_100ms_around_PSTH_peak.value = zeros(1,L);
+        
         outputStruct.spikeCount_stimTo100ms.units = 'spikes';
         outputStruct.spikeCount_stimTo100ms.type = 'byEpoch';
         outputStruct.spikeCount_stimTo100ms.value = zeros(1,L);
@@ -773,6 +777,21 @@ if ONSETresponseEndTime_max > ONSETresponseStartTime_min
         outputStruct.ONSET_FRhalfMaxSusLatency.value = min(xvals_stimToEnd(getSustainedThresCross(psth_stimToEnd))); % Adam 9/22/15 %2/14/16 changed "PSTH_onset" to "psth_stimToEnd"
         outputStruct.ONSET_FRrange.value = outputStruct.ONSET_FRmax.value - min(psth_onset(maxLoc:end)); %range from max to end
         outputStruct.ONSET_FRrangeFrac.value = outputStruct.ONSET_FRrange.value / outputStruct.ONSET_FRmax.value;
+    end
+    if outputStruct.ONSET_FRmaxLatency.value > 0
+        minTime = xvals_onset(maxLoc) - 0.05;
+        maxTime = xvals_onset(maxLoc) + 0.05;
+        L = length(epochInd);
+        for i=1:L
+            %i
+            curEpoch = cellData.epochs(epochInd(i));
+            
+            %'MovingBget spike times (in units of seconds from startTime
+            spikeTimes = curEpoch.getSpikes(ip.Results.DeviceName);
+            spikeTimes = spikeTimes - stimStart;
+            spikeTimes = spikeTimes / sampleRate;
+            outputStruct.spikeCount_100ms_around_PSTH_peak.value(i) = length(spikeTimes(spikeTimes>=minTime & spikeTimes<maxTime));
+        end
     end
     
 end
