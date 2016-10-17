@@ -207,17 +207,17 @@ if plotResultsByOptions
 %     nonlinOutput = polyfit(out_valsByOptions(:,1), out_valsByOptions(:,3),1);
 %     out_valsByOptions(:,4) = polyval(nonlinOutput, out_valsByOptions(:,1));
 
-    ordering = [3];
+    ordering = [5];
     % ordering = 1;
     for ti = ordering
         angles = deg2rad(stim_directions)';
         values = [];
         for oi = 1:stim_numOptions
             signals = outputSignalsByOption{oi};
-            values(oi,1) = -sum(signals(ti,signals(ti,:) < 0)) * sim_timeStep;
+            values(oi,1) = -sum(signals(ti, signals(ti,:) < 0)) * sim_timeStep;
         end
         
-        outputStruct.(sprintf('byang_%s',outputLabels{ti})) = values;
+%         outputStruct.(sprintf('byang_%s',outputLabels{ti})) = values;
         
         a = [angles; angles(1)];
         v = [values; values(1)];
