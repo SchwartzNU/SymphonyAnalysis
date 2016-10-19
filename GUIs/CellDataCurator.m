@@ -587,7 +587,13 @@ classdef CellDataCurator < handle
         end
         
         function saveDataSetFunc(obj)
-           saveName = inputdlg('Enter data set name'); 
+            
+           displayName = obj.cellData.epochs(obj.dataSet(1)).attributes('displayName');
+           displayName = strrep(displayName, ' ', '');
+           saveName = inputdlg('Enter data set name','',1,{displayName});
+           if isempty(saveName)
+               return
+           end
            saveName = saveName{1}; %inputdlg returns cell instead of string
            obj.cellData.savedDataSets(saveName) = obj.dataSet;
            obj.epochsInDataSets = unique([obj.epochsInDataSets obj.dataSet]); %todo - look for double-counted epochs?
