@@ -919,12 +919,12 @@ end
         % set axis limits
         axis(largestDistanceOffset * [-1 1 -1 1])
         
-%         set(gca, 'XTickMode', 'auto', 'XTickLabelMode', 'auto')
-%         set(gca, 'YTickMode', 'auto', 'YTickLabelMode', 'auto')
+        set(gca, 'XTickMode', 'auto', 'XTickLabelMode', 'auto')
+        set(gca, 'YTickMode', 'auto', 'YTickLabelMode', 'auto')
         
-        % plot with no axis labels
-        set(gca, 'XTick', [], 'XColor', 'none')
-        set(gca, 'YTick', [], 'YColor', 'none')
+%         % plot with no axis labels
+%         set(gca, 'XTick', [], 'XColor', 'none')
+%         set(gca, 'YTick', [], 'YColor', 'none')
     end
 
 end
