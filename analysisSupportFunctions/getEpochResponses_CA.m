@@ -371,11 +371,11 @@ for i=1:L
         outputStruct.ONSET_FRhalfMaxLatency.type = 'singleValue';
         outputStruct.ONSET_FRhalfMaxLatency.value = NaN;
         
-        %%%%Adam 9/22/15    
-        outputStruct.ONSET_FRhalfMaxSusLatency.units = 's';
-        outputStruct.ONSET_FRhalfMaxSusLatency.type = 'singleValue';
-        outputStruct.ONSET_FRhalfMaxSusLatency.value = NaN;
-        %%%%
+%         %%%%Adam 9/22/15    
+%         outputStruct.ONSET_FRhalfMaxSusLatency.units = 's';
+%         outputStruct.ONSET_FRhalfMaxSusLatency.type = 'singleValue';
+%         outputStruct.ONSET_FRhalfMaxSusLatency.value = NaN;
+%         %%%%
         
         outputStruct.ONSET_FRrampLatency.units = 's';
         outputStruct.ONSET_FRrampLatency.type = 'singleValue';
@@ -774,7 +774,7 @@ if ONSETresponseEndTime_max > ONSETresponseStartTime_min
     FRthres = outputStruct.ONSET_FRmax.value / 2; %half max
     if FRthres>0
         outputStruct.ONSET_FRhalfMaxLatency.value = min(xvals_stimToEnd(getThresCross(psth_stimToEnd, FRthres, 1)));
-        outputStruct.ONSET_FRhalfMaxSusLatency.value = min(xvals_stimToEnd(getSustainedThresCross(psth_stimToEnd))); % Adam 9/22/15 %2/14/16 changed "PSTH_onset" to "psth_stimToEnd"
+%        outputStruct.ONSET_FRhalfMaxSusLatency.value = min(xvals_stimToEnd(getSustainedThresCross(psth_onset))); % Adam 9/22/15 %2/14/16 changed "PSTH_onset" to "psth_stimToEnd"
         outputStruct.ONSET_FRrange.value = outputStruct.ONSET_FRmax.value - min(psth_onset(maxLoc:end)); %range from max to end
         outputStruct.ONSET_FRrangeFrac.value = outputStruct.ONSET_FRrange.value / outputStruct.ONSET_FRmax.value;
     end
