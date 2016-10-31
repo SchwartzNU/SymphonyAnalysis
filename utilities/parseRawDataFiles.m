@@ -28,13 +28,14 @@ for i=1:length(D_raw)
         end
         if writeOK
             tic;
-            disp(['parsing ' curCellName]);
+            disp(['parsing file' curCellName]);
             fname = [rawDataDir curCellName '.h5'];
 
             if h5readatt(fname, '/', 'version') == 2
+                disp('Parsing cells in Symphony 2 file')
                 cells = symphony2Mapper(fname);
                 arrayfun(@(cellData) save([cellDataDir cellData.savedFileName], 'cellData'), cells);
-                disp(['Elapsed time: ' num2str(toc) ' seconds']);   
+                disp(['Elapsed time: ' num2str(toc) ' seconds']);
             else
                 cellData = CellData(fname);
                 save([cellDataDir curCellName], 'cellData');
