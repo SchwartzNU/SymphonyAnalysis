@@ -146,7 +146,7 @@ classdef SpikeDetectorGUI < handle
                     if strcmp(obj.mode, 'Simple threshold')
                         spikeTimes = getThresCross(data,obj.threshold,sign(obj.threshold));
                     elseif strcmp(obj.cellData.epochs(obj.epochInd(obj.curEpochInd)).get('ampMode'), 'Cell attached')
-                        spikeResults = SpikeDetector_simple(data, 1./obj.sampleRate, obj.threshold);
+                        spikeResults = SpikeDetector_simple(data, 1./obj.sampleRate, abs(obj.threshold));
                         spikeTimes = spikeResults.sp;
                     else
                         spikeResults = SpikeDetector_simple_Iclamp(data, 1./obj.sampleRate, obj.threshold);

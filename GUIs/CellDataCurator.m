@@ -317,16 +317,17 @@ classdef CellDataCurator < handle
             if isempty(obj.dataSet)
                 return;
             end
-            epochTimes = obj.cellData.getEpochVals('epochStartTime', obj.dataSet);
+%             epochTimes = obj.cellData.getEpochVals('epochStartTime', obj.dataSet);
+            epochNums = obj.cellData.getEpochVals('epochNum', obj.dataSet);
             displayParam = obj.allKeys{get(obj.handles.diaryYMenu,'Value')};
             displayVals = obj.cellData.getEpochVals(displayParam, obj.dataSet);
             if isnumeric(displayVals)   
                 hold(obj.handles.diaryPlotAxes, 'on');
                 inDataSetInd = ismember(obj.dataSet, obj.epochsInDataSets);                
-                obj.handles.diaryPlotLine = plot(obj.handles.diaryPlotAxes, epochTimes(~inDataSetInd), displayVals(~inDataSetInd), 'bo');
-                obj.handles.diaryPlotLine = plot(obj.handles.diaryPlotAxes, epochTimes(inDataSetInd), displayVals(inDataSetInd), 'go', 'MarkerFaceColor', 'g');
+                obj.handles.diaryPlotLine = plot(obj.handles.diaryPlotAxes, epochNums(~inDataSetInd), displayVals(~inDataSetInd), 'bo');
+                obj.handles.diaryPlotLine = plot(obj.handles.diaryPlotAxes, epochNums(inDataSetInd), displayVals(inDataSetInd), 'go', 'MarkerFaceColor', 'g');
                 
-                plot(obj.handles.diaryPlotAxes, epochTimes(obj.selectedEpochInd), displayVals(obj.selectedEpochInd), 'bo', ...
+                plot(obj.handles.diaryPlotAxes, epochNums(obj.selectedEpochInd), displayVals(obj.selectedEpochInd), 'bo', ...
                     'MarkerFaceColor', 'r');
                 ylabel(obj.handles.diaryPlotAxes, displayParam);
             else
@@ -337,10 +338,10 @@ classdef CellDataCurator < handle
                 end
                 hold(obj.handles.diaryPlotAxes, 'on');
                 inDataSetInd = ismember(obj.dataSet, obj.epochsInDataSets);                
-                obj.handles.diaryPlotLine = plot(obj.handles.diaryPlotAxes, epochTimes(~inDataSetInd), valInd(~inDataSetInd), 'bo');
-                obj.handles.diaryPlotLine = plot(obj.handles.diaryPlotAxes, epochTimes(inDataSetInd), valInd(inDataSetInd), 'go', 'MarkerFaceColor', 'g');
+                obj.handles.diaryPlotLine = plot(obj.handles.diaryPlotAxes, epochNums(~inDataSetInd), valInd(~inDataSetInd), 'bo');
+                obj.handles.diaryPlotLine = plot(obj.handles.diaryPlotAxes, epochNums(inDataSetInd), valInd(inDataSetInd), 'go', 'MarkerFaceColor', 'g');
 
-                plot(obj.handles.diaryPlotAxes, epochTimes(obj.selectedEpochInd), valInd(obj.selectedEpochInd), 'bo', ...
+                plot(obj.handles.diaryPlotAxes, epochNums(obj.selectedEpochInd), valInd(obj.selectedEpochInd), 'bo', ...
                     'MarkerFaceColor', 'r');
                 set(obj.handles.diaryPlotAxes, 'Ytick', unique(valInd), ...
                     'YtickLabel', uniqueVals);
@@ -348,7 +349,7 @@ classdef CellDataCurator < handle
                 set(obj.handles.diaryPlotAxes, 'Ylim', [0 max(valInd)+1]);
                 %text labels here
             end
-            xlabel('Time (s)');
+            xlabel('Epoch Number');
             hold(obj.handles.diaryPlotAxes, 'off');
             
             
@@ -617,10 +618,11 @@ classdef CellDataCurator < handle
         end
         
         function diaryPlotClick(obj)
-            epochTimes = obj.cellData.getEpochVals('epochStartTime', obj.dataSet);
+%             epochTimes = obj.cellData.getEpochVals('epochStartTime', obj.dataSet);
+            epochNums = obj.cellData.getEpochVals('epochNum', obj.dataSet);
             p = get(obj.handles.diaryPlotAxes,'CurrentPoint');
             xval = p(1,1);
-            [~, closestInd] = min(abs(xval - epochTimes));
+            [~, closestInd] = min(abs(xval - epochNums));
             obj.selectedEpochInd = closestInd;
             obj.updateDiaryPlot();
             obj.updateDataPlot();

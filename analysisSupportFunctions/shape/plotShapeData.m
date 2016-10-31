@@ -601,6 +601,11 @@ elseif strcmp(mode, 'spatialOffset')
     v_in = max(obs(:,4));
     v_ex = min(obs(:,4));
     
+    if v_in == v_ex
+        disp('Only one voltage in data set');
+        return
+    end
+    
     r_ex = [];
     r_in = [];
 
