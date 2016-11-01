@@ -178,8 +178,8 @@ classdef ShapeData < handle
             
             % rotate positions using rig angle offset
             if isnan(obj.rigOffsetAngle)
-                obj.rigOffsetAngle = 0;
-                disp('AutoCenter epoch is missing angle offset');
+                obj.rigOffsetAngle = 180;
+                disp('AutoCenter epoch is missing angle offset, using default 180 for rig A');
             end
 
             theta = -1 * obj.rigOffsetAngle; % not sure if this should be positive or negative... test to confirm
