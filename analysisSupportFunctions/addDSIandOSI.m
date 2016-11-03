@@ -23,6 +23,7 @@ for i=1:length(fnames)
             OSI = abs(ROrtn/R);
             DSang = angle(RDirn/R)*180/pi;
             OSang = angle(ROrtn/R)*90/pi;
+            OSang = mod(OSang,180);
             
             if DSang < 0
                 DSang = 360 + DSang;

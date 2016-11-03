@@ -138,7 +138,7 @@ classdef MovingBarAnalysis < AnalysisTree
             hold off;
         end
         
-        function plot0_barAngleVsspikeCount_stimToEnd(node, cellData)
+        function plot_barAngleVsspikeCount_stimToEnd(node, cellData)
             rootData = node.get(1);
             xvals = rootData.barAngle;
             yField = rootData.spikeCount_stimToEnd;
