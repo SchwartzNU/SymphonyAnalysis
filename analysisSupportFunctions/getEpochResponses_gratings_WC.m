@@ -89,6 +89,10 @@ for i=1:L
         outputStruct.cycleAvg_y.type = 'combinedAcrossEpochs';
         outputStruct.cycleAvg_y.value = []; 
         
+        outputStruct.F0amplitude.units = 'pA';
+        outputStruct.F0amplitude.type = 'singleValue';
+        outputStruct.F0amplitude.value = NaN;
+        
         outputStruct.F1amplitude.units = 'pA/s^2'; %?
         outputStruct.F1amplitude.type = 'singleValue';
         outputStruct.F1amplitude.value = NaN;
@@ -130,7 +134,8 @@ outputStruct.cycleAvg_x.value = xvals(1:length(avgCycle));
 
 % Do the FFT.
 ft = fft(avgCycle);
-% Pull out the F1 and F2 amplitudes.
+% Pull out the F0, F1 and F2 amplitudes.
+outputStruct.F0amplitude.value = abs(ft(1))/length(ft);
 outputStruct.F1amplitude.value = abs(ft(2))/length(ft)*2;
 outputStruct.F2amplitude.value = abs(ft(3))/length(ft)*2;
 outputStruct.F2overF1.value = abs(ft(3))/abs(ft(2));

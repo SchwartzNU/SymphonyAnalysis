@@ -47,7 +47,7 @@ classdef ShapeData < handle
                 obj.presentationId = epoch.get('presentationId');
                 sdc = epoch.get('shapeDataColumns');
                 sdm = epoch.get('shapeDataMatrix');
-                if ~(isa(sdm,'System.String') || isa(sdm,'char'))
+                if ~(isa(sdm,'System.String') || isa(sdm,'char') || isa(sdm,'double'))
                     sdm = epoch.get('shapeData');
                 end
                 em = epoch.get('epochMode');
@@ -127,10 +127,16 @@ classdef ShapeData < handle
                 end
             
                 num_cols = length(obj.shapeDataColumns);
-                obj.shapeDataMatrix = reshape(str2num(char(sdm)), [], num_cols); %#ok<*ST2NM>
-%                 disp(obj.shapeDataMatrix)
+                
+                if isa(sdm,'double')
+                    sdmNumbers = sdm; % symphony 2 has numerical storage
+                else
+                    sdmNumbers = str2num(char(sdm));
+                end
+                obj.shapeDataMatrix = reshape(sdmNumbers, [], num_cols); %#ok<*ST2NM>
             end
             
+
             obj.totalNumSpots = size(obj.shapeDataMatrix,1);
             
             % add default values for columns that we don't have in the epoch
@@ -172,13 +178,13 @@ classdef ShapeData < handle
             
             % rotate positions using rig angle offset
             if isnan(obj.rigOffsetAngle)
-                obj.rigOffsetAngle = 0;
-                disp('AutoCenter epoch is missing angle offset');
+                obj.rigOffsetAngle = 180;
+                disp('AutoCenter epoch is missing angle offset, using default 180 for rig A');
             end
 
             theta = -1 * obj.rigOffsetAngle; % not sure if this should be positive or negative... test to confirm
             R = [cosd(theta) -sind(theta); sind(theta) cosd(theta)];
-            for p = 1:size(positions, 1);
+            for p = 1:size(positions, 1)
                 positions(p,:) = (R * positions(p,:)')';
             end
             obj.shapeDataMatrix(:, [obj.shapeDataColumns('X'), obj.shapeDataColumns('Y')]) = positions;

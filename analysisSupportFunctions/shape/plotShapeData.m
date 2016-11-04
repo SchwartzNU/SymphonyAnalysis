@@ -5,10 +5,6 @@ if ~isfield(ad,'observations')
     return 
 end
 obs = ad.observations;
-if isempty(obs)
-    disp('empty observations')
-    return
-end
 
 
 if strcmp(mode, 'printParameters')
@@ -30,6 +26,11 @@ if strcmp(mode, 'printParameters')
     
 elseif strncmp(mode, 'plotSpatial', 11)
 % elseif strcmp(mode, 'plotSpatial_tHalfMax')
+
+    if isempty(obs)
+        disp('empty observations')
+        return
+    end
 
     if strfind(mode, 'mean')
         mode_col = 5;
@@ -82,11 +83,12 @@ elseif strncmp(mode, 'plotSpatial', 11)
             axes(ha(a));
 
             if posIndex >= 3
-                plotSpatial(goodPositions, vals, sprintf('%s at V = %d mV, intensity = %f', smode, voltage, intensity), 1, sign(voltage));
+                gfit = plotSpatial(goodPositions, vals, sprintf('%s at V = %d mV, intensity = %f', smode, voltage, intensity), 1, sign(voltage));
     %             caxis([0, max(vals)]);
     %             colormap(flipud(colormap))
             end
-            
+                disp(gfit.keys)
+                disp(cell2mat(gfit.values))
             data(vi, ii, 1:2) = {goodPositions, vals};
         end
     end
@@ -599,6 +601,11 @@ elseif strcmp(mode, 'spatialOffset')
     v_in = max(obs(:,4));
     v_ex = min(obs(:,4));
     
+    if v_in == v_ex
+        disp('Only one voltage in data set');
+        return
+    end
+    
     r_ex = [];
     r_in = [];
 
@@ -670,6 +677,10 @@ elseif strcmp(mode, 'spatialOffset')
     title('Gaussian 2\sigma Fits Overlaid')
     colorbar
     linkaxes(ha)
+    
+    disp(g_ex.keys)
+    disp(cell2mat(g_ex.values))
+    disp(cell2mat(g_in.values))
     
 elseif strcmp(mode, 'spatialDiagnostics')
     obs = ad.observations;
@@ -894,6 +905,7 @@ end
 %             hi = 20;%round(length(values) / 2);
 %             positions(hi,:)
 %             values(hi) = 1;
+            fitValues(fitValues < 0) = 0; % Interesting, maybe an improvement for fitting WC results
             gfit = fit2DGaussian(positions, fitValues);
             fprintf('gaussian fit center: %d um, %d um\n', round(gfit('centerX')), round(gfit('centerY')))
             v = fitValues - min(fitValues);
@@ -912,12 +924,12 @@ end
         % set axis limits
         axis(largestDistanceOffset * [-1 1 -1 1])
         
-%         set(gca, 'XTickMode', 'auto', 'XTickLabelMode', 'auto')
-%         set(gca, 'YTickMode', 'auto', 'YTickLabelMode', 'auto')
+        set(gca, 'XTickMode', 'auto', 'XTickLabelMode', 'auto')
+        set(gca, 'YTickMode', 'auto', 'YTickLabelMode', 'auto')
         
-        % plot with no axis labels
-        set(gca, 'XTick', [], 'XColor', 'none')
-        set(gca, 'YTick', [], 'YColor', 'none')
+%         % plot with no axis labels
+%         set(gca, 'XTick', [], 'XColor', 'none')
+%         set(gca, 'YTick', [], 'YColor', 'none')
     end
 
 end

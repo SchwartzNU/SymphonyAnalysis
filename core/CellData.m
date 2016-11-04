@@ -135,7 +135,7 @@ classdef CellData < handle
             if nargin < 3
                 excluded = '';
             end
-            excluded = {excluded, 'numberOfAverages', 'epochStartTime', 'epochNum', 'identifier'};
+            excluded = {excluded, 'numberOfAverages', 'epochStartTime', 'identifier'};
             allKeys = obj.getEpochKeysetUnion(epochInd);
             L = length(allKeys);
             params = {};

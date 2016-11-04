@@ -86,6 +86,8 @@ function cell = getCellData(fname, cellLabel, h5Epochs)
         savedFileName = file;
     end
     cell.savedFileName = savedFileName;
+    
+    fprintf('Extracted %s\n', savedFileName)
 end
 
 function [id, name, path] = getProtocolId(epochPath)

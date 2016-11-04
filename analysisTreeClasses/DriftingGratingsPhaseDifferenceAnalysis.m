@@ -55,6 +55,7 @@ classdef DriftingGratingsPhaseDifferenceAnalysis < AnalysisTree
             end
             
             diffVals=[];
+            F1amplitude=[];
             k=1;
             combinations=(posCount-1)*(negCount-1);
             m=zeros(1,combinations);
@@ -68,6 +69,13 @@ classdef DriftingGratingsPhaseDifferenceAnalysis < AnalysisTree
                     m(j)=i;
                     n(j)=j;
                 end
+                
+            end
+            
+            for i=1:size(diffVals,1)
+                
+                ft=fft(diffVals(i,:));
+                F1amplitude(i,:)=abs(ft(2))/length(ft)*2;
                 
             end
             
