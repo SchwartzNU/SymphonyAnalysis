@@ -93,7 +93,7 @@ classdef RadonRFAnalysis < AnalysisTree
                 radonMat = zeros(rootData.Nangles, rootData.Npositions);
                 chInd = obj.getchildren(1); %angle nodes
                 angles = zeros(1, rootData.Nangles);
-                for i=1:length(chInd);
+                for i=1:length(chInd)
                     curData = obj.get(chInd(i));
                     angles(i) = curData.splitValue;
                     radonMat(i,:) = getRespVectors(curData, {radonFields{f}});

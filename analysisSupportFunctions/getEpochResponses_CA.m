@@ -177,6 +177,10 @@ for i=1:L
         outputStruct.spikeCount_stimAfter200ms.type = 'byEpoch';
         outputStruct.spikeCount_stimAfter200ms.value = zeros(1,L);
         
+        outputStruct.spikeCount_stimAfter500ms.units = 'spikes';
+        outputStruct.spikeCount_stimAfter500ms.type = 'byEpoch';
+        outputStruct.spikeCount_stimAfter500ms.value = zeros(1,L);        
+        
         outputStruct.spikeCount_stimToEnd.units = 'spikes';
         outputStruct.spikeCount_stimToEnd.type = 'byEpoch';
         outputStruct.spikeCount_stimToEnd.value = zeros(1,L);
@@ -501,6 +505,8 @@ for i=1:L
     outputStruct.spikeCount_stimAfter100ms.value(i) = spikeCount;
     spikeCount = length(find(spikeTimes >= intervalStart + 0.2));
     outputStruct.spikeCount_stimAfter200ms.value(i) = spikeCount;
+    spikeCount = length(find(spikeTimes >= intervalStart + 0.5));
+    outputStruct.spikeCount_stimAfter500ms.value(i) = spikeCount;    
     
     %count spikes in 400 ms after onset and offset
     if responseIntervalLen >= 0.4

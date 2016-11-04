@@ -537,6 +537,7 @@ classdef TreeBrowserGUI < handle
             [fname, pathname] = uiputfile([ANALYSIS_FOLDER filesep 'analysisTrees' filesep '*.mat'], 'Save analysisTree');
             analysisTree = obj.analysisTree;
             save(fullfile(pathname, fname), 'analysisTree');
+            disp(['Saved analysis tree as ' fullfile(pathname, fname)]);
         end
         
         function addChildren(obj, nodeInd, uiTreeNode)
