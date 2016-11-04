@@ -47,8 +47,11 @@ for nodeInd=1:numAnalysisClassNodes
             XparamValues = curAnalysisNode.barAngle;
         case 'SpotsMultiSizeAnalysis'
             XparamValues = curAnalysisNode.spotSize;
+        case 'DriftingGratingsAnalysis'
+            XparamValues = curAnalysisNode.gratingAngle;
+        case 'DriftingTextureAnalysis'
+            XparamValues = curAnalysisNode.textureAngle;              
     end;
-    
 
     for paramInd = 1:numParam
         paramIsStruct = 0;

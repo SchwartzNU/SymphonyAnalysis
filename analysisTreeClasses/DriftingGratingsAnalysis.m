@@ -24,7 +24,8 @@ classdef DriftingGratingsAnalysis < AnalysisTree
             obj = obj.copyAnalysisParams(params);
             obj = obj.copyParamsFromSampleEpoch(cellData, dataSet, ...
                 {'RstarMean', 'RstarIntensity', params.ampModeParam, params.holdSignalParam, 'gratingProfile', 'contrast', 'offsetX', 'offsetY'});
-            obj = obj.buildCellTree(1, cellData, dataSet, {'contrast','temporalFreq', 'spatialFreq','gratingAngle'});
+%             obj = obj.buildCellTree(1, cellData, dataSet, {'contrast','temporalFreq', 'spatialFreq','gratingAngle'});
+            obj = obj.buildCellTree(1, cellData, dataSet, {'gratingAngle'});
         end
         
         function obj = doAnalysis(obj, cellData)
