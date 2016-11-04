@@ -13,6 +13,9 @@ for i=1:L
     whiteSpace = 5 + maxLen - keyLen(i);    
     val = M(allKeys{i});
     val = reshape(val, 1, []);
+    if iscellstr(val)
+       val = [val{:}];
+    end
     disp([allKeys{i} ':' repmat(' ', 1, whiteSpace) num2str(val)]);
 end
 disp(sprintf('\n'));
