@@ -72,7 +72,7 @@ classdef DriftingGratingsAnalysis < AnalysisTree
             
             %OSI, OSang
             rootData = obj.get(1);
-            %rootData = addDSIandOSI(rootData, 'gratingAngle');
+            rootData = addDSIandOSI(rootData, 'gratingAngle');
             %rootData.stimParameterList = {'gratingAngle'};
             %rootData.byEpochParamList = byEpochParamList;
             %rootData.singleValParamList = singleValParamList;
