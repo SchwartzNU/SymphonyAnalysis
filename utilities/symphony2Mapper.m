@@ -17,13 +17,16 @@ function cells = symphony2Mapper(fname)
 
     info = h5info(fname);
     epochsByCellMap = getEpochsByCellLabel(fname, info.Groups(1).Groups(2).Groups);
+    sourceTree = buildSourceTree(info.Groups(1).Groups(5).Links.Value{:}, fname);
     numberOfCells = numel(epochsByCellMap.keys);
 
     cells = CellData.empty(numberOfCells, 0);
+    labels = epochsByCellMap.keys;
+
     for i = 1 : numberOfCells
-        labels = epochsByCellMap.keys;
         h5epochs =  epochsByCellMap(labels{i});
         cells(i) = getCellData(fname, labels{i}, h5epochs);
+        cells(i).attributes = getSourceAttributes(sourceTree, labels{i}, cells(i).attributes);
     end
 end
 
@@ -163,10 +166,56 @@ function map = buildAttributes(h5group, fname, map)
     end
 end
 
+function sourceTree = buildSourceTree(sourceLink, fname, sourceTree, level)
+    
+    if nargin < 3
+        sourceTree = tree();
+        level = 0;
+    end
+    sourceGroup = h5info(fname, sourceLink);
+    
+    label = h5readatt(fname, sourceGroup.Name, 'label');
+    map = containers.Map();
+    map('label') = label;
+    
+    sourceProperties = [sourceGroup.Name '/properties'];
+    map = buildAttributes(sourceProperties, fname, map);
+        
+    sourceTree = sourceTree.addnode(level, map);   
+    level = level + 1;
+    childSource = h5info(fname, [sourceGroup.Name '/sources']);
+    
+    for i = 1 : numel(childSource.Groups)
+        sourceTree = buildSourceTree(childSource.Groups(i).Name, fname, sourceTree, level);
+    end
+end
+
+function map = getSourceAttributes(sourceTree, label, map)
+
+    id = find(sourceTree.treefun(@(node) strcmp(node('label'), label)));
+    
+    while id > 0
+        currentMap = sourceTree.get(id);
+        keys = currentMap.keys;
+        for i = 1 : numel(keys)
+            k = keys{i};
+            map = addToMap(map, k, currentMap(k));
+        end
+        id = sourceTree.getparent(id);
+    end
+end
+
 function map  = addToMap(map, key, value)
 
     if isKey(map, key)
-        map(key) = [map(key); value];
+        old = map(key);
+        
+        if ischar(value)
+            value = cellstr(value);
+            old = cellstr(old);
+        end
+        
+        map(key) = [old; value];
     else
         map(key) = value;
     end
