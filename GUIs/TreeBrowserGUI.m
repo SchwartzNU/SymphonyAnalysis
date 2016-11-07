@@ -1063,6 +1063,7 @@ classdef TreeBrowserGUI < handle
                 assignin('base', 'timeAxis_spikes', timeAxis_spikes);
                 assignin('base', 'timeAxis_PSTH', timeAxis_PSTH);
                 assignin('base', 'spikeTimes', spikeTimes);
+                disp('Set variables: PSTH, timeAxis_spikes, timeAxis_PSTH, spikeTimes');
             else
                 [meanData, timeAxis] = obj.curCellData.getMeanData(nodeData.epochID, device);
                 L = length(nodeData.epochID);
@@ -1073,6 +1074,7 @@ classdef TreeBrowserGUI < handle
                 assignin('base', 'meanData', meanData);
                 assignin('base', 'timeAxis', timeAxis);
                 assignin('base', 'dataMatrix', dataMatrix);
+                disp('Set variables: meanData, timeAxis, dataMatrix');
             end
         end
         
@@ -1081,6 +1083,7 @@ classdef TreeBrowserGUI < handle
             curNodeIndex = get(selectedNodes(1), 'Value');
             nodeData = obj.analysisTree.get(curNodeIndex);
             assignin('base', 'nodeData', nodeData);
+            disp('Set variable: nodeData');
         end
         
         function keyHandler(obj, evt, curNode, cellData, device, epochIndex) %takes control of the epochIndex

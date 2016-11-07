@@ -812,7 +812,10 @@ classdef CellDataCurator < handle
             if ind==1
                 warndlg('You must select a data set');
             else
-                saveName = inputdlg('Enter new data set name'); 
+                saveName = inputdlg('Enter new data set name', 'New name', 1, {dataSetNames{ind}});
+                if isempty(saveName)
+                    return
+                end
                 saveName = saveName{1}; %inputdlg returns cell instead of string
                 remove(obj.cellData.savedDataSets, dataSetNames{ind});
                 obj.cellData.savedDataSets(saveName) = obj.dataSet;

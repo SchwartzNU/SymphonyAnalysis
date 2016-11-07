@@ -41,7 +41,7 @@ for nodeInd=1:numAnalysisClassNodes
     dataSetNames{nodeInd} = curAnalysisNode.name;
     leafInd = analysisTree.getchildren(analysisClassInd(nodeInd));   %Where responses are stored.
     %numLeafs = length(leafInd);   %ASSUMING =1
-    curLeaf = analysisTree.get(leafInd)
+    curLeaf = analysisTree.get(leafInd);
     switch analysisClass
         case {'MovingBarAnalysis', 'BarsMultiAngleAnalysis'}
             XparamValues = curAnalysisNode.barAngle;
