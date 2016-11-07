@@ -23,7 +23,6 @@ for i=1:length(fnames)
             OSI = abs(ROrtn/R);
             DSang = angle(RDirn/R)*180/pi;
             OSang = angle(ROrtn/R)*90/pi;
-            OSang = mod(OSang,180);
             
             if DSang < 0
                 DSang = 360 + DSang;
@@ -32,6 +31,8 @@ for i=1:length(fnames)
             if OSang < 0
                 OSang = 360 + OSang;
             end
+            
+            OSang = mod(OSang,180); %OSangles should be between [0,180]
             
             rootData.([curField '_DSI']) = DSI;
             rootData.([curField '_DSang']) = DSang;
