@@ -52,8 +52,11 @@ classdef LabDataGUI < handle
             if nargin == 0
                 folder_name = '';
             end
-            while isempty(folder_name)
+            if isempty(folder_name)
                 folder_name = uigetdir([ANALYSIS_FOLDER 'Projects/'],'Choose project folder');
+            end
+            if folder_name == 0
+                return
             end
             obj.projFolder = [folder_name filesep];
             folderParts = strsplit(folder_name, filesep);
