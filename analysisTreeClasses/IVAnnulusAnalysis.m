@@ -154,23 +154,11 @@ classdef IVAnnulusAnalysis < AnalysisTree
             %errs = yField.SEM(2:end);
             yvals = yField.mean_c;
             errs = yField.SEM;
-=======
-            xvals = rootData.holdSignal(2:end);
-            yField = rootData.shortInt200_peak;
-            yvals = yField.mean_c(2:end);
-            errs = yField.SEM(2:end);
-            errorbar(xvals, yvals, errs,'DisplayName','current at 0.2s');
-            hold on;
-            yField = rootData.shortInt800_peak;
-            yvals = yField.mean_c(2:end);
-            errs = yField.SEM(2:end);
->>>>>>> master
+
             errorbar(xvals, yvals, errs,'DisplayName','current at 0.8s');
             xlabel('holdSignal');
             ylabel(['Current (' yField.units ')']);
             title('I-V at 200ms (blue); at 800ms (red)');
-<<<<<<< HEAD
-            xvals'
             hold off
         end
         
@@ -195,8 +183,6 @@ classdef IVAnnulusAnalysis < AnalysisTree
             ylabel(['Current (' yField.units ')']);
             title('I-V at 500ms (blue); at 900ms (red)');
             xvals'
-=======
->>>>>>> master
             hold off
         end
         
