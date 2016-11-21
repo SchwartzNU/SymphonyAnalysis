@@ -373,6 +373,13 @@ for i=1:L
         outputStruct.ONSET_FRhalfMaxSusLatency.value = NaN;
         %%%%
         
+        %%%%Adam 4/23/16   for use if too few epochs
+        outputStruct.ONSET_FRhalfMaxSusLatency20.units = 's';
+        outputStruct.ONSET_FRhalfMaxSusLatency20.type = 'singleValue';
+        outputStruct.ONSET_FRhalfMaxSusLatency20.value = NaN;
+        %%%%
+        
+        
         outputStruct.ONSET_FRrampLatency.units = 's';
         outputStruct.ONSET_FRrampLatency.type = 'singleValue';
         outputStruct.ONSET_FRrampLatency.value = NaN;
@@ -462,6 +469,10 @@ for i=1:L
         outputStruct.ONSET_ISI_peakLatency.type = 'singleValue';
         outputStruct.ONSET_ISI_peakLatency.value = [];
         
+        outputStruct.spikeCount_afterStim.units = 'spikes';
+        outputStruct.spikeCount_afterStim.type = 'byEpoch';
+        outputStruct.spikeCount_afterStim.value = ones(1,L).*0;   
+        
     end
     
     curEpoch = cellData.epochs(epochInd(i));
@@ -522,6 +533,12 @@ for i=1:L
     
     %count spikes 100 ms offset till epoch end
     tailSpikeCount = length(find(spikeTimes >= intervalEnd + 0.1 & spikeTimes < intervalEnd+tailTime));
+    
+    %count spikes after stim offset
+    spikeCount = length(find(spikeTimes > intervalEnd & spikeTimes <= intervalEnd+tailTime));
+    outputStruct.spikeCount_afterStim.value(i) = spikeCount;
+    
+    
     
     %subtract baseline
     spikeCount_baselineSubtracted = spikeCount - meanBaselineRate.*responseIntervalLen; %division?? should be *. luckily it's usually 1.
@@ -647,11 +664,12 @@ ONSETresponseEndTime_max = max(ONSETresponseEndTime_all);
 OFFSETresponseStartTime_min = min(OFFSETresponseStartTime_all);
 OFFSETresponseEndTime_max = max(OFFSETresponseEndTime_all);
 [psth, xvals] = cellData.getPSTH(epochInd, ip.Results.BinWidth, ip.Results.DeviceName);
+[psth20, xvals20] = cellData.getPSTH(epochInd, 20, ip.Results.DeviceName);
 
 %%%%%%%%%Adam 8/27/15 temp hack centerOfMassLatency
 respOffs = 0.15;
 stimXvals = xvals((xvals >= respOffs)&(xvals <= 1 + respOffs)); 
-stimPsth = psth((xvals >= respOffs)&(xvals <= 1 + respOffs)); 
+stimPsth = psth((xvals >= respOffs)&(xvals <= 1 + respOffs)); cellData.getPSTH(epochInd, ip.Results.BinWidth, ip.Results.DeviceName);
 comTime = sum(stimXvals.*stimPsth)/sum(stimPsth);
 outputStruct.centerOfMassLatency.value = comTime;
 %%%%%%%%%%
@@ -747,6 +765,9 @@ if ONSETresponseEndTime_max > ONSETresponseStartTime_min
     psth_onset = psth(xvals >= ONSETresponseStartTime_min & xvals < ONSETresponseEndTime_max);
     xvals_stimToEnd = xvals(xvals >= 0);
     psth_stimToEnd = psth(xvals >= 0);
+    
+    xvals20_stimToEnd = xvals20(xvals20 >= 0);
+    psth20_stimToEnd = psth20(xvals20 >= 0);
     %Amurta
     transEndTime = 0.2; %s %duration of transient response
     pauseStart = 0.1; %s
@@ -770,7 +791,8 @@ if ONSETresponseEndTime_max > ONSETresponseStartTime_min
     FRthres = outputStruct.ONSET_FRmax.value / 2; %half max
     if FRthres>0
         outputStruct.ONSET_FRhalfMaxLatency.value = min(xvals_stimToEnd(getThresCross(psth_stimToEnd, FRthres, 1)));
-        outputStruct.ONSET_FRhalfMaxSusLatency.value = min(xvals_stimToEnd(getSustainedThresCross(psth_stimToEnd))); % Adam 9/22/15 %2/14/16 changed "PSTH_onset" to "psth_stimToEnd"
+        outputStruct.ONSET_FRhalfMaxSusLatency.value = min(xvals_stimToEnd(getSustainedThresCross(psth_stimToEnd))); 
+        outputStruct.ONSET_FRhalfMaxSusLatency20.value = min(xvals20_stimToEnd(getSustainedThresCross(psth20_stimToEnd))); % Adam 4/23/15 for too few epochs
         outputStruct.ONSET_FRrange.value = outputStruct.ONSET_FRmax.value - min(psth_onset(maxLoc:end)); %range from max to end
         outputStruct.ONSET_FRrangeFrac.value = outputStruct.ONSET_FRrange.value / outputStruct.ONSET_FRmax.value;
     end

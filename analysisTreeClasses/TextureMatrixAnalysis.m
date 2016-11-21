@@ -498,6 +498,100 @@ classdef TextureMatrixAnalysis < AnalysisTree
             hold('off');
         end
         
+        % % % WC plotter % % %
+
+        
+        function plotAllData_charge(node, cellData)
+            seedChildren = node.getchildren(childrenByValue(node, 1, 'name', 'Across blur tree'));
+            %            c = ['b', 'r', 'g', 'k', 'm'];
+            for i=1:length(seedChildren)      %i=[1,4]
+                curNode = node.get(seedChildren(i));
+                xvals = curNode.pixelBlur;
+                %                 yvals = curNode.overEpochs_ONSETspikes.mean_c;
+                %                 yerrs = curNode.overEpochs_ONSETspikes.SEM;
+                yvals = curNode.overEpochs_stimInterval_charge.mean_c;
+                yerrs = curNode.overEpochs_stimInterval_charge.SEM;
+                %plot(xvals, yvals, [c(mod(i,5)+1) 'o']);
+                errorbar(xvals, yvals, yerrs,'b','marker','o','LineStyle','none');  %,'LineStyle','none'
+                %                 errorbar(node.get(seedChildren(i)).pixelBlurVals, node.get(seedChildren(i)).respMean_blur, node.get(seedChildren(i)).respSEM_blur, ...
+                %                     [c(mod(i,5)+1) 'o-']);
+                hold('on');
+            end
+            blurRootData = node.get(childrenByValue(node, 1, 'name', 'Across seed tree'));
+            %             yMean = blurRootData.ONSETspikes.mean_c;`
+            %             yMeanErr = blurRootData.ONSETspikes.SEM_c;
+            yMean = blurRootData.stimInterval_charge.mean_c;
+            yMeanErr = blurRootData.stimInterval_charge.SEM_c;
+            errorbar(xvals, yMean, yMeanErr,'r');
+            xlabel('Pixel blur');
+            ylabel('stimIntervalCharge');
+            hold('off');
+        end
+        
+        function plotMeanData_chargeNORM(node, cellData)
+            blurRootData = node.get(childrenByValue(node, 1, 'name', 'Across seed tree'));
+            xvals = blurRootData.pixelBlur;
+            yMean = blurRootData.stimInterval_charge.mean_c;
+            yMeanErr = blurRootData.stimInterval_charge.SEM_c;
+            [M, Mind] = max(abs(yMean));
+            if yMean(Mind) < 0
+                yMean = -yMean./M;
+            else
+                yMean = yMean./M;
+            end;
+            yMeanErr = yMeanErr./M;
+            errorbar(xvals, yMean, yMeanErr,'r');
+            xlabel('Pixel blur');
+            ylabel('stimIntervalCharge (norm)');
+            hold('off');
+        end
+        
+        function plotAllData_stimToEndCharge(node, cellData)
+            seedChildren = node.getchildren(childrenByValue(node, 1, 'name', 'Across blur tree'));
+            %            c = ['b', 'r', 'g', 'k', 'm'];
+            for i=1:length(seedChildren)      %i=[1,4]
+                curNode = node.get(seedChildren(i));
+                xvals = curNode.pixelBlur;
+                %                 yvals = curNode.overEpochs_ONSETspikes.mean_c;
+                %                 yerrs = curNode.overEpochs_ONSETspikes.SEM;
+                yvals = curNode.overEpochs_stimToEnd_charge.mean_c;
+                yerrs = curNode.overEpochs_stimToEnd_charge.SEM;
+                %plot(xvals, yvals, [c(mod(i,5)+1) 'o']);
+                errorbar(xvals, yvals, yerrs,'b','marker','o','LineStyle','none');  %,'LineStyle','none'
+                %                 errorbar(node.get(seedChildren(i)).pixelBlurVals, node.get(seedChildren(i)).respMean_blur, node.get(seedChildren(i)).respSEM_blur, ...
+                %                     [c(mod(i,5)+1) 'o-']);
+                hold('on');
+            end
+            blurRootData = node.get(childrenByValue(node, 1, 'name', 'Across seed tree'));
+            %             yMean = blurRootData.ONSETspikes.mean_c;`
+            %             yMeanErr = blurRootData.ONSETspikes.SEM_c;
+            yMean = blurRootData.stimToEnd_charge.mean_c;
+            yMeanErr = blurRootData.stimToEnd_charge.SEM_c;
+            errorbar(xvals, yMean, yMeanErr,'r');
+            xlabel('Pixel blur');
+            ylabel('stimtoEndCharge');
+            hold('off');
+        end
+        
+        function plotMeanData_stimToEndChargeNORM(node, cellData)
+            blurRootData = node.get(childrenByValue(node, 1, 'name', 'Across seed tree'));
+            xvals = blurRootData.pixelBlur;
+            yMean = blurRootData.stimToEnd_charge.mean_c;
+            yMeanErr = blurRootData.stimToEnd_charge.SEM_c;
+            [M, Mind] = max(abs(yMean));
+            if yMean(Mind) < 0
+                yMean = -yMean./M;
+            else
+                yMean = yMean./M;
+            end;
+            yMeanErr = yMeanErr./M;
+            errorbar(xvals, yMean, yMeanErr,'r');
+            xlabel('Pixel blur');
+            ylabel('stimtoEndCharge (norm)');
+            hold('off');
+        end
+        
+        
     end
     
 end

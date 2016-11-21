@@ -28,6 +28,7 @@ classdef SpotsMultiSizeAnalysis < AnalysisTree
             rootData = obj.get(1);
             leafIDs = obj.findleaves();
             L = length(leafIDs);
+            baseline = zeros(1,L);  %for grandBaseline subt.
             
             %get grand mean for multi-peak fitting (with zero crossings)
             %             if strcmp(rootData.(rootData.ampModeParam), 'Whole cell')
@@ -71,6 +72,7 @@ classdef SpotsMultiSizeAnalysis < AnalysisTree
                         'FitPSTH', 0);
                     outputStruct = getEpochResponseStats(outputStruct);
                     curNode = mergeIntoNode(curNode, outputStruct);
+                    baseline(i) = outputStruct.baselineRate.mean_c; %for grandBaseline subt.
                 else %whole cell
                     outputStruct = getEpochResponses_WC(cellData, curNode.epochID, ...
                         'DeviceName', rootData.deviceName);
@@ -84,6 +86,26 @@ classdef SpotsMultiSizeAnalysis < AnalysisTree
             
             obj = obj.percolateUp(leafIDs, ...
                 'splitValue', 'spotSize');
+            
+            %grand baseline subtraction
+            if strcmp(rootData.(rootData.ampModeParam), 'Cell attached')
+                %baseline subtraction
+                
+                grandBaselineMean = mean(baseline);
+                for i=1:L %for each leaf node
+                    curNode = obj.get(leafIDs(i));
+                    
+                    
+                    tempStruct.spikeCount_ONSET_after200ms_grndBlSubt = curNode.spikeCount_ONSET_after200ms;
+                    tempStruct.spikeCount_ONSET_after200ms_grndBlSubt.value = curNode.spikeCount_ONSET_after200ms.value - grandBaselineMean.*0.8; %assumes 1 sec stim interval
+                    tempStruct.spikeCount_stimInterval_grndBlSubt = curNode.spikeCount_stimInterval;
+                    tempStruct.spikeCount_stimInterval_grndBlSubt.value = curNode.spikeCount_stimInterval.value - grandBaselineMean; %assumes 1 sec stim interval
+                    tempStruct = getEpochResponseStats(tempStruct);
+                    
+                    curNode = mergeIntoNode(curNode, tempStruct);
+                    obj = obj.set(leafIDs(i), curNode);
+                end
+            end
             
             [byEpochParamList, singleValParamList, collectedParamList] = getParameterListsByType(curNode);
             %fnames = fnames{1};
@@ -346,6 +368,16 @@ classdef SpotsMultiSizeAnalysis < AnalysisTree
             ylabel(['ONSET_FRhalfMaxSusLatency (' yField.units ')']);
         end
         
+        function plot_spotSizeVsONSET_FRhalfMaxSusLatency20(node, cellData)
+            rootData = node.get(1);
+            xvals = rootData.spotSize;
+            yField = rootData.ONSET_FRhalfMaxSusLatency20;
+            yvals = yField.value;
+            plot(xvals, yvals, 'bx-');
+            xlabel('spotSize');
+            ylabel(['ONSET_FRhalfMaxSusLatency (' yField.units ')']);
+        end
+        
         function plot_spotSizeVsONSET_FRhalfMaxSusLatency_inXlimits(node, cellData)
             xRangeMin = 180;
             xRangeMax = 700;
@@ -471,6 +503,54 @@ classdef SpotsMultiSizeAnalysis < AnalysisTree
             ylabel(['spikeCount_stimAfter200ms (' yField.units ')']);
         end
 
+        function plot_spotSizeVsspikeCount_stimInt_gblSubt(node, cellData)
+            rootData = node.get(1);
+            xvals = rootData.spotSize;
+            yField = rootData.spikeCount_stimInterval_grndBlSubt;
+            if strcmp(yField.units, 's')
+                yvals = yField.median_c;
+            else
+                yvals = yField.mean_c;
+            end
+            errs = yField.SEM;
+            errorbar(xvals, yvals, errs);
+            xlabel('spotSize');
+            ylabel(['spikeCount_stimInterval_granBaselineSubtracted (' yField.units ')']);
+        end
+        
+         function plot_spotSizeVsspikeCount_stimInt_gblSubtNORM(node, cellData)
+            rootData = node.get(1);
+            xvals = rootData.spotSize;
+            yField = rootData.spikeCount_stimInterval_grndBlSubt;
+            if strcmp(yField.units, 's')
+                yvals = yField.median_c;
+            else
+                yvals = yField.mean_c;
+            end
+            errs = yField.SEM;
+            M = max(abs(yvals));
+            yvals = yvals./M;
+            errs = errs./M;
+            errorbar(xvals, yvals, errs);
+            xlabel('inner diameter');
+            ylabel(['spikeCount_stimInterval_granBaselineSubtracted (' yField.units ')']);
+         end
+         
+         function plot_spotSizeVsstimAfter200_charge(node, cellData)
+             rootData = node.get(1);
+             xvals = rootData.spotSize;
+             yField = rootData.stimAfter200_charge;
+             if strcmp(yField.units, 's')
+                 yvals = yField.median_c;
+             else
+                 yvals = yField.mean_c;
+             end
+             errs = yField.SEM;
+             errorbar(xvals, yvals, errs);
+             xlabel('spotSize');
+             ylabel(['stimAfter200_charge (' yField.units ')']);
+         end
+         
     end
     
 end
