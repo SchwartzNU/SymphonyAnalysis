@@ -378,7 +378,7 @@ classdef LabData < handle
                 curTypeTree = curTypeTree.set(1, nodeData);
                 
                 cellNames = obj.getCellsOfType(curType);
-                for j=1:length(cellNames);
+                for j=1:length(cellNames)
                     curCellName = cellNames{j};
                     disp(['Analyzing cell ' curCellName ': ' num2str(j) ' of ' num2str(length(cellNames))]);
                     

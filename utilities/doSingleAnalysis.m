@@ -19,7 +19,7 @@ fclose(fid);
 Nanalyses = length(analysisTable{1});
 analysisInd = 0;
 for i=1:Nanalyses
-    if strcmp(analysisTable{2}{i}, analysisClassName);
+    if strcmp(analysisTable{2}{i}, analysisClassName)
         analysisInd = i;
         break;
     end
@@ -55,7 +55,7 @@ cellData = loadAndSyncCellData(cellName);
 dataSetKeys = cellData.savedDataSets.keys;
 
 %run cell filter
-if ~isempty(cellFilter);
+if ~isempty(cellFilter)
     analyzeThisCell = cellData.filterCell(cellFilter.makeQueryString());
     if ~analyzeThisCell
         resultTree = [];
@@ -63,7 +63,8 @@ if ~isempty(cellFilter);
     end
 end
 
-for i=1:length(dataSetKeys);
+
+for i=1:length(dataSetKeys)
     T = [];
     analyzeDataSet = false;
     curDataSet = dataSetKeys{i};

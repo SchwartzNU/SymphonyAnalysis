@@ -8,7 +8,7 @@ numParam = length(paramList);
 
 %Find all analyses of analysisClass in tree
 analysisClass = [];
-analisysClassInd = [];
+analysisClassInd = [];
 numNodes = length(analysisTree.Node);
 for nodeInd = 1:numNodes
     if isfield(analysisTree.Node{nodeInd},'class')
@@ -19,7 +19,7 @@ for nodeInd = 1:numNodes
             end;
             %if strcmp(analysisTree.Node{nodeInd}.ampMode, 'Cell attached')
                 %can put more filtering conditions on data sets here
-                analisysClassInd = [analisysClassInd, nodeInd];
+                analysisClassInd = [analysisClassInd, nodeInd];
             %end;
 %         end;
     end;
@@ -28,7 +28,7 @@ end;
 
 
 %initialize variables
-numAnalysisClassNodes = length(analisysClassInd);   
+numAnalysisClassNodes = length(analysisClassInd);   
 cellNames = cell(numAnalysisClassNodes, 1);
 dataSetNames = cell(numAnalysisClassNodes, 1);
 paramMatrix = cell(numParam, numAnalysisClassNodes);
@@ -36,10 +36,10 @@ paramMatrix = cell(numParam, numAnalysisClassNodes);
 
 %extract parameters
 for nodeInd=1:numAnalysisClassNodes
-    curAnalysisNode = analysisTree.get(analisysClassInd(nodeInd));
+    curAnalysisNode = analysisTree.get(analysisClassInd(nodeInd));
     cellNames{nodeInd} = curAnalysisNode.cellName;
     dataSetNames{nodeInd} = curAnalysisNode.name;
-    leafInd = analysisTree.getchildren(analisysClassInd(nodeInd));   %Where responses are stored.
+    leafInd = analysisTree.getchildren(analysisClassInd(nodeInd));   %Where responses are stored.
     %numLeafs = length(leafInd);   %ASSUMING =1
     curLeaf = analysisTree.get(leafInd);
     switch analysisClass
@@ -47,8 +47,11 @@ for nodeInd=1:numAnalysisClassNodes
             XparamValues = curAnalysisNode.barAngle;
         case 'SpotsMultiSizeAnalysis'
             XparamValues = curAnalysisNode.spotSize;
+        case 'DriftingGratingsAnalysis'
+            XparamValues = curAnalysisNode.gratingAngle;
+        case 'DriftingTextureAnalysis'
+            XparamValues = curAnalysisNode.textureAngle;              
     end;
-    
 
     for paramInd = 1:numParam
         paramIsStruct = 0;

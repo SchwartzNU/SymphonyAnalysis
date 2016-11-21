@@ -5,6 +5,7 @@ global PREFERENCE_FILES_FOLDER;
 fid = fopen([PREFERENCE_FILES_FOLDER filesep 'MergedCells.txt']);
 fline = 'temp';
 z=1;
+mergedCells = {};
 while ~isempty(fline)
     fline = fgetl(fid);
     if isempty(fline)

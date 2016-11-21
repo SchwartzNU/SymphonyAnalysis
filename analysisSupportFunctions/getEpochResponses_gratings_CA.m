@@ -128,10 +128,9 @@ for j = 1 : numCycles
     cycles(j,:) =  psth(index);
 end
 % Take the mean, skipping first cycle
-avgCycle = mean(cycles(2:end),1);
+avgCycle = mean(cycles(2:end, :),1);
 outputStruct.cycleAvgPSTH_y.value = avgCycle;
 outputStruct.cycleAvgPSTH_x.value = xvals(1:length(avgCycle));
-
 % Do the FFT.
 ft = fft(avgCycle);
 % figure(10)

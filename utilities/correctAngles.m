@@ -17,7 +17,11 @@ function cd = correctAngles(cd, cellName)
     
     %% loop through epochs
     for ei = 1:length(cd.epochs)
+
         epoch = cd.epochs(ei);
+        if isempty(epoch.parentCell)
+            continue
+        end
         
         displayName = epoch.get('displayName');
         
@@ -46,6 +50,10 @@ function cd = correctAngles(cd, cellName)
             case 'Bars multiple speeds'
                 angleName = 'offsetAngle';
                 angleOffset = 0;
+            
+            case 'Auto Center'
+                angleName = 'rigOffsetAngle';
+                angleOffset = 0;
                 
             otherwise
                 continue
@@ -54,10 +62,21 @@ function cd = correctAngles(cd, cellName)
         % calculate displayName angle offset
         offset = angleOffset + rigAngle;
         
-        % add epoch parameter
+        % add epoch parameter to store the amount of offset made
+        if isKey(epoch.attributes, 'angleOffsetForRigAndStimulus')
+%             disp('already did this epoch')
+            continue
+        end
         epoch.attributes('angleOffsetForRigAndStimulus') = offset;
-        epoch.attributes(angleName) = mod(epoch.get(angleName) + offset, 360);
-%         epoch.get('ventralAngle');
+        
+        % change epoch angle values (danger zone)
+        origAngle = epoch.get(angleName);
+        if isnan(origAngle) % for old autocenter
+            origAngle = 0;
+%             disp('add autocenter angle')
+        end
+        epoch.attributes('originalAngle') = origAngle;
+        epoch.attributes(angleName) = mod(origAngle + offset, 360);
     end
     
     fprintf('%s angles corrected\n', cellName);

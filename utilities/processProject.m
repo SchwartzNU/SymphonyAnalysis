@@ -1,7 +1,7 @@
 cellData_folder = [ANALYSIS_FOLDER 'cellData' filesep];
 
-% projFolder = uigetdir
-projFolder = '/Users/sam/analysis/Projects/WFDS';
+projFolder = uigetdir
+% projFolder = '/Users/sam/analysis/Projects/WFDS_all';
 
 
 fid = fopen([projFolder filesep 'cellNames.txt'], 'r');
@@ -28,27 +28,36 @@ numFiles = length(files);
 
 %% loop through cellData
 % angles are relative to moving bar towards direction
-for fi = numFiles-1
+for fi = 1:numFiles
     fprintf('processing cellData %d of %d: %s\n', fi, numFiles, files{fi})
     fname = fullfile(cellData_folder, [files{fi}, '.mat']);
     load(fname)
     
     
-%     cellData = correctAngles(cellData, files{fi});
-%     cellData.cellType = 'WFDS';
-    cellData.location
-    
-    dataSetNames = cellData.savedDataSets.keys;
-    dgset_ca = strncmpi('DriftingGratings_ca', dataSetNames, 20);
-    if ~any(dgset_ca)
-        dgset_ca = strncmpi('DriftingGratings', dataSetNames, 20);
-    end
-    
-    cellData.savedDataSets('DriftingGratings_ca')
-    
+    % set cell type
+%     disp(cellData.cellType)
+%     if strcmp(cellData.cellType, 'ON transient LSDS')
+%         cellData.cellType = 'ON WFDS';
+%         disp('renamed')
+%         save(fname, 'cellData');
+%     end
+
+    cellData.tags('RecordedBy') = 'Sam';
+
+
+%     cellData.location
+%     
+%     dataSetNames = cellData.savedDataSets.keys;
+%     dgset_ca = strncmpi('DriftingGratings_ca', dataSetNames, 20);
+%     if ~any(dgset_ca)
+%         dgset_ca = strncmpi('DriftingGratings', dataSetNames, 20);
+%     end
+%     
+%     cellData.savedDataSets('DriftingGratings_ca')
+%     
 
 
     %% Save cellData
-%     save(fname, 'cellData');
+    save(fname, 'cellData');
     
 end

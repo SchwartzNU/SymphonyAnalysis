@@ -142,15 +142,17 @@ classdef MovingBarAnalysis < AnalysisTree
             rootData = node.get(1);
             xvals = rootData.barAngle;
             yField = rootData.spikeCount_stimToEnd;
-            if strcmp(yField.units, 's')
-                yvals = yField.median_c;
-            else
-                yvals = yField.mean_c;
-            end
-            errs = yField.SEM;
-            errorbar(xvals, yvals, errs);
+            yvals = yField.mean_c;
+            polarerror(xvals*pi/180, yvals, zeros(1,length(xvals)));
+            
+            hold on;
+            polar([0 rootData.spikeCount_stimToEnd_DSang*pi/180], [0 (100*rootData.spikeCount_stimToEnd_DSI)], 'r-');
+            polar([0 rootData.spikeCount_stimToEnd_OSang*pi/180], [0 (100*rootData.spikeCount_stimToEnd_OSI)], 'g-');
             xlabel('barAngle');
             ylabel(['spikeCount_stimToEnd (' yField.units ')']);
+            title(['DSI = ' num2str(rootData.spikeCount_stimToEnd_DSI) ', DSang = ' num2str(rootData.spikeCount_stimToEnd_DSang) ...
+                ' and OSI = ' num2str(rootData.spikeCount_stimToEnd_OSI) ', OSang = ' num2str(rootData.spikeCount_stimToEnd_OSang)]);
+            hold off;            
         end
         
         function plotMeanTraces(node, cellData)

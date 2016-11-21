@@ -6,7 +6,7 @@ classdef MovingBarConductanceSubtractionAnalysis < AnalysisTree
     %TreeBrowserGUI should be made to replace its analysisTree object with
     %the new one created by this class.
     properties
-        %currently these properties aren not used
+        %currently these properties are not used
         StartTime = 0;
         EndTime = 0;
         respType = 'peak'
@@ -55,7 +55,7 @@ classdef MovingBarConductanceSubtractionAnalysis < AnalysisTree
                     for j=1:L
                         curExcNode = obj.get(barAngle_chInd_exc(j));
                         curInhNode = obj.get(barAngle_chInd_inh(j));
-                        [excData, xvals] = cellData.getMeanData(curExcNode.epochID, deviceName);
+                        [excData, ~] = cellData.getMeanData(curExcNode.epochID, deviceName);
                         inhData = cellData.getMeanData(curInhNode.epochID, deviceName);
                         gE = excData / -60;
                         gI = inhData / 60;

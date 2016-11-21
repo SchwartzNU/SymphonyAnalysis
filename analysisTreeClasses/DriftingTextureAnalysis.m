@@ -90,10 +90,10 @@ classdef DriftingTextureAnalysis < AnalysisTree
     
     methods(Static)
         
-        function plot_textureAngleVsspikeCount_stimInterval(node, cellData)
+        function plot_textureAngleVsspikeCount_stimAfter500ms(node, cellData)
             rootData = node.get(1);
             xvals = rootData.textureAngle;
-            yField = rootData.spikeCount_stimInterval;
+            yField = rootData.spikeCount_stimAfter500ms;
             if strcmp(yField(1).units, 's')
                 yvals = yField.median_c;
             else
@@ -104,20 +104,20 @@ classdef DriftingTextureAnalysis < AnalysisTree
 
             
             hold on;
-            polar([0 rootData.spikeCount_stimInterval_DSang*pi/180], [0 (100*rootData.spikeCount_stimInterval_DSI)], 'r-');
-            polar([0 rootData.spikeCount_stimInterval_OSang*pi/180], [0 (100*rootData.spikeCount_stimInterval_OSI)], 'g-');
+            polar([0 rootData.spikeCount_stimAfter500ms_DSang*pi/180], [0 (100*rootData.spikeCount_stimAfter500ms_DSI)], 'r-');
+            polar([0 rootData.spikeCount_stimAfter500ms_OSang*pi/180], [0 (100*rootData.spikeCount_stimAfter500ms_OSI)], 'g-');
             xlabel('TextureAngle');
-            ylabel(['SpikeCount_stimInterval (' yField(1).units ')']);
-            title(['DSI = ' num2str(rootData.spikeCount_stimInterval_DSI) ', DSang = ' num2str(rootData.spikeCount_stimInterval_DSang) ...
-                ' and OSI = ' num2str(rootData.spikeCount_stimInterval_OSI) ', OSang = ' num2str(rootData.spikeCount_stimInterval_OSang)]);
+            ylabel(['spikeCount_stimAfter500ms (' yField(1).units ')']);
+            title(['DSI = ' num2str(rootData.spikeCount_stimAfter500ms_DSI) ', DSang = ' num2str(rootData.spikeCount_stimAfter500ms_DSang) ...
+                ' and OSI = ' num2str(rootData.spikeCount_stimAfter500ms_OSI) ', OSang = ' num2str(rootData.spikeCount_stimAfter500ms_OSang)]);
             hold off;
             
 
             hold on
-            polar([0 rootData.spikeCount_stimInterval_DSang*pi/180], [0 (100*rootData.spikeCount_stimInterval_DSI)], 'r-');
-            polar([0 rootData.spikeCount_stimInterval_OSang*pi/180], [0 (100*rootData.spikeCount_stimInterval_OSI)], 'g-');
-            title(['DSI = ' num2str(rootData.spikeCount_stimInterval_DSI) ', DSang = ' num2str(rootData.spikeCount_stimInterval_DSang) ...
-                ' and OSI = ' num2str(rootData.spikeCount_stimInterval_OSI) ', OSang = ' num2str(rootData.spikeCount_stimInterval_OSang)]);
+            polar([0 rootData.spikeCount_stimAfter500ms_DSang*pi/180], [0 (100*rootData.spikeCount_stimAfter500ms_DSI)], 'r-');
+            polar([0 rootData.spikeCount_stimAfter500ms_OSang*pi/180], [0 (100*rootData.spikeCount_stimAfter500ms_OSI)], 'g-');
+            title(['DSI = ' num2str(rootData.spikeCount_stimAfter500ms_DSI) ', DSang = ' num2str(rootData.spikeCount_stimAfter500ms_DSang) ...
+                ' and OSI = ' num2str(rootData.spikeCount_stimAfter500ms_OSI) ', OSang = ' num2str(rootData.spikeCount_stimAfter500ms_OSang)]);
             hold off
 
         end
@@ -135,7 +135,7 @@ classdef DriftingTextureAnalysis < AnalysisTree
             polar([0 rootData.stimToEnd_avgTracePeak_DSang*pi/180], [0 (100*rootData.stimToEnd_avgTracePeak_DSI)], 'r-');
             polar([0 rootData.stimToEnd_avgTracePeak_OSang*pi/180], [0 (100*rootData.stimToEnd_avgTracePeak_OSI)], 'g-');
             xlabel('TextureAngle');
-            ylabel(['SpikeCount_stimInterval (' yField.units ')']);
+            ylabel(['spikeCount_stimAfter500ms (' yField.units ')']);
 
             hold on
             polar([0 rootData.stimToEnd_avgTracePeak_DSang*pi/180], [0 (100*rootData.stimToEnd_avgTracePeak_DSI)], 'r-');

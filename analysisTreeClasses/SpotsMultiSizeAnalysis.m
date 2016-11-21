@@ -162,6 +162,20 @@ classdef SpotsMultiSizeAnalysis < AnalysisTree
     
     methods(Static)
         
+        function plot0_spotSizeVsspikeCount_stimInterval(node, cellData)
+            rootData = node.get(1);
+            xvals = rootData.spotSize;
+            yField = rootData.spikeCount_stimInterval;
+            if strcmp(yField.units, 's')
+                yvals = yField.median_c;
+            else
+                yvals = yField.mean_c;
+            end
+            errs = yField.SEM;
+            errorbar(xvals, yvals, errs);
+            xlabel('spotSize');
+            ylabel(['spikeCount_stimInterval (' yField.units ')']);
+        end
         
         function plot_spotSizeVsONSETspikes(node, cellData)
             rootData = node.get(1);

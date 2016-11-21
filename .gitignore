@@ -3,3 +3,11 @@
 *.bak
 *.DS_Store
 *.asv
+shapeModel/shapeModel_v0.zip
+
+*.png
+
+*.pdf
+
+*.h5
+lib/*

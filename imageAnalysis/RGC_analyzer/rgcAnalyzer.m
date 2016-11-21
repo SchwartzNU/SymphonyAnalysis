@@ -16,7 +16,7 @@ else
 end
 
 conformalJump = 1;
-Nbins = 51;
+Nbins = 101;
 % read the arbor trace file - add 1 to node positions because FIJI format for arbor tracing starts from 0
 [nodes,edges,radii,nodeTypes,abort] = readArborTrace(arborFileName,[-1 0 1 2 3 4 5]); 
 nodes = nodes + 1;

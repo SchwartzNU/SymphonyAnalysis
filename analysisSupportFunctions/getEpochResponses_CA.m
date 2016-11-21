@@ -157,6 +157,10 @@ for i=1:L
         outputStruct.OFFSET_ISI_full.type = 'combinedAcrossEpochs';
         outputStruct.OFFSET_ISI_full.value = [];
         
+        outputStruct.spikeCount_100ms_around_PSTH_peak.units = 'spikes';
+        outputStruct.spikeCount_100ms_around_PSTH_peak.type = 'byEpoch';
+        outputStruct.spikeCount_100ms_around_PSTH_peak.value = zeros(1,L);
+        
         outputStruct.spikeCount_stimTo100ms.units = 'spikes';
         outputStruct.spikeCount_stimTo100ms.type = 'byEpoch';
         outputStruct.spikeCount_stimTo100ms.value = zeros(1,L);
@@ -172,6 +176,10 @@ for i=1:L
         outputStruct.spikeCount_stimAfter200ms.units = 'spikes';
         outputStruct.spikeCount_stimAfter200ms.type = 'byEpoch';
         outputStruct.spikeCount_stimAfter200ms.value = zeros(1,L);
+        
+        outputStruct.spikeCount_stimAfter500ms.units = 'spikes';
+        outputStruct.spikeCount_stimAfter500ms.type = 'byEpoch';
+        outputStruct.spikeCount_stimAfter500ms.value = zeros(1,L);        
         
         outputStruct.spikeCount_stimToEnd.units = 'spikes';
         outputStruct.spikeCount_stimToEnd.type = 'byEpoch';
@@ -367,11 +375,11 @@ for i=1:L
         outputStruct.ONSET_FRhalfMaxLatency.type = 'singleValue';
         outputStruct.ONSET_FRhalfMaxLatency.value = NaN;
         
-        %%%%Adam 9/22/15    
-        outputStruct.ONSET_FRhalfMaxSusLatency.units = 's';
-        outputStruct.ONSET_FRhalfMaxSusLatency.type = 'singleValue';
-        outputStruct.ONSET_FRhalfMaxSusLatency.value = NaN;
-        %%%%
+%         %%%%Adam 9/22/15    
+%         outputStruct.ONSET_FRhalfMaxSusLatency.units = 's';
+%         outputStruct.ONSET_FRhalfMaxSusLatency.type = 'singleValue';
+%         outputStruct.ONSET_FRhalfMaxSusLatency.value = NaN;
+%         %%%%
         
         %%%%Adam 4/23/16   for use if too few epochs
         outputStruct.ONSET_FRhalfMaxSusLatency20.units = 's';
@@ -508,6 +516,8 @@ for i=1:L
     outputStruct.spikeCount_stimAfter100ms.value(i) = spikeCount;
     spikeCount = length(find(spikeTimes >= intervalStart + 0.2));
     outputStruct.spikeCount_stimAfter200ms.value(i) = spikeCount;
+    spikeCount = length(find(spikeTimes >= intervalStart + 0.5));
+    outputStruct.spikeCount_stimAfter500ms.value(i) = spikeCount;    
     
     %count spikes in 400 ms after onset and offset
     if responseIntervalLen >= 0.4
@@ -791,10 +801,29 @@ if ONSETresponseEndTime_max > ONSETresponseStartTime_min
     FRthres = outputStruct.ONSET_FRmax.value / 2; %half max
     if FRthres>0
         outputStruct.ONSET_FRhalfMaxLatency.value = min(xvals_stimToEnd(getThresCross(psth_stimToEnd, FRthres, 1)));
+<<<<<<< HEAD
         outputStruct.ONSET_FRhalfMaxSusLatency.value = min(xvals_stimToEnd(getSustainedThresCross(psth_stimToEnd))); 
         outputStruct.ONSET_FRhalfMaxSusLatency20.value = min(xvals20_stimToEnd(getSustainedThresCross(psth20_stimToEnd))); % Adam 4/23/15 for too few epochs
+=======
+%        outputStruct.ONSET_FRhalfMaxSusLatency.value = min(xvals_stimToEnd(getSustainedThresCross(psth_onset))); % Adam 9/22/15 %2/14/16 changed "PSTH_onset" to "psth_stimToEnd"
+>>>>>>> master
         outputStruct.ONSET_FRrange.value = outputStruct.ONSET_FRmax.value - min(psth_onset(maxLoc:end)); %range from max to end
         outputStruct.ONSET_FRrangeFrac.value = outputStruct.ONSET_FRrange.value / outputStruct.ONSET_FRmax.value;
+    end
+    if outputStruct.ONSET_FRmaxLatency.value > 0
+        minTime = xvals_onset(maxLoc) - 0.05;
+        maxTime = xvals_onset(maxLoc) + 0.05;
+        L = length(epochInd);
+        for i=1:L
+            %i
+            curEpoch = cellData.epochs(epochInd(i));
+            
+            %'MovingBget spike times (in units of seconds from startTime
+            spikeTimes = curEpoch.getSpikes(ip.Results.DeviceName);
+            spikeTimes = spikeTimes - stimStart;
+            spikeTimes = spikeTimes / sampleRate;
+            outputStruct.spikeCount_100ms_around_PSTH_peak.value(i) = length(spikeTimes(spikeTimes>=minTime & spikeTimes<maxTime));
+        end
     end
     
 end

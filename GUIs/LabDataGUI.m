@@ -42,15 +42,21 @@ classdef LabDataGUI < handle
     end
     
     methods
-        function obj = LabDataGUI()
+        function obj = LabDataGUI(folder_name)
             %todo: figure out how to organize directory structure for
             %different projects / labData structures
             global ANALYSIS_FOLDER
             global PREFERENCE_FILES_FOLDER
             global SYNC_TO_SERVER
-            folder_name = '';
-            while isempty(folder_name)
+            
+            if nargin == 0
+                folder_name = '';
+            end
+            if isempty(folder_name)
                 folder_name = uigetdir([ANALYSIS_FOLDER 'Projects/'],'Choose project folder');
+            end
+            if folder_name == 0
+                return
             end
             obj.projFolder = [folder_name filesep];
             folderParts = strsplit(folder_name, filesep);
@@ -87,7 +93,11 @@ classdef LabDataGUI < handle
             
             obj.buildUIComponents();
             obj.loadCellNames();
-            obj.loadTree();
+            try % this will error when 
+                obj.loadTree();
+            catch
+                disp('loadTree stumbled on multi-display configuration. Resize the window to continue');
+            end
             obj.initializeEpochFilterTable();
             obj.initializeCellFilterTable();
             obj.initializeCellTypeAndAnalysisMenus();
@@ -96,7 +106,7 @@ classdef LabDataGUI < handle
         function buildUIComponents(obj)
             bounds = screenBounds;
             obj.fig = figure( ...
-                'Name',         ['LabDataGUI: ' obj.cellData_folder], ...
+                'Name',         ['LabDataGUI: ' obj.projFolder], ...
                 'NumberTitle',  'off', ...
                 'ToolBar',      'none',...
                 'Menubar',      'none', ...
@@ -113,7 +123,7 @@ classdef LabDataGUI < handle
                 'Units', 'pixels', ... %so that uitree can be resized inside it
                 'FontSize', 12);
             L_cellInfoPanel = uiextras.BoxPanel('Parent', L_mainGrid, ...
-                'Title', 'Cell infromation', ...                
+                'Title', 'Cell information', ...                
                 'FontSize', 12);
             L_filterPanel = uiextras.BoxPanel('Parent', L_mainGrid, ...
                 'Title', 'Filter Construction', ...
@@ -456,10 +466,11 @@ classdef LabDataGUI < handle
         function initializeCellTypeAndAnalysisMenus(obj)
             global ANALYSIS_CODE_FOLDER;
             global PREFERENCE_FILES_FOLDER;
-            analysisClassesFolder = [ANALYSIS_CODE_FOLDER filesep 'analysisTreeClasses'];
+            analysisClassesFolder = [ANALYSIS_CODE_FOLDER 'analysisTreeClasses'];
             d = dir(analysisClassesFolder);
             analysisClasses = {};
             z = 1;
+            
             for i=1:length(d)
                 if ~isempty(strfind(d(i).name, '.m')) && ~strcmp(d(i).name, 'AnalysisTree.m')
                     analysisClasses{z} = strtok(d(i).name, '.');
@@ -638,6 +649,9 @@ classdef LabDataGUI < handle
         
         function analyzeAndBrowseCellType(obj)
             selectedNodes = get(obj.guiTree, 'SelectedNodes');
+            if isempty(selectedNodes)
+                disp('Click on cell to refresh epoch list')
+            end
             node = selectedNodes(1);
             
             if get(node, 'Depth') == 1 %cell type
@@ -881,6 +895,10 @@ classdef LabDataGUI < handle
                     %load(curName); %loads cellData
                     fprintf('LabDataGUI load names: ');
                     cellData = loadAndSyncCellData(cellDataNames{j});
+                    if isempty(cellData)
+                        disp('Cell Data file not loaded: may be missing');
+                        continue;
+                    end
                     if cellData.get('Nepochs') > 0
                         if  ~isnan(cellData.epochs(1).get('amp2')) %if 2 amps
                             has2amps = true;

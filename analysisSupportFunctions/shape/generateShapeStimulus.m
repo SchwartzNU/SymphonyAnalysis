@@ -1,7 +1,7 @@
 function runConfig = generateShapeStimulus(p, analysisData)
 
     runConfig = struct();
-    runConfig.autoContinueRun = true;
+    runConfig.autoContinueRun = false;
     
     % select the type of epoch to run based on params & results
 
@@ -39,9 +39,9 @@ function runConfig = generateShapeStimulus(p, analysisData)
     end
     
     % set the auto continue bit for after this epoch finishes
-    if p.timeRemainingSeconds - (runConfig.stimTime / 1000) < 0
-        runConfig.autoContinueRun = false;
-    end
+%     if p.timeRemainingSeconds - (runConfig.stimTime / 1000) < 0
+%         runConfig.autoContinueRun = false;
+%     end
     
 end
 
@@ -57,25 +57,26 @@ function runConfig = generateTemporalAlignment(parameters, runConfig)
 
     runConfig.epochMode = 'temporalAlignment';
     runConfig.numShapes = 1;
-    durations = [1, 0.6, 0.4, 0.2];
-%     durations = [8];
-    numSpotsPerRate = 1;
-    diam_ta = 100;
+    durations = [1, 0.6, 0.4]; % full durations, and the spot is on for 1/3 of that time
     runConfig.shapeDataMatrix = [];
 
-    tim = 0;
-    for si = 1:numSpotsPerRate
-        for dur = durations
-            shape = [0, 0, parameters.valueMax, tim, tim + dur / 3, diam_ta, 0];
-            runConfig.shapeDataMatrix = vertcat(runConfig.shapeDataMatrix, shape);
-            tim = tim + dur;
-        end
-        tim = tim + 0.5;
+    curtime = 0;
+    for dur = durations
+        shape = [0, 0, parameters.valueMax, curtime, curtime + dur / 3, parameters.alignmentSpotDiameter, 0];
+        runConfig.shapeDataMatrix = vertcat(runConfig.shapeDataMatrix, shape);
+        curtime = curtime + dur;
     end
-    %                 obj.stimTimeSaved = round(1000 * (1.0 + tim));
+    
+    % then add smaller spot, long ON, long OFF
+    temporalFilterSpotDiam = 100;
+    temporalFilterSpotOnTime = 1.5;
+    temporalFilterSpotOffTime = 1.5;
+    shape = [0, 0, parameters.valueMax, curtime, curtime + temporalFilterSpotOnTime, temporalFilterSpotDiam, 0];
+    runConfig.shapeDataMatrix = vertcat(runConfig.shapeDataMatrix, shape);
+    curtime = curtime + temporalFilterSpotOnTime + temporalFilterSpotOffTime;
+    
     runConfig.shapeDataColumns = {'X','Y','intensity','startTime','endTime','diameter', 'flickerFrequency'};
-    runConfig.stimTime = round(1e3 * (1 + tim));
-    %                 disp(obj.shapeDataMatrix)
+    runConfig.stimTime = round(1e3 * (0.5 + curtime)); % add a half second on for fun
     
 end
 
@@ -96,7 +97,25 @@ function runConfig = generateStandardSearch(parameters, analysisData, runConfig)
 
     % select positions
     if parameters.generatePositions
-        rotAngle = parameters.epochNum * 1.1; % sure, why not, doesn't matter the real value
+        si = parameters.pointSetIndex;
+        if si == 1
+            center = [0,0];
+        elseif si == 2
+            center = [-.5, .4330] * parameters.mapResolution;
+        elseif si == 3
+            center = [0, .649] * parameters.mapResolution;
+        elseif si == 4
+            center = [0, .325] * parameters.mapResolution;
+        elseif si == 5
+            center = [.5, .1] * parameters.mapResolution;
+        elseif si > 5
+            center = rand(1,2) * parameters.mapResolution;
+        end
+        
+        
+%         center = mod(parameters.epochNum * 2 * [1,1], 10); % a bit of jitter makes the graph look nicer
+%         rotAngle = parameters.epochNum * 0.3; % sure, why not, doesn't matter the real value
+        rotAngle = 0;
 %         positions = generatePositions('random', [parameters.numSpots, parameters.spotDiameter, searchDiameterUpdated / 2]);
         %             positions = generatePositions('grid', [obj.searchDiameter, round(sqrt(obj.numSpots))]);
         positions = generatePositions('triangular', [searchDiameterUpdated / 2, parameters.mapResolution, rotAngle]);
@@ -226,8 +245,9 @@ function runConfig = generateAdaptationRegionStimulus(p, analysisData, runConfig
     % first time setup / all for now
 %     for ai = 1:numAdaptationPositions
     % make array of spot positions around 
-    probePositions = generatePositions('triangular', [p.probeSpotPositionRadius, p.probeSpotSpacing]);
+    probePositions = generatePositions('triangular', [p.probeSpotPositionRadius, p.probeSpotSpacing, 0]);
     numProbeSpots = size(probePositions, 1);
+    probePositions = probePositions(randperm(numProbeSpots), :); % randomly reorder, but I suppose use the same for each adapt spot
     probePositions_by_adapt = cell(numAdaptationPositions,1);
     for ai = 1:numAdaptationPositions
         probePositions_by_adapt{ai,1} = bsxfun(@plus, probePositions, p.adaptationSpotPositions(ai,:));
@@ -239,7 +259,7 @@ function runConfig = generateAdaptationRegionStimulus(p, analysisData, runConfig
     
     % get curves before & after adaptation
     si = 1;
-    delay = 0;
+    delay = 0.5; % add a little delay to start to ensure a baseline
     for prePostAdapt = 1:2
         for repeat = 1:p.probeSpotRepeats
             for val = p.probeSpotValues
@@ -255,7 +275,7 @@ function runConfig = generateAdaptationRegionStimulus(p, analysisData, runConfig
         end
         if prePostAdapt == 1
             flickerStartTime = starts(end) + 1;
-            delay = p.adaptSpotWarmupTime;
+            delay = p.adaptSpotWarmupTime + delay;
         end
     end
 

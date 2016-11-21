@@ -135,9 +135,16 @@ classdef EpochData < handle
                 xvals = [];
                 units = '';
             else
-                temp = h5read(fullfile(RAW_DATA_FOLDER, [obj.parentCell.savedFileName '.h5']),obj.dataLinks(streamName));
-                data = temp.quantity;
-                units = deblank(temp.unit(:,1)');
+                if isKey(obj.parentCell.attributes, 'symphonyVersion')
+                    temp = h5read(fullfile(RAW_DATA_FOLDER, [obj.parentCell.get('fname') '.h5']), obj.dataLinks(streamName));
+                    data = temp.quantity;
+                    units = deblank(temp.units(:,1)');
+                else
+                    temp = h5read(fullfile(RAW_DATA_FOLDER, [obj.parentCell.savedFileName '.h5']),obj.dataLinks(streamName));
+                    data = temp.quantity;
+                    units = deblank(temp.unit(:,1)');
+                end
+
                 sampleRate = obj.get('sampleRate');
                 %temp hack
                 if ischar(obj.get('preTime'))

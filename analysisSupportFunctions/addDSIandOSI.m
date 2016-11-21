@@ -32,6 +32,8 @@ for i=1:length(fnames)
                 OSang = 360 + OSang;
             end
             
+            OSang = mod(OSang,180); %OSangles should be between [0,180]
+            
             rootData.([curField '_DSI']) = DSI;
             rootData.([curField '_DSang']) = DSang;
             rootData.([curField '_OSI']) = OSI;

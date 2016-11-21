@@ -2,8 +2,9 @@ function [] = saveAndSyncCellData(cellData)
 global ANALYSIS_FOLDER;
 global SYNC_TO_SERVER;
 do_sync = true;
-fileinfo = dir([ANALYSIS_FOLDER 'cellData' filesep cellData.savedFileName '.mat']);
-localModDate = fileinfo.datenum;
+
+
+% Determine server mod time
 if exist([filesep 'Volumes' filesep 'SchwartzLab'  filesep 'CellDataMaster']) == 7 %sever is connected and CellDataMaster folder is found
     disp('CellDataMaster found');
     try
@@ -18,12 +19,26 @@ else
     serverModDate = 0;
 end
 
-if serverModDate > localModDate
+
+save([ANALYSIS_FOLDER 'cellData' filesep cellData.savedFileName '.mat'], 'cellData');
+fileinfo = dir([ANALYSIS_FOLDER 'cellData' filesep cellData.savedFileName '.mat']);
+localModDate = fileinfo.datenum;
+
+fprintf('Local file is %g sec newer than server file\n',(localModDate - serverModDate) * 86400)
+fileCopySlopTimeSec = 40;
+
+if serverModDate > localModDate + fileCopySlopTimeSec/86400
     disp([cellData.savedFileName ': A newer copy of the file exists on the server. Please reload before continuing']);
     return;
 end
 
-save([ANALYSIS_FOLDER 'cellData' filesep cellData.savedFileName '.mat'], 'cellData');
+if serverModDate + fileCopySlopTimeSec/86400 > localModDate
+%     disp([cellData.savedFileName ': File is less than 120 seconds updated relative to server... waiting to sync']);
+    do_sync = 0;
+end
+
+
+
 
 if do_sync && SYNC_TO_SERVER
     %syncing stuff here
@@ -118,10 +133,10 @@ if do_sync && SYNC_TO_SERVER
         %do the copy
         disp([cellData.savedFileName ': Copying local file to server']);
         save([filesep 'Volumes' filesep 'SchwartzLab'  filesep 'CellDataMaster'  filesep cellData.savedFileName '.mat'], 'cellData'); 
-        pause(1.5);
+%         pause(0.5);
         %resave local version so modification date is later
-        disp([cellData.savedFileName ': Local resave']);
-        save([ANALYSIS_FOLDER 'cellData' filesep cellData.savedFileName '.mat'], 'cellData'); 
+%         disp([cellData.savedFileName ': Local resave']);
+%         save([ANALYSIS_FOLDER 'cellData' filesep cellData.savedFileName '.mat'], 'cellData'); 
         
         %reset busy status to 0
         status(ind) = 0;
