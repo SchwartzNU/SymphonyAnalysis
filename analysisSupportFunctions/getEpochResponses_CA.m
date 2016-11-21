@@ -801,12 +801,10 @@ if ONSETresponseEndTime_max > ONSETresponseStartTime_min
     FRthres = outputStruct.ONSET_FRmax.value / 2; %half max
     if FRthres>0
         outputStruct.ONSET_FRhalfMaxLatency.value = min(xvals_stimToEnd(getThresCross(psth_stimToEnd, FRthres, 1)));
-<<<<<<< HEAD
+
         outputStruct.ONSET_FRhalfMaxSusLatency.value = min(xvals_stimToEnd(getSustainedThresCross(psth_stimToEnd))); 
         outputStruct.ONSET_FRhalfMaxSusLatency20.value = min(xvals20_stimToEnd(getSustainedThresCross(psth20_stimToEnd))); % Adam 4/23/15 for too few epochs
-=======
-%        outputStruct.ONSET_FRhalfMaxSusLatency.value = min(xvals_stimToEnd(getSustainedThresCross(psth_onset))); % Adam 9/22/15 %2/14/16 changed "PSTH_onset" to "psth_stimToEnd"
->>>>>>> master
+
         outputStruct.ONSET_FRrange.value = outputStruct.ONSET_FRmax.value - min(psth_onset(maxLoc:end)); %range from max to end
         outputStruct.ONSET_FRrangeFrac.value = outputStruct.ONSET_FRrange.value / outputStruct.ONSET_FRmax.value;
     end
