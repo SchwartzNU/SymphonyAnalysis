@@ -411,7 +411,7 @@ classdef CellDataCurator < handle
                 %show unique values
                 vals = obj.cellData.getEpochVals(newData);
                 vals = vals(~isnan_cell(vals));
-                vals = unique(vals);                
+                vals = unique(vals);
                 D{rowInd,3} = makeDelimitedString(vals);
             end
                 

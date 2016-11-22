@@ -14,6 +14,8 @@ temp = textscan(fid, '%s', 'delimiter', '\n');
 cellNames = temp{1};
 fclose(fid);
 
+fprintf('Checking for %g files\n', length(cellNames));
+
 for i=1:length(cellNames)
     cellDataNames = cellNameToCellDataNames(cellNames{i});
     for j=1:length(cellDataNames)
@@ -40,3 +42,4 @@ for i=1:length(cellNames)
         end
     end
 end
+disp('Done');

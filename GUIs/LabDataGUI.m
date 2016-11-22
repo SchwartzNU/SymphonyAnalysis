@@ -616,8 +616,11 @@ classdef LabDataGUI < handle
             obj.updateCellPositionTable();
             
             %set online label
-            set(obj.handles.labelTextVal, 'String', sprintf('Label: %s \t S2 Online Type: %s', strjoin(obj.curCellData.get('label')), obj.curCellData.get('type')));
-            
+            if ~iscell(obj.curCellData.get('label'))
+                set(obj.handles.labelTextVal, 'String', sprintf('Label: %s', obj.curCellData.get('label')));
+            else
+                set(obj.handles.labelTextVal, 'String', sprintf('S2 Online Type: %s',obj.curCellData.get('type')));
+            end
             %set notes
             set(obj.handles.notesTextVal, 'String', obj.curCellData.notes);
             
