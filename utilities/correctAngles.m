@@ -43,7 +43,7 @@ function cd = correctAngles(cd, cellName)
                 angleName = 'barAngle';
                 angleOffset = 0;
                 
-            case 'Drifting Texture';
+            case 'Drifting Texture'
                 angleName = 'textureAngle';
                 angleOffset = 0;
                 

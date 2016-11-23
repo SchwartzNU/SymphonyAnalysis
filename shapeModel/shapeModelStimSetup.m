@@ -40,7 +40,7 @@ stim_meanLevel = 0.5;
 stim_uniformDistribution = 1;
 stim_resScaleFactor = 2;
 stim_randomSeed = 1;
-stim_textureScale = 60;
+stim_textureScale = 30;
 stim_movementDelay = 0.5;
 
 stim_lightMatrix_byOption = {};
