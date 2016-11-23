@@ -17,9 +17,13 @@ function cells = symphony2Mapper(fname)
 
     info = h5info(fname);
     epochsByCellMap = getEpochsByCellLabel(fname, info.Groups(1).Groups(2).Groups);
-    sourceTree = buildSourceTree(info.Groups(1).Groups(5).Links.Value{:}, fname);
+    sourceLinks = info.Groups(1).Groups(5).Links;
+    sourceTree = tree();
+    for i = 1 : numel(sourceLinks)
+       sourceTree = sourceTree.graft(1, buildSourceTree(sourceLinks(i).Value{:}, fname));
+    end
+    
     numberOfCells = numel(epochsByCellMap.keys);
-
     cells = CellData.empty(numberOfCells, 0);
     labels = epochsByCellMap.keys;
 
@@ -201,16 +205,21 @@ end
 
 function map = getSourceAttributes(sourceTree, label, map)
 
-    id = find(sourceTree.treefun(@(node) strcmp(node('label'), label)));
+    id = find(sourceTree.treefun(@(node) ~isempty(node) && strcmp(node('label'), label)));
     
     while id > 0
         currentMap = sourceTree.get(id);
+        id = sourceTree.getparent(id);
+        
+        if isempty(currentMap)
+            continue;
+        end
+        
         keys = currentMap.keys;
         for i = 1 : numel(keys)
             k = keys{i};
             map = addToMap(map, k, currentMap(k));
         end
-        id = sourceTree.getparent(id);
     end
 end
 
