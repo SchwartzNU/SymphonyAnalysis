@@ -113,7 +113,7 @@ classdef DriftingGratingsAnalysis < AnalysisTree
            x = [rootData.F0amplitude_OSang,rootData.F0amplitude_OSang];
            y = get(gca, 'ylim');
            plot(x,y);
-           title(['OSI = ' num2str(rootData.F0amplitude_OSI) ', OSang = ' num2str(rootData.F0amplitude_OSang)]);
+           addDsiOsiVarTitle(rootData, 'F0amplitude')
            hold off;
         end
         
@@ -128,8 +128,7 @@ classdef DriftingGratingsAnalysis < AnalysisTree
            polar([0 rootData.F1amplitude_OSang*pi/180], [0 (100*rootData.F1amplitude_OSI)], 'g-');
            xlabel('Grating Angle');
            ylabel(['F1 (' yField(1).units ')']);
-           title(['DSI = ' num2str(rootData.F1amplitude_DSI) ', DSang = ' num2str(rootData.F1amplitude_DSang) ...
-                ' and OSI = ' num2str(rootData.F1amplitude_OSI) ', OSang = ' num2str(rootData.F1amplitude_OSang)]);
+           addDsiOsiVarTitle(rootData, 'F1amplitude')
            hold off;
         end
         
@@ -144,8 +143,7 @@ classdef DriftingGratingsAnalysis < AnalysisTree
            polar([0 rootData.F2amplitude_OSang*pi/180], [0 (100*rootData.F2amplitude_OSI)], 'g-');
            xlabel('Grating Angle');
            ylabel(['F2 (' yField(1).units ')']);
-           title(['DSI = ' num2str(rootData.F2amplitude_DSI) ', DSang = ' num2str(rootData.F2amplitude_DSang) ...
-                ' and OSI = ' num2str(rootData.F2amplitude_OSI) ', OSang = ' num2str(rootData.F2amplitude_OSang)]);
+           addDsiOsiVarTitle(rootData, 'F2amplitude')
            hold off;
         end
         

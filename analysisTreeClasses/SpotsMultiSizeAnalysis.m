@@ -153,6 +153,9 @@ classdef SpotsMultiSizeAnalysis < AnalysisTree
             errorbar(xvals, yvals, errs);
             xlabel('spotSize');
             ylabel(['spikeCount_stimInterval (' yField.units ')']);
+            [~,i] = max(yvals);
+            bestSize = xvals(i);
+            title(sprintf('Pref Size: %g µm', bestSize));
         end
         
         function plot_spotSizeVsONSETspikes(node, cellData)
@@ -168,6 +171,9 @@ classdef SpotsMultiSizeAnalysis < AnalysisTree
             errorbar(xvals, yvals, errs);
             xlabel('spotSize');
             ylabel(['ONSETspikes (' yField.units ')']);
+            [~,i] = max(yvals);
+            bestSize = xvals(i);
+            title(sprintf('Pref Size: %g µm', bestSize));            
         end
         
         function plot_spotSizeVsOFFSETspikes(node, cellData)
@@ -183,6 +189,9 @@ classdef SpotsMultiSizeAnalysis < AnalysisTree
             errorbar(xvals, yvals, errs);
             xlabel('spotSize');
             ylabel(['OFFSETspikes (' yField.units ')']);
+            [~,i] = max(yvals);
+            bestSize = xvals(i);
+            title(sprintf('Pref Size: %g µm', bestSize));
         end
         function plot_spotSizeVsONSET_peak(node, cellData)
             rootData = node.get(1);
@@ -197,6 +206,9 @@ classdef SpotsMultiSizeAnalysis < AnalysisTree
             errorbar(xvals, yvals, errs);
             xlabel('spotSize');
             ylabel(['ONSET_peak (' yField.units ')']);
+            [~,i] = max(yvals);
+            bestSize = xvals(i);
+            title(sprintf('Pref Size: %g µm', bestSize));
         end
         
         function plot_spotSizeVsONSETsuppressedSpikes(node, cellData)
@@ -207,6 +219,9 @@ classdef SpotsMultiSizeAnalysis < AnalysisTree
             plot(xvals, yvals, 'bx-');
             xlabel('spotSize');
             ylabel(['ONSETsuppressedSpikes (' yField.units ')']);
+            [~,i] = max(yvals);
+            bestSize = xvals(i);
+            title(sprintf('Pref Size: %g µm', bestSize));
         end
         
         function plot_spotSizeVsONSETsuppressionTime(node, cellData)
@@ -217,6 +232,9 @@ classdef SpotsMultiSizeAnalysis < AnalysisTree
             plot(xvals, yvals, 'bx-');
             xlabel('spotSize');
             ylabel(['ONSETsuppressionTime (' yField.units ')']);
+            [~,i] = max(yvals);
+            bestSize = xvals(i);
+            title(sprintf('Pref Size: %g µm', bestSize));
         end
         
         function plotEpochData(node, cellData, device, epochIndex)
@@ -275,6 +293,9 @@ classdef SpotsMultiSizeAnalysis < AnalysisTree
             plot(xvals, yvals, 'bx-');
             xlabel('spotSize');
             ylabel(['ONSET_FRhalfMaxLatency (' yField.units ')']);
+            [~,i] = max(yvals);
+            bestSize = xvals(i);
+            title(sprintf('Pref Size: %g µm', bestSize));
         end
         
         function plot_spotSizeVsONSET_FRmax(node, cellData)
@@ -285,6 +306,9 @@ classdef SpotsMultiSizeAnalysis < AnalysisTree
             plot(xvals, yvals, 'bx-');
             xlabel('spotSize');
             ylabel(['ONSET_FRmax (' yField.units ')']);
+            [~,i] = max(yvals);
+            bestSize = xvals(i);
+            title(sprintf('Pref Size: %g µm', bestSize));
         end
         
         function plot_spotSizeVsstimInterval_charge(node, cellData)
@@ -300,6 +324,9 @@ classdef SpotsMultiSizeAnalysis < AnalysisTree
             errorbar(xvals, yvals, errs);
             xlabel('spotSize');
             ylabel(['stimInterval_charge (' yField.units ')']);
+            [~,i] = max(yvals);
+            bestSize = xvals(i);
+            title(sprintf('Pref Size: %g µm', bestSize));
         end
         
         function plot_spotSizeVsstimInterval_chargeNORM(node, cellData)
@@ -322,6 +349,9 @@ classdef SpotsMultiSizeAnalysis < AnalysisTree
             errorbar(xvals, yvals, errs);
             xlabel('spotSize');
             ylabel(['stimInterval_charge (' yField.units ')']);
+            [~,i] = max(yvals);
+            bestSize = xvals(i);
+            title(sprintf('Pref Size: %g µm', bestSize));
         end
         
         function plot_spotSizeVsONSET_avgTracePeak(node, cellData)
@@ -390,6 +420,9 @@ classdef SpotsMultiSizeAnalysis < AnalysisTree
             errorbar(xvals, yvals, errs);
             xlabel('spotSize');
             ylabel(['ONSETspikes (' yField.units ')']);
+            [~,i] = max(yvals);
+            bestSize = xvals(i);
+            title(sprintf('Pref Size: %g µm', bestSize));
         end
         
         function plot_spotSizeVsONSETspikesNORM_inXlimits(node, cellData)

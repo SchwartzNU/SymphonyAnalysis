@@ -868,10 +868,10 @@ classdef LabDataGUI < handle
         end
         
         function loadFilterList(obj)
+            disp(obj.labData.allCellTypes)
             global ANALYSIS_FOLDER;
             [fname,fpath] = uigetfile(ANALYSIS_FOLDER,'Load filter file');
             if ~isempty(fname) %if selected something
-                analysisTrees = {};
                 load(fullfile(fpath, fname))
                 
                 for fi = 1:length(filterFileNames)
@@ -921,10 +921,14 @@ classdef LabDataGUI < handle
                     
                     % save tree
                     
-                    analysisTrees{fi} = tempTree;
+                    analysisTree = tempTree;
+                    
+                    sfile = fullfile('analysisTrees/automaticData/treeData/', num2str(fi));
+                    save(sfile, 'analysisTree');
+                    disp(['Saved analysis tree to ' sfile]);
+                    
                 end
-                save('analysisTrees/automaticData/analysisTrees', 'analysisTrees');
-                disp('Saved analysis trees to analysisTrees/automaticData/analysisTrees');
+                
             end
         end
         
