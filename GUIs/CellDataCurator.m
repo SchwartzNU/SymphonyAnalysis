@@ -73,18 +73,26 @@ classdef CellDataCurator < handle
             
             L_diaryPlot = uiextras.VBox('Parent', L_dataPanels);
             obj.handles.diaryPlotAxes = axes('Parent', L_diaryPlot);
-            L_diaryYMenu = uiextras.HBox('Parent', L_diaryPlot);
-            diaryYMenuText = uicontrol('Parent', L_diaryYMenu, ...
+            L_diaryMenu = uiextras.HBox('Parent', L_diaryPlot);
+            diaryYMenuText = uicontrol('Parent', L_diaryMenu, ...
                 'Style', 'text', ...
                 'String', 'Diary plot y-axis', ...
                 'FontSize', 11);
-            obj.handles.diaryYMenu = uicontrol('Parent', L_diaryYMenu, ...
+            obj.handles.diaryYMenu = uicontrol('Parent', L_diaryMenu, ...
                 'Style', 'popupmenu', ...
                 'String', obj.allKeys, ...
                 'Units', 'normalized', ...
-                'Position', [0.2, 0, 0.4, .8], ...%position control not working
                 'Callback', @(uiobj, evt)obj.updateDiaryPlot);
-            set(L_diaryYMenu, 'Sizes', [100, 250], 'Spacing', 20);
+            diaryXMenuText = uicontrol('Parent', L_diaryMenu, ...
+                'Style', 'text', ...
+                'String', 'Diary plot x-axis', ...
+                'FontSize', 11);
+            obj.handles.diaryXMenu = uicontrol('Parent', L_diaryMenu, ...
+                'Style', 'popupmenu', ...
+                'String', {'epochNum','time'}, ...
+                'Units', 'normalized', ...
+                'Callback', @(uiobj, evt)obj.updateDiaryPlot);            
+            set(L_diaryMenu, 'Sizes', [80, 220, 80, 200], 'Spacing', 20);
             set(L_diaryPlot, 'Sizes', [-1, 20], 'Padding', 5);
             
             L_dataPlot = uiextras.VBox('Parent', L_dataPanels);
@@ -319,15 +327,25 @@ classdef CellDataCurator < handle
             end
 %             epochTimes = obj.cellData.getEpochVals('epochStartTime', obj.dataSet);
             epochNums = obj.cellData.getEpochVals('epochNum', obj.dataSet);
+            epochTimes = obj.cellData.getEpochVals('epochStartTime', obj.dataSet);
+            a = get(obj.handles.diaryXMenu,'Value');
+            s = get(obj.handles.diaryXMenu,'String');
+            
+            if strcmp(s(a), 'epochNum')
+                xvals = epochNums;
+            else
+                xvals = epochTimes;
+            end            
             displayParam = obj.allKeys{get(obj.handles.diaryYMenu,'Value')};
             displayVals = obj.cellData.getEpochVals(displayParam, obj.dataSet);
+        
             if isnumeric(displayVals)   
                 hold(obj.handles.diaryPlotAxes, 'on');
                 inDataSetInd = ismember(obj.dataSet, obj.epochsInDataSets);                
-                obj.handles.diaryPlotLine = plot(obj.handles.diaryPlotAxes, epochNums(~inDataSetInd), displayVals(~inDataSetInd), 'bo');
-                obj.handles.diaryPlotLine = plot(obj.handles.diaryPlotAxes, epochNums(inDataSetInd), displayVals(inDataSetInd), 'go', 'MarkerFaceColor', 'g');
+                obj.handles.diaryPlotLine = plot(obj.handles.diaryPlotAxes, xvals(~inDataSetInd), displayVals(~inDataSetInd), 'bo');
+                obj.handles.diaryPlotLine = plot(obj.handles.diaryPlotAxes, xvals(inDataSetInd), displayVals(inDataSetInd), 'go', 'MarkerFaceColor', 'g');
                 
-                plot(obj.handles.diaryPlotAxes, epochNums(obj.selectedEpochInd), displayVals(obj.selectedEpochInd), 'bo', ...
+                plot(obj.handles.diaryPlotAxes, xvals(obj.selectedEpochInd), displayVals(obj.selectedEpochInd), 'bo', ...
                     'MarkerFaceColor', 'r');
                 ylabel(obj.handles.diaryPlotAxes, displayParam);
             else
@@ -337,11 +355,14 @@ classdef CellDataCurator < handle
                     valInd(strcmp(displayVals, uniqueVals{i})) = i;
                 end
                 hold(obj.handles.diaryPlotAxes, 'on');
-                inDataSetInd = ismember(obj.dataSet, obj.epochsInDataSets);                
-                obj.handles.diaryPlotLine = plot(obj.handles.diaryPlotAxes, epochNums(~inDataSetInd), valInd(~inDataSetInd), 'bo');
-                obj.handles.diaryPlotLine = plot(obj.handles.diaryPlotAxes, epochNums(inDataSetInd), valInd(inDataSetInd), 'go', 'MarkerFaceColor', 'g');
+                inDataSetInd = ismember(obj.dataSet, obj.epochsInDataSets);
+                
 
-                plot(obj.handles.diaryPlotAxes, epochNums(obj.selectedEpochInd), valInd(obj.selectedEpochInd), 'bo', ...
+                
+                obj.handles.diaryPlotLine = plot(obj.handles.diaryPlotAxes, xvals(~inDataSetInd), valInd(~inDataSetInd), 'bo');
+                obj.handles.diaryPlotLine = plot(obj.handles.diaryPlotAxes, xvals(inDataSetInd), valInd(inDataSetInd), 'go', 'MarkerFaceColor', 'g');
+
+                plot(obj.handles.diaryPlotAxes, xvals(obj.selectedEpochInd), valInd(obj.selectedEpochInd), 'bo', ...
                     'MarkerFaceColor', 'r');
                 set(obj.handles.diaryPlotAxes, 'Ytick', unique(valInd), ...
                     'YtickLabel', uniqueVals);

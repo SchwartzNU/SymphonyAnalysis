@@ -928,6 +928,7 @@ classdef LabDataGUI < handle
                     disp(['Saved analysis tree to ' sfile]);
                     
                 end
+                disp('Done with all files');
                 
             end
         end
