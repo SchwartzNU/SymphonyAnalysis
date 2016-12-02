@@ -330,8 +330,8 @@ classdef CellDataCurator < handle
             epochTimes = obj.cellData.getEpochVals('epochStartTime', obj.dataSet);
             a = get(obj.handles.diaryXMenu,'Value');
             s = get(obj.handles.diaryXMenu,'String');
-            
-            if strcmp(s(a), 'epochNum')
+            xmode = s(a);
+            if strcmp(xmode, 'epochNum')
                 xvals = epochNums;
             else
                 xvals = epochTimes;
@@ -370,7 +370,12 @@ classdef CellDataCurator < handle
                 set(obj.handles.diaryPlotAxes, 'Ylim', [0 max(valInd)+1]);
                 %text labels here
             end
-            xlabel('Epoch Number');
+            
+            if strcmp(xmode, 'epochNum')
+                xlabel('Epoch Number');
+            else
+                xlabel('Epoch Time (sec)');
+            end  
             hold(obj.handles.diaryPlotAxes, 'off');
             
             
@@ -639,11 +644,19 @@ classdef CellDataCurator < handle
         end
         
         function diaryPlotClick(obj)
-%             epochTimes = obj.cellData.getEpochVals('epochStartTime', obj.dataSet);
+            epochTimes = obj.cellData.getEpochVals('epochStartTime', obj.dataSet);
             epochNums = obj.cellData.getEpochVals('epochNum', obj.dataSet);
+            a = get(obj.handles.diaryXMenu,'Value');
+            s = get(obj.handles.diaryXMenu,'String');
+            xmode = s(a);
+            if strcmp(xmode, 'epochNum')
+                xvals = epochNums;
+            else
+                xvals = epochTimes;
+            end                
             p = get(obj.handles.diaryPlotAxes,'CurrentPoint');
             xval = p(1,1);
-            [~, closestInd] = min(abs(xval - epochNums));
+            [~, closestInd] = min(abs(xval - xvals));
             obj.selectedEpochInd = closestInd;
             obj.updateDiaryPlot();
             obj.updateDataPlot();
