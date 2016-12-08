@@ -1,5 +1,4 @@
 
-
 load cellData/102816Ac3.mat
 epochIndices = [311 314 317];
 
@@ -29,18 +28,18 @@ for ei=1:numberOfEpochs
     
     % generate response
     sampleRate = epoch.get('sampleRate');
+    frameRate = epoch.get('patternRate');
     response = epoch.getData('Amplifier_Ch1')';
     response = response * sign(mean(response));
     response = response - mean(response);
 %     response = zscore(response);
     response = resample(response, frameRate, sampleRate);
     
-    % Generate stimulus
+    %% Generate stimulus
     
     centerNoiseStream = RandStream('mt19937ar', 'Seed', centerNoiseSeed);
     stimulus = [];
     
-    frameRate = 60;
     %                 chunkLen = epoch.get('frameDwell') / displayFrameRate;
     preFrames = round(frameRate * (epoch.get('preTime')/1e3));
     stimFrames = round(frameRate * (epoch.get('stimTime')/1e3));
@@ -64,6 +63,7 @@ for ei=1:numberOfEpochs
         'StopbandAttenuation',65,'DesignMethod','kaiserwin');
     stimulusFiltered = filtfilt(stimFilter, stimulus);
     
+    %% plot for each epoch in a row
     axes(handles((ei-1) * 3 + 1));
     t = linspace(0, length(stimulus) / frameRate, length(stimulus));
     plot(t, stimulus)
