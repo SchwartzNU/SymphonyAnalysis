@@ -1,10 +1,10 @@
-function scatterPlotInfo = paramOverlapMany2Dnew(analysisTree, paramList, cellTypeList) 
+function scatterPlotInfo = paramOverlapMany2D(analysisTree, paramList, cellTypeList) 
 %1/23/2015. Version 2
 %"main cell type" will be the first type on the list of celltypes passed down to
 %this function.
 
-% global TYPOLOGY_FILES_FOLDER;
-% pathname = TYPOLOGY_FILES_FOLDER;
+global TYPOLOGY_FILES_FOLDER;
+pathname = TYPOLOGY_FILES_FOLDER;
 
 %paramList: Greg's format is [L1 L2 L3] = getParameterListByType(nodeData);
 %Adam's format is L = adaptParamList(nodeData). 
@@ -15,7 +15,6 @@ function scatterPlotInfo = paramOverlapMany2Dnew(analysisTree, paramList, cellTy
 
 
 [cellTypeList, numOfCells, cellNamesByType, paramList, paramByType] = getParamDataFromAnalysisTree(analysisTree, paramList, cellTypeList);
-%[cellTypeList, numOfCells, cellNamesByType, paramList, paramByType] = getParamDataFromBigMatrix(dataStruct, paramList, cellTypeList);
 
 mainCellType = cellTypeList{1};
 otherCellTypes = cellTypeList(2:end);
@@ -23,7 +22,6 @@ paramForMainCellType = paramByType{1};
 paramForOtherTypes = paramByType(2:end);
 numOtherTypes = length(otherCellTypes);
 numParams = length(paramList);
-
 % Make matrices with only the scalar parameters
 % Deal with vector parameters later...
 
@@ -89,29 +87,17 @@ for paramInd1 = 1:numParams-1
         
         if ~all(isnan(MmainParam1)| MmainParam1==inf) && ~all(isnan(MmainParam2)| MmainParam2==inf)
             paramPairCount = paramPairCount+1;
-            if mod(paramPairCount,1) == 0
+            if mod(paramPairCount,4) == 1
                 figure;
             end;
-            %subplotFigure(paramPairCount, numParameterPairs, 1,1);
+            subplotFigure(paramPairCount, numParameterPairs, 4);
             
             scatter(MmainParam1, MmainParam2, 'DisplayName', mainCellType, 'MarkerFaceColor',[1 0 0],...
                 'MarkerEdgeColor',[1 0 0]);
-            
-%             %cell names in plot
-%             for pt = 1:length(MmainParam1)
-%                 text(MmainParam1(pt), MmainParam2(pt), cellNamesByType{1}{pt});
-%             end;
-             
             hold on;
             for otherTypeInd = 1:numOtherTypes
                 if ~all(isnan(M_otherParam1{otherTypeInd})| M_otherParam1{otherTypeInd}==inf) && ~all(isnan(M_otherParam2{otherTypeInd})| M_otherParam2{otherTypeInd}==inf)
                     scatter(M_otherParam1{otherTypeInd}, M_otherParam2{otherTypeInd}, 'DisplayName', otherCellTypes{otherTypeInd});
-                    
-%                     %cell names in plot
-%                     for pt = 1:length(M_otherParam1{otherTypeInd})
-%                         text(M_otherParam1{otherTypeInd}(pt), M_otherParam2{otherTypeInd}(pt), cellNamesByType{otherTypeInd+1}{pt});
-%                     end;
-                    
                     title([paramList{paramInd1},' vs ', paramList{paramInd2}]);
                 end;
             end; 

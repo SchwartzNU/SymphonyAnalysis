@@ -18,14 +18,13 @@ classdef DriftingGratingsAnalysis < AnalysisTree
                 params.holdSignalParam = 'amp2HoldSignal';
             end            
             
-            nameStr = [cellData.savedFileName ': ' dataSetName ': DriftingGratingsAnalysis'];            
+            nameStr = [cellData.savedFileName ': ' dataSetName ': MovingBarAnalysis'];            
             obj = obj.setName(nameStr);
             dataSet = cellData.savedDataSets(dataSetName);
             obj = obj.copyAnalysisParams(params);
             obj = obj.copyParamsFromSampleEpoch(cellData, dataSet, ...
                 {'RstarMean', 'RstarIntensity', params.ampModeParam, params.holdSignalParam, 'gratingProfile', 'contrast', 'offsetX', 'offsetY'});
-%             obj = obj.buildCellTree(1, cellData, dataSet, {'contrast','temporalFreq', 'spatialFreq','gratingAngle'});
-            obj = obj.buildCellTree(1, cellData, dataSet, {'gratingAngle'});
+            obj = obj.buildCellTree(1, cellData, dataSet, {'contrast','temporalFreq', 'spatialFreq','gratingAngle'});
         end
         
         function obj = doAnalysis(obj, cellData)
@@ -72,7 +71,7 @@ classdef DriftingGratingsAnalysis < AnalysisTree
             
             %OSI, OSang
             rootData = obj.get(1);
-            rootData = addDSIandOSI(rootData, 'gratingAngle');
+            %rootData = addDSIandOSI(rootData, 'gratingAngle');
             %rootData.stimParameterList = {'gratingAngle'};
             %rootData.byEpochParamList = byEpochParamList;
             %rootData.singleValParamList = singleValParamList;
@@ -100,6 +99,17 @@ classdef DriftingGratingsAnalysis < AnalysisTree
             hold(ax, 'off');
         end
         
+        function plot_gratingAngleVsminCurrent(node, cellData)
+           rootData = node.get(1);
+           xvals = rootData.gratingAngle;
+           yField = rootData.minCycleAvg;
+           yvals = yField.value;
+           plot(xvals, yvals);
+           xlabel('Grating Angle');
+           ylabel(['Current (' yField.units ')']);
+           
+        end
+        
         function plot_gratingAngleVsF0(node, cellData)
            rootData = node.get(1);
            xvals = rootData.gratingAngle;
@@ -113,38 +123,34 @@ classdef DriftingGratingsAnalysis < AnalysisTree
            x = [rootData.F0amplitude_OSang,rootData.F0amplitude_OSang];
            y = get(gca, 'ylim');
            plot(x,y);
-           addDsiOsiVarTitle(rootData, 'F0amplitude')
+           title(['OSI = ' num2str(rootData.F0amplitude_OSI) ', OSang = ' num2str(rootData.F0amplitude_OSang)]);
            hold off;
         end
         
         function plot_gratingAngleVsF1(node, cellData)
-           rootData = node.get(1);
-           xvals = rootData.gratingAngle;
-           yField = rootData.F1amplitude;
-           yvals = yField.value;
-           polarerror(xvals*pi/180, yvals, zeros(1,length(xvals)));
-           hold on;
-           polar([0 rootData.F1amplitude_DSang*pi/180], [0 (100*rootData.F1amplitude_DSI)], 'r-');
-           polar([0 rootData.F1amplitude_OSang*pi/180], [0 (100*rootData.F1amplitude_OSI)], 'g-');
-           xlabel('Grating Angle');
-           ylabel(['F1 (' yField(1).units ')']);
-           addDsiOsiVarTitle(rootData, 'F1amplitude')
-           hold off;
+            rootData = node.get(1);
+            xvals = rootData.gratingAngle;
+            yField = rootData.F1amplitude;
+            yvals = yField.value;
+            polarerror(xvals*pi/180, yvals, zeros(1,length(xvals)));
+            hold on;
+            polar([0 rootData.F1amplitude_DSang*pi/180], [0 (100*rootData.F1amplitude_DSI)], 'r-');
+            polar([0 rootData.F1amplitude_OSang*pi/180], [0 (100*rootData.F1amplitude_OSI)], 'g-');
+            xlabel('gratingAngle');
+            ylabel(['F1 (' yField(1).units ')']);
+            title(['DSI = ' num2str(rootData.F1amplitude_DSI) ', DSang = ' num2str(rootData.F1amplitude_DSang) ...
+                ' and OSI = ' num2str(rootData.F1amplitude_OSI) ', OSang = ' num2str(rootData.F1amplitude_OSang)]);
+            hold off;
         end
         
         function plot_gratingAngleVsF2(node, cellData)
-           rootData = node.get(1);
-           xvals = rootData.gratingAngle;
-           yField = rootData.F2amplitude;
-           yvals = yField.value;
-           polarerror(xvals*pi/180, yvals, zeros(1,length(xvals)));
-           hold on;
-           polar([0 rootData.F2amplitude_DSang*pi/180], [0 (100*rootData.F2amplitude_DSI)], 'r-');
-           polar([0 rootData.F2amplitude_OSang*pi/180], [0 (100*rootData.F2amplitude_OSI)], 'g-');
-           xlabel('Grating Angle');
-           ylabel(['F2 (' yField(1).units ')']);
-           addDsiOsiVarTitle(rootData, 'F2amplitude')
-           hold off;
+            rootData = node.get(1);
+            xvals = rootData.gratingAngle;
+            yField = rootData.F2amplitude;
+            yvals = yField.value;
+            polarerror(xvals*pi/180, yvals, zeros(1,length(xvals)));
+            xlabel('gratingAngle');
+            ylabel(['F2 (' yField(1).units ')']);
         end
         
         function plot_gratingAngleVsF2overF1(node, cellData)
@@ -159,14 +165,9 @@ classdef DriftingGratingsAnalysis < AnalysisTree
          
         function plotLeaf(node, cellData)
             leafData = node.get(1);
-            if ~isfield(leafData, 'cycleAvg_y')
-                yField = leafData.cycleAvgPSTH_y;
-                xField = leafData.cycleAvgPSTH_x;
-            else
-                yField = leafData.cycleAvg_y;
-                xField = leafData.cycleAvg_x;
-            end
+            xField = leafData.cycleAvg_x;
             xvals = xField.value;
+            yField = leafData.cycleAvg_y;
             yvals = yField.value;
             plot (xvals,yvals);
             xlabel('Time (s)');
