@@ -2,6 +2,7 @@ classdef CenterSurroundNoiseAnalysis < AnalysisTree
     properties
         StartTime = 0;
         EndTime = 0;
+        modelStruct
     end
     
     methods
@@ -45,23 +46,24 @@ classdef CenterSurroundNoiseAnalysis < AnalysisTree
                     epochIndices(end+1) = eid;
                 end
             end
-            epochIndices
+           
             
-            return
+            obj.modelStruct = noiseFilter(cellData, epochIndices);
 
-            
-
-            
-            % loop through epochs, regenerate stim, and compare linear prediction to response
-
+            allFilters = cell2mat(obj.modelStruct.filtersByEpoch);
+            mn = mean(allFilters);
+            se = std(allFilters)/sqrt(size(allFilters, 1));
+            plot(obj.modelStruct.timeByEpoch{1}, [mn; mn+se; mn-se], 'LineWidth', 1)
+            % hold off
+            title('Filter mean \{pm} sem')                  
             
         end
     end
     
     methods(Static)
         
-        function plotMeanTraces(node, cellData)
-            
+        function plotMeanTraces(~, ~)
+      
         end
     end
 end
