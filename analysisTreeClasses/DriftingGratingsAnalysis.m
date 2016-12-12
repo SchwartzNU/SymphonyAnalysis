@@ -99,7 +99,7 @@ classdef DriftingGratingsAnalysis < AnalysisTree
             hold(ax, 'off');
         end
         
-        function plot_gratingAngleVsminCurrent(node, cellData)
+        function plot_gratingAngleVsminCurrent(node, ~)
            rootData = node.get(1);
            xvals = rootData.gratingAngle;
            yField = rootData.minCycleAvg;
@@ -110,24 +110,24 @@ classdef DriftingGratingsAnalysis < AnalysisTree
            
         end
         
-        function plot_gratingAngleVsF0(node, cellData)
-           rootData = node.get(1);
-           xvals = rootData.gratingAngle;
-           yField = rootData.F0amplitude;
-           yvals = yField.value;
-           plot(xvals, yvals);
-           xlabel('Grating Angle');
-           ylabel(['F0 amplitude (' yField.units ')']);
+        function plot_gratingAngleVsF0(node, ~)
+            rootData = node.get(1);
+            xvals = rootData.gratingAngle;
+            yField = rootData.F0amplitude;
+            yvals = yField.value;
+           
+            polarerror(xvals*pi/180, yvals, zeros(1,length(xvals)));
+            hold on;
             
-           hold on;
-           x = [rootData.F0amplitude_OSang,rootData.F0amplitude_OSang];
-           y = get(gca, 'ylim');
-           plot(x,y);
-           title(['OSI = ' num2str(rootData.F0amplitude_OSI) ', OSang = ' num2str(rootData.F0amplitude_OSang)]);
-           hold off;
+            polar([0 rootData.F0amplitude_DSang*pi/180], [0 (100*rootData.F0amplitude_DSI)], 'r-');
+            polar([0 rootData.F0amplitude_OSang*pi/180], [0 (100*rootData.F0amplitude_OSI)], 'g-');
+            xlabel('Grating Angle');
+            ylabel(['F0 amplitude (' yField.units ')']);
+            addDsiOsiVarTitle(rootData, 'F1amplitude')
+            hold off;
         end
         
-        function plot_gratingAngleVsF1(node, cellData)
+        function plot_gratingAngleVsF1(node, ~)
             rootData = node.get(1);
             xvals = rootData.gratingAngle;
             yField = rootData.F1amplitude;
@@ -138,32 +138,39 @@ classdef DriftingGratingsAnalysis < AnalysisTree
             polar([0 rootData.F1amplitude_OSang*pi/180], [0 (100*rootData.F1amplitude_OSI)], 'g-');
             xlabel('gratingAngle');
             ylabel(['F1 (' yField(1).units ')']);
-            title(['DSI = ' num2str(rootData.F1amplitude_DSI) ', DSang = ' num2str(rootData.F1amplitude_DSang) ...
-                ' and OSI = ' num2str(rootData.F1amplitude_OSI) ', OSang = ' num2str(rootData.F1amplitude_OSang)]);
+            addDsiOsiVarTitle(rootData, 'F1amplitude')
             hold off;
         end
         
-        function plot_gratingAngleVsF2(node, cellData)
+        function plot_gratingAngleVsF2(node, ~)
             rootData = node.get(1);
             xvals = rootData.gratingAngle;
             yField = rootData.F2amplitude;
             yvals = yField.value;
             polarerror(xvals*pi/180, yvals, zeros(1,length(xvals)));
+            hold on
+            polar([0 rootData.F2amplitude_DSang*pi/180], [0 (100*rootData.F2amplitude_DSI)], 'r-');
+            polar([0 rootData.F2amplitude_OSang*pi/180], [0 (100*rootData.F2amplitude_OSI)], 'g-');            
             xlabel('gratingAngle');
             ylabel(['F2 (' yField(1).units ')']);
+            addDsiOsiVarTitle(rootData, 'F2amplitude')
         end
         
-        function plot_gratingAngleVsF2overF1(node, cellData)
+        function plot_gratingAngleVsF2overF1(node, ~)
             rootData = node.get(1);
             xvals = rootData.gratingAngle;
             yField = rootData.F2overF1;
             yvals = yField.value;
             polarerror(xvals*pi/180, yvals, zeros(1,length(xvals)));
+            hold on
+            polar([0 rootData.F2overF1_DSang*pi/180], [0 (20*rootData.F2overF1_DSI)], 'r-');
+            polar([0 rootData.F2overF1_OSang*pi/180], [0 (20*rootData.F2overF1_OSI)], 'g-');            
             xlabel('gratingAngle');
             ylabel('F2 over F1');
+            addDsiOsiVarTitle(rootData, 'F2overF1')
         end
          
-        function plotLeaf(node, cellData)
+        function plotLeaf(node, ~)
             leafData = node.get(1);
             xField = leafData.cycleAvg_x;
             xvals = xField.value;
