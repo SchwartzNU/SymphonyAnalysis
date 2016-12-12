@@ -18,7 +18,7 @@ classdef DriftingGratingsAnalysis < AnalysisTree
                 params.holdSignalParam = 'amp2HoldSignal';
             end            
             
-            nameStr = [cellData.savedFileName ': ' dataSetName ': MovingBarAnalysis'];            
+            nameStr = [cellData.savedFileName ': ' dataSetName ': DriftingGratingsAnalysis'];            
             obj = obj.setName(nameStr);
             dataSet = cellData.savedDataSets(dataSetName);
             obj = obj.copyAnalysisParams(params);
