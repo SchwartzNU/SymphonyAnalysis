@@ -1,7 +1,7 @@
 
 function returnStruct = noiseFilter(cellData, epochIndices)
     numberOfEpochs = length(epochIndices);
-    uifig = figure(200);clf;clc;
+    uifig = figure(200);
 
     handles = tight_subplot(numberOfEpochs, 3);
 
@@ -77,7 +77,7 @@ function returnStruct = noiseFilter(cellData, epochIndices)
         end    
 
         updateRate = frameRate/epoch.get('frameDwell');
-        freqCutoff = 30;
+        freqCutoff = 30;  
         filterFFT = fft(response) ./ fft(stimulus);
         freqcutoff_adjusted = round(freqCutoff/(updateRate/length(stimulus))) ; % this adjusts the freq cutoff for the length
         filterFFT(:,1+freqcutoff_adjusted:length(stimulus)-freqcutoff_adjusted) = 0 ;     

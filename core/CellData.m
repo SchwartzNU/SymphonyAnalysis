@@ -320,15 +320,16 @@ classdef CellData < handle
         end
         
         function plotPSTH(obj, epochInd, binWidth, streamName, ax)
+            if nargin < 5
+                ax = gca;
+            end
             if nargin < 4
                 streamName = 'Amplifier_Ch1';
             end
             if nargin < 3
                 binWidth = 10;
             end
-            if nargin < 4
-                ax = gca;
-            end
+
             sampleEpoch = obj.epochs(epochInd(1));
             stimLen = sampleEpoch.get('stimTime')*1E-3; %s
             [spCount, xvals] = obj.getPSTH(epochInd, binWidth, streamName);
