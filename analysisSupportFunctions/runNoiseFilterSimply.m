@@ -1,10 +1,27 @@
 
 
-load cellData/102816Ac3.mat
-epochIndices = [311 314 317];
+% load cellData/102816Ac3.mat
+% epochIndices = [311 314 317];
 
 % load cellData/102516Ac2.mat
 % epochIndices = [167];
+
+load cellData/110216Ac19.mat
+epochIndices = 218:251;
+
+centerEpochs = [];
+numberOfEpochs = length(epochIndices);
+for ei=1:numberOfEpochs
+
+    epoch = cellData.epochs(epochIndices(ei));
+    centerNoiseSeed = epoch.get('centerNoiseSeed');
+    stimulusAreaMode = epoch.get('currentStimulus');
+
+    if strcmp(stimulusAreaMode, 'Center')
+        centerEpochs(end+1) = epochIndices(ei);
+    end
+end
+epochIndices = centerEpochs;
 
 modelStruct = noiseFilter(cellData, epochIndices);
 

@@ -50,10 +50,12 @@ classdef CenterSurroundNoiseAnalysis < AnalysisTree
             
             obj.modelStruct = noiseFilter(cellData, epochIndices);
 
+            
+            figure(197);clf;
             allFilters = cell2mat(obj.modelStruct.filtersByEpoch);
             mn = mean(allFilters);
             se = std(allFilters)/sqrt(size(allFilters, 1));
-            plot([mn; mn+se; mn-se], 'LineWidth', 1) %obj.modelStruct.timeByEpoch{1}, 
+            plot([mn; mn+se; mn-se]', 'LineWidth', 1) %obj.modelStruct.timeByEpoch{1}, 
             % hold off
             title('Filter mean \{pm} sem')                  
             

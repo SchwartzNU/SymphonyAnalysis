@@ -1,17 +1,49 @@
 
 function returnStruct = noiseFilter(cellData, epochIndices)
-    numberOfEpochs = length(epochIndices);
-    uifig = figure(200);
-
-    handles = tight_subplot(numberOfEpochs, 3);
-
-    % loop through all epochs and generate a linear filter for each
 
     returnStruct = struct();
 
+    % organize epochs by seed: repeats and nonrepeats
+    % probably this'd be a quarter this length in Python, god help me MathWorks
+    numberOfEpochs = length(epochIndices);
+    seedByEpoch = [];
     for ei=1:numberOfEpochs
 
         epoch = cellData.epochs(epochIndices(ei));
+        centerNoiseSeed = epoch.get('centerNoiseSeed');
+        stimulusAreaMode = epoch.get('currentStimulus');
+        
+        seedByEpoch(ei) = centerNoiseSeed;
+    end
+    
+    uniqueSeeds = unique(seedByEpoch);
+    uniqueSeedCounts = [];
+    for ui = 1:length(uniqueSeeds)
+        uniqueSeedCounts(ui) = sum(seedByEpoch == uniqueSeeds(ui));
+    end
+    
+    repeatSeeds = uniqueSeeds(uniqueSeedCounts > 1);
+    if ~isempty(repeatSeeds)
+        repeatSeed = repeatSeeds(1);
+    end
+    singleSeeds = uniqueSeeds(uniqueSeedCounts == 1);
+    repeatRunEpochIndices = epochIndices(seedByEpoch == repeatSeed);
+    
+    singleRunEpochIndices = [];
+    for ei = 1:numberOfEpochs
+        if any(singleSeeds == seedByEpoch(ei))
+            singleRunEpochIndices(end+1) = epochIndices(ei);
+        end
+    end
+    
+    % generate filter for each single-run epoch
+    figure(200);clf;
+    numberOfEpochs = length(singleRunEpochIndices);
+    handles = tight_subplot(numberOfEpochs, 3);
+    
+    for ei=1:numberOfEpochs
+
+        epoch = cellData.epochs(singleRunEpochIndices(ei));
         centerNoiseSeed = epoch.get('centerNoiseSeed');
         stimulusAreaMode = epoch.get('currentStimulus');
 
