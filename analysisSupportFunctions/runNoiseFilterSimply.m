@@ -14,7 +14,7 @@ numberOfEpochs = length(epochIndices);
 for ei=1:numberOfEpochs
 
     epoch = cellData.epochs(epochIndices(ei));
-    centerNoiseSeed = epoch.get('centerNoiseSeed');
+    centerNoiseSeed = epoch.get('centerNoiseSeed')
     stimulusAreaMode = epoch.get('currentStimulus');
 
     if strcmp(stimulusAreaMode, 'Center')
@@ -23,14 +23,14 @@ for ei=1:numberOfEpochs
 end
 epochIndices = centerEpochs;
 
-modelStruct = noiseFilter(cellData, epochIndices);
+modelStruct = noiseFilter(cellData, epochIndices, 'NIM LN');
 
-figure(201);clf;
-% plot(t, allFilters);
-% hold on
-allFilters = cell2mat(modelStruct.filtersByEpoch);
-mn = mean(allFilters);
-se = std(allFilters)/sqrt(size(allFilters, 1));
-plot(modelStruct.timeByEpoch{1}, [mn; mn+se; mn-se], 'LineWidth', 1)
-% hold off
-title('Filter mean and sem')
+% figure(201);clf;
+% % plot(t, allFilters);
+% % hold on
+% allFilters = cell2mat(modelStruct.filtersByEpoch);
+% mn = mean(allFilters);
+% se = std(allFilters)/sqrt(size(allFilters, 1));
+% plot([mn; mn+se; mn-se]', 'LineWidth', 1)
+% % hold off
+% title('Filter mean and sem')
