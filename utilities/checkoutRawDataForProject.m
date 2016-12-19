@@ -21,7 +21,7 @@ for i=1:length(cellNames)
     for j=1:length(cellDataNames)
         rawData_fname = [cellDataNames{j} '.h5'];
         
-        n = split(cellDataNames{j}, 'c');
+        n = strsplit(cellDataNames{j}, 'c');
         rawData_fname_symphony2 = [n{1} '.h5'];
         
         if exist([RAW_DATA_FOLDER rawData_fname], 'file') %already have the file
