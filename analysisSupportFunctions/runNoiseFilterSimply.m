@@ -9,6 +9,10 @@
 load cellData/110216Ac19.mat
 epochIndices = 218:251;
 
+% spiking WFDS
+load cellData/121616Ac2.mat 
+epochIndices = 133:135;
+
 centerEpochs = [];
 numberOfEpochs = length(epochIndices);
 for ei=1:numberOfEpochs
