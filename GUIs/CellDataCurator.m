@@ -300,7 +300,9 @@ classdef CellDataCurator < handle
             end
             channels = get(obj.handles.channelMenu,'String');
             selectedChannelStr = channels{get(obj.handles.channelMenu,'Value')};
-            obj.cellData.epochs(obj.dataSet(obj.selectedEpochInd)).plotData(selectedChannelStr, obj.handles.dataPlotAxes);
+            epochNum = obj.dataSet(obj.selectedEpochInd);
+            obj.cellData.epochs(epochNum).plotData(selectedChannelStr, obj.handles.dataPlotAxes);
+            title(obj.handles.dataPlotAxes, sprintf('Epoch number: %g', epochNum));
         end
         
         function updateParamsList(obj)
