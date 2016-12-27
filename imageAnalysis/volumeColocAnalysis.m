@@ -1,8 +1,8 @@
 function [pixelAvg, pixelAvg90, pixelAvg180, pixelAvg270, withinVals, vals90, vals180, vals270] = volumeColocAnalysis(image_fname)
-Nchannels = 2;
-cellChannel = 1;
-quantChannel = 2;
-searchArea = 30; %pixels
+Nchannels = 3;
+cellChannel = 2;
+quantChannel = 1;
+searchArea = 50; %pixels
 
 imageData = bfopen(image_fname);
 rawImageSequence = imageData{1,1};
@@ -27,9 +27,10 @@ for i=1:Nframes
     quantImageMat270(:,:,i) = imrotate(quantImageSeq{i}, 270);
     
     thresLevel(i) = graythresh(squeeze(cellImageMat(:,:,i)));
+    %thresLevel(i) = 1;
     cellImageMask(:,:,i) = im2bw(cellImageMat(:,:,i), thresLevel(i));
+    %cellImageMask(:,:,i) = cellImageMat(:,:,i) > 1500;
 end
-
 temp =  quantImageMat .* cellImageMask;
 withinVals = temp(:);
 withinValMean = mean(temp(:));
