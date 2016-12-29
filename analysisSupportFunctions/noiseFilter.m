@@ -25,7 +25,7 @@ numberOfEpochs = length(epochIndices);
 for ei=1:numberOfEpochs
 
     epoch = cellData.epochs(epochIndices(ei));
-    centerNoiseSeed = epoch.get('centerNoiseSeed')
+    centerNoiseSeed = epoch.get('centerNoiseSeed');
     stimulusAreaMode = epoch.get('currentStimulus');
 
     if strcmp(stimulusAreaMode, 'Center')
@@ -154,63 +154,61 @@ plot(handles(3), repeatMarkerFull)
 
 %% Generate model parameters
 
-model = 'NIM LN';
+stimulus = stimulusFull;
+response = responseFull;
+modelFitIndices = repeatMarkerFull;
 
-if strcmp(model, 'LN filter')
+% Set parameters of fits
+up_samp_fac = 1; % temporal up-sampling factor applied to stimulus 
+tent_basis_spacing = 1; % represent stimulus filters using tent-bases with this spacing (in up-sampled time units)
+timeCutoff = 0.5;
+updateRate = frameRate/epoch.get('frameDwell');
+nLags = round(timeCutoff * updateRate);
 
-    %% Generate neuron linear filter using FFT
-    stimulus = stimulusFull;
-    response = responseFull;
-    
-    updateRate = frameRate/epoch.get('frameDwell');
-    freqCutoff = 30;  
-    filterFFT = fft(response) ./ fft(stimulus);
-    freqcutoff_adjusted = round(freqCutoff/(updateRate/length(stimulus))) ; % this adjusts the freq cutoff for the length
-    filterFFT(:,1+freqcutoff_adjusted:length(stimulus)-freqcutoff_adjusted) = 0 ;     
-    filterT = real(ifft(filterFFT));
+% Create structure with parameters using static NIM function
+params_stim = NIM.create_stim_params([nLags 1 1], 'stim_dt', 1/frameRate);
 
-    timeCutoff = 0.5;
-    timeCutoffCount = round(timeCutoff * updateRate);
-    filterT = filterT(1:timeCutoffCount);
+% Create T x nLags 'design matrix' representing the relevant stimulus history at each time point
+Xstim = NIM.create_time_embedding(stimulus, params_stim);
 
+%% Fit a single-filter LN model (without cross-validation)
+NL_types = {'rectlin'}; % define subunit as linear (note requires cell array of strings)
+subunit_signs = [1]; % determines whether input is exc or sup (mult by +1 in the linear case)
 
-elseif strcmp(model, 'NIM LN')
+% Set initial regularization as second temporal derivative of filter
+lambda_d2t = 1;
 
-    % Set parameters of fits
-    up_samp_fac = 1; % temporal up-sampling factor applied to stimulus 
-    tent_basis_spacing = 1; % represent stimulus filters using tent-bases with this spacing (in up-sampled time units)
-    timeCutoff = 0.5;
-    updateRate = frameRate/epoch.get('frameDwell');
-    nLags = round(timeCutoff * updateRate);
+% Initialize NIM 'object' (use 'help NIM.NIM' for more details about the contructor 
+nim = NIM(params_stim, NL_types, subunit_signs, 'd2t', lambda_d2t);
 
-    % Create structure with parameters using static NIM function
-    params_stim = NIM.create_stim_params([nLags 1 1], 'stim_dt', 1/frameRate);
+% Fit model filters
+nim = nim.fit_filters(response, Xstim);
 
-    % Create T x nLags 'design matrix' representing the relevant stimulus history at each time point
-    Xstim = NIM.create_time_embedding(stimulus, params_stim);
+% fit upstream nonlinearities
+nonpar_reg = 20; % set regularization value
+nim = nim.init_nonpar_NLs( Xstim, 'lambda_nld2', nonpar_reg );
+nim = nim.fit_upstreamNLs( response, Xstim, 'silent', 1 );
 
-    %% Fit a single-filter LN model (without cross-validation)
-    NL_types = {'lin'}; % define subunit as linear (note requires cell array of strings)
-    subunit_signs = [1]; % determines whether input is exc or sup (mult by +1 in the linear case)
+% Do another iteration of fitting filters and upstream NLs
+nim = nim.fit_filters( response, Xstim, 'silent', 1 );
+nim = nim.fit_upstreamNLs( response, Xstim, 'silent', 1 );
 
-    % Set initial regularization as second temporal derivative of filter
-    lambda_d2t = 1;
+nims = nim.fit_spkNL(response, Xstim);
 
-    % Initialize NIM 'object' (use 'help NIM.NIM' for more details about the contructor 
-    LN = NIM(params_stim, NL_types, subunit_signs, 'd2t', lambda_d2t);
+% plot for each epoch in a row
 
-    % Fit model filters
-    LN = LN.fit_filters(response, Xstim);
+[ll, responsePrediction, mod_internals] = nim.eval_model(response, Xstim);
+ll
 
-    filterT = LN.subunits(1).filtK;
-
-end
+[ll_s, responsePrediction_s, mod_internals] = nims.eval_model(response, Xstim);
+generatingFunction = mod_internals.G;
+subunitOutputComplete = mod_internals.fgint;
+subunitOutputPrimary = mod_internals.gint;
 
 
-%% plot for each epoch in a row
 figure(200);clf;
 numberOfEpochs = length(epochIndices);
-handles = tight_subplot(3,1);
+handles = tight_subplot(2,2);
 
 % stimulus
 axes(handles(1));
@@ -219,33 +217,40 @@ plot(t, stimulus)
 % hold on
 % plot(t, stimulusFiltered, 'LineWidth',2)
 % hold off
-if ei == 1
-    title('stimulus')
-end
-ylabel(sprintf('epoch: %g',ei))
+title('stimulus')
 
 % response
 axes(handles(2));
 plot(response)
-if ei == 1
-    title('response')
-end    
+hold on
+plot(responsePrediction)
+plot(responsePrediction_s)
+legend('response','prediction','prediction spiking nl')
+hold off
+title('response')
 
 % filter
 axes(handles(3));
-plot(filterT(1:end))
-if ei == 1
-    title('filter')
+for i = 1:length(subunit_signs)
+    f = nim.subunits(i).filtK;
+    plot(f);
+    hold on
 end
+legend('1','2','3')
+title('filter')
 
-%         linkaxes(handles((ei-1) * 3 + [1,2]))
-
-%         returnStruct.filtersByEpoch{ei,1} = filterT;
-%         returnStruct.timeByEpoch{ei,1} = t;
+axes(handles(4));
+title('spiking nonlinearity');
+nim.display_spkNL(generatingFunction);
 
 
 % generate nonlinearity using repeated epochs
 % get mean filter from the single run epochs
+
+%% Do NIM NL fitting
+
+
+return
 
 %%
 allFilters = cell2mat(returnStruct.filtersByEpoch); 
