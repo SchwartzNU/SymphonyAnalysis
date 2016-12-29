@@ -155,6 +155,7 @@ plot(handles(3), repeatMarkerFull)
 %% Generate model parameters
 
 stimulus = stimulusFull;
+stimulusFiltered = filtfilt(stimFilter, stimulus);
 response = responseFull;
 modelFitIndices = repeatMarkerFull;
 
@@ -172,8 +173,9 @@ params_stim = NIM.create_stim_params([nLags 1 1], 'stim_dt', 1/frameRate);
 Xstim = NIM.create_time_embedding(stimulus, params_stim);
 
 %% Fit a single-filter LN model (without cross-validation)
-NL_types = {'rectlin'}; % define subunit as linear (note requires cell array of strings)
-subunit_signs = [1]; % determines whether input is exc or sup (mult by +1 in the linear case)
+NL_types = {'rectlin', 'rectlin'}; % define subunit as linear (note requires cell array of strings)
+subunit_signs = [1, -1]; % determines whether input is exc or sup (mult by +1 in the linear case)
+numSubunits = length(subunit_signs);
 
 % Set initial regularization as second temporal derivative of filter
 lambda_d2t = 1;
@@ -193,163 +195,74 @@ nim = nim.fit_upstreamNLs( response, Xstim, 'silent', 1 );
 nim = nim.fit_filters( response, Xstim, 'silent', 1 );
 nim = nim.fit_upstreamNLs( response, Xstim, 'silent', 1 );
 
-nims = nim.fit_spkNL(response, Xstim);
+nim = nim.fit_spkNL(response, Xstim);
 
 % plot for each epoch in a row
 
-[ll, responsePrediction, mod_internals] = nim.eval_model(response, Xstim);
-ll
 
 [ll_s, responsePrediction_s, mod_internals] = nims.eval_model(response, Xstim);
+fprintf('Log likelihood: %g', -1*ll);
+
 generatingFunction = mod_internals.G;
 subunitOutputComplete = mod_internals.fgint;
 subunitOutputPrimary = mod_internals.gint;
 
 
+%%
+
 figure(200);clf;
-numberOfEpochs = length(epochIndices);
 handles = tight_subplot(2,2);
 
-% stimulus
-axes(handles(1));
-t = linspace(0, length(stimulus) / frameRate, length(stimulus));
-plot(t, stimulus)
-% hold on
-% plot(t, stimulusFiltered, 'LineWidth',2)
-% hold off
-title('stimulus')
-
-% response
-axes(handles(2));
-plot(response)
-hold on
-plot(responsePrediction)
-plot(responsePrediction_s)
-legend('response','prediction','prediction spiking nl')
-hold off
-title('response')
 
 % filter
-axes(handles(3));
-for i = 1:length(subunit_signs)
+axes(handles(1));
+for i = 1:numSubunits
     f = nim.subunits(i).filtK;
     plot(f);
     hold on
 end
-legend('1','2','3')
+legend('1','2')
 title('filter')
 
-axes(handles(4));
+axes(handles(2));
 title('spiking nonlinearity');
 nim.display_spkNL(generatingFunction);
 
+axes(handles(3))
+title('subunit nonlinearities')
+hold on
+for si=1:numSubunits
+    nim.subunits(si).display_NL()
+end
 
+
+% notes for LN:
 % generate nonlinearity using repeated epochs
 % get mean filter from the single run epochs
 
-%% Do NIM NL fitting
 
+
+%% Display time signals
+
+figure(201);clf;
+% handles = tight_subplot(2,2);
+
+% stimulus
+% axes(handles(1));
+t = linspace(0, length(stimulus) / frameRate, length(stimulus));
+% plot(t, stimulus)
+hold on
+plot(t, stimulusFiltered * 3)
+
+% response
+% axes(handles(2));
+plot(t, response)
+hold on
+plot(t, responsePrediction)
+plot(t, responsePrediction_s)
+legend('stim filtered','response','prediction','prediction spiking nl')
+hold off
+title('response')
 
 return
-
-%%
-allFilters = cell2mat(returnStruct.filtersByEpoch); 
-meanFilter = mean(allFilters);
-repeatedStimulus = [];
-allResponses = [];
-
-for ei = 1:length(repeatRunEpochIndices)
-    epoch = cellData.epochs(repeatRunEpochIndices(ei));
-    centerNoiseSeed = epoch.get('centerNoiseSeed');
-    stimulusAreaMode = epoch.get('currentStimulus');
-
-    if ~strcmp(stimulusAreaMode, 'Center')
-        return
-    end
-
-    response = epoch.getData('Amplifier_Ch1')';
-    response = response * sign(mean(response));
-    response = response - mean(response);
-%     response = zscore(response);
-    response = resample(response, frameRate, sampleRate);
-    allResponses(ei,:) = response;
-
-
-    if ei == 1
-        stimulus = [];
-        %                 chunkLen = epoch.get('frameDwell') / displayFrameRate;
-        preFrames = round(frameRate * (epoch.get('preTime')/1e3));
-        stimFrames = round(frameRate * (epoch.get('stimTime')/1e3));
-        stimulus(1:preFrames) = zeros(1, preFrames);
-        for fi = preFrames+1:floor(stimFrames/epoch.get('frameDwell'))
-            stimulus(fi) = centerNoiseStream.randn;
-        end
-        ml = epoch.get('meanLevel');
-        contrast = 1; %epoch.get('currentContrast')
-        stimulus = ml + contrast * ml * stimulus;
-
-        while length(stimulus) < length(response)
-            stimulus  = [stimulus, ml];
-        end
-
-        stimulus(stimulus < 0) = 0;
-        stimulus(stimulus > 1) = 1;     
-        repeatedStimulus = stimulus;
-    end
-end
-
-meanResponse = mean(allResponses);
-
-%% generate prediction
-responsePrediction = conv(meanFilter, repeatedStimulus);
-responsePrediction = responsePrediction(1:end-length(filterT)+1);
-%         responsePrediction = responsePrediction(1:length(response));
-
-% solve nonlinearity
-inpt = responsePrediction;
-inpt = inpt - mean(inpt);
-inpt = inpt / max(abs(inpt));
-responsePrediction = inpt;
-out = meanResponse;
-out = out - mean(out);
-out = out / max(abs(out));
-meanResponse = out;
-
-[~,i] = sort(inpt);
-inpt = inpt(i);
-out = out(i);
-
-figure(10); clf;
-plot(inpt, out, '.')
-hold on
-bucketLen = floor(length(out) / 20);
-numbuckets = ceil(length(out) / bucketLen);
-
-nonlinInput = [];
-nonlinOutput = [];
-for bi = 1:numbuckets
-    r = (bi-1) * bucketLen + (1:bucketLen);
-    nonlinInput(bi) = mean(inpt(r));
-    nonlinOutput(bi) = mean(out(r));
-end
-
-plot(nonlinInput,nonlinOutput,'LineWidth',3);
-
-
-%% Generate LN prediction
-
-figure(15)
-plot(meanFilter)
-
-responsePredictionNonlin = interp1(nonlinInput,nonlinOutput, responsePrediction, 'linear', 'extrap');
-
-figure(20);clf;
-plot(meanResponse)
-hold on
-plot(responsePrediction)
-plot(responsePredictionNonlin)
-%     plot(repeatedStimulus)
-%     plot(allResponses')
-legend('mean response','prediction (lin)','prediction (nonlin)')
-
 
