@@ -78,6 +78,9 @@ stimFilter = designfilt('lowpassfir','PassbandFrequency',8, ...
 responseFull = [];
 stimulusFull = [];
 repeatMarkerFull = [];
+
+averageRepeatSeedEpochs = true;
+
 for ei=1:numberOfEpochs
 
     epoch = cellData.epochs(epochIndices(ei));
@@ -139,11 +142,26 @@ for ei=1:numberOfEpochs
     assert(all(size(stimulus) == size(response)))
     repeatMarker = isRepeatSeed * ones(size(stimulus));
 
-    stimulusFull = [stimulus; stimulusFull];
-    responseFull = [response; responseFull];
-    repeatMarkerFull = [repeatMarker; repeatMarkerFull];
+    if averageRepeatSeedEpochs
+        
+        stimulusFull = [stimulus, stimulusFull];
+        responseFull = [response, responseFull];
+        repeatMarkerFull = [repeatMarker, repeatMarkerFull];
+    else
+        
+        stimulusFull = [stimulus; stimulusFull];
+        responseFull = [response; responseFull];
+        repeatMarkerFull = [repeatMarker; repeatMarkerFull];
+    end
 
 end
+
+if averageRepeatSeedEpochs
+    stimulusFull = mean(stimulusFull, 2);
+    responseFull = mean(responseFull, 2);
+    repeatMarkerFull = mean(repeatMarkerFull, 2);
+end
+
 
 figure(6);clf;
 handles = tight_subplot(3,1);
@@ -173,9 +191,8 @@ params_stim = NIM.create_stim_params([nLags 1 1], 'stim_dt', 1/frameRate);
 Xstim = NIM.create_time_embedding(stimulus, params_stim);
 
 %% Fit a single-filter LN model (without cross-validation)
-NL_types = {'rectlin', 'rectlin'}; % define subunit as linear (note requires cell array of strings)
-subunit_signs = [1, -1]; % determines whether input is exc or sup (mult by +1 in the linear case)
-numSubunits = length(subunit_signs);
+NL_types = {'rectlin'}; % define subunit as linear (note requires cell array of strings)
+subunit_signs = [1]; % determines whether input is exc or sup (mult by +1 in the linear case)
 
 % Set initial regularization as second temporal derivative of filter
 lambda_d2t = 1;
@@ -186,21 +203,26 @@ nim = NIM(params_stim, NL_types, subunit_signs, 'd2t', lambda_d2t);
 % Fit model filters
 nim = nim.fit_filters(response, Xstim);
 
-% fit upstream nonlinearities
-nonpar_reg = 20; % set regularization value
-nim = nim.init_nonpar_NLs( Xstim, 'lambda_nld2', nonpar_reg );
-nim = nim.fit_upstreamNLs( response, Xstim, 'silent', 1 );
+% add second subunit starting with a delayed copy of the first
+delayed_filt = nim.shift_mat_zpad( nim.subunits(1).filtK, 4 );
+nim = nim.add_subunits( {'rectlin'}, -1, 'init_filts', {delayed_filt} );
+nim = nim.fit_filters(response, Xstim);
 
-% Do another iteration of fitting filters and upstream NLs
-nim = nim.fit_filters( response, Xstim, 'silent', 1 );
-nim = nim.fit_upstreamNLs( response, Xstim, 'silent', 1 );
+% fit upstream nonlinearities
+% nonpar_reg = 20; % set regularization value
+% nim = nim.init_nonpar_NLs( Xstim, 'lambda_nld2', nonpar_reg );
+% nim = nim.fit_upstreamNLs( response, Xstim, 'silent', 1 );
+% 
+% % Do another iteration of fitting filters and upstream NLs
+% nim = nim.fit_filters( response, Xstim, 'silent', 1 );
+% nim = nim.fit_upstreamNLs( response, Xstim, 'silent', 1 );
 
 nim = nim.fit_spkNL(response, Xstim);
 
 % plot for each epoch in a row
 
 
-[ll_s, responsePrediction_s, mod_internals] = nims.eval_model(response, Xstim);
+[ll, responsePrediction_s, mod_internals] = nim.eval_model(response, Xstim);
 fprintf('Log likelihood: %g', -1*ll);
 
 generatingFunction = mod_internals.G;
@@ -208,11 +230,11 @@ subunitOutputComplete = mod_internals.fgint;
 subunitOutputPrimary = mod_internals.gint;
 
 
-%%
+%
 
 figure(200);clf;
 handles = tight_subplot(2,2);
-
+numSubunits = length(nim.subunits);
 
 % filter
 axes(handles(1));
@@ -258,9 +280,9 @@ plot(t, stimulusFiltered * 3)
 % axes(handles(2));
 plot(t, response)
 hold on
-plot(t, responsePrediction)
+% plot(t, responsePrediction)
 plot(t, responsePrediction_s)
-legend('stim filtered','response','prediction','prediction spiking nl')
+legend('stim filtered','response','prediction spiking nl')
 hold off
 title('response')
 
