@@ -12,16 +12,16 @@
 % epochIndices = 218:251;
 
 % spiking WFDS
-% load cellData/121616Ac2.mat 
-% epochIndices = 133:135;
+load cellData/121616Ac2.mat 
+epochIndices = 133:135;
 
 % spiking On Off DS
 % load cellData/121616Ac4.mat 
 % epochIndices = 30;
 
 % WC on wfds
-load cellData/121616Ac7.mat 
-epochIndices = 63;
+% load cellData/121616Ac7.mat 
+% epochIndices = 63;
 
 returnStruct = struct();
 
@@ -208,58 +208,76 @@ params_stim = NIM.create_stim_params([nLags 1 1], 'stim_dt', 1/frameRate);
 % Create T x nLags 'design matrix' representing the relevant stimulus history at each time point
 Xstim = NIM.create_time_embedding(stimulus, params_stim);
 
-% Fit a single-filter LN model (without cross-validation)
-lambda_d2t = 20;
+%% Generate Model
 
-% Initialize NIM 'object'
 % use a saved filter to get things looking right at the start (avoid inversions)
 % nim = NIM(params_stim, NL_types, subunit_signs, 'd2t', lambda_d2t, 'init_filts', {savedFilter});
-nim = NIM(params_stim, [], [], 'd2t', lambda_d2t, 'spkNL', 'lin');
-nim = nim.add_subunits('lin', 1);
-% nim.subunits(1).NLoffset = .3;
 
-% Fit model filters
-nim = nim.fit_filters(response, Xstim, 'silent', 1 );
+% doc on the regularization types:
+% nld2 second derivative of tent basis coefs
+% d2xt spatiotemporal laplacian
+% d2x 2nd spatial deriv
+% d2t 2nd temporal deriv
+% l2 L2 on filter coefs
+% l1 L1 on filter coefs
+
+% doc on output nonlinearities
+% {'lin','rectpow','exp','softplus','logistic'}
+
+nim = NIM(params_stim, [], [], 'spkNL', 'softplus');
+nim = nim.add_subunits('lin', 1);
+nim = nim.set_reg_params('d2t', 10);
 
 % add negative subunit starting with a delayed copy of the first
-delayed_filt = nim.shift_mat_zpad( nim.subunits(1).filtK, 4 );
-nim = nim.add_subunits( {'lin'}, -1, 'init_filts', {delayed_filt} );
-nim = nim.fit_filters(response, Xstim, 'silent', 1);
+nim = nim.fit_filters( response, Xstim, 'silent', 1);
+useDelayedCopy = true;
+if useDelayedCopy
+    nim = nim.fit_filters(response, Xstim, 'silent', 1 );
+    delayed_filt = nim.shift_mat_zpad( nim.subunits(1).filtK, 4 );
+    nim = nim.add_subunits( {'lin'}, -1, 'init_filts', {delayed_filt});
+else
+    nim = nim.add_subunits( {'lin'}, -1);
+end    
 
 % add subunit as an OFF filter
-flipped_filt = -1 * nim.subunits(1).filtK;
-nim = nim.add_subunits( {'rectlin'}, 1, 'init_filts', {flipped_filt} );
-nim = nim.fit_filters(response, Xstim, 'silent', 1);
+% nim = nim.fit_filters( response, Xstim, 'silent', 1);
+% flipped_filt = -1 * nim.subunits(1).filtK;
+% nim = nim.add_subunits( {'rectlin'}, 1, 'init_filts', {flipped_filt} );
+% nim = nim.fit_filters(response, Xstim, 'silent', 1);
+
+% add subunit as an -OFF filter
+% flipped_filt = -1 * nim.subunits(3).filtK;
+% delayed_filt = nim.shift_mat_zpad( nim.subunits(1).filtK, 4 );
+% nim = nim.add_subunits( {'rectlin'}, -1, 'init_filts', {flipped_filt} );
+% nim = nim.fit_filters(response, Xstim, 'silent', 1);
 
 % fit upstream nonlinearities
 
 nonpar_reg = 20; % set regularization value
 enforceMonotonicSubunitNonlinearity = false;
 nim = nim.init_nonpar_NLs( Xstim, 'lambda_nld2', nonpar_reg, 'NLmon', enforceMonotonicSubunitNonlinearity);
-nim = nim.fit_upstreamNLs( response, Xstim, 'silent', 1 );
 
-% Do another iteration of fitting filters and upstream NLs
-nim = nim.fit_filters( response, Xstim, 'silent', 1 );
-nim = nim.fit_upstreamNLs( response, Xstim, 'silent', 1 );
-nim = nim.fit_filters( response, Xstim, 'silent', 1 );
-nim = nim.fit_upstreamNLs( response, Xstim, 'silent', 1 );
-
+% use this later:
 % nim = nim.init_spkhist( 20, 'doubling_time', 5 );
-useOutputNonlinearity = 1;
-if useOutputNonlinearity
-    nim = nim.fit_spkNL(response, Xstim, 'silent', 1);
-end
 
-[ll, responsePrediction_s, mod_internals] = nim.eval_model(response, Xstim);
-r2 = 1-mean((response-responsePrediction_s).^2)/var(response);
+numFittingLoops = 3;
+
+for fi = 1:numFittingLoops
+    nim = nim.fit_filters( response, Xstim, 'silent', 1);
+    nim = nim.fit_upstreamNLs( response, Xstim, 'silent', 1);
+    nim = nim.fit_spkNL(response, Xstim, 'silent', 1);
+    [ll, responsePrediction_s, mod_internals] = nim.eval_model(response, Xstim);
+    r2 = 1-mean((response-responsePrediction_s).^2)/var(response);
+end
 fprintf('Log likelihood: %g R2: %g\n', -1*ll, r2);
+
 
 generatingFunction = mod_internals.G;
 subunitOutputLN = mod_internals.fgint;
 subunitOutputL = mod_internals.gint;
 
-%% Display model components
-colorsBySubunit = [1,0,.5; 0,.5,1; 0,1,.9];
+% Display model components
+colorsBySubunit = [1,0,.5; 0,.5,1; 0,1,.9; 1,.3,0];
 
 figure(200);clf;
 handles = tight_subplot(2,2, .05);
@@ -283,20 +301,23 @@ title('subunit linear filters')
 % Subunit nonlinearity
 axes(handles(2));
 for si=1:numSubunits
+    yyaxis left
     histogram(subunitOutputL(:,si), 'DisplayStyle','stairs','EdgeColor', colorsBySubunit(si,:), 'Normalization', 'Probability')
     hold on
-
     gendist_x = xlim();
     
     subunit = nim.subunits(si);
     if strcmp(subunit.NLtype, 'nonpar')          
         x = subunit.NLnonpar.TBx; y = subunit.NLnonpar.TBy;        
     else
-        x = gendist_x; y = subunit.apply_NL( x );
+        x = gendist_x; y = subunit.apply_NL(x);
     end
+    yyaxis right
     plot(x, y, 'Color', colorsBySubunit(si,:), 'LineWidth',1)
+    hold on
     
 end
+yyaxis right
 line(xlim(),[0,0],'Color','k', 'LineStyle',':')
 line([0,0], ylim(),'Color','k', 'LineStyle',':')
 title('subunit generator & output nonlinearity')
@@ -370,5 +391,25 @@ xlim([5,7])
 
 pan xon
 
-%%
+%% step response
+stepStartTime = 0.5;
+stepEndTime = 1.5;
+
+t = (0:1/updateRate:3)';
+artStim = zeros(size(t));
+artStim(t >= stepStartTime & t <= stepEndTime) = 0.5;
+artXstim = NIM.create_time_embedding(artStim, params_stim);
+
+figure(205);clf;
+plot(t, artStim);
+
+hold on
+[~, artResponsePrediction_s] = nim.eval_model([], artXstim);
+plot(t, artResponsePrediction_s)
+
+legend('stimulus','response')
+
+
+
+
 
