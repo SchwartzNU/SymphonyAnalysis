@@ -63,6 +63,8 @@ end
 repeatSeeds = uniqueSeeds(uniqueSeedCounts > 1);
 if ~isempty(repeatSeeds)
     repeatSeed = repeatSeeds(1);
+else
+    repeatSeed = [];
 end
 singleSeeds = uniqueSeeds(uniqueSeedCounts == 1);
 repeatRunEpochIndices = epochIndices(seedByEpoch == repeatSeed);
@@ -130,9 +132,9 @@ for ei=1:numberOfEpochs
     if strcmp(epoch.get('ampMode'), 'Cell attached')
         spikeTimes = epoch.get('spikes_ch1') / sampleRate;
         response = NIM.Spks2Robs(spikeTimes, 1/frameRate, size(stimulus,1) );
-        spikeMode = true;
+        useOutputNonlinearity = true;
     else
-        spikeMode = false;
+        useOutputNonlinearity = false;
         
         responseRaw = epoch.getData('Amplifier_Ch1');        
         response = responseRaw * sign(mean(responseRaw));
@@ -209,7 +211,7 @@ Xstim = NIM.create_time_embedding(stimulus, params_stim);
 % Fit a single-filter LN model (without cross-validation)
 lambda_d2t = 20;
 
-% Initialize NIM 'object' (use 'help NIM.NIM' for more details about the contructor 
+% Initialize NIM 'object'
 % use a saved filter to get things looking right at the start (avoid inversions)
 % nim = NIM(params_stim, NL_types, subunit_signs, 'd2t', lambda_d2t, 'init_filts', {savedFilter});
 nim = NIM(params_stim, [], [], 'd2t', lambda_d2t, 'spkNL', 'lin');
@@ -234,7 +236,8 @@ nim = nim.fit_filters(response, Xstim);
 % fit upstream nonlinearities
 
 nonpar_reg = 20; % set regularization value
-nim = nim.init_nonpar_NLs( Xstim, 'lambda_nld2', nonpar_reg, 'NLmon', 0);
+enforceMonotonicSubunitNonlinearity = false;
+nim = nim.init_nonpar_NLs( Xstim, 'lambda_nld2', nonpar_reg, 'NLmon', enforceMonotonicSubunitNonlinearity);
 nim = nim.fit_upstreamNLs( response, Xstim, 'silent', 1 );
 
 % Do another iteration of fitting filters and upstream NLs
@@ -244,21 +247,24 @@ nim = nim.fit_filters( response, Xstim, 'silent', 1 );
 nim = nim.fit_upstreamNLs( response, Xstim, 'silent', 1 );
 
 % nim = nim.init_spkhist( 20, 'doubling_time', 5 );
-
-% if spikeMode
+useOutputNonlinearity = 1;
+if useOutputNonlinearity
     nim = nim.fit_spkNL(response, Xstim);
-% end
+end
 
 % plot for each epoch in a row
 
 
 [ll, responsePrediction_s, mod_internals] = nim.eval_model(response, Xstim);
-fprintf('Log likelihood: %g\n', -1*ll);
+r2 = 1-mean((response-responsePrediction_s).^2)/var(response);
+fprintf('Log likelihood: %g R2: %g\n', -1*ll, r2);
 
 generatingFunction = mod_internals.G;
-subunitOutputComplete = mod_internals.fgint;
-subunitOutputPrimary = mod_internals.gint;
+subunitOutputLN = mod_internals.fgint;
+subunitOutputL = mod_internals.gint;
 
+%% Display model components
+colorsBySubunit = [1,0,.5; 0,.5,1; 0,1,0];
 
 figure(200);clf;
 handles = tight_subplot(2,2, .05);
@@ -266,27 +272,59 @@ numSubunits = length(nim.subunits);
 
 % filter
 axes(handles(1));
-for i = 1:numSubunits
-    f = nim.subunits(i).filtK;
-    plot(f);
+filterTime = 1:nLags;
+filterTime = (filterTime-1) / updateRate;
+h = [];
+for si = 1:numSubunits
+    f = nim.subunits(si).filtK;
+    h(si) = plot(filterTime, f, 'Color', colorsBySubunit(si,:));
     hold on
 end
-legend('1','2')
-title('filters')
+line([0,max(filterTime)],[0,0],'Color','k', 'LineStyle',':')
+legString = cellfun(@num2str, num2cell(1:10), 'UniformOutput', 0);
+legend(h, legString)
+title('subunit linear filters')
 
 axes(handles(2));
-title('subunit nonlinearities')
-hold on
 for si=1:numSubunits
-    nim.subunits(si).display_NL(subunitOutputPrimary(:,si))
+    histogram(subunitOutputL(:,si), 'DisplayStyle','stairs','EdgeColor', colorsBySubunit(si,:), 'Normalization', 'Probability')
+    hold on
+
+    gendist_x = xlim();
+    
+    subunit = nim.subunits(si);
+    if strcmp(subunit.NLtype, 'nonpar')          
+        x = subunit.NLnonpar.TBx; y = subunit.NLnonpar.TBy;        
+    else
+        x = gendist_x; y = subunit.apply_NL( x );
+    end
+    plot(x, y, 'Color', colorsBySubunit(si,:), 'LineWidth',2)
     
 end
-yticklabels('auto')
-xticklabels('auto')
+line(xlim(),[0,0],'Color','k', 'LineStyle',':')
+line([0,0], ylim(),'Color','k', 'LineStyle',':')
+title('subunit generator & output nonlinearity')
+
 
 axes(handles(3))
-title('spiking nonlinearity');
-nim.display_spkNL(generatingFunction);
+for si = 1:numSubunits
+   histogram(subunitOutputLN(:,si), 'DisplayStyle','stairs', 'EdgeColor', colorsBySubunit(si,:), 'Normalization','Probability');
+   hold on
+end
+legend(legString)
+title('subunit output')
+hold on
+
+axes(handles(4))
+yyaxis left
+title('spiking nonlinearity w/ generator his');
+histogram(generatingFunction, 'DisplayStyle','stairs','EdgeColor','k', 'Normalization','Probability');
+hold on
+
+yyaxis right
+x = linspace(min(generatingFunction), max(generatingFunction));
+y = nim.apply_spkNL(x);
+plot(x,y)
 yticks('auto')
 
 % notes for LN:
@@ -306,21 +344,22 @@ warning('off', 'MATLAB:legend:IgnoringExtraEntries')
 t = linspace(0, length(stimulus) / frameRate, length(stimulus));
 % plot(t, stimulus)
 hold on
-plot(t, stimulusFiltered, 'LineWidth',2)
+plot(t, stimulusFiltered-.5, 'Color','k')
 
 % response
 % axes(handles(2));
-plot(t, response)
+plot(t, response, 'g')
 hold on
 % plot(t, responsePrediction)
-plot(t, responsePrediction_s)
+plot(t, responsePrediction_s, 'r')
 
-plot(t, subunitOutputComplete/3, '--')
-legend('stim filtered','response','prediction spiking nl', 'fg1','fg2','fg3')
+for si = 1:numSubunits
+    plot(t, nim.subunits(si).weight * subunitOutputLN(:,si)/3, 'Color', colorsBySubunit(si,:))
+end
+legend('stim lowpass','response','prediction', 'sub 1 out weighted','sub 2 out weighted','sub 3 out')
 hold off
 title('response')
+grid on
+xlim([5,7])
 
-xlim([5,8])
-
-return
 
