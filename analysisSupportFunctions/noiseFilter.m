@@ -1,9 +1,10 @@
+% Model generator for RG cells.
 
 % function returnStruct = noiseFilter(cellData, epochIndices, model)
 
 %% load data
-% load cellData/102816Ac3.mat
-% epochIndices = [311 314 317];
+load cellData/102816Ac3.mat
+epochIndices = 311:319;
 
 % load cellData/102516Ac2.mat
 % epochIndices = [167];
@@ -12,8 +13,8 @@
 % epochIndices = 218:251;
 
 % spiking WFDS
-load cellData/121616Ac2.mat 
-epochIndices = 133:135;
+% load cellData/121616Ac2.mat 
+% epochIndices = 133:135;
 
 % spiking On Off DS
 % load cellData/121616Ac4.mat 
@@ -22,8 +23,6 @@ epochIndices = 133:135;
 % WC on wfds
 % load cellData/121616Ac7.mat 
 % epochIndices = 63;
-
-returnStruct = struct();
 
 %% organize epochs
 
@@ -313,7 +312,7 @@ for si=1:numSubunits
         x = gendist_x; y = subunit.apply_NL(x);
     end
     yyaxis right
-    plot(x, y, 'Color', colorsBySubunit(si,:), 'LineWidth',1)
+    plot(x, y, '-', 'Color', colorsBySubunit(si,:), 'LineWidth',1)
     hold on
     
 end
