@@ -1,8 +1,8 @@
 function [pixelAvg, pixelAvg90, pixelAvg180, pixelAvg270, withinVals, vals90, vals180, vals270] = volumeColocAnalysis(image_fname)
-Nchannels = 3;
-cellChannel = 2;
-quantChannel = 1;
-searchArea = 50; %pixels
+Nchannels = 2;
+cellChannel = 1;
+quantChannel = 2;
+searchArea = 60; %pixels
 
 imageData = bfopen(image_fname);
 rawImageSequence = imageData{1,1};

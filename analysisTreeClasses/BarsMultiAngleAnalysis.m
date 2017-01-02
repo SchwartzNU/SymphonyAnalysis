@@ -83,6 +83,8 @@ classdef BarsMultiAngleAnalysis < AnalysisTree
             
             %OSI, OSang
             rootData = obj.get(1);
+            ind = find(rootData.barAngle >= 180);
+            rootData.barAngle(ind) = rootData.barAngle(ind) - 180;   
             rootData = addOSI(rootData, 'barAngle');
             rootData.stimParameterList = {'barAngle'};
             rootData.byEpochParamList = byEpochParamList;
