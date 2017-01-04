@@ -9,7 +9,7 @@ acName = '1032';
 
 useRealRf = 0;
 useRealFilters = 0;
-useSubunits = 1;
+useSubunits = 0;
 
 % cellName = '033116Ac2'; % nice RF with edges and bars, but missing bars spikes and inhibitory temporal align
 % acName = '263';
@@ -58,11 +58,11 @@ end
 disp('Running full simulation');
 
 
-%% Big parameter loop around 12 angles and simulation core
+%% Big parameter loop around overall parameters
 
-paramColumnNames = {'positionOffset'};
-col_positionOffset = 1;
-col_barSpeed = 1;
+paramColumnNames = {'rfOffset', 'barSpeed'};
+col_rfOffset = 1;
+col_barSpeed = 2;
 
 % paramValues  = {0;
 %                 10;
@@ -73,7 +73,16 @@ col_barSpeed = 1;
 %                 975;
 %                 1365};
             
-paramValues = {1000}; % barspeed
+paramValues = [0, 1000;
+               1, 1000;
+               2, 1000;
+               4, 1000;
+               1, 500;
+               2, 500;
+               4, 500;
+               1, 250;
+               2, 250;
+               4, 250];
             
             
 [numParamSets,numParams] = size(paramValues);
@@ -81,10 +90,10 @@ paramValues = {1000}; % barspeed
 dsiByParamSet = [];
 valuesByParamSet = [];
 
-
+tic
 
 for paramSetIndex = 1:numParamSets
-    fprintf('Param Set %d: %s\n', paramSetIndex, num2str(paramValues{paramSetIndex,:}));
+    fprintf('Param Set %d: %s\n', paramSetIndex, mat2str(paramValues(paramSetIndex,:)));
     
     %% Setup
 
@@ -105,6 +114,24 @@ for paramSetIndex = 1:numParamSets
     shapeModelAnalyzeOutput
 
 end
+
+disp('Model run complete')
+toc
+
+%% display DSI over parameters
+figure(901);clf;
+d1 = linspace(min(paramValues(:,1)), max(paramValues(:,1)), 10);
+d2 = linspace(min(paramValues(:,2)), max(paramValues(:,2)), 10);
+
+[d1q,d2q] = meshgrid(d1, d2);        
+c = griddata(paramValues(:,1), paramValues(:,2), dsiByParamSet, d1q, d2q);
+surface(d1q, d2q, zeros(size(d1q)), c)
+hold on
+plot(paramValues(:,1), paramValues(:,2), '.', 'MarkerSize', 40)
+hold off
+xlabel(paramColumnNames{1})
+ylabel(paramColumnNames{2})
+colorbar
 
 %% process output nonlinearity
 

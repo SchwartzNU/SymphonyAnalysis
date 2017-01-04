@@ -12,7 +12,7 @@ c_subunit2SigmaWidth = [40 40; 60 60;];
 c_subunit2SigmaWidth_surround = [80 80; 120 120];
 c_subunitSurroundRatio = [0.15 0.15; 0.0 0.0];
 
-positionOffsetByVoltage = [13,0];
+positionOffsetByVoltage = [paramValues(paramSetIndex,col_rfOffset),0];
 
 % generate RF map for EX and IN
 % import completed maps 
