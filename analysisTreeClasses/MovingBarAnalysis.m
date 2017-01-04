@@ -158,13 +158,13 @@ classdef MovingBarAnalysis < AnalysisTree
             L = length(chInd);
             ax = gca;
             for i=1:L
-                hold(ax, 'on');
                 epochInd = node.get(chInd(i)).epochID;
                 if strcmp(rootData.(rootData.ampModeParam), 'Cell attached')
                     cellData.plotPSTH(epochInd, 10, rootData.deviceName, ax);
                 else
                     cellData.plotMeanData(epochInd, false, [], rootData.deviceName, ax);
                 end
+                hold(ax, 'on');               
             end
             hold(ax, 'off');
         end

@@ -86,15 +86,15 @@ classdef DriftingGratingsAnalysis < AnalysisTree
             rootData = node.get(1);
             chInd = node.getchildren(1);
             L = length(chInd);
-            ax = axes;
+            ax = gca;
             for i=1:L
-                hold(ax, 'on');
                 epochInd = node.get(chInd(i)).epochID;
                 if strcmp(rootData.(rootData.ampModeParam), 'Cell attached')
                     cellData.plotPSTH(epochInd, 10, rootData.deviceName, ax);
                 else
                     cellData.plotMeanData(epochInd, false, [], rootData.deviceName, ax);
                 end
+                hold(ax, 'on');
             end
             hold(ax, 'off');
         end
