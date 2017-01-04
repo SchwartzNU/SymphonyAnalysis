@@ -21,7 +21,11 @@ figure;
 imagesc(meanImage);
 disp('Draw a line along the middle of the ROI. Double click to finish');
 [xpts, ypts] = getline(gcf);
-allX = 1:w;
+if xpts(1) < w/2
+    allX = 1:w;
+else
+    allX = w:-1:1;
+end
 allY = interp1(xpts, ypts, allX);
 
 [X,Y] = meshgrid(1:w,1:h);
@@ -30,17 +34,20 @@ allY = interp1(xpts, ypts, allX);
 z=1;
 for i=1:w
     if ~isnan(allY(i))
-        x = i;
+        x = allX(i);
         y = allY(i);
         dist_2 = sum(bsxfun(@minus, [X(:), Y(:)], [x, y]) .^ 2, 2);
         dist_2(cellImageMask(sub2ind([h, w], Y(:), X(:))) == 0) = Inf;
         [~, ind] = sort(dist_2);
         selectedInd = ind(1:pixels);
         
+        dist_2(selectedInd(pixels));
         if dist_2(selectedInd(pixels)) < Inf
             nearPoints = zeros(h,w);
             [xNear, yNear] = ind2sub([h, w], selectedInd);
             nearPoints(xNear, yNear) = 1;
+%             imagesc(nearPoints);
+%             pause;
             xPoints(z) = x;
             yPoints(z) = y; 
             signalMat(z,:) = squeeze(mean(mean(cellImageMat(xNear, yNear, :))));
@@ -48,10 +55,7 @@ for i=1:w
             deltaFoverF(z) = (mean(signalMat(z,:)) - bg) / bg;
             z=z+1;
         end
-    end
-    
-    %        nearPoints = reshape(dist_2 <= (radPix .^ 2), [h, w]);
-    %        nearPointsInMask(:,:,i) = nearPoints .* cellImageMask;
+    end      
 end
 
 refPointX = xPoints(1);
