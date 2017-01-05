@@ -1,6 +1,6 @@
 % shapeModelSetup
 
-sim_endTime = 5.0;
+sim_endTime = 2.0;
 sim_timeStep = 0.005;
 sim_spaceResolution = 3; % um per point
 s_sidelength = 350;%max(cell_rfPositions);

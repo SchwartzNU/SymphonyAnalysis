@@ -13,10 +13,10 @@ out_valsByOptions = [];
 plot_timeLims = [0.0, sim_endTime];
 timeOffsetSim = -0.21;
 timeOffsetSpikes = -.35;
-ephysScale = 1;
+ephysScale = .3;
 simScale = [1, .5; 1, .5] * 1000; % scaling the sim relative to ephys
 combineScaleCurrents = [2, 2; 1, 1]; % voltages, ooi
-combineScaleSpikes = 1;
+combineScaleSpikes = .1;
 % displayScale = [5,2.2];
 plotYLimsScale = 1;
 fitAnalysisLimits = [.2, 1.5];
@@ -32,7 +32,7 @@ for optionIndex = 1:stim_numOptions
     outputSignals = [];
     outputLabels = {};
     
-%     ang = stim_directions(optionIndex);
+    ang = stim_directions(optionIndex);
     % Output scale
     sim_responseSubunitsCombinedScaled = sim_responseSubunitsCombinedByOption{optionIndex};
     for vi = 1:e_numVoltages
@@ -81,29 +81,36 @@ for optionIndex = 1:stim_numOptions
     simShift = timeOffsetSim / sim_timeStep;
     cell_responses = [];
     
-%     for vi = 1:3 %3 %enables spikes
-%         mn = ephysScale * c_responses{vi, c_angles == ang}.mean;
-% 
-%         mn = combineScale(vi) * resample(mn, round(1/sim_timeStep), 10000);
-%         cell_responses(vi,:) = mn;
-%         rcell = cell_responses(vi,Esel);
-%         if simShift >= 0
-%             outputSignals(end+1,:) = rcell(simShift:end);
-%         else
-%             outputSignals(end+1,:) = [zeros(1,-simShift), rcell(1:end+2*simShift+1)];
-%         end
-%         l = {'ex_e','in_e','spike_e'};
-%         outputLabels{end+1} = l{vi};
-% 
-% %                 if vi < 3
-% %                     plot(T(Esel), mn(Esel))
-% %                 else
-% %                     plot(T(Esel) + timeOffsetSpikes, mn(Esel));
-% %                 end
-% 
-% 
-%     end
-    % ephys combined values
+    for vi = 1:3 %3 %enables spikes
+        mn = ephysScale * c_responses{vi, c_angles == ang}.mean;
+
+        if vi <= 2
+            scale = combineScaleCurrents(vi,oi);
+        else
+            scale = combineScaleSpikes;
+        end
+        mn = scale * resample(mn, round(1/sim_timeStep), 10000);
+        cell_responses(vi,:) = mn;
+        rcell = cell_responses(vi,Esel);
+        if simShift >= 0
+            outputSignals(end+1,:) = rcell(simShift:end);
+        else
+            outputSignals(end+1,:) = [zeros(1,-simShift), rcell(1:end+2*simShift+1)];
+        end
+        l = {'ex_e','in_e','spike_e'};
+        outputLabels{end+1} = l{vi};
+
+%                 if vi < 3
+%                     plot(T(Esel), mn(Esel))
+%                 else
+%                     plot(T(Esel) + timeOffsetSpikes, mn(Esel));
+%                 end
+
+
+    end
+    
+    
+%     ephys combined values
 %     cell_responsesCombined = sum(cell_responses(1:2,:));
 %     rcell = cell_responsesCombined(Esel);
 %     if simShift >= 0
@@ -112,11 +119,11 @@ for optionIndex = 1:stim_numOptions
 %         outputSignals(end+1,:) = [zeros(1,-simShift), rcell(1:end+2*simShift+1)];
 %     end            
 %     outputLabels{end+1} = 'comb_e';
-
-    % extract values for comparison plot
+% 
+%     extract values for comparison plot
 %             out_valsByOptions(optionIndex, 2) = -1*sum(cell_responsesCombined(cell_responsesCombined < 0)) / sim_dims(1);        
 %             out_valsByOptions(optionIndex, 3) = -1*sum(cell_responses(3,:)) / sim_dims(1);            
-    
+%     
 %     fitAnalysisWindow = Tsim > fitAnalysisLimits(1) & Tsim < fitAnalysisLimits(2);
 %     for oi = 1:3
 %         fitnessScoreByOptionCurrent(optionIndex,oi) = rsquare(outputSignals(3+oi,fitAnalysisWindow),outputSignals(oi,fitAnalysisWindow));
@@ -127,7 +134,7 @@ for optionIndex = 1:stim_numOptions
     
     if plotCellResponses
         % then plot all the signals together
-        plotSelect = logical([1,1,1,1,1]);
+        plotSelect = logical([1,1,1,1,1,1,1,1]);
         plot(Tsim, outputSignals(plotSelect,:)');
         legend(outputLabels(plotSelect),'Location','Best');
         xlim(plot_timeLims);
@@ -207,9 +214,10 @@ if plotResultsByOptions
 %     nonlinOutput = polyfit(out_valsByOptions(:,1), out_valsByOptions(:,3),1);
 %     out_valsByOptions(:,4) = polyval(nonlinOutput, out_valsByOptions(:,1));
 
-    ordering = [5];
+    ordering = [5,8];
     % ordering = 1;
     for ti = ordering
+        ti
         angles = deg2rad(stim_directions)';
         values = [];
         for oi = 1:stim_numOptions
@@ -221,10 +229,11 @@ if plotResultsByOptions
         
         a = [angles; angles(1)];
         v = [values; values(1)];
+        v = v / max(v);
         polarplot(a, v)
         hold on
         
-        dsi = abs(sum(exp(sqrt(-1) * angles) .* values) / sum(values))
+        dsi = abs(sum(exp(sqrt(-1) * angles) .* values) / sum(values));
         dsiByParamSet(paramSetIndex,1) = dsi;
         valuesByParamSet(paramSetIndex,:) = values;
         

@@ -8,7 +8,7 @@ cellName = '060216Ac2'; % original good WFDS
 acName = '1032';
 
 useRealRf = 0;
-useRealFilters = 0;
+useRealFilters = 1;
 useSubunits = 0;
 
 % cellName = '033116Ac2'; % nice RF with edges and bars, but missing bars spikes and inhibitory temporal align
@@ -54,11 +54,10 @@ end
 
 
 
-%%
+%% Big parameter loop around overall parameters
+
 disp('Running full simulation');
 
-
-%% Big parameter loop around overall parameters
 
 paramColumnNames = {'rfOffset', 'barSpeed'};
 col_rfOffset = 1;
@@ -73,16 +72,18 @@ col_barSpeed = 2;
 %                 975;
 %                 1365};
             
-paramValues = [0, 1000;
-               1, 1000;
-               2, 1000;
-               4, 1000;
-               1, 500;
-               2, 500;
-               4, 500;
-               1, 250;
-               2, 250;
-               4, 250];
+% paramValues = [0, 1000;
+%                1, 1000;
+%                2, 1000;
+%                4, 1000;
+%                1, 500;
+%                2, 500;
+%                4, 500;
+%                1, 250;
+%                2, 250;
+%                4, 250];
+
+paramValues = [4, 500];
             
             
 [numParamSets,numParams] = size(paramValues);

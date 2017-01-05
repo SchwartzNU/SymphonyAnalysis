@@ -12,7 +12,7 @@ barOrEdge = 1;
 
 % ha = tight_subplot(12, 4);
 
-for vi = 1:4;
+for vi = 1:4
     if strcmp(cellName, '060216Ac2')
         if vi == 1 % ex
             startEpoch = 343;
