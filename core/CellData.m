@@ -182,18 +182,21 @@ classdef CellData < handle
             dataStd = std(M,1);
         end
         
-        function plotMeanData(obj, epochInd, subtractBaseline, lowPass, streamName)
+        function plotMeanData(obj, epochInd, subtractBaseline, lowPass, streamName, ax)
+            if nargin < 6
+                ax = gca;
+            end
             if nargin < 5
                 streamName = 'Amplifier_Ch1';
             end
             if nargin < 4
                 lowPass = [];
             end
-            if nargin < 4
+            if nargin < 3
                 subtractBaseline = true;
             end
             
-            ax = gca;
+
             sampleEpoch = obj.epochs(epochInd(1));
             sampleRate = sampleEpoch.get('sampleRate');
             stimLen = sampleEpoch.get('stimTime')*1E-3; %s
