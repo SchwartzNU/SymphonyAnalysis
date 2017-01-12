@@ -1,6 +1,6 @@
 % shapeModelSetup
 
-sim_endTime = 2.0;
+sim_endTime = 2.5;
 sim_timeStep = 0.005;
 sim_spaceResolution = 3; % um per point
 s_sidelength = 350;%max(cell_rfPositions);
@@ -12,7 +12,9 @@ c_subunit2SigmaWidth = [40 40; 60 60;];
 c_subunit2SigmaWidth_surround = [80 80; 120 120];
 c_subunitSurroundRatio = [0.15 0.15; 0.0 0.0];
 
-positionOffsetByVoltage = [paramValues(paramSetIndex,col_rfOffset),0];
+% paramValues(paramSetIndex,col_rfOffset)
+% positionOffsetByVoltageDim = [6, 8; 0, 0];
+positionOffsetByVoltageDim = [paramValues(paramSetIndex,col_rfOffset), 0; 0, 0];
 
 % generate RF map for EX and IN
 % import completed maps 
@@ -76,7 +78,7 @@ for vi = 1:e_numVoltages
         % add null corners to ground the spatial map at edges
         if useRealRf
             positions = e_positions{vi, ii};
-            positions = bsxfun(@plus, positions, [0,positionOffsetByVoltage(vi)]);
+            positions = bsxfun(@plus, positions, [positionOffsetByVoltageDim(vi,1),positionOffsetByVoltageDim(vi,2)]);
             vals = e_vals{vi,ii,:};
         %     positions = vertcat(positions, [X(1),Y(1);X(end),Y(1);X(end),Y(end);X(1),Y(end)]);
         %     vals = vertcat(vals, [0,0,0,0]');
@@ -84,8 +86,9 @@ for vi = 1:e_numVoltages
                 'linear','none');
             m = F(mapX, mapY) * sign(e_voltages(vi));    
         else
-            d = sqrt((mapY-positionOffsetByVoltage(vi)).^2 + mapX.^2);
-            m = -20 + 100*exp(-d.^2 / 80^2);
+            % Simple gaussian RF approximation
+            d = sqrt((mapY-positionOffsetByVoltageDim(vi,2)).^2 + 2*(mapX-positionOffsetByVoltageDim(vi,1)).^2);
+            m = exp(-d.^2 / 60^2);
         end
 
         m(isnan(m)) = 0;

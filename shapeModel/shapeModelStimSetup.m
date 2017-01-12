@@ -5,7 +5,7 @@ stim_directions = linspace(0,360,numAngles+1);
 stim_directions(end) = [];
 stim_numOptions = length(stim_directions);
 
-stim_barSpeed = paramValues(paramSetIndex,col_barSpeed);
+stim_barSpeed = 500;%paramValues(paramSetIndex,col_barSpeed);
 stim_barLength = 500;
 stim_barWidth = 150;
 stim_moveTime = sim_endTime + 1.0;
