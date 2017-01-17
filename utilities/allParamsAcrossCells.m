@@ -42,17 +42,43 @@ for nodeInd=1:numAnalysisClassNodes
     leafInd = analysisTree.getchildren(analysisClassInd(nodeInd));   %Where responses are stored.
     %numLeafs = length(leafInd);   %ASSUMING =1
     curLeaf = analysisTree.get(leafInd);
+    
+    
+%     splitParamToUse = nan;
+%     switch analysisClass
+%         case 'DriftingGratingsAnalysis'
+%             splitParamToUse = 'spatialFreq'; % use to specify a multiple branching analysis's final leaf
+%     end
+%     
+%     if ~isnan(splitParamToUse) % step down tree to get to the data
+%         while ~strcmp(splitParamToUse, curAnalysisNode.get('splitParam'))
+%             analysisClassInd(nodeInd) = curAnalysisNode.getchildren(analysisClassInd(nodeInd));
+%             curAnalysisNode = analysisTree.get(analysisClassInd(nodeInd));
+%         end
+%     end
+    
+    XparamValuesName = nan;
+
     switch analysisClass
         case {'MovingBarAnalysis', 'BarsMultiAngleAnalysis'}
-            XparamValues = curAnalysisNode.barAngle;
+            XparamValuesName = 'barAngle';
         case 'SpotsMultiSizeAnalysis'
-            XparamValues = curAnalysisNode.spotSize;
+            XparamValuesName = 'spotSize';
         case 'DriftingGratingsAnalysis'
-            XparamValues = curAnalysisNode.gratingAngle;
+            XparamValuesName = 'gratingAngle';
         case 'DriftingTextureAnalysis'
-            XparamValues = curAnalysisNode.textureAngle;                 
-    end;
+            XparamValuesName = 'textureAngle';
+    end
     
+    if ~isnan(XparamValuesName)
+        while ~isfield(curAnalysisNode, XparamValuesName)
+            children = analysisTree.getchildren(analysisClassInd(nodeInd));
+            analysisClassInd(nodeInd) = children(1);
+            curAnalysisNode = analysisTree.get(analysisClassInd(nodeInd));
+        end
+    
+        XparamValues = curAnalysisNode.(XparamValuesName);
+    end
 
     for paramInd = 1:numParam
         paramIsStruct = 0;
@@ -69,7 +95,7 @@ for nodeInd=1:numAnalysisClassNodes
                 if ~isempty(strfind(YparamName,'_c')) %assuming using mean_c or median_c
                     YparamSEM = curAnalysisNode.(YparamStructName).SEM_c;
                 else
-                    YparamSEM = curAnalysisNode.(YparamStructName).SEM; %suuming using mean or median
+                    YparamSEM = curAnalysisNode.(YparamStructName).SEM; %assuming using mean or median
                 end;
             else
                 YparamSEM = zeros(1,length(YparamValues));
