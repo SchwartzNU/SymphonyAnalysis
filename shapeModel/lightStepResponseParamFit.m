@@ -1,7 +1,10 @@
 % solves parameters for fitting light step responses
 % eid = 101;
 % stepResponse = cellData.epochs(eid).getData('Amplifier_Ch1');
-stepResponse = meanData';
+
+% function lightStepResponseParamFit(stepResponse, voltage, 
+
+% stepResponse = meanData';
 voltage = -60;
 preTimeSec = cellData.epochs(eid).get('preTime') / 1000;
 stepResponse = stepResponse - mean(stepResponse(1:(preTimeSec * 10000)));

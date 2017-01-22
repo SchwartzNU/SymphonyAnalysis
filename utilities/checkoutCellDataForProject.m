@@ -2,7 +2,6 @@ function [] = checkoutCellDataForProject
 global ANALYSIS_FOLDER;
 projFolder = uigetdir([ANALYSIS_FOLDER 'Projects' filesep], 'Choose project folder');
 global CELL_DATA_MASTER
-cellData_folder = CELL_DATA_MASTER;% uigetdir([],'Choose cellData folder from which to copy data');
 
 fid = fopen([projFolder filesep 'cellNames.txt'], 'r');
 if fid < 0
@@ -22,11 +21,12 @@ for i=1:length(cellNames)
         if exist([ANALYSIS_FOLDER 'cellData' filesep cellData_fname], 'file') %already have the file
             %do nothing
         else
-            if exist([cellData_folder filesep cellData_fname], 'file')
+            if exist([CELL_DATA_MASTER cellData_fname], 'file')
                 disp(['Copying ' cellData_fname]);
-                eval(['!cp -r ' [cellData_folder filesep cellData_fname] ' ' ANALYSIS_FOLDER 'cellData' filesep]);
+                st = ['!cp -p ' [CELL_DATA_MASTER cellData_fname] ' ' ANALYSIS_FOLDER 'cellData' filesep];
+                eval(st);
             else
-                disp([cellData_folder filesep cellData_fname ' not found']);
+                disp([CELL_DATA_MASTER cellData_fname ' not found']);
             end
         end
     end
