@@ -1,14 +1,16 @@
 function [] = saveAndSyncCellData(cellData)
 global ANALYSIS_FOLDER;
+global CELL_DATA_MASTER;
 global SYNC_TO_SERVER;
 do_sync = true;
 
+cellDataStatusFileLocation = [CELL_DATA_MASTER 'CellDataStatus.txt'];
 
 % Determine server mod time
-if exist([filesep 'Volumes' filesep 'SchwartzLab'  filesep 'CellDataMaster']) == 7 %sever is connected and CellDataMaster folder is found
+if exist(CELL_DATA_MASTER, 'dir') == 7 %sever is connected and CellDataMaster folder is found
     disp('CellDataMaster found');
     try
-        fileinfo = dir([filesep 'Volumes' filesep 'SchwartzLab'  filesep 'CellDataMaster'  filesep cellData.savedFileName '.mat']);
+        fileinfo = dir([CELL_DATA_MASTER cellData.savedFileName '.mat']);
         serverModDate = fileinfo.datenum;
     catch
         serverModDate = 0;
@@ -49,7 +51,7 @@ if do_sync && SYNC_TO_SERVER
     time_elapsed = toc;
     file_opened = false;
     while time_elapsed < FILE_IO_TIMEOUT
-        fid = fopen('/Volumes/SchwartzLab/CellDataStatus.txt', 'r+');
+        fid = fopen(cellDataStatusFileLocation, 'r+');
         if fid>0
             file_opened = true;
             break;
@@ -58,7 +60,7 @@ if do_sync && SYNC_TO_SERVER
     end
     
     if ~file_opened
-        disp('Unable to open CellDataStatus.txt');
+        disp(['Unable to open CellDataStatus.txt at' cellDataStatusFileLocation]);
         return;
     end
     
@@ -87,7 +89,7 @@ if do_sync && SYNC_TO_SERVER
         time_elapsed = toc;
         fclose(fid);
         while time_elapsed < BUSY_STATUS_TIMEOUT
-            fid = fopen('/Volumes/SchwartzLab/CellDataStatus.txt', 'r');
+            fid = fopen(cellDataStatusFileLocation, 'r');
             M = textscan(fid, '%s%s%s%u', 'Delimiter', '\t', 'HeaderLines', 1);
             fnames = M{1};
             dates = M{2};
@@ -115,7 +117,7 @@ if do_sync && SYNC_TO_SERVER
     if curStatus %file is busy
         disp(['File is busy: ' cellData.savedFileName ' not updated!']);
     else
-        fid = fopen('/Volumes/SchwartzLab/CellDataStatus.txt', 'w');
+        fid = fopen(cellDataStatusFileLocation, 'w');
         %write busy flag before copying cellData
         fnames{ind} = cellData.savedFileName;
         dates{ind} = datestr(now);
@@ -132,7 +134,7 @@ if do_sync && SYNC_TO_SERVER
         
         %do the copy
         disp([cellData.savedFileName ': Copying local file to server']);
-        save([filesep 'Volumes' filesep 'SchwartzLab'  filesep 'CellDataMaster'  filesep cellData.savedFileName '.mat'], 'cellData'); 
+        save([CELL_DATA_MASTER cellData.savedFileName '.mat'], 'cellData'); 
 %         pause(0.5);
         %resave local version so modification date is later
 %         disp([cellData.savedFileName ': Local resave']);
@@ -141,7 +143,7 @@ if do_sync && SYNC_TO_SERVER
         %reset busy status to 0
         status(ind) = 0;
         %print file
-        fid = fopen('/Volumes/SchwartzLab/CellDataStatus.txt', 'w');
+        fid = fopen(cellDataStatusFileLocation, 'w');
         fprintf(fid,'%s\t%s\t%s\t%s\n','Filename', 'CheckInDate', 'CheckedInBy', 'BusyStatus');
         L = length(fnames);
         for i=1:L

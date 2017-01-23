@@ -491,7 +491,7 @@ for vari = 1:length(varsToMean)
 end
 outstruct.spotSize = mean_spotSize;
 
-%% SMS population mean  Data
+%% SMS example traces
 
 figure(103);clf;
 handles = tight_subplot(2,4, .005, .1, .08);
