@@ -4,9 +4,13 @@
 colo = [.1, .3, .7];
 colo2 = [.68, .1, .2];
 
-col_exc = [1 0 1];
-col_inh = [0 1 1];
-    
+% col_exc = [1 0 1];
+% col_inh = [0 1 1];
+
+col_exc = [0 0 1];
+col_inh = [1 0 0];
+
+
 
 set(0,'DefaultAxesFontSize',14)
 
@@ -405,7 +409,7 @@ spikesOverBaselineByVar = {};
 outstruct = struct();
 
 varsToMean = {'SMS_onSpikes','SMS_offSpikes','SMS_charge_ex','SMS_peak_ex','SMS_charge_inh','SMS_peak_inh'};
-ylabels = {'ON spikes','OFF spikes','charge ex','peak ex','charge in','peak in'};
+ylabels = {'ON spikes','OFF spikes','Ex Charge','Ex Peak','In Charge','In Peak'};
 baselinesToMean = {'SMS_spotSize_ca','SMS_spotSize_ca','SMS_spotSize_exc','SMS_spotSize_exc','SMS_spotSize_inh','SMS_spotSize_inh'};
 cellTypeSelects = {selectWfdsOn};
 cellTypeNames = {'WFDS ON','WFDS OFF'};
@@ -468,7 +472,7 @@ for vari = 1:length(varsToMean)
         [~, i] = max(abs(m));
         mx = m(i);
         if ~isnan(mx)
-            yticks(sort([0, round(mx)]))
+            yticks(sort([0, round(mx/2,0), round(mx)]))
         end
         
         xlim([0,1200])
@@ -487,7 +491,7 @@ for vari = 1:length(varsToMean)
 end
 outstruct.spotSize = mean_spotSize;
 
-%% SMS Trace Data
+%% SMS population mean  Data
 
 figure(103);clf;
 handles = tight_subplot(2,4, .005, .1, .08);
@@ -496,7 +500,7 @@ load('analysisTrees/automaticData/sms_data');
 t = -.5:.0001:1.9999;
 for vi = 1:3
     for si = 1:4
-        if vi == 1
+        if vi == 1 %spikes
             axes(handles(si))
         elseif vi == 2
             axes(handles(si + 4))
@@ -522,8 +526,9 @@ for vi = 1:3
         end
         r = r - mean(r(abs(t) < .03));
         
-        c = {colo, col_exc, col_inh};
-        plot(t, r, 'Color', c{vi})
+        c = {'k', col_exc, col_inh};
+        wid = [1,2,2];
+        plot(t, r, 'Color', c{vi},'LineWidth',wid(vi))
         xlim([-.1,.5])
         ylabel('')
         
@@ -539,9 +544,9 @@ for vi = 1:3
             legend({'Excitatory','Inhibitory'})
         end
         if vi == 1
-            title(sprintf('Ø %g µm',sms_sizes(si)))
+            title(sprintf('%g µm diameter',sms_sizes(si)))
             ylim([-1,.5])
-            line([0,0],[-1,.5],'Color','r');
+            line([0,0],[-1,.5],'Color','y','LineWidth',3);
             xticks([])
         else
             ylim([-.5,5])
@@ -549,9 +554,10 @@ for vi = 1:3
             xticklabels('auto')
         end
         if vi == 3
-            line([0,0],[-0.5,5],'Color','r');
+            line([0,0],[-0.5,5],'Color','y','LineWidth',3);
         end
-
+        set(gca,'box','off')
+        set(gca,'xcolor','w','ycolor','w','xtick',[],'ytick',[])
     end
 end
 %% SMS traces WC
@@ -736,10 +742,10 @@ for i = 1:numCells
     if selectWfdsOn(i)
         c = colo;
         x = 0;
-    else
-        c = colo2;
-        x = 50;
     end
+%         c = colo2;
+%         x = 50;
+%     end
     plot([250, 500, 1000]+x,dtab{i,{'MB_250_DSI_sp', 'MB_500_DSI_sp', 'MB_1000_DSI_sp'}},...
         '+-', 'Color', c, 'MarkerSize',10)
     hold on
@@ -749,8 +755,12 @@ ylim([0,.7])
 xlabel('Movement speed (µm/sec)')
 ylabel('DSI')
 
-plot([250, 500, 1000], nanmean(dtab{selectWfdsOn,{'MB_250_DSI_sp', 'MB_500_DSI_sp', 'MB_1000_DSI_sp'}}),'o-r','LineWidth',2);
-plot([250, 500, 1000]+50, nanmean(dtab{selectWfdsOff,{'MB_250_DSI_sp', 'MB_500_DSI_sp', 'MB_1000_DSI_sp'}}),'o-r','LineWidth',2);
+plot([250, 500, 1000], nanmean(dtab{selectWfdsOn,{'MB_250_DSI_sp', 'MB_500_DSI_sp', 'MB_1000_DSI_sp'}}),'.-r','LineWidth',2,'MarkerSize',40);
+
+% DS cells controls:
+plot([250, 500, 1000], nanmean(dtab{selectOtherDS,{'MB_250_DSI_sp', 'MB_500_DSI_sp', 'MB_1000_DSI_sp'}}),'.-g','LineWidth',2,'MarkerSize',40);
+
+% plot([250, 500, 1000]+50, nanmean(dtab{selectWfdsOff,{'MB_250_DSI_sp', 'MB_500_DSI_sp', 'MB_1000_DSI_sp'}}),'o-r','LineWidth',2);
 
 % title('Moving Bar DSI Speed Dependence')
 
@@ -759,9 +769,9 @@ d1 = dtab{selectWfdsOn, 'DrifTex_DSI_sp'};
 x = 0*ones(length(d1), 1);
 plot(x,d1, '+', 'Color', colo, 'MarkerSize',10)
 hold on
-d2 = dtab{selectWfdsOff, 'DrifTex_DSI_sp'};
-x = 0*ones(length(d2), 1) + .1;
-plot(x,d2, '+', 'Color', colo2, 'MarkerSize',10)
+% d2 = dtab{selectWfdsOff, 'DrifTex_DSI_sp'};
+% x = 0*ones(length(d2), 1) + .1;
+% plot(x,d2, '+', 'Color', colo2, 'MarkerSize',10)
 ylim([0,.7])
 yticks([])
 
@@ -769,9 +779,9 @@ d3 = dtab{selectWfdsOn, 'DrifGrat_DSI_sp'};
 x = 1*ones(length(d3), 1);
 plot(x,d3, '+', 'Color', colo, 'MarkerSize',10)
 
-d4 = dtab{selectWfdsOff, 'DrifGrat_DSI_sp'};
-x = 1*ones(length(d4), 1) + .1;
-plot(x,d4, '+', 'Color', colo2, 'MarkerSize',10)
+% d4 = dtab{selectWfdsOff, 'DrifGrat_DSI_sp'};
+% x = 1*ones(length(d4), 1) + .1;
+% plot(x,d4, '+', 'Color', colo2, 'MarkerSize',10)
 
 ylim([0,.7])
 yticks([])
@@ -779,7 +789,9 @@ xlim([-.5, 1.5])
 xticks([0,1])
 xticklabels({'Texture','Grating'})
 
-plot([0, .1,1, 1.1], [nanmean(d1),nanmean(d2),nanmean(d3), nanmean(d4)],'or','LineWidth',2);
+% plot([0, .1,1, 1.1], [nanmean(d1),nanmean(d2),nanmean(d3), nanmean(d4)],'or','LineWidth',2);
+plot([0, 1], [nanmean(d1),nanmean(d3)],'.r','LineWidth',2,'MarkerSize',40);
+plot([0, 1], [nanmean(dtab{selectOtherDS,'DrifTex_DSI_sp'}),nanmean(dtab{selectOtherDS,'DrifGrat_DSI_sp'})],'.g','MarkerSize',40);
 
 
 % Which stimulus is best for each cell's DSI
@@ -909,7 +921,7 @@ end
 
 figure(108);clf;
 
-% load('analysisTrees/automaticData/polarPlotsByStimForExampleCell2');
+load('analysisTrees/automaticData/polarPlotsByStimForExampleCell');
 plotNames = {'MB 250','MB 500','MB 1000','MB 2000'};
 handles = tight_subplot(1,length(plotNames), .02, .0, .01);
 
@@ -1006,13 +1018,13 @@ figure(111);clf;
 polarplotImproved(exampleGratings010716Ac1{1},exampleGratings010716Ac1{2})
 %% LOCATION DATA
 
-figure(141);clf
-ha = tight_subplot(1,2, .05, .05, .05);
+figure(141);clf;
+ha = tight_subplot(1,3, .05, .05, .05);
 
 
 
-% map_data = dtab{selectWfdsOn, {'location_x','location_y','best_DSang_sp','best_DSI_sp','eye','imageAngle'}};
-map_data = dtab{selectWfdsOn, {'location_x','location_y','DrifTex_DSang_sp','DrifTex_DSI_sp','eye','imageAngle'}};
+map_data = dtab{selectWfdsOn, {'location_x','location_y','best_DSang_sp','best_DSI_sp','eye','imageAngle'}};
+% map_data = dtab{selectWfdsOn, {'location_x','location_y','DrifTex_DSang_sp','DrifTex_DSI_sp','eye','imageAngle'}};
 
 
 % map_data: X, Y, angle, DSI, right=1
@@ -1040,30 +1052,30 @@ circy = sin(theta)*2;
 % axis square
 % title('all wfds locations')
 
-% Together
-% axes(ha(1));
-% x_eyesTogether = x;
-% x_eyesTogether(right) = -1 * x_eyesTogether(right);
-% uRigFlipped = u;
-% uRigFlipped(right) = -1 * uRigFlipped(right);
-% sel = left == 1;
-% quiver(x_eyesTogether(sel),y(sel),uRigFlipped(sel),v(sel),1.3,'color',colo2,'linewidth',2)
-% hold on
-% sel = right == 1;
-% quiver(x_eyesTogether(sel),y(sel),uRigFlipped(sel),v(sel),1.3,'color',colo,'linewidth',2)
-% plot(circx, circy, '--k')
-% legend('left','right');
-% line([-.500, .500],[0,0],'color','k')
-% line([0,0],[-.500, .500],'color','k')
-% axis(1.2*[-2,2, -2,2])
-% axis square
-% title('Both eyes (Right X Flipped)')
-% xlabel('Nasal -- Caudal')
+% % Together
+axes(ha(1));
+x_eyesTogether = x;
+x_eyesTogether(right) = -1 * x_eyesTogether(right);
+uRigFlipped = u;
+uRigFlipped(right) = -1 * uRigFlipped(right);
+sel = left == 1;
+quiver(x_eyesTogether(sel),y(sel),uRigFlipped(sel),v(sel),1.3,'color',colo2,'linewidth',2)
+hold on
+sel = right == 1;
+quiver(x_eyesTogether(sel),y(sel),uRigFlipped(sel),v(sel),1.3,'color',colo,'linewidth',2)
+plot(circx, circy, '--k')
+legend('left','right');
+line([-.500, .500],[0,0],'color','k')
+line([0,0],[-.500, .500],'color','k')
+axis(1.2*[-2,2, -2,2])
+axis square
+title('Both eyes (Right X Flipped)')
+xlabel('Nasal -- Caudal')
 
 % left
-axes(ha(1));
+axes(ha(2));
 sel = left == 1;
-quiver(x(sel),y(sel),u(sel),v(sel),1.3,'linewidth',2, 'Color', colo)
+quiver(x(sel),y(sel),u(sel),v(sel),1.3,'linewidth',2, 'Color', colo2)
 hold on
 plot(circx, circy, '--k')
 line([-.500, .500],[0,0],'color','k')
@@ -1074,7 +1086,7 @@ title('Left Eye')
 xlabel('Nasal -- Caudal')
 
 % right
-axes(ha(2));
+axes(ha(3));
 sel = right == 1;
 quiver(x(sel),y(sel),u(sel),v(sel),1.3,'linewidth',2, 'Color', colo)
 hold on
@@ -1275,7 +1287,7 @@ for exin = 1:2
     
     figure;clf;
     h = tight_subplot(3,2,.1);
-    for parami = 1:size(allParams, 2)
+    for parami = 1:size(paramMatrix, 2)
         
         axes(h(parami));
         histogram(paramMatrix(selectWfdsOn,exin,parami),8)
