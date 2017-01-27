@@ -1344,3 +1344,34 @@ end
 sel = ~cellfun(@isempty, dtab.SMS_spotSize_ca);
 sel = sel & ~cellfun(@isempty, dtab.SMS_spotSize_exc);
 names = cellNames(sel)
+
+
+%% Plot RF offset ovals
+figure(200);clf;
+sel = ~isnan(dtab.spatial_ex_amplitude) & selectWfdsOn;
+h = tight_subplot(4,3);
+
+cis = find(sel);
+for ci = 1:sum(sel)
+    cel = dtab(cis(ci), :);
+    axes(h(ci))
+    
+    hold on
+    ellipse(cel.spatial_ex_sigma2X, cel.spatial_ex_sigma2Y, -cel.spatial_ex_angle, cel.spatial_ex_centerX, cel.spatial_ex_centerY, 'blue');
+    
+    ellipse(cel.spatial_in_sigma2X, cel.spatial_in_sigma2Y, -cel.spatial_in_angle, cel.spatial_in_centerX, cel.spatial_in_centerY, 'red');
+    
+%     legend('Exc','Inh')
+    
+    plot(cel.spatial_ex_centerX, cel.spatial_ex_centerY,'blue','MarkerSize',20, 'Marker','+')
+    plot(cel.spatial_in_centerX, cel.spatial_in_centerY,'red','MarkerSize',20, 'Marker','+')
+    hold off
+    set(gca,'box','off')
+    set(gca,'xcolor','w','ycolor','w','xtick',[],'ytick',[])
+end
+
+%%
+figure(201)
+boxplot(autocenterOffsetDistanceNormalized, selectWfdsOn, 'Labels',{'control','F-mini ON'})
+ylabel('Distance (norm)')
+% title('magnitude of spatial offset (norm)')
