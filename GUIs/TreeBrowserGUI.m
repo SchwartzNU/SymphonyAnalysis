@@ -364,7 +364,7 @@ classdef TreeBrowserGUI < handle
             curNode = obj.analysisTree.get(curNodeIndex);
             figName = get(obj.handles.fig, 'Name');
             %4 cases: at data set level, at cell level, below data set level, above cell level
-            if  isfield(curNode, 'cellName') %at data set cell level
+            if isfield(curNode, 'cellName') %at data set cell level
                 curCellName = curNode.cellName;
                 epochIDs = [];
                 treePart =  obj.analysisTree.subtree(curNodeIndex);
@@ -404,7 +404,7 @@ classdef TreeBrowserGUI < handle
                 %get siglings of parent (actual cell level instead of
                 %dataset level
                 siblings = obj.analysisTree.getsiblings(obj.analysisTree.getparent(childInd));
-                for c = 1:length(siblings);
+                for c = 1:length(siblings)
                     dataSetNodeInd = obj.analysisTree.getchildren(siblings(c));
                     for d=1:length(dataSetNodeInd)
                         curNodeIndex = dataSetNodeInd(d);
@@ -588,7 +588,7 @@ classdef TreeBrowserGUI < handle
         end
         
         function resetPlotControls(obj)
-            if isfield(obj.handles, 'L_plotXY_box');
+            if isfield(obj.handles, 'L_plotXY_box')
                 delete(obj.handles.L_plotXY_box);
                 set(obj.handles.L_plotControls, 'Sizes', [-1, 40, 40, 40]);
             end
@@ -597,7 +597,7 @@ classdef TreeBrowserGUI < handle
         function addXYselectionToPlotControls(obj, xList, yList)
             plotControls_children = get(obj.handles.L_plotControls, 'children');
             for i=1:length(plotControls_children)
-                if ~strcmp(get(plotControls_children(i), 'Tag'), 'plotSelectionMenu');
+                if ~strcmp(get(plotControls_children(i), 'Tag'), 'plotSelectionMenu')
                     delete(plotControls_children(i));
                 end
             end
@@ -650,12 +650,12 @@ classdef TreeBrowserGUI < handle
             selectedNodes = get(obj.guiTree, 'selectedNodes');
             curNodeIndex = get(selectedNodes(1), 'Value');
             plotClass = obj.plotSelectionTable{curNodeIndex, 1};
-            if isempty(plotClass),
+            if isempty(plotClass)
                 return;
             end
             
             plotFuncIndex = obj.plotSelectionTable{curNodeIndex, 3} - 1; %-1 to account for 'none' option
-            if plotFuncIndex == 0,
+            if plotFuncIndex == 0
                 reset(obj.handles.plotAxes);
                 cla(obj.handles.plotAxes);
                 obj.resetPlotControls();
@@ -666,8 +666,16 @@ classdef TreeBrowserGUI < handle
             curNode = obj.analysisTree.subtree(curNodeIndex);
             cellName = obj.analysisTree.getCellName(curNodeIndex);
             %load([obj.cellDataFolder cellName]);
-            cellData = loadAndSyncCellData(cellName);
-            obj.curCellData = cellData;
+            %obj.curCellData = cellData;
+            
+%             cellData = loadAndSyncCellData(cellName);
+            if ~isempty(obj.curCellData) && isprop(obj.curCellData, 'savedFileName') && strcmp(obj.curCellData.savedFileName, cellName) %cellData already loaded
+                %do nothing
+            else %load it
+                obj.curCellData = loadAndSyncCellData(curCellName);
+            end
+            cellData = obj.curCellData; % load it locally for later plot functions
+            
             
             %do the plot
             set(obj.handles.fig,'KeyPressFcn',[]); %get rid of callback for non SingleEpoch plots
@@ -779,13 +787,14 @@ classdef TreeBrowserGUI < handle
                     obj.printCodeForPlotterFunction_singleVal(xName,yName);
                 else
                     obj.resetPlotControls();
-                    eval([plotClass '.' plotFunc '(curNode, cellData);']);
+                    plotterString = [plotClass '.' plotFunc '(curNode, cellData);'];
+                    eval(plotterString);
                     
                 end
             end
         end
         
-        function printCodeForPlotterFunction_singleVal(obj, xName, yName)
+        function printCodeForPlotterFunction_singleVal(~, xName, yName)
             disp('%%%%%%%%%%%%%% plotter code %%%%%%%%%%%%%%');
             disp(['function plot_' xName 'Vs' yName '(node, cellData)']);
             disp('rootData = node.get(1);');
@@ -799,7 +808,7 @@ classdef TreeBrowserGUI < handle
             disp('%%%%%%%%%%%%%% plotter code %%%%%%%%%%%%%%');
         end
         
-        function printCodeForPlotterFunction_byEpoch(obj, xName, yName)
+        function printCodeForPlotterFunction_byEpoch(~, xName, yName)
             disp('%%%%%%%%%%%%%% plotter code %%%%%%%%%%%%%%');
             disp(['function plot_' xName 'Vs' yName '(node, cellData)']);
             disp('rootData = node.get(1);');
@@ -838,18 +847,36 @@ classdef TreeBrowserGUI < handle
                 end
             end
             
-            obj.populateEpochTagsTable();
-            obj.populateCellTagsTable();
-            obj.populateNodePropertiesTable();
+            curNodeData = obj.analysisTree.get(curNodeIndex);
+            allFields = fieldnames(curNodeData);
+            curCellName = obj.analysisTree.getCellName(curNodeIndex);
+            
+            % handle multichannel here, I believe:
+            [~, namePart] = strtok(curNodeData.name, ':');
+            if ~isempty(namePart)
+                namePart = strtok(namePart, ':');
+                namePart = strtrim(namePart(2:end));
+            end
+            if (length(namePart) == 9 || length(namePart) == 10) && isfield(curNodeData, 'device') %cell node
+                curCellName = namePart;
+            end
+            
+            % load celldata into this object if needed
+            if ~isempty(curCellName)
+                if ~isempty(obj.curCellData) && isprop(obj.curCellData, 'savedFileName') && strcmp(obj.curCellData.savedFileName, curCellName) %cellData already loaded
+                else %load it
+                    obj.curCellData = loadAndSyncCellData(curCellName);
+                end
+            end
+            
+            obj.populateEpochTagsTable(curNodeIndex, curNodeData);
+            obj.populateCellTagsTable(curCellName);
+            obj.populateNodePropertiesTable(curNodeData, allFields);
             obj.updatePlot();
         end
         
-        function populateNodePropertiesTable(obj)
-            selectedNodes = get(obj.guiTree, 'selectedNodes');
-            curNodeIndex = get(selectedNodes(1), 'Value');
-            curNodeData = obj.analysisTree.get(curNodeIndex);
-            allFields = fieldnames(curNodeData);
-            
+        function populateNodePropertiesTable(obj, curNodeData, allFields)
+
             L = length(allFields);
             D = cell(L,2);
             z=1;
@@ -874,16 +901,8 @@ classdef TreeBrowserGUI < handle
             set(obj.handles.nodePropertiesTable, 'data', D)
         end
         
-        function populateEpochTagsTable(obj)
-            selectedNodes = get(obj.guiTree, 'selectedNodes');
-            curNodeIndex = get(selectedNodes(1), 'Value');
-            curNodeData = obj.analysisTree.get(curNodeIndex);
-            curCellName = obj.analysisTree.getCellName(curNodeIndex);
-            if isfield(obj.curCellData, 'savedFileName') && strcmp(obj.curCellData.savedFileName, curCellName) %cellData already loaded
-                %do nothing
-            else %load it
-                obj.curCellData = loadAndSyncCellData(curCellName);
-            end
+        function populateEpochTagsTable(obj, curNodeIndex, curNodeData)           
+
             D = cell(5,2);
             if isfield(curNodeData, 'class') %only display for level of data sets
                 %get all epochsIDs under this node
@@ -922,23 +941,10 @@ classdef TreeBrowserGUI < handle
             set(obj.handles.epochTagsTable, 'data', D)
         end
         
-        function populateCellTagsTable(obj)
-            selectedNodes = get(obj.guiTree, 'selectedNodes');
-            curNodeIndex = get(selectedNodes(1), 'Value');
-            curNode = obj.analysisTree.get(curNodeIndex);
-            curCellName = obj.analysisTree.getCellName(curNodeIndex);
-            [~, namePart] = strtok(curNode.name, ':');
-            if ~isempty(namePart)
-                namePart = strtok(namePart, ':');
-                namePart = strtrim(namePart(2:end));
-            end
-            if (length(namePart) == 9 || length(namePart) == 10) && isfield(curNode, 'device') %cell node
-                curCellName = namePart;
-            end
-                        
+        function populateCellTagsTable(obj, curCellName)
+                                   
             D = cell(1,2);
             if ~isempty(curCellName)
-                obj.curCellData = loadAndSyncCellData(curCellName);
                 tagNames = obj.curCellData.tags.keys;
                 L = length(tagNames);
                 D = cell(L,2);
