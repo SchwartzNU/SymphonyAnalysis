@@ -31,8 +31,8 @@ save('analysisTrees/automaticData/filterFileNames', 'filterFileNames');
 treeVariableModes = [1,0,1,1,0,0,1,1,1,2,2,0]; % 1 for single params (Light step on spike count mean), 0 for vectors (spike count by spot size), 2 for extracting params for a curve
 paramsByTree = {{'ONSETspikes_mean', 'OFFSETspikes_mean'};
     {'ONSETspikes','OFFSETspikes','ONSETrespDuration'};
-    {'spikeCount_stimAfter500ms_DSI', 'spikeCount_stimAfter500ms_DSang','spikeCount_stimAfter500ms_OSI', 'spikeCount_stimAfter500ms_OSang', 'spikeCount_stimAfter500ms_DVar'};
-    {'F1amplitude_DSI','F1amplitude_DSang','F1amplitude_OSI','F1amplitude_OSang','F1amplitude_DVar'}
+    {'spikeCount_stimAfter500ms_mean','spikeCount_stimAfter500ms_DSI', 'spikeCount_stimAfter500ms_DSang','spikeCount_stimAfter500ms_OSI', 'spikeCount_stimAfter500ms_OSang', 'spikeCount_stimAfter500ms_DVar'};
+    {'F1amplitude_mean','F1amplitude_DSI','F1amplitude_DSang','F1amplitude_OSI','F1amplitude_OSang','F1amplitude_DVar'}
     {'stimInterval_charge','ONSET_peak'};
     {'stimInterval_charge','ONSET_peak'};
     {'spikeCount_stimInterval_mean','spikeCount_stimInterval_DSI', 'spikeCount_stimInterval_DSang','spikeCount_stimInterval_OSI', 'spikeCount_stimInterval_OSang', 'spikeCount_stimInterval_DVar'};
@@ -42,17 +42,17 @@ paramsByTree = {{'ONSETspikes_mean', 'OFFSETspikes_mean'};
     {'params'};
     {'ONSETspikes','ONSETlatency'};};
 paramsColumnNamesByTree = {{'LS_ON_sp','LS_OFF_sp'};
-    {'SMS_spotSize_ca','SMS_onSpikes','SMS_offSpikes','SMS_onDuration'};
-    {'DrifTex_DSI_sp','DrifTex_DSang_sp','DrifTex_OSI_sp','DrifTex_OSang_sp','DrifTex_DVar_sp'};
-    {'DrifGrat_DSI_sp','DrifGrat_DSang_sp','DrifGrat_OSI_sp','DrifGrat_OSang_sp','DrifGrat_DVar_sp'};
-    {'SMS_spotSize_exc','SMS_charge_ex','SMS_peak_ex'};
-    {'SMS_spotSize_inh','SMS_charge_inh','SMS_peak_inh'};
+    {'SMS_spotSize_sp','SMS_onSpikes','SMS_offSpikes','SMS_onDuration'};
+    {'DrifTex_mean_sp','DrifTex_DSI_sp','DrifTex_DSang_sp','DrifTex_OSI_sp','DrifTex_OSang_sp','DrifTex_DVar_sp'};
+    {'DrifGrat_mean_sp','DrifGrat_DSI_sp','DrifGrat_DSang_sp','DrifGrat_OSI_sp','DrifGrat_OSang_sp','DrifGrat_DVar_sp'};
+    {'SMS_spotSize_ex','SMS_charge_ex','SMS_peak_ex'};
+    {'SMS_spotSize_in','SMS_charge_in','SMS_peak_in'};
     {'MB_1000_mean_sp','MB_1000_DSI_sp','MB_1000_DSang_sp','MB_1000_OSI_sp','MB_1000_OSang_sp','MB_1000_DVar_sp'};
     {'MB_500_mean_sp','MB_500_DSI_sp','MB_500_DSang_sp','MB_500_OSI_sp','MB_500_OSang_sp','MB_500_DVar_sp'};
     {'MB_250_mean_sp','MB_250_DSI_sp','MB_250_DSang_sp','MB_250_OSI_sp','MB_250_OSang_sp','MB_250_DVar_sp'};
     {'LS_ON_params_ex'};
     {'LS_ON_params_in'};
-    {'Contrast_contrastVal_ca','Contrast_onSpikes','Contrast_onLatency'};};
+    {'Contrast_contrastVal_sp','Contrast_onSpikes','Contrast_onLatency'};};
 
 % on
 cellNameReplacements = containers.Map();
@@ -85,8 +85,9 @@ numTrees = length(treeVariableModes);
 allCellNames = {};
 for ti = 1:numTrees
     fname = fullfile('analysisTrees/automaticData/treeData/', num2str(ti));
-    fprintf('Parsing tree %s \n', fname)
+    fprintf('Loading tree %s for cell names\n', fname)
     load(fname);
+    fprintf('Processing tree\n');
     cellNames = {};
     
     if treeVariableModes(ti) == 1
@@ -124,6 +125,7 @@ for ti = 1:numTrees
     fname = fullfile('analysisTrees/automaticData/treeData/', num2str(ti));
     fprintf('Loading tree %s (%g of %g) \n', fname, ti, numTrees)
     load(fname);
+    disp('Processing');
     
     if treeVariableModes(ti) == 1
         
@@ -253,9 +255,17 @@ if loadCellDataFiles
         
         typ = cellData.cellType;
         dtab{cellNames{ci}, 'cellType'} = {typ};
+        
+        tags = cellData.tags;
+        if isKey(tags, 'QualityRating')
+            qr = str2double(tags('QualityRating'));
+        else
+            qr = nan;
+        end
+        dtab{cellNames{ci}, 'QualityRating'} = {qr};
     end
     
-    cellLocationsAndTypes = dtab(:,{'cellType','location_x', 'location_y', 'eye'});
+    cellLocationsAndTypes = dtab(:,{'cellType','location_x', 'location_y', 'eye', 'QualityRating'});
     save('analysisTrees/automaticData/cellLocationsAndTypes', 'cellLocationsAndTypes');
     disp('Done')
     toc
@@ -264,11 +274,12 @@ else
     load('analysisTrees/automaticData/cellLocationsAndTypes');
     cellNames = dtab.Properties.RowNames;
     
-    dtab(:, {'cellType','location_x', 'location_y', 'eye'}) = cellLocationsAndTypes(cellNames,{'cellType','location_x', 'location_y', 'eye'});
+    dtab(:, {'cellType','location_x', 'location_y', 'eye','QualityRating'}) = cellLocationsAndTypes(cellNames,{'cellType','location_x', 'location_y', 'eye','QualityRating'});
 end
 %% Finish up the number vars
 
 dtab = sortrows(dtab, 'RowNames');
+cellNames = dtab.Properties.RowNames;
 selectWfdsOn = ~cellfun(@isempty, strfind(dtab{:,'cellType'}, 'ON WFDS'));
 selectWfdsOff = ~cellfun(@isempty, strfind(dtab{:,'cellType'}, 'OFF WFDS'));
 selectControl = ~(selectWfdsOn | selectWfdsOff);
@@ -277,7 +288,7 @@ selectOtherDS = ~cellfun(@isempty, strfind(dtab{:,'cellType'}, 'ON-OFF DS transi
 %% Save data table
 % Change the save file name if desired
 
-save('analysisTrees/automaticData/wfds_on_data_table', 'dtab','selectWfdsOn','selectWfdsOff','selectControl','selectOtherDS','numCells','cellNames');
+save('analysisTrees/automaticData/wfds_data_table', 'dtab','selectWfdsOn','selectWfdsOff','selectControl','selectOtherDS','numCells','cellNames');
 %% Initial numbers
 
 fprintf('Total count: %g\n', numCells)

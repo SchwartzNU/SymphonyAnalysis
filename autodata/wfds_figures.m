@@ -16,7 +16,7 @@ set(0,'DefaultAxesFontSize',14)
 
 %% 
 % 
-%% Population stats for WFDS ON
+%% Generate param columns for SMS data
 
 % spots multiple sizes
 
@@ -29,14 +29,19 @@ for ci = 1:size(dtab,1)
 %     if ~selectWfdsOn(ci)
 %         continue
 %     end
-    spotSize = dtab{ci, 'SMS_spotSize_ca'}{1};
+    spotSize = dtab{ci, 'SMS_spotSize_sp'}{1};
     if ~isempty(spotSize)
         spikes = dtab{ci, 'SMS_onSpikes'}{1};
         hold on
         plot(spotSize, spikes);
         [m, mi] = max(spikes);
+        peakValue(ci) = m;
         peakSize(ci) = spotSize(mi);
-        tailSpikes(ci) = mean(spikes(end-2:end));
+        tailSpikes(ci) = mean(spikes(spotSize > 550));
+    else
+        peakValue(ci) = nan;
+        peakSize(ci) = nan;
+        tailSpikes(ci) = nan;
     end
 end
 xlabel('spot size um')
@@ -44,8 +49,12 @@ ylabel('spike count on')
 title('sms on')
 hold off
 
+
+dtab{:,'SMS_onSpikes_prefSize'} = peakSize';
+dtab{:,'SMS_onSpikes_peakSpikes'} = peakValue';
+dtab{:,'SMS_onSpikes_tailSpikes'} = tailSpikes';
+
 axes(handles(2));
-peakSize(peakSize == 0) = nan;
 histogram(peakSize, 10)
 title('sms peak spot size')
 
@@ -408,9 +417,9 @@ tailSpikes = [];
 spikesOverBaselineByVar = {};
 outstruct = struct();
 
-varsToMean = {'SMS_onSpikes','SMS_offSpikes','SMS_charge_ex','SMS_peak_ex','SMS_charge_inh','SMS_peak_inh'};
+varsToMean = {'SMS_onSpikes','SMS_offSpikes','SMS_charge_ex','SMS_peak_ex','SMS_charge_in','SMS_peak_in'};
 ylabels = {'ON spikes','OFF spikes','Ex Charge','Ex Peak','In Charge','In Peak'};
-baselinesToMean = {'SMS_spotSize_ca','SMS_spotSize_ca','SMS_spotSize_exc','SMS_spotSize_exc','SMS_spotSize_inh','SMS_spotSize_inh'};
+baselinesToMean = {'SMS_spotSize_sp','SMS_spotSize_sp','SMS_spotSize_ex','SMS_spotSize_ex','SMS_spotSize_in','SMS_spotSize_in'};
 cellTypeSelects = {selectWfdsOn};
 cellTypeNames = {'WFDS ON','WFDS OFF'};
 
@@ -1211,17 +1220,17 @@ sel = selectWfdsOn & goodDSI;
 
 axes(handles(1));
 spatialToTextureDiff = dtab.DrifGrat_DSang_sp - rad2deg(autocenterOffsetDirections);
-a = polarhistogram(deg2rad(spatialToTextureDiff(sel)), angleBins);
+xvar = polarhistogram(deg2rad(spatialToTextureDiff(sel)), angleBins);
 % hold on
 % polarhistogram(deg2rad(spatialToTextureDiff(~selectWfds)), 10)
 title('difference between texture response angle and RF offset angle')
-outputstruct.angle_LR_to_RF = a.Values;
+outputstruct.angle_LR_to_RF = xvar.Values;
 
 axes(handles(2));
 spatialToImageDiff = mod(autocenterOffsetDirections(sel) - dtab.imageAngle(sel), 360);
-b = polarhistogram(deg2rad(spatialToImageDiff), angleBins);
+yvar = polarhistogram(deg2rad(spatialToImageDiff), angleBins);
 title('difference between soma to dendrites image angle and RF offset angle')
-outputstruct.angle_Image_to_RF = b.Values;
+outputstruct.angle_Image_to_RF = yvar.Values;
 
 
 axes(handles(3));
@@ -1346,7 +1355,7 @@ sel = sel & ~cellfun(@isempty, dtab.SMS_spotSize_exc);
 names = cellNames(sel)
 
 
-%% Plot RF offset ovals
+%% Plot RF offset ovals with angle arrows
 figure(200);clf;
 sel = ~isnan(dtab.spatial_ex_amplitude) & selectWfdsOn;
 h = tight_subplot(4,3);
@@ -1363,11 +1372,27 @@ for ci = 1:sum(sel)
     
 %     legend('Exc','Inh')
     
-    plot(cel.spatial_ex_centerX, cel.spatial_ex_centerY,'blue','MarkerSize',20, 'Marker','+')
-    plot(cel.spatial_in_centerX, cel.spatial_in_centerY,'red','MarkerSize',20, 'Marker','+')
+    plot(cel.spatial_ex_centerX, cel.spatial_ex_centerY, 'blue', 'MarkerSize', 20, 'Marker', '+')
+    plot(cel.spatial_in_centerX, cel.spatial_in_centerY, 'red', 'MarkerSize', 20, 'Marker', '+')
+    
+    % then, directions
+    start = ([cel.spatial_ex_centerX, cel.spatial_ex_centerY] + [cel.spatial_in_centerX, cel.spatial_in_centerY]) / 2;
+    
+    angleNames = {'imageAngle','MB_500_DSang_sp','MB_1000_DSang_sp','DrifTex_DSang_sp'};
+    angleColors = {'r','b','g','k'};
+    for ai = 1:length(angleNames)
+        ang = dtab{cis(ci), angleNames{ai}};
+        if isnan(ang)
+            continue
+        end
+        offset = 5*[cos(deg2rad(ang)), sin(deg2rad(ang))];
+        arrow(start, start + 10*offset,'Color',angleColors{ai})
+    end
+    
     hold off
     set(gca,'box','off')
     set(gca,'xcolor','w','ycolor','w','xtick',[],'ytick',[])
+    title(cellNames{cis(ci)})
 end
 
 %%
@@ -1375,3 +1400,44 @@ figure(201)
 boxplot(autocenterOffsetDistanceNormalized, selectWfdsOn, 'Labels',{'control','F-mini ON'})
 ylabel('Distance (norm)')
 % title('magnitude of spatial offset (norm)')
+
+%% Is light SMS peak connected to DSI? (Sensitivity)
+figure(202)
+clf;
+
+yvar = 'best_DSI_sp';
+xvar = 'SMS_onSpikes_peakSpikes';
+
+x = dtab{selectWfdsOn,xvar};
+y = dtab{selectWfdsOn,yvar};
+valid = ~(isnan(x)|isnan(y));
+x = x(valid);
+y = y(valid);
+[x,i] = sort(x);
+y = y(i);
+
+plot(x,y,'o')
+[p,S] = polyfit(x,y,1);
+hold on
+[yfit, delta] = polyval(p,x,S); 
+
+Rsq = 1 - sum((y - yfit).^2)/sum((y - mean(y)).^2)
+
+plot(x, yfit, 'k');
+plot(x, yfit+delta,'--k');
+plot(x, yfit-delta,'--k');
+hold off
+xlabel(xvar, 'Interpreter', 'none')
+ylabel(yvar, 'Interpreter', 'none')
+
+%% Check for quality and discard outliers
+% var = dtab{:, 'SMS_onSpikes_peakSpikes'};
+var = dtab{:, 'best_DSI_sp'};
+
+figure(205)
+histogram(var(selectWfdsOn), 10)
+% threshold = prctile(var(selectWfdsOn), 90)
+threshold = .6
+
+cellNames(var >= threshold & selectWfdsOn) % | var > prctile(var, 90)
+
