@@ -150,7 +150,13 @@ function label = getSourceLabel(fname, epochGroup)
     else
         source = epochGroup.Links(2).Value{:};
     end
-    label = h5readatt(fname, source, 'label');
+    try
+        label = h5readatt(fname, source, 'label');
+    catch
+        % if there is any problem check links.
+        source = epochGroup.Links(2).Value{:};
+        label = h5readatt(fname, source, 'label');
+    end
 end
 
 function map = buildAttributes(h5group, fname, map)
