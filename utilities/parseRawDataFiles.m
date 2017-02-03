@@ -28,7 +28,7 @@ for i=1:length(D_raw)
         end
         if writeOK
             tic;
-            disp(['parsing file' curCellName]);
+            disp(['parsing file ' curCellName]);
             fname = [rawDataDir curCellName '.h5'];
 
             if h5readatt(fname, '/', 'version') == 2
