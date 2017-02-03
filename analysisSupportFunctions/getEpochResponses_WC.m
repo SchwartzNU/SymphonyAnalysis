@@ -45,9 +45,6 @@ postInterval = xvals >= intervalEnd;
 responseIntervalLen = intervalEnd - intervalStart; %s
 baselineIntervalLen = baselineEnd - baselineStart; %s
 postIntervalLen = xvals(end) - intervalEnd; %s
-movBarOnInterval = xvals >= intervalStart & xvals <= 1;         %Maite 02/03/17
-movBarOffInterval = xvals > 1 & xvals < intervalEnd;            %Maite 02/03/17
-
 
 Mstim = zeros(L, sum(responseInterval)); %full data matrix, baseline subtracted on each epoch
 Mtrans = zeros(L, sum(transientInterval)); %transient data matrix, baseline subtracted on each epoch
@@ -55,8 +52,6 @@ Msus = zeros(L, sum(sustainedInterval)); %sustained data matrix, baseline subtra
 Mpost = zeros(L, sum(postInterval)); %full data matrix, baseline subtracted on each epoch
 MstimToEnd = zeros(L, sum(responseInterval) + sum(postInterval));
 baselineVal = zeros(1,L);
-MmovBarOn = zeros(L, sum(movBarOnInterval));                    %Maite 02/03/17
-MmovBarOff = zeros(L, sum(movBarOffInterval));                  %Maite 02/03/17
 
 for i=1:L
     curEpoch = cellData.epochs(epochInd(i));
@@ -72,9 +67,7 @@ for i=1:L
     stimData = data(responseInterval);
     transData = data(transientInterval);
     susData = data(sustainedInterval);
-    postData = data(postInterval);   
-    movBarOnData = data(movBarOnInterval);                          %Maite 02/03/17
-    movBarOffData = data(movBarOffInterval);                        %Maite 02/03/17
+    postData = data(postInterval);    
     
     if responseIntervalLen >= 0.2
         stimData200 = data(xvals > 0 & xvals <= 0.2);
@@ -116,8 +109,7 @@ for i=1:L
     Mpost(i,:) = postData;
     stimToEndData = [stimData postData];
     MstimToEnd(i,:) = stimToEndData;
-    MmovBarOn(i,:) = movBarOnData;                                  %Maite 02/03/17
-    MmovBarOff(i,:) = movBarOffData;                                %Maite 02/03/17
+
     
     if i==1 %some stuff we only need to do once: units and types for each output
         outputStruct.baseline.units = units;
@@ -127,22 +119,6 @@ for i=1:L
         outputStruct.stimToEnd_peak.units = units;
         outputStruct.stimToEnd_peak.type = 'byEpoch';
         outputStruct.stimToEnd_peak.value = ones(1,L) * NaN;
-        
-        outputStruct.stimToEnd_maxPeak.units = units;               %Maite 02/03/17
-        outputStruct.stimToEnd_maxPeak.type = 'byEpoch';           
-        outputStruct.stimToEnd_maxPeak.value = ones(1,L) * NaN;    
-        
-        outputStruct.stimToEnd_minPeak.units = units;               %Maite 02/03/17
-        outputStruct.stimToEnd_minPeak.type = 'byEpoch';           
-        outputStruct.stimToEnd_minPeak.value = ones(1,L) * NaN;    
-                
-        outputStruct.movBarCW_minPeakON.units = units;              %Maite 02/03/17
-        outputStruct.movBarCW_minPeakON.type = 'byEpoch';           
-        outputStruct.movBarCW_minPeakON.value = ones(1,L) * NaN; 
-        
-        outputStruct.movBarCW_minPeakOFF.units = units;             %Maite 02/03/17
-        outputStruct.movBarCW_minPeakOFF.type = 'byEpoch';           
-        outputStruct.movBarCW_minPeakOFF.value = ones(1,L) * NaN; 
         
         outputStruct.stimToEnd_avgTracePeak.units = units;
         outputStruct.stimToEnd_avgTracePeak.type = 'singleValue';
@@ -175,7 +151,7 @@ for i=1:L
         outputStruct.stimToEnd_avgTrace_latencyToPeak.units = 's';
         outputStruct.stimToEnd_avgTrace_latencyToPeak.type = 'singleValue';
         outputStruct.stimToEnd_avgTrace_latencyToPeak.value = NaN;
-                       
+        
         outputStruct.stimInterval_charge.units = 'pC';
         outputStruct.stimInterval_charge.type = 'byEpoch';
         outputStruct.stimInterval_charge.value = ones(1,L) * NaN;
@@ -287,14 +263,6 @@ for i=1:L
         [outputStruct.stimToEnd_peak.value(i), pos] = min(stimToEndData);
         outputStruct.stimToEnd_latencyToPeak.value(i) = pos / sampleRate;
     end
-    
-    %stimToEnd
-    [outputStruct.stimToEnd_maxPeak.value(i), pos] = max(stimToEndData);    %Maite 02/03/17
-    [outputStruct.stimToEnd_minPeak.value(i), pos] = min(stimToEndData);    %Maite 02/03/17
-    
-    %MovingBar_CW
-    [outputStruct.movBarCW_minPeakON.value(i), pos] = min(movBarOnData);     %Maite 02/03/17
-    [outputStruct.movBarCW_minPeakOFF.value(i), pos] = min(movBarOffData);   %Maite 02/03/17
     
     %ONSET
     if abs(max(stimData)) > abs(min(stimData)) %outward current larger
