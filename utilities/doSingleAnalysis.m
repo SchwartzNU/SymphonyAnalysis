@@ -1,19 +1,23 @@
-function resultTree = doSingleAnalysis(cellName, analysisClassName, cellFilter, epochFilter)
-if nargin < 4
-    epochFilter = [];
-end
+function resultTree = doSingleAnalysis(cellName, analysisClassName, cellFilter, epochFilter, cellData, analysisTable)
+global PREFERENCE_FILES_FOLDER
+
 if nargin < 3
     cellFilter = [];
 end
+if nargin < 4
+    epochFilter = [];
+end
+% cell data is loaded below
 
-global ANALYSIS_FOLDER
-global PREFERENCE_FILES_FOLDER
-
+if nargin < 6
 %Open DataSetsAnalyses.txt file that defines the mapping between data set
 %names and analysis classes
-fid = fopen([PREFERENCE_FILES_FOLDER 'DataSetAnalyses.txt'], 'r');
-analysisTable = textscan(fid, '%s\t%s');
-fclose(fid);
+    fid = fopen([PREFERENCE_FILES_FOLDER 'DataSetAnalyses.txt'], 'r');
+    analysisTable = textscan(fid, '%s\t%s');
+    fclose(fid);
+end
+
+
 
 %find correct row in this table
 Nanalyses = length(analysisTable{1});
@@ -49,9 +53,11 @@ nodeData.name = ['Single analysis tree: ' cellName ' : ' analysisClassName];
 nodeData.device = params_deviceOnly.deviceName;
 resultTree = resultTree.set(1, nodeData);
 
-%load cellData
-cellData = loadAndSyncCellData(cellName);
-%load([ANALYSIS_FOLDER 'cellData' filesep cellName]);
+%load cellData if needed
+if nargin < 5
+    cellData = loadAndSyncCellData(cellName);
+end
+
 dataSetKeys = cellData.savedDataSets.keys;
 
 %run cell filter
