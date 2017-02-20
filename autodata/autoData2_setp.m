@@ -1,5 +1,11 @@
 global ANALYSIS_FOLDER;
-cellNamesListLocation = [ANALYSIS_FOLDER 'Projects' filesep 'WFDS On and Off and Controls/cellNames.txt'];
+cellNamesListLocation = [ANALYSIS_FOLDER 'Projects' filesep 'maiteConnectedPair/cellNames.txt'];
+
+% set this to [] if no external table
+externalTableFilename = 'analysisTrees/automaticData/externalCellDataTable';
+
+% output save location, set to [] to not save
+outputSaveFilename = 'analysisTrees/automaticData/autodata';
 
 %% load filter/analysis list
 filterFileNames = {'analysisTrees/automaticData/filter light step CA.mat';
@@ -16,7 +22,9 @@ filterFileNames = {'analysisTrees/automaticData/filter light step CA.mat';
     'analysisTrees/automaticData/filter contrast CA.mat';
     };
 
-treeVariableModes = [1,0,1,1,0,0,1,1,1,2,2,0]; % 1 for single params (Light step on spike count mean), 0 for vectors (spike count by spot size), 2 for extracting params for a curve
+% 1 for single params (Light step on spike count mean), 0 for vectors (spike count by spot size), 2 for extracting params for a curve
+treeVariableModes = [1,0,1,1,0,0,1,1,1,2,2,0]; 
+
 paramsByTree = {{'ONSETspikes_mean', 'OFFSETspikes_mean'};
     {'ONSETspikes','OFFSETspikes','ONSETrespDuration'};
     {'spikeCount_stimAfter500ms_mean','spikeCount_stimAfter500ms_DSI', 'spikeCount_stimAfter500ms_DSang','spikeCount_stimAfter500ms_OSI', 'spikeCount_stimAfter500ms_OSang', 'spikeCount_stimAfter500ms_DVar'};

@@ -14,7 +14,7 @@ fclose(f);
 
 
 %% make full table
-dtab2 = table();
+dtab_add = table();
 numTableCells = length(cellFileNames);
 
 %% loop through cells
@@ -115,60 +115,98 @@ for ci = 1:numTableCells
 
 
     %% combine table row
-    dtab2(cellNamesInThisCell{1}, trow.Properties.VariableNames) = trow;
+    dtab_add(cellNamesInThisCell{1}, trow.Properties.VariableNames) = trow;
 
 
 end
 
 %% Load external data table for non-automated analyses
 tic
-load 'analysisTrees/automaticData/externalCellDataTable';
-origTableVars = dtab2.Properties.VariableNames;
-warning('off','MATLAB:table:RowsAddedNewVars')
-for externalRowIndex = 1:size(externalCellDataTable,1)
-    cellName = externalCellDataTable.Properties.RowNames{externalRowIndex};
-    
-    % find if the external cell is not already present in the table so we can fill in nans
-    % have to put in nan for the missing values because otherwise it'll get filled with 0   
-    externalRow = externalCellDataTable(cellName,:);
-    
-    if ~ismember(cellName, dtab2.Properties.RowNames)
-        for vi = 1:length(origTableVars)
-            varName = origTableVars{vi};
+if ~isempty(externalTableFilename)
+    load(externalTableFilename);
+    origTableVars = dtab_add.Properties.VariableNames;
+    warning('off','MATLAB:table:RowsAddedNewVars')
+    for rowIndex = 1:size(dtab_add,1)
+        cellName = dtab_add.Properties.RowNames{rowIndex};
 
-            if strcmp(varName, 'cellType')
-                externalRow{cellName, varName} = {''};
-            elseif isempty(strfind(varName, 'SMS')) && isempty(strfind(varName, 'Contrast')) && isempty(strfind(varName, 'params'))
-                externalRow(cellName, varName) = {nan};
-            end
+        % find if the external cell is not already present in the table so we can fill in nans
+        % have to put in nan for the missing values because otherwise it'll get filled with 0
+        if ismember(cellName, externalCellDataTable.Properties.RowNames)
+            externalRow = externalCellDataTable(cellName,:);
+            dtab_add(cellName, externalRow.Properties.VariableNames) = externalRow(1,:);
+        else
+            a = width(externalCellDataTable(1,:));
+            dtab_add(cellName, externalCellDataTable.Properties.VariableNames) = num2cell(nan(1,a));
         end
+
+%         if ~ismember(cellName, externalCellDataTable.Properties.RowNames)
+%             for vi = 1:length(origTableVars)
+%                 varName = origTableVars{vi};
+% 
+%                 if strcmp(varName, 'cellType')
+%                     externalRow{cellName, varName} = {''};
+%                 elseif isempty(strfind(varName, 'SMS')) && isempty(strfind(varName, 'Contrast')) && isempty(strfind(varName, 'params'))
+%                     externalRow(cellName, varName) = {nan};
+%                 end
+%             end
+%         end
+        
     end
-    dtab2(cellName, externalRow.Properties.VariableNames) = externalRow(1,:);
+
+    % clear empties
+%     numericalVarColumns = externalCellDataTable.Properties.VariableNames;
+%     for tableRow = 1:size(dtab_add,1)
+%         d = dtab_add{tableRow, numericalVarColumns};
+%         if all(d == 0)
+%             dtab_add(tableRow, numericalVarColumns) = num2cell(nan*zeros(1,length(numericalVarColumns)));
+%         end
+%     end
+
+    %
+
+    disp('Loaded external data table')
+    toc
 end
 
-% % clear empties
-numericalVarColumns = externalCellDataTable.Properties.VariableNames;
-for tableRow = 1:size(dtab2,1)
-    d = dtab2{tableRow, numericalVarColumns};
-    if all(d == 0)
-        dtab2(tableRow, numericalVarColumns) = num2cell(nan*zeros(1,length(numericalVarColumns)));
+%% combine Additional rows with current table
+if exist('dtab','var')
+    for rowIndex = 1:size(dtab_add,1)
+        cellName = dtab_add.Properties.RowNames{rowIndex};
+        addRow = dtab_add(cellName,:);
+        addTableVars = addRow.Properties.VariableNames;
+        
+%         for vi = 1:length(addTableVars)
+%             varName = addTableVars{vi}
+%             
+%             if strcmp(varName, 'cellType')
+%                 
+%             elseif isempty(strfind(varName, 'SMS')) && isempty(strfind(varName, 'Contrast')) && isempty(strfind(varName, 'params'))
+%                 addRow(cellName, varName) = {nan};
+%             end
+%         end        
+        
+        
+        dtab(cellName, addRow.Properties.VariableNames) = addRow(1,:);
     end
+else
+    dtab = dtab_add;
 end
-
-%
-
-disp('Loaded external data table')
-toc
-
 
 %% process full table
 
 % generate cell select map
-% valid = ~cellfun(@isempty, dtab2.cellType);
-[cellTypes, ia, ic] = unique(dtab2.cellType);
+% valid = ~cellfun(@isempty, dtab.cellType);
+[cellTypes, ia, ic] = unique(dtab.cellType);
 cellTypeSelect = containers.Map;
 for i = 1:length(cellTypes)
     cellTypeSelect(cellTypes{i}) = ic == i;
 end
+numCells = size(dtab, 1);
+cellNames = dtab.Properties.RowNames;
 
-disp('done')
+if ~isempty(outputSaveFilename)
+    save(outputSaveFilename, 'dtab','cellNames','numCells','cellTypeSelect');
+    fprintf('saved data to %s \n', outputSaveFilename);
+end
+
+fprintf('done processing %g cells\nhave a nice day!\n', numCells)
