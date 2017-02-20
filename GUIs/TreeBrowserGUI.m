@@ -672,7 +672,7 @@ classdef TreeBrowserGUI < handle
             if ~isempty(obj.curCellData) && isprop(obj.curCellData, 'savedFileName') && strcmp(obj.curCellData.savedFileName, cellName) %cellData already loaded
                 %do nothing
             else %load it
-                obj.curCellData = loadAndSyncCellData(curCellName);
+                obj.curCellData = loadAndSyncCellData(cellName);
             end
             cellData = obj.curCellData; % load it locally for later plot functions
             
