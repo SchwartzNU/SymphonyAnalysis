@@ -69,7 +69,7 @@ classdef LabDataGUI < handle
             
             %copy newer versions of local cellData files to server
             if SYNC_TO_SERVER
-                syncLocalCellDataToServer();
+                %syncLocalCellDataToServer();
             end
             
             %read in CellTags.txt file
@@ -93,7 +93,7 @@ classdef LabDataGUI < handle
             
             obj.buildUIComponents();
             obj.loadCellNames();
-            try % this will error when displays are weird
+            try % this will error when 
                 obj.loadTree();
             catch
                 disp('loadTree stumbled on multi-display configuration. Resize the window to continue');
@@ -458,11 +458,6 @@ classdef LabDataGUI < handle
                 'String', 'Load filter', ...
                 'FontSize', 12, ...
                 'Callback', @(uiobj,evt)obj.loadFilter);
-            obj.handles.loadFilterListButton = uicontrol('Parent', L_filterControls, ...
-                'Style', 'pushbutton', ...
-                'String', 'Load list & analyze', ...
-                'FontSize', 10, ...
-                'Callback', @(uiobj,evt)obj.loadFilterList);
                         
             set(L_filterBox, 'Sizes', [-1, 25, -2, 25, 25, -2, 25, 40]);
                                   
@@ -616,11 +611,8 @@ classdef LabDataGUI < handle
             obj.updateCellPositionTable();
             
             %set online label
-            if ~iscell(obj.curCellData.get('label'))
-                set(obj.handles.labelTextVal, 'String', sprintf('Label: %s', obj.curCellData.get('label')));
-            else
-                set(obj.handles.labelTextVal, 'String', sprintf('S2 Online Type: %s',obj.curCellData.get('type')));
-            end
+            set(obj.handles.labelTextVal, 'String', obj.curCellData.get('label'));
+            
             %set notes
             set(obj.handles.notesTextVal, 'String', obj.curCellData.notes);
             
@@ -866,74 +858,6 @@ classdef LabDataGUI < handle
                 obj.updateCellFilter();
             end
         end
-        
-        function loadFilterList(obj)
-            disp(obj.labData.allCellTypes)
-            global ANALYSIS_FOLDER;
-            [fname,fpath] = uigetfile(ANALYSIS_FOLDER,'Load filter file');
-            if ~isempty(fname) %if selected something
-                load(fullfile(fpath, fname))
-                
-                for fi = 1:length(filterFileNames)
-                    fname = filterFileNames{fi};
-                    fprintf('Loading filter %g of %g, %s\n', fi, length(filterFileNames), fname);
-                
-                    % load filter
-                    load(fname, 'filterData', 'filterPatternString','analysisType', 'cellType');
-                                        
-                    epochFilt = SearchQuery();
-%                     epochFilter.fieldnames = {};
-%                     epochFilter.operators = {};
-                    for i=1:size(filterData,1)
-                        if ~isempty(filterData{i,1})
-                            epochFilt.fieldnames{i} = filterData{i,1};
-                            epochFilt.operators{i} = filterData{i,2};
-                            
-                            value_str = filterData{i,3};
-                            if isempty(value_str)
-                                value = [];
-                            elseif strfind(value_str, ',')
-                                z = 1;
-                                r = value_str;
-                                while ~isempty(r)
-                                    [token, r] = strtok(r, ',');
-                                    value{z} = strtrim(token);
-                                    z=z+1;
-                                end
-                            else
-                                value = str2num(value_str); %#ok<ST2NM>
-                            end
-                            
-                            epochFilt.values{i} = value;
-                        end
-                    end
-                    epochFilt.pattern = filterPatternString;
-                    
-                    if strcmp(cellType, 'All')
-                        cellType = obj.labData.allCellTypes;
-                    end
-                    
-                    cellFilt = [];
-
-%                     analysisType
-%                     epochFilt
-                    tempTree = obj.labData.collectAnalysis(analysisType, cellType, cellFilt, epochFilt);
-                    
-                    % save tree
-                    
-                    analysisTree = tempTree;
-                    
-                    sfile = fullfile('analysisTrees/automaticData/treeData/', num2str(fi));
-                    save(sfile, 'analysisTree');
-                    disp(['Saved analysis tree to ' sfile]);
-                    
-                end
-                disp('Done with all files');
-                
-            end
-        end
-        
-        
         
         function loadCellNames(obj)
             cellDataFolder = obj.cellData_folder;

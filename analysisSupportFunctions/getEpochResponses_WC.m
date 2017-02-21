@@ -45,6 +45,13 @@ postInterval = xvals >= intervalEnd;
 responseIntervalLen = intervalEnd - intervalStart; %s
 baselineIntervalLen = baselineEnd - baselineStart; %s
 postIntervalLen = xvals(end) - intervalEnd; %s
+stimToEndIntervalLen = xvals(end) - intervalStart; %s
+shortInt200 = xvals >= intervalStart+0.2 & xvals < intervalStart + 0.22;
+shortInt800 = xvals >= intervalStart+0.8 & xvals < intervalStart + 0.82;
+shortInt900 = xvals >= intervalStart+0.9 & xvals < intervalStart + 0.92;
+shortInt150 = xvals >= intervalStart+0.15 & xvals < intervalStart + 0.17;
+shortInt400 = xvals >= intervalStart+0.4 & xvals < intervalStart + 0.42;
+shortInt500 = xvals >= intervalStart+0.5 & xvals < intervalStart + 0.52;
 
 Mstim = zeros(L, sum(responseInterval)); %full data matrix, baseline subtracted on each epoch
 Mtrans = zeros(L, sum(transientInterval)); %transient data matrix, baseline subtracted on each epoch
@@ -67,7 +74,7 @@ for i=1:L
     stimData = data(responseInterval);
     transData = data(transientInterval);
     susData = data(sustainedInterval);
-    postData = data(postInterval);    
+    postData = data(postInterval);   
     
     if responseIntervalLen >= 0.2
         stimData200 = data(xvals > 0 & xvals <= 0.2);
@@ -102,6 +109,38 @@ for i=1:L
     else
         stimData_next1000 = [];
     end
+    if responseIntervalLen >= 0.22
+        shortData200 = data(shortInt200);
+    else
+        shortData200 = [];
+    end
+    if responseIntervalLen >= 0.82
+        shortData800 = data(shortInt800);
+    else
+        shortData800 = [];
+    end
+    if responseIntervalLen >= 0.92
+        shortData900 = data(shortInt900);
+    else
+        shortData900 = [];
+    end
+    if responseIntervalLen >= 0.17
+        shortData150 = data(shortInt150);
+    else
+        shortData150 = [];
+    end
+    if responseIntervalLen >= 0.42
+        shortData400 = data(shortInt400);
+    else
+        shortData400 = [];
+    end
+    if responseIntervalLen >= 0.52
+        shortData500 = data(shortInt500);
+    else
+        shortData500 = [];
+    end
+    
+    
     
     Mstim(i,:) = stimData;   
     Mtrans(i,:) = transData;
@@ -155,6 +194,50 @@ for i=1:L
         outputStruct.stimInterval_charge.units = 'pC';
         outputStruct.stimInterval_charge.type = 'byEpoch';
         outputStruct.stimInterval_charge.value = ones(1,L) * NaN;
+        
+        %Adam 11/25/16
+        outputStruct.stimInterval_inCharge.units = 'pC';
+        outputStruct.stimInterval_inCharge.type = 'byEpoch';
+        outputStruct.stimInterval_inCharge.value = ones(1,L) * NaN;       
+        %Adam 11/25/16
+        outputStruct.stimInterval_outCharge.units = 'pC';
+        outputStruct.stimInterval_outCharge.type = 'byEpoch';
+        outputStruct.stimInterval_outCharge.value = ones(1,L) * NaN;
+        
+        %Adam 6/30/16
+        outputStruct.stimToEnd_charge.units = 'pC';
+        outputStruct.stimToEnd_charge.type = 'byEpoch';
+        outputStruct.stimToEnd_charge.value = ones(1,L) * NaN;
+        
+        %Adam 8/9/16
+        outputStruct.stimAfter200_charge.units = 'pC';
+        outputStruct.stimAfter200_charge.type = 'byEpoch';
+        outputStruct.stimAfter200_charge.value = ones(1,L) * NaN;
+        
+        outputStruct.shortInt200_peak.units = 'pA';
+        outputStruct.shortInt200_peak.type = 'byEpoch';
+        outputStruct.shortInt200_peak.value = ones(1,L) * NaN;
+        
+        outputStruct.shortInt800_peak.units = 'pA';
+        outputStruct.shortInt800_peak.type = 'byEpoch';
+        outputStruct.shortInt800_peak.value = ones(1,L) * NaN;
+        
+        outputStruct.shortInt900_peak.units = 'pA';
+        outputStruct.shortInt900_peak.type = 'byEpoch';
+        outputStruct.shortInt900_peak.value = ones(1,L) * NaN;
+        
+        outputStruct.shortInt400_peak.units = 'pA';
+        outputStruct.shortInt400_peak.type = 'byEpoch';
+        outputStruct.shortInt400_peak.value = ones(1,L) * NaN;
+        
+        outputStruct.shortInt500_peak.units = 'pA';
+        outputStruct.shortInt500_peak.type = 'byEpoch';
+        outputStruct.shortInt500_peak.value = ones(1,L) * NaN;
+        
+        outputStruct.shortInt150_peak.units = 'pA';
+        outputStruct.shortInt150_peak.type = 'byEpoch';
+        outputStruct.shortInt150_peak.value = ones(1,L) * NaN;
+        
         
         outputStruct.ONSET_peak.units = units;
         outputStruct.ONSET_peak.type = 'byEpoch';
@@ -264,16 +347,26 @@ for i=1:L
         outputStruct.stimToEnd_latencyToPeak.value(i) = pos / sampleRate;
     end
     
-    %ONSET
-    if abs(max(stimData)) > abs(min(stimData)) %outward current larger
-        [outputStruct.ONSET_peak.value(i), pos] = max(stimData);
-        outputStruct.ONSET_latencyToPeak.value(i) = pos / sampleRate;
-    else %inward current larger
-        [outputStruct.ONSET_peak.value(i), pos] = min(stimData);
-        outputStruct.ONSET_latencyToPeak.value(i) = pos / sampleRate;
-    end
+%     %ONSET
+%     if abs(max(stimData)) > abs(min(stimData)) %outward current larger
+%         [outputStruct.ONSET_peak.value(i), pos] = max(stimData);
+%         outputStruct.ONSET_latencyToPeak.value(i) = pos / sampleRate;
+%     else %inward current larger
+%         [outputStruct.ONSET_peak.value(i), pos] = min(stimData);
+%         outputStruct.ONSET_latencyToPeak.value(i) = pos / sampleRate;
+%     end
+
+
+    %TEMP HACK ADAM 10/19/16 assume excitation!!! take min even if occasional larger peak outward drugs
+    [outputStruct.ONSET_peak.value(i), pos] = min(stimData);
+    outputStruct.ONSET_latencyToPeak.value(i) = pos / sampleRate;
+
+
     outputStruct.stimInterval_charge.value(i) = sum(stimData) * responseIntervalLen / sampleRate; %pC
-    
+    outputStruct.stimInterval_inCharge.value(i) = sum( (-0.5*sign(stimData)+0.5).*stimData) * responseIntervalLen / sampleRate; %pC    AM 11/25/16
+    outputStruct.stimInterval_outCharge.value(i) = sum( (0.5*sign(stimData)+0.5).*stimData) * responseIntervalLen / sampleRate; %pC    AM 11/25/16
+    outputStruct.stimToEnd_charge.value(i) = sum(stimToEndData) * stimToEndIntervalLen / sampleRate; %pC    AM 6/30/16
+    outputStruct.stimAfter200_charge.value(i) = sum(stimData200to1000) * (responseIntervalLen-0.2) / sampleRate; %p
     %ONSET
     if ~isempty(transData)
         if abs(max(transData)) > abs(min(transData)) %outward current larger
@@ -331,6 +424,27 @@ for i=1:L
         end
         outputStruct.ONSET_charge400ms.value(i) = sum(stimData400) * 0.4 / sampleRate;
     end
+    
+    %ONSET
+    if ~isempty(shortData200)
+        outputStruct.shortInt200_peak.value(i) = mean(shortData200); %max(shortData200);
+    end
+    if ~isempty(shortData800)
+        outputStruct.shortInt800_peak.value(i) = mean(shortData800); %max(shortData200);
+    end
+    if ~isempty(shortData900)
+        outputStruct.shortInt900_peak.value(i) = mean(shortData900); %max(shortData200);
+    end
+    if ~isempty(shortData400)
+        outputStruct.shortInt400_peak.value(i) = mean(shortData400); %max(shortData200);
+    end
+    if ~isempty(shortData500)
+        outputStruct.shortInt500_peak.value(i) = mean(shortData500); %max(shortData200);
+    end
+    if ~isempty(shortData150)
+        outputStruct.shortInt150_peak.value(i) = mean(shortData150); %max(shortData200);
+    end
+    
     
     
     %OFFSET

@@ -8,8 +8,8 @@ function [respMean,respErr,normResp] = normtoMaxCellAvg(Data)
     normResp = zeros(row,col);
     for i=1:row
         normResp(i,:) = Data(i,:)./max(Data(i,:));     %normalize to max
-        j = find(normResp(i,:)==1);      %find preferred stimulus
-        normResp(i,:) = circshift(normResp(i,:),-min(j)+7,2);    %shift max to middle
+        %j = find(normResp(i,:)==1);      %find preferred stimulus
+        %normResp(i,:) = circshift(normResp(i,:),-min(j)+7,2);    %shift max to middle
     end
     respMean = transpose(mean(normResp,1));
     respErr = transpose(std(normResp,1)/sqrt(row));

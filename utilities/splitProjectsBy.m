@@ -8,15 +8,13 @@ function [] = splitProjectsBy(varargin)
 %dataSet prefixes, and optional fourth argument of epoch filters for each data
 %set
 global ANALYSIS_FOLDER;
-global CELL_DATA_MASTER;
 
-if ~(exist(CELL_DATA_MASTER, 'dir') == 7)
-    disp(['Could not connect to CellDataMaster at ' CELL_DATA_MASTER]);
-    return;
+if exist([filesep 'Volumes' filesep 'SchwartzLab'  filesep 'CellDataMaster']) == 7
+    cellDataMasterFolder = [filesep 'Volumes' filesep 'SchwartzLab'  filesep 'CellDataMaster'];
 else
-    cellDataMasterFolder = CELL_DATA_MASTER;
+    disp('Could not connect to CellDataMaster');
+    return;
 end
-    
 
 if nargin==1
     splitKey = varargin{1};
@@ -55,7 +53,7 @@ end
 
 L = length(cellDataBaseNames);
 projMap = containers.Map;
-if strcmp(splitKey, 'expDate')
+if strcmp(splitKey, 'expDate');
     for i=1:L
         disp(['Cell ' num2str(i) ' of ' num2str(L)]);
         if ~isempty(cellDataBaseNames{i})
@@ -68,7 +66,7 @@ if strcmp(splitKey, 'expDate')
             end
         end
     end
-elseif strcmp(splitKey, 'hasDataSet')
+elseif strcmp(splitKey, 'hasDataSet');
     for i=1:L
         disp(['Cell ' num2str(i) ' of ' num2str(L)]);
         if ~isempty(cellDataBaseNames{i})
@@ -86,7 +84,7 @@ elseif strcmp(splitKey, 'hasDataSet')
             end
         end
     end
-elseif strcmp(splitKey, 'cellTypeWithDataSets')
+elseif strcmp(splitKey, 'cellTypeWithDataSets');
     for i=1:L
         disp(['Cell ' num2str(i) ' of ' num2str(L)]);
         if ~isempty(cellDataBaseNames{i})
@@ -134,7 +132,7 @@ elseif strcmp(splitKey, 'cellTypeWithDataSets')
             end
         end
     end
-elseif strcmp(splitKey, 'cellType') %cell type
+elseif strcmp(splitKey, 'cellType'); %cell type
     for i=1:L
         disp(['Cell ' num2str(i) ' of ' num2str(L)]);
         if ~isempty(cellDataBaseNames{i})

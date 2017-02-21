@@ -82,24 +82,69 @@ classdef IVAnalysis < AnalysisTree
             hold(ax, 'off');
         end
         
-        function plot_holdSignalVsshortIntCurrent(node, cellData)
+        
+        function plot_holdSignalVsshortIntCurrent200_900(node, cellData)
             rootData = node.get(1);
-            xvals = rootData.holdSignal(2:end);
+            %xvals = rootData.holdSignal(2:end);
+            xvals = rootData.holdSignal;
             yField = rootData.shortInt200_peak;
-            yvals = yField.mean_c(2:end);
-            errs = yField.SEM(2:end);
+            %yvals = yField.mean_c(2:end);
+            %errs = yField.SEM(2:end);
+            yvals = yField.mean_c;
+            errs = yField.SEM;
+            errorbar(xvals, yvals, errs,'DisplayName','current at 0.2s');
+            hold on;
+            yField = rootData.shortInt900_peak;
+            %yvals = yField.mean_c(2:end);           
+            %errs = yField.SEM(2:end);
+            yvals = yField.mean_c;
+            errs = yField.SEM;
+            errorbar(xvals, yvals, errs,'DisplayName','current at 0.9s');
+            xlabel('holdSignal');
+            ylabel(['Current (' yField.units ')']);
+            title('I-V at 200ms (blue); at 900ms (red)');
+            hold off
+        end
+        
+        function plot_holdSignalVsshortIntCurrent200_800(node, cellData)
+            rootData = node.get(1);
+            %xvals = rootData.holdSignal(2:end);
+            xvals = rootData.holdSignal;
+            yField = rootData.shortInt200_peak;
+            %yvals = yField.mean_c(2:end);
+            %errs = yField.SEM(2:end);
+            yvals = yField.mean_c;
+            errs = yField.SEM;
             errorbar(xvals, yvals, errs,'DisplayName','current at 0.2s');
             hold on;
             yField = rootData.shortInt800_peak;
-            yvals = yField.mean_c(2:end);
-            errs = yField.SEM(2:end);
+            %yvals = yField.mean_c(2:end);           
+            %errs = yField.SEM(2:end);
+            yvals = yField.mean_c;
+            errs = yField.SEM;
             errorbar(xvals, yvals, errs,'DisplayName','current at 0.8s');
             xlabel('holdSignal');
             ylabel(['Current (' yField.units ')']);
             title('I-V at 200ms (blue); at 800ms (red)');
+            xvals'
             hold off
         end
         
+        function plot_holdSignalVsshortInt500_peak(node, cellData)
+            rootData = node.get(1);
+            xvals = rootData.holdSignal;
+            yField = rootData.shortInt500_peak;
+            if strcmp(yField.units, 's')
+                yvals = yField.median_c;
+            else
+                yvals = yField.mean_c;
+            end
+            errs = yField.SEM;
+            errorbar(xvals, yvals, errs);
+            xlabel('holdSignal');
+            ylabel(['shortInt500_peak (' yField.units ')']);
+        end
+
     end
     
 end

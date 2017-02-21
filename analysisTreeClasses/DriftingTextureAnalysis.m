@@ -108,13 +108,21 @@ classdef DriftingTextureAnalysis < AnalysisTree
             polar([0 rootData.spikeCount_stimAfter500ms_OSang*pi/180], [0 (100*rootData.spikeCount_stimAfter500ms_OSI)], 'g-');
             xlabel('TextureAngle');
             ylabel(['spikeCount_stimAfter500ms (' yField(1).units ')']);
-            addDsiOsiVarTitle(rootData, 'spikeCount_stimAfter500ms')
+            title(['DSI = ' num2str(rootData.spikeCount_stimAfter500ms_DSI) ', DSang = ' num2str(rootData.spikeCount_stimAfter500ms_DSang) ...
+                ' and OSI = ' num2str(rootData.spikeCount_stimAfter500ms_OSI) ', OSang = ' num2str(rootData.spikeCount_stimAfter500ms_OSang)]);
             hold off;
+            
 
+            hold on
+            polar([0 rootData.spikeCount_stimAfter500ms_DSang*pi/180], [0 (100*rootData.spikeCount_stimAfter500ms_DSI)], 'r-');
+            polar([0 rootData.spikeCount_stimAfter500ms_OSang*pi/180], [0 (100*rootData.spikeCount_stimAfter500ms_OSI)], 'g-');
+            title(['DSI = ' num2str(rootData.spikeCount_stimAfter500ms_DSI) ', DSang = ' num2str(rootData.spikeCount_stimAfter500ms_DSang) ...
+                ' and OSI = ' num2str(rootData.spikeCount_stimAfter500ms_OSI) ', OSang = ' num2str(rootData.spikeCount_stimAfter500ms_OSang)]);
+            hold off
 
         end
         
-        function plot_textureAngleVsStimToEnd_avgTracePeak(node, cellData)
+        function plot_textureAngleVsCharge_stimInterval(node, cellData)
             rootData = node.get(1);
             xvals = rootData.textureAngle;
             yField = rootData.stimToEnd_avgTracePeak;
@@ -127,8 +135,14 @@ classdef DriftingTextureAnalysis < AnalysisTree
             polar([0 rootData.stimToEnd_avgTracePeak_DSang*pi/180], [0 (100*rootData.stimToEnd_avgTracePeak_DSI)], 'r-');
             polar([0 rootData.stimToEnd_avgTracePeak_OSang*pi/180], [0 (100*rootData.stimToEnd_avgTracePeak_OSI)], 'g-');
             xlabel('TextureAngle');
-            ylabel(['stimToEnd_avgTracePeak (' yField.units ')']);
-            addDsiOsiVarTitle(rootData, 'stimToEnd_avgTracePeak')
+            ylabel(['spikeCount_stimAfter500ms (' yField.units ')']);
+
+            hold on
+            polar([0 rootData.stimToEnd_avgTracePeak_DSang*pi/180], [0 (100*rootData.stimToEnd_avgTracePeak_DSI)], 'r-');
+            polar([0 rootData.stimToEnd_avgTracePeak_OSang*pi/180], [0 (100*rootData.stimToEnd_avgTracePeak_OSI)], 'g-');
+
+            title(['DSI = ' num2str(rootData.stimToEnd_avgTracePeak_DSI) ', DSang = ' num2str(rootData.stimToEnd_avgTracePeak_DSang) ...
+                ' and OSI = ' num2str(rootData.stimToEnd_avgTracePeak_OSI) ', OSang = ' num2str(rootData.stimToEnd_avgTracePeak_OSang)]);
             hold off;
         end        
     end

@@ -295,19 +295,6 @@ classdef ContrastRespAnalysis < AnalysisTree
             xlabel('contrast');
             ylabel(['ONSET_respIntervalT25 (' yField.units ')']);
         end
-        ONSETlatency
-        
-        function plot_contrastVsONSETlatency(node, cellData)
-            rootData = node.get(1);
-            xvals = rootData.contrast;
-            yField = rootData.ONSETlatency;
-            yvals = yField.mean;
-            plot(xvals, yvals, 'bx-');
-            xlim([min(xvals), max(xvals)]);
-            xlabel('contrast');
-            ylabel(['ONSET_ONSETlatency (' yField.units ')']);
-        end        
-        
         
         function plotData(node, cellData)
             rootData = node.get(1);
@@ -335,6 +322,38 @@ classdef ContrastRespAnalysis < AnalysisTree
             ylabel(['ONSETspikes_grandBaselineSubtracted (' yField.units ')']);
         end
 
+        function plot_contrastVsStimIntervalSpks_gbl(node, cellData)
+            rootData = node.get(1);
+            xvals = rootData.contrast;
+            yField = rootData.spikeCount_stimInterval_grandBaselineSubtracted;
+            if strcmp(yField.units, 's')
+                yvals = yField.median_c;
+            else
+                yvals = yField.mean_c;
+            end
+            errs = yField.SEM;
+            errorbar(xvals, yvals, errs);
+            xlabel('contrast');
+            ylabel(['spikes stimInterval grandBaselineSubtracted (' yField.units ')']);
+        end
+        
+        function plot_contrastVsStimIntervalSpks_gblNORM(node, cellData)
+            rootData = node.get(1);
+            xvals = rootData.contrast;
+            yField = rootData.spikeCount_stimInterval_grandBaselineSubtracted;
+            if strcmp(yField.units, 's')
+                yvals = yField.median_c;
+            else
+                yvals = yField.mean_c;
+            end
+            errs = yField.SEM;
+            M = max(abs(yvals));
+            yvals = yvals./M;
+            errs = errs./M;
+            errorbar(xvals, yvals, errs);
+            xlabel('contrast');
+            ylabel(['spikes stimInterval grandBaselineSubtracted (' yField.units ')']);
+        end
         
     end
     

@@ -1,4 +1,3 @@
-
 % Integrate and fire
 
 %DEFINE PARAMETERS
@@ -7,9 +6,9 @@ t_start = -500;
 t_end = 2000; %total time of run [ms]
 t_StimStart = 0; %time to start injecting current [ms]
 t_StimEnd = 1000; %time to end injecting current [ms]
-E_L = -62; %resting membrane potential [mV]
-V_th = -56; %spike threshold [mV]
-V_reset = -70; %value to reset voltage to after a spike [mV]
+E_L = -60; %resting membrane potential [mV]
+V_th = -58; %spike threshold [mV]
+V_reset = -65; %value to reset voltage to after a spike [mV]
 V_spike = 20; %value to draw a spike to, when cell spikes [mV]
 R_m = 500; %membrane resistance [MOhm]
 tau_mem = 1; %membrane time constant [ms]
