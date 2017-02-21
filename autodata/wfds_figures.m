@@ -10,7 +10,7 @@ colo2 = [.68, .1, .2];
 col_exc = [0 0 1];
 col_inh = [1 0 0];
 
-cellTypeSelect('ON WFDS') = cellTypeSelect('ON WFDS');
+selectWfdsOn = cellTypeSelect('ON WFDS');
 selectWfdsOff = cellTypeSelect('OFF WFDS');
 selectULD = cellTypeSelect('UltraLowDefinition');
 selectControl = ~(cellTypeSelect('ON WFDS') | selectWfdsOff | selectULD);
@@ -19,32 +19,26 @@ set(0,'DefaultAxesFontSize',14)
 
 %% 
 % 
-%% Generate param columns for SMS data
+%% Plot many SMS curves
 
 % spots multiple sizes
 
+select = selectWfdsOn;
+
 figure(101);clf;
-handles = tight_subplot(1,3);
+handles = tight_subplot(2,2, .1);
 peakSize = [];
 tailSpikes = [];
 axes(handles(1));
 for ci = 1:size(dtab,1)
-%     if ~cellTypeSelect('ON WFDS')(ci)
-%         continue
-%     end
+    if ~select(ci)
+        continue
+    end
     spotSize = dtab{ci, 'SMS_spotSize_sp'}{1};
     if ~isempty(spotSize)
         spikes = dtab{ci, 'SMS_onSpikes'}{1};
         hold on
         plot(spotSize, spikes);
-        [m, mi] = max(spikes);
-        peakValue(ci) = m;
-        peakSize(ci) = spotSize(mi);
-        tailSpikes(ci) = mean(spikes(spotSize > 550));
-    else
-        peakValue(ci) = nan;
-        peakSize(ci) = nan;
-        tailSpikes(ci) = nan;
     end
 end
 xlabel('spot size um')
@@ -52,19 +46,22 @@ ylabel('spike count on')
 title('sms on')
 hold off
 
-
-dtab{:,'SMS_onSpikes_prefSize'} = peakSize';
-dtab{:,'SMS_onSpikes_peakSpikes'} = peakValue';
-dtab{:,'SMS_onSpikes_tailSpikes'} = tailSpikes';
-
 axes(handles(2));
-histogram(peakSize, 10)
-title('sms peak spot size')
+histogram(dtab{select,'SMS_onSpikes_prefSize'}, 10)
+title('sms preferred spot size')
 
 axes(handles(3));
-tailSpikes(tailSpikes == 0) = nan;
-histogram(tailSpikes, 10)
+histogram(dtab{select,'SMS_onSpikes_tailSpikes'}, 10)
 title('tail spikes')
+
+axes(handles(4));
+histogram(dtab{select,'SMS_onSpikes_peakSpikes'}, 10)
+title('preferred spot spikes')
+
+%% Plot a set of SMS
+
+
+
 %% 
 % 
 %% Population stats for WFDS OFF
@@ -126,15 +123,7 @@ legend('ON','OFF','other');
 title('ls off spikes')
 %% calculate the best DS
 
-src = {'DrifTex_DSI_sp','DrifGrat_DSI_sp','MB_1000_DSI_sp','MB_500_DSI_sp','MB_250_DSI_sp'};
-for ci = 1:numCells
-    dsis = dtab{ci, {'DrifTex_DSI_sp','DrifGrat_DSI_sp','MB_1000_DSI_sp','MB_500_DSI_sp','MB_250_DSI_sp'}};
-    angs = dtab{ci, {'DrifTex_DSang_sp','DrifGrat_DSang_sp','MB_1000_DSang_sp','MB_500_DSang_sp','MB_250_DSang_sp'}};
-    [m, i] = max(dsis);
-    dtab{ci,'best_DSI_sp'} = m;
-    dtab{ci,'best_DSang_sp'} = angs(i);
-    dtab{ci,'best_source'} = {src{i}};
-end
+
     
 %
     
@@ -236,13 +225,8 @@ handles = tight_subplot(3,3, .05, .1);
 % end
 % angleOffset = deg2rad(angleOffset);
 
-diffX = dtab.spatial_ex_centerX - dtab.spatial_in_centerX;
-diffY = dtab.spatial_ex_centerY - dtab.spatial_in_centerY;
-avgSigma = mean(dtab{:,{'spatial_in_sigma2X','spatial_ex_sigma2X','spatial_in_sigma2Y','spatial_ex_sigma2Y'}}, 2);
-autocenterOffsetDistance = sqrt(diffX.^2 + diffY.^2);
-autocenterOffsetDistanceNormalized = autocenterOffsetDistance ./ avgSigma;
-autocenterOffsetDirections = angle(diffX + sqrt(-1) * diffY);
-dtab.spatial_exin_offset = autocenterOffsetDistance .* exp(sqrt(-1) * autocenterOffsetDirections);
+autocenterOffsetDirections = angle(dtab.spatial_exin_offset);
+autocenterOffsetDistance = abs(dtab.spatial_exin_offset);
 
 axes(handles(1));
 plot(autocenterOffsetDistance(cellTypeSelect('ON WFDS')) .* exp(sqrt(-1) * autocenterOffsetDirections(cellTypeSelect('ON WFDS'))), 'ob')
@@ -412,7 +396,7 @@ xlabel('Spike count')
 ylabel('PDF across cells')
 title('Light Step Spike Counts')
 legend({'Onset','Offset'})
-%% SPOTS MULTI SIZE
+%% SPOTS MULTI SIZE population averages
 
 figure(102);clf;
 peakSize = [];
@@ -423,7 +407,7 @@ outstruct = struct();
 varsToMean = {'SMS_onSpikes','SMS_offSpikes','SMS_charge_ex','SMS_peak_ex','SMS_charge_in','SMS_peak_in'};
 ylabels = {'ON spikes','OFF spikes','Ex Charge','Ex Peak','In Charge','In Peak'};
 baselinesToMean = {'SMS_spotSize_sp','SMS_spotSize_sp','SMS_spotSize_ex','SMS_spotSize_ex','SMS_spotSize_in','SMS_spotSize_in'};
-cellTypeSelects = {cellTypeSelect('ON WFDS')};
+cellTypeSelects = {cellTypeSelect('UltraLowDefinition')};
 cellTypeNames = {'WFDS ON','WFDS OFF'};
 
 handles = tight_subplot(length(varsToMean), length(cellTypeSelects), [0.01, .1], 0.1, .1);
@@ -484,10 +468,16 @@ for vari = 1:length(varsToMean)
         [~, i] = max(abs(m));
         mx = m(i);
         if ~isnan(mx)
-            yticks(sort([0, round(mx/2,0), round(mx)]))
+            if abs(mx) >= 1
+                ticks = [0, round(mx/2,0), ceil(mx)];
+            else
+                ticks = [0, mx/2, mx];
+            end
+            yticks(sort(ticks))
         end
         
         xlim([0,1200])
+        
         
         ylabel(ylabels{vari})
         if vari == 1
@@ -628,7 +618,7 @@ for ci = 1:size(dtab,1)
         width = 1;
     end
     
-    spotSize = dtab{ci, 'Contrast_contrastVal_ca'}{1};
+    spotSize = dtab{ci, 'Contrast_contrastVal_sp'}{1};
     if ~isempty(spotSize)
         [spotSize, order] = sort(spotSize);
         spikes = dtab{ci, 'Contrast_onSpikes'}{1};

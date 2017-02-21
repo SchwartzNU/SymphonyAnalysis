@@ -1,5 +1,5 @@
 global ANALYSIS_FOLDER;
-cellNamesListLocation = [ANALYSIS_FOLDER 'Projects' filesep 'maiteConnectedPair/cellNames.txt'];
+cellNamesListLocation = [ANALYSIS_FOLDER 'Projects' filesep 'UltraLowDef/cellNames.txt'];
 
 % set this to [] if no external table
 externalTableFilename = 'analysisTrees/automaticData/externalCellDataTable';
