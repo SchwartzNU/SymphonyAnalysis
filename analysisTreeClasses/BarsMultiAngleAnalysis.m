@@ -28,6 +28,7 @@ classdef BarsMultiAngleAnalysis < AnalysisTree
             rootData = obj.get(1);
             leafIDs = obj.findleaves();
             L = length(leafIDs);
+            baseline = zeros(1,L);  %for grandBaseline subt.
             for i=1:L
                 curNode = obj.get(leafIDs(i));
                 if strcmp(rootData.(rootData.ampModeParam), 'Cell attached')
@@ -35,6 +36,7 @@ classdef BarsMultiAngleAnalysis < AnalysisTree
                         'DeviceName', rootData.deviceName,'StartTime', obj.StartTime, 'EndTime', obj.EndTime);
                     outputStruct = getEpochResponseStats(outputStruct);
                     curNode = mergeIntoNode(curNode, outputStruct);
+                    baseline(i) = outputStruct.baselineRate.mean_c; %for grandBaseline subt. Adam 2/13/17
                 else %whole cell
                     outputStruct = getEpochResponses_WC(cellData, curNode.epochID, ...
                         'DeviceName', rootData.deviceName);
@@ -54,25 +56,36 @@ classdef BarsMultiAngleAnalysis < AnalysisTree
                 for i=1:L %for each leaf node
                     curNode = obj.get(leafIDs(i));
                     %baseline subtraction
-                    grandBaselineMean = outputStruct.baselineRate.mean_c;
-                    tempStruct.ONSETrespRate_grandBaselineSubtracted = curNode.ONSETrespRate;
-                    tempStruct.ONSETrespRate_grandBaselineSubtracted.value = curNode.ONSETrespRate.value - grandBaselineMean;
-                    tempStruct.OFFSETrespRate_grandBaselineSubtracted = curNode.OFFSETrespRate;
-                    tempStruct.OFFSETrespRate_grandBaselineSubtracted.value = curNode.OFFSETrespRate.value - grandBaselineMean;
-                    tempStruct.ONSETspikes_grandBaselineSubtracted = curNode.ONSETspikes;
-                    tempStruct.ONSETspikes_grandBaselineSubtracted.value = curNode.ONSETspikes.value - grandBaselineMean.*curNode.ONSETrespDuration.value; %fix nan and INF here
-                    tempStruct.OFFSETspikes_grandBaselineSubtracted = curNode.OFFSETspikes;
-                    tempStruct.OFFSETspikes_grandBaselineSubtracted.value = curNode.OFFSETspikes.value - grandBaselineMean.*curNode.OFFSETrespDuration.value;
-                    tempStruct.ONSETspikes_400ms_grandBaselineSubtracted = curNode.spikeCount_ONSET_400ms;
-                    tempStruct.ONSETspikes_400ms_grandBaselineSubtracted.value = curNode.spikeCount_ONSET_400ms.value - grandBaselineMean.*0.4; %fix nan and INF here
-                    tempStruct.OFFSETspikes_400ms_grandBaselineSubtracted = curNode.OFFSETspikes;
-                    tempStruct.OFFSETspikes_400ms_grandBaselineSubtracted.value = curNode.OFFSETspikes.value - grandBaselineMean.*0.4;
+                    baselineMean = outputStruct.baselineRate.mean_c; %THIS WAS WRONGLY NAMED "GRAND_BASELINE" Adam 2/13/17
+                    tempStruct.ONSETrespRate_baselineSubtracted = curNode.ONSETrespRate;
+                    tempStruct.ONSETrespRate_baselineSubtracted.value = curNode.ONSETrespRate.value - baselineMean;
+                    tempStruct.OFFSETrespRate_baselineSubtracted = curNode.OFFSETrespRate;
+                    tempStruct.OFFSETrespRate_baselineSubtracted.value = curNode.OFFSETrespRate.value - baselineMean;
+                    tempStruct.ONSETspikes_baselineSubtracted = curNode.ONSETspikes;
+                    tempStruct.ONSETspikes_baselineSubtracted.value = curNode.ONSETspikes.value - baselineMean.*curNode.ONSETrespDuration.value; %fix nan and INF here
+                    tempStruct.OFFSETspikes_baselineSubtracted = curNode.OFFSETspikes;
+                    tempStruct.OFFSETspikes_baselineSubtracted.value = curNode.OFFSETspikes.value - baselineMean.*curNode.OFFSETrespDuration.value;
+                    tempStruct.ONSETspikes_400ms_baselineSubtracted = curNode.spikeCount_ONSET_400ms;
+                    tempStruct.ONSETspikes_400ms_baselineSubtracted.value = curNode.spikeCount_ONSET_400ms.value - baselineMean.*0.4; %fix nan and INF here
+                    tempStruct.OFFSETspikes_400ms_baselineSubtracted = curNode.OFFSETspikes;
+                    tempStruct.OFFSETspikes_400ms_baselineSubtracted.value = curNode.OFFSETspikes.value - baselineMean.*0.4;
                     tempStruct = getEpochResponseStats(tempStruct);
                     
                     curNode = mergeIntoNode(curNode, tempStruct);
                     obj = obj.set(leafIDs(i), curNode);
                 end
                 
+                grandBaselineMean = mean(baseline);
+                for i=1:L %for each leaf node
+                    curNode = obj.get(leafIDs(i));
+                    
+                    tempStruct.spikeCount_stimInterval_grndBlSubt = curNode.spikeCount_stimInterval;
+                    tempStruct.spikeCount_stimInterval_grndBlSubt.value = curNode.spikeCount_stimInterval.value - grandBaselineMean; %assumes 1 sec stim interval
+                    tempStruct = getEpochResponseStats(tempStruct);
+                    
+                    curNode = mergeIntoNode(curNode, tempStruct);
+                    obj = obj.set(leafIDs(i), curNode);
+                end  
                 
             end
             
@@ -302,9 +315,9 @@ classdef BarsMultiAngleAnalysis < AnalysisTree
             xvals = rootData.barAngle;
             yField = rootData.spikeCount_stimAfter200ms;
             if strcmp(yField.units, 's')
-            yvals = yField.median_c;
+                yvals = yField.median_c;
             else
-            yvals = yField.mean_c;
+                yvals = yField.mean_c;
             end
             errs = yField.SEM;
             errorbar(xvals, yvals, errs);
@@ -318,6 +331,38 @@ classdef BarsMultiAngleAnalysis < AnalysisTree
             title(['OSI = ' num2str(rootData.spikeCount_stimAfter200ms_OSI) ', OSang = ' num2str(rootData.spikeCount_stimAfter200ms_OSang)]);
             hold off;
         end
+       function plot_barAngleVsspikeCount_stimInt_gblSubt(node, cellData)
+            rootData = node.get(1);
+            xvals = rootData.barAngle;
+            yField = rootData.spikeCount_stimInterval_grndBlSubt;
+            if strcmp(yField.units, 's')
+                yvals = yField.median_c;
+            else
+                yvals = yField.mean_c;
+            end
+            errs = yField.SEM;
+            errorbar(xvals, yvals, errs);
+            xlabel('barAngle');
+            ylabel(['spikeCount_stimInterval_granBaselineSubtracted (' yField.units ')']);
+        end
+        
+        function plot_barAngleVsspikeCount_stimInt_gblSubtNORM(node, cellData)
+            rootData = node.get(1);
+            xvals = rootData.barAngle;
+            yField = rootData.spikeCount_stimInterval_grndBlSubt;
+            if strcmp(yField.units, 's')
+                yvals = yField.median_c;
+            else
+                yvals = yField.mean_c;
+            end
+            errs = yField.SEM;
+            M = max(abs(yvals));
+            yvals = yvals./M;
+            errs = errs./M;
+            errorbar(xvals, yvals, errs);
+            xlabel('barAngle');
+            ylabel(['spikeCount_stimInterval_granBaselineSubtracted_norm (' yField.units ')']);
+        end 
     end
     
 end
