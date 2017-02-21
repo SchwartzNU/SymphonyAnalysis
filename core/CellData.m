@@ -35,6 +35,7 @@ classdef CellData < handle
             %Epoch attributes (protocol properties)
             %and data links
             %EpochDataGroups = info.Groups(1).Groups(2).Groups;
+            %EpochDataGroups = info.Groups(1).Groups(1).Groups(1).Groups(2).Groups;
             
             %search through all EpochGroups (not just first one!!!)
             %GWS fixed on 6/6/14

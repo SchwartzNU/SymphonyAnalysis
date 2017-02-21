@@ -52,7 +52,7 @@ for i=1:w
             yPoints(z) = y; 
             signalMat(z,:) = squeeze(mean(mean(cellImageMat(xNear, yNear, :))));
             bg = mean(signalMat(z,1:baselineFrames));
-            deltaFoverF(z) = (mean(signalMat(z,:)) - bg) / bg;
+            deltaFoverF(z) = (mean(signalMat(z,baselineFrames+1:end)) - bg) / bg;
             z=z+1;
         end
     end      
