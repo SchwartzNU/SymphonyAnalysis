@@ -84,7 +84,6 @@ classdef IVAnnulusAnalysis < AnalysisTree
 %         
         function plot_holdSignalVsshortIntCurrent(node, cellData)
             rootData = node.get(1);
-<<<<<<< HEAD
             xvals = rootData.holdSignal; %(2:end);
 %             yField = rootData.shortInt200_peak;
 %             yvals = yField.mean_c; %(2:end);

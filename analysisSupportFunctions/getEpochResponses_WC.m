@@ -195,6 +195,15 @@ for i=1:L
         outputStruct.stimInterval_charge.type = 'byEpoch';
         outputStruct.stimInterval_charge.value = ones(1,L) * NaN;
         
+        %Adam 11/25/16
+        outputStruct.stimInterval_inCharge.units = 'pC';
+        outputStruct.stimInterval_inCharge.type = 'byEpoch';
+        outputStruct.stimInterval_inCharge.value = ones(1,L) * NaN;       
+        %Adam 11/25/16
+        outputStruct.stimInterval_outCharge.units = 'pC';
+        outputStruct.stimInterval_outCharge.type = 'byEpoch';
+        outputStruct.stimInterval_outCharge.value = ones(1,L) * NaN;
+        
         %Adam 6/30/16
         outputStruct.stimToEnd_charge.units = 'pC';
         outputStruct.stimToEnd_charge.type = 'byEpoch';
@@ -354,6 +363,8 @@ for i=1:L
 
 
     outputStruct.stimInterval_charge.value(i) = sum(stimData) * responseIntervalLen / sampleRate; %pC
+    outputStruct.stimInterval_inCharge.value(i) = sum( (-0.5*sign(stimData)+0.5).*stimData) * responseIntervalLen / sampleRate; %pC    AM 11/25/16
+    outputStruct.stimInterval_outCharge.value(i) = sum( (0.5*sign(stimData)+0.5).*stimData) * responseIntervalLen / sampleRate; %pC    AM 11/25/16
     outputStruct.stimToEnd_charge.value(i) = sum(stimToEndData) * stimToEndIntervalLen / sampleRate; %pC    AM 6/30/16
     outputStruct.stimAfter200_charge.value(i) = sum(stimData200to1000) * (responseIntervalLen-0.2) / sampleRate; %p
     %ONSET

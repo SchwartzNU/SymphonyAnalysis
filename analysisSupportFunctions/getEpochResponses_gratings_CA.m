@@ -102,6 +102,10 @@ for i=1:L
         outputStruct.F2overF1.type = 'singleValue';
         outputStruct.F2overF1.value = NaN;
         
+        %Adam 2/13/17
+        outputStruct.cycleAvgPeakFR.units = 'Hz';
+        outputStruct.cycleAvgPeakFR.type = 'singleValue';
+        outputStruct.cycleAvgPeakFR.value = [];     
     end
     
     
@@ -145,5 +149,8 @@ ft = fft(avgCycle);
 outputStruct.F1amplitude.value = abs(ft(2))/length(ft)*2;
 outputStruct.F2amplitude.value = abs(ft(3))/length(ft)*2;
 outputStruct.F2overF1.value = abs(ft(3))/abs(ft(2));
+
+%Adam 2/13/17
+outputStruct.cycleAvgPeakFR.value = max(avgCycle); 
 
 

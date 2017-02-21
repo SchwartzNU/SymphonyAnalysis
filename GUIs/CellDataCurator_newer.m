@@ -15,6 +15,7 @@ classdef CellDataCurator < handle
         dataSet %vector of epoch indices
         allKeys     
         epochsInDataSets = [];
+        quickParamsFilterList = {};
     end
     
     properties (Hidden, Constant)
@@ -133,8 +134,33 @@ classdef CellDataCurator < handle
                 'Style', 'pushbutton', ...
                 'String', 'Delete data set', ...
                 'Callback', @(uiobj, evt)obj.deleteDataSet);
+            uicontrol('Parent', L_controls, ...
+                'Style', 'pushbutton', ...
+                'String', 'Reset view', ...
+                'Callback', @(uiobj, evt)obj.resetView);
+            
             set(L_dataPanels, 'Sizes', [-1, -1, 40], 'Padding', 5);
-            set(L_controls, 'Sizes', [100, 200, 100, 100]);
+            set(L_controls, 'Sizes', [100, 200, 100, 100, 100]);
+            
+            L_quickFilterBox = uiextras.HBox('Parent',L_filterPanels);
+            L_filterDisplayNames = uiextras.VBox('Parent',L_quickFilterBox);
+            obj.handles.filterDisplayNamesMenu = uicontrol('Parent',L_filterDisplayNames, ...
+                'Style', 'popupmenu', ...
+                'String', {'default'}, ...
+                'Callback', @(uiobj, evt) obj.makeDisplayNameFilter);
+            
+            L_filterVoltages = uiextras.VBox('Parent',L_quickFilterBox);
+            obj.handles.filterVoltagesMenu = uicontrol('Parent',L_filterVoltages, ...
+                'Style', 'popupmenu', ...
+                'String', {'default'}, ...
+                'Callback', @(uiobj, evt) obj.makeVoltagesFilter);
+            
+            L_filterParams = uiextras.VBox('Parent',L_quickFilterBox);
+            obj.handles.filterParamsMenu = uicontrol('Parent',L_filterParams, ...
+                'Style', 'popupmenu', ...
+                'String', {'default'}, ...
+                'Callback', @(uiobj, evt) obj.makeParamsFilter);
+            
             
             L_filterBox = uiextras.VBox('Parent',L_filterPanels);
             filterText = uicontrol('Parent', L_filterBox, ...
@@ -241,7 +267,7 @@ classdef CellDataCurator < handle
                 'RowName', [], ...
                 'Data', cell(6,4), ...
                 'CellEditCallback', @(uiobj, evt)obj.curEpochTableEdit(evt), ...
-                'TooltipString', 'table for current eoch parameters');
+                'TooltipString', 'table for current epoch parameters');
             L_viewControls = uiextras.HButtonBox('Parent', L_currentEpochParamsBox, ...
                 'ButtonSize', [100 30], ...
                 'Spacing', 20);
@@ -255,7 +281,7 @@ classdef CellDataCurator < handle
                 'Callback', @(uiboj, evt)obj.loadViewFunc);
             set(L_currentEpochParamsBox, 'Sizes', [25, -1 50], 'Padding', 5);
             
-            set(L_filterPanels, 'Sizes', [-1, -1, -1], 'Padding', 5);
+            set(L_filterPanels, 'Sizes', [20, -1, -1, -1], 'Padding', 5);
             
         end
         
@@ -291,16 +317,17 @@ classdef CellDataCurator < handle
             if isempty(obj.dataSet)
                 return;
             end
-            epochTimes = obj.cellData.getEpochVals('epochStartTime', obj.dataSet);
+%             epochTimes = obj.cellData.getEpochVals('epochStartTime', obj.dataSet);
+            epochNums = obj.cellData.getEpochVals('epochNum', obj.dataSet);
             displayParam = obj.allKeys{get(obj.handles.diaryYMenu,'Value')};
             displayVals = obj.cellData.getEpochVals(displayParam, obj.dataSet);
             if isnumeric(displayVals)   
                 hold(obj.handles.diaryPlotAxes, 'on');
                 inDataSetInd = ismember(obj.dataSet, obj.epochsInDataSets);                
-                obj.handles.diaryPlotLine = plot(obj.handles.diaryPlotAxes, epochTimes(~inDataSetInd), displayVals(~inDataSetInd), 'bo');
-                obj.handles.diaryPlotLine = plot(obj.handles.diaryPlotAxes, epochTimes(inDataSetInd), displayVals(inDataSetInd), 'go', 'MarkerFaceColor', 'g');
+                obj.handles.diaryPlotLine = plot(obj.handles.diaryPlotAxes, epochNums(~inDataSetInd), displayVals(~inDataSetInd), 'bo');
+                obj.handles.diaryPlotLine = plot(obj.handles.diaryPlotAxes, epochNums(inDataSetInd), displayVals(inDataSetInd), 'go', 'MarkerFaceColor', 'g');
                 
-                plot(obj.handles.diaryPlotAxes, epochTimes(obj.selectedEpochInd), displayVals(obj.selectedEpochInd), 'bo', ...
+                plot(obj.handles.diaryPlotAxes, epochNums(obj.selectedEpochInd), displayVals(obj.selectedEpochInd), 'bo', ...
                     'MarkerFaceColor', 'r');
                 ylabel(obj.handles.diaryPlotAxes, displayParam);
             else
@@ -311,10 +338,10 @@ classdef CellDataCurator < handle
                 end
                 hold(obj.handles.diaryPlotAxes, 'on');
                 inDataSetInd = ismember(obj.dataSet, obj.epochsInDataSets);                
-                obj.handles.diaryPlotLine = plot(obj.handles.diaryPlotAxes, epochTimes(~inDataSetInd), valInd(~inDataSetInd), 'bo');
-                obj.handles.diaryPlotLine = plot(obj.handles.diaryPlotAxes, epochTimes(inDataSetInd), valInd(inDataSetInd), 'go', 'MarkerFaceColor', 'g');
+                obj.handles.diaryPlotLine = plot(obj.handles.diaryPlotAxes, epochNums(~inDataSetInd), valInd(~inDataSetInd), 'bo');
+                obj.handles.diaryPlotLine = plot(obj.handles.diaryPlotAxes, epochNums(inDataSetInd), valInd(inDataSetInd), 'go', 'MarkerFaceColor', 'g');
 
-                plot(obj.handles.diaryPlotAxes, epochTimes(obj.selectedEpochInd), valInd(obj.selectedEpochInd), 'bo', ...
+                plot(obj.handles.diaryPlotAxes, epochNums(obj.selectedEpochInd), valInd(obj.selectedEpochInd), 'bo', ...
                     'MarkerFaceColor', 'r');
                 set(obj.handles.diaryPlotAxes, 'Ytick', unique(valInd), ...
                     'YtickLabel', uniqueVals);
@@ -322,7 +349,7 @@ classdef CellDataCurator < handle
                 set(obj.handles.diaryPlotAxes, 'Ylim', [0 max(valInd)+1]);
                 %text labels here
             end
-            xlabel('Time (s)');
+            xlabel('Epoch Number');
             hold(obj.handles.diaryPlotAxes, 'off');
             
             
@@ -497,19 +524,17 @@ classdef CellDataCurator < handle
             D = get(obj.handles.curEpochTable,'Data');
             z=1;
             for i=1:size(D,1)
-                if ~isempty(D{i,1})
-                    D{i,2} = obj.cellData.epochs(obj.dataSet(obj.selectedEpochInd)).get(D{i,1});
-                    obj.curViewParams{z} = D{i,1};
-                    obj.curViewLocations{z} = [i,1];
-                    z=z+1;
+                for col = [1, 3]
+                    if ~isempty(D{i,col})
+                        value = obj.cellData.epochs(obj.dataSet(obj.selectedEpochInd)).get(D{i,col});
+                        D{i,col+1} = num2str(value, '%d');
+%                         value;
+                        obj.curViewParams{z} = D{i,col};
+                        obj.curViewLocations{z} = [i,col];
+                        z=z+1;
+                    end
                 end
-                if ~isempty(D{i,3})
-                    D{i,4} = obj.cellData.epochs(obj.dataSet(obj.selectedEpochInd)).get(D{i,3});
-                    obj.curViewParams{z} = D{i,3};
-                    obj.curViewLocations{z} = [i,3];
-                    z=z+1;
-                end
-            end                                    
+            end
             set(obj.handles.curEpochTable,'Data', D);
         end
         
@@ -526,17 +551,46 @@ classdef CellDataCurator < handle
             set(obj.handles.filterResultsText, ...
                 'String', ['Parameters With Multiple Values: ' num2str(length(obj.dataSet)) ' Epochs']);
             [params, vals] = obj.cellData.getNonMatchingParamVals(obj.dataSet);
-            L = length(params);
-            D = cell(L,2);
-            for i=1:L
+            numParams = length(params);
+            D = cell(numParams,2);
+            quickParamListData = {};
+            quickParamListStrings = {};
+            quickParamIndex = 1;
+            for i=1:numParams
                 D{i,1} = params{i};
                 if length(vals{i}) == 1
                     D{i,2} = vals{i};
                 else
                     D{i,2} = makeDelimitedString(vals{i});
                 end
+
+                if length(vals{i}) < 6
+                    v = vals{i};
+                    for vi = 1:length(v)
+                        if iscell(v)
+                            quickParamListData{quickParamIndex,2} = v{vi};
+                        else
+                            quickParamListData{quickParamIndex,2} = v(vi);
+                        end
+                        quickParamListData{quickParamIndex,1} = params{i};
+                        if ischar(quickParamListData{quickParamIndex,2})
+                            quickParamListStrings{1,quickParamIndex} = sprintf('%s: %s', quickParamListData{quickParamIndex,1}, quickParamListData{quickParamIndex,2});
+                        else
+                            quickParamListStrings{1,quickParamIndex} = sprintf('%s: %g', quickParamListData{quickParamIndex,1}, quickParamListData{quickParamIndex,2});
+                        end
+                        quickParamIndex = quickParamIndex + 1;
+                    end
+                end
             end
             set(obj.handles.filterResultsTable, 'Data', D);
+            
+            % update string for dropdown quick filter
+            if quickParamIndex == 1
+                obj.handles.filterParamsMenu.String = {'No params'};
+            else
+                obj.handles.filterParamsMenu.String = horzcat('Quick change params', quickParamListStrings);
+            end
+            obj.quickParamsFilterList = quickParamListData;
         end
         
         function initializeFilterTable(obj)
@@ -554,13 +608,21 @@ classdef CellDataCurator < handle
             set(obj.handles.filterTable, 'Data', cell(12,3));
             
             set(obj.handles.filterPatternEdit, 'String', '');
+            
+            % initialize the list of display names dropdown for quick filter construction
+            displayNames = unique(obj.cellData.getEpochVals('displayName', obj.dataSet));
+            obj.handles.filterDisplayNamesMenu.String = horzcat('Quick change display name', displayNames);
+            voltages = num2cell(unique(obj.cellData.getEpochVals('ampHoldSignal', obj.dataSet)));
+            obj.handles.filterVoltagesMenu.String = horzcat('Quick change voltages', voltages);
+            
         end
         
         function diaryPlotClick(obj)
-            epochTimes = obj.cellData.getEpochVals('epochStartTime', obj.dataSet);
+%             epochTimes = obj.cellData.getEpochVals('epochStartTime', obj.dataSet);
+            epochNums = obj.cellData.getEpochVals('epochNum', obj.dataSet);
             p = get(obj.handles.diaryPlotAxes,'CurrentPoint');
             xval = p(1,1);
-            [~, closestInd] = min(abs(xval - epochTimes));
+            [~, closestInd] = min(abs(xval - epochNums));
             obj.selectedEpochInd = closestInd;
             obj.updateDiaryPlot();
             obj.updateDataPlot();
@@ -589,7 +651,12 @@ classdef CellDataCurator < handle
         end
         
         function saveDataSetFunc(obj)
-           saveName = inputdlg('Enter data set name'); 
+           displayName = obj.cellData.epochs(obj.dataSet(1)).attributes('displayName'); % fill in dataset name guess
+           displayName = strrep(displayName, ' ', '');
+           saveName = inputdlg('Enter data set name','',1,{displayName});
+           if isempty(saveName)
+               return
+           end
            saveName = saveName{1}; %inputdlg returns cell instead of string
            obj.cellData.savedDataSets(saveName) = obj.dataSet;
            obj.epochsInDataSets = unique([obj.epochsInDataSets obj.dataSet]); %todo - look for double-counted epochs?
@@ -604,6 +671,88 @@ classdef CellDataCurator < handle
            obj.saveCellData();
         end
         
+        function makeDisplayNameFilter(obj)
+            filterTableData = get(obj.handles.filterTable, 'Data');
+            
+            displayNameList = get(obj.handles.filterDisplayNamesMenu,'String');
+            ind = get(obj.handles.filterDisplayNamesMenu,'Value');
+            obj.handles.filterDisplayNamesMenu.Value = 1;
+            if ind == 1
+                return
+            end
+            
+            displayName = displayNameList{ind};
+            filterTableData(1,:) = {'displayName', '==', displayName};
+            set(obj.handles.filterTable, 'Data', filterTableData);
+            
+            obj.updateFilter();
+            if strcmp(obj.handles.filterPatternEdit.String, '')
+                set(obj.handles.filterPatternEdit, 'String', '@1');
+            end
+            obj.updateFilter();
+        end
+        
+        
+        function makeVoltagesFilter(obj)
+            voltageList = get(obj.handles.filterVoltagesMenu,'String');
+            ind = get(obj.handles.filterVoltagesMenu,'Value');
+            obj.handles.filterVoltagesMenu.Value = 1;
+            if ind == 1
+                if strcmp(obj.handles.filterPatternEdit.String, '@1 && @2')
+                    set(obj.handles.filterPatternEdit, 'String', '@1');
+                elseif strcmp(obj.handles.filterPatternEdit.String, '@1 && @2 && @3')
+                    set(obj.handles.filterPatternEdit, 'String', '@1 && @3');
+                end
+                obj.handles.filterTable.Data(2,:) = {'','',''};
+                return
+            end
+            voltage = voltageList{ind};
+            
+            filterTableData = get(obj.handles.filterTable, 'Data');          
+            filterTableData(2,:) = {'ampHoldSignal', '==', voltage};
+            set(obj.handles.filterTable, 'Data', filterTableData);
+            
+            obj.updateFilter();
+            if strcmp(obj.handles.filterPatternEdit.String, '@1')
+                set(obj.handles.filterPatternEdit, 'String', '@1 && @2');
+            end
+            if strcmp(obj.handles.filterPatternEdit.String, '@1 && @3')
+                set(obj.handles.filterPatternEdit, 'String', '@1 && @2 && @3');
+            end
+            obj.updateFilter();
+        end
+        
+        function makeParamsFilter(obj)
+            ind = get(obj.handles.filterParamsMenu,'Value');
+            obj.handles.filterParamsMenu.Value = 1;
+            if ind == 1
+                if strcmp(obj.handles.filterPatternEdit.String, '@1 && @3')
+                    set(obj.handles.filterPatternEdit, 'String', '@1');
+                elseif strcmp(obj.handles.filterPatternEdit.String, '@1 && @2 && @3')
+                    set(obj.handles.filterPatternEdit, 'String', '@1 && @2');
+                end
+                obj.handles.filterTable.Data(3,:) = {'','',''};
+                obj.updateFilter();
+                return
+            end
+            param = obj.quickParamsFilterList(ind - 1, :);
+            
+            filterTableData = get(obj.handles.filterTable, 'Data');
+            filterTableData(3,:) = {param{1}, '==', num2str(param{2})};
+            set(obj.handles.filterTable, 'Data', filterTableData);
+            obj.updateFilter();
+
+            obj.updateFilter();
+            if strcmp(obj.handles.filterPatternEdit.String, '@1')
+                set(obj.handles.filterPatternEdit, 'String', '@1 && @3');
+            end            
+            
+            if strcmp(obj.handles.filterPatternEdit.String, '@1 && @2')
+                set(obj.handles.filterPatternEdit, 'String', '@1 && @2 && @3');
+            end
+            obj.updateFilter();
+        end
+        
         function loadViewFunc(obj)
             [fname,fpath] = uigetfile('*.mat','Load view file...','~/analysis/views/');            
             load(fullfile(fpath, fname), 'viewParams', 'viewLocations'); 
@@ -615,6 +764,17 @@ classdef CellDataCurator < handle
             end
             set(obj.handles.curEpochTable,'Data', D)
             obj.updateCurEpochTable();
+        end
+        
+        function resetView(obj)
+            obj.handles.dataSetsMenu.Value = 1;
+            obj.dataSet = 1:obj.cellData.get('Nepochs');
+            obj.initializeFilterTable();
+            obj.initializeFilterResultsTable();
+            obj.selectedEpochInd = 1;
+            obj.updateDataPlot();
+            obj.updateDiaryPlot();
+            obj.updateCurEpochTable();            
         end
         
         function loadDataSet(obj)
@@ -652,7 +812,10 @@ classdef CellDataCurator < handle
             if ind==1
                 warndlg('You must select a data set');
             else
-                saveName = inputdlg('Enter new data set name'); 
+                saveName = inputdlg('Enter new data set name', 'New name', 1, {dataSetNames{ind}});
+                if isempty(saveName)
+                    return
+                end
                 saveName = saveName{1}; %inputdlg returns cell instead of string
                 remove(obj.cellData.savedDataSets, dataSetNames{ind});
                 obj.cellData.savedDataSets(saveName) = obj.dataSet;

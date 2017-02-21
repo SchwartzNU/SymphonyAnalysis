@@ -158,7 +158,86 @@ classdef DriftingGratingsAnalysis < AnalysisTree
             xlabel('gratingAngle');
             ylabel('F2 over F1');
         end
-         
+        
+        %Adam 2/14/17
+        function plot_gratingAngleVsCycleAvgPeakFR_polar(node, cellData)
+            rootData = node.get(1);
+            xvals = rootData.gratingAngle;
+            yFieldName = 'cycleAvgPeakFR';
+            yField = rootData.(yFieldName);
+            yvals = yField.value;
+ 
+            polarerror(xvals*pi/180, yvals, zeros(1,length(xvals)));
+            hold on;
+            polar([0 rootData.([yFieldName '_DSang'])*pi/180], [0 (100*rootData.([yFieldName '_DSI']))], 'r-');
+            polar([0 rootData.([yFieldName '_OSang'])*pi/180], [0 (100*rootData.([yFieldName '_OSI']))], 'g-');
+            xlabel('Grating Angle');
+            ylabel([yFieldName ' (' yField(1).units ')']);
+            title(['DSI = ' num2str(rootData.([yFieldName '_DSI'])) ', DSang = ' num2str(rootData.([yFieldName '_DSang'])) ...
+                ' and OSI = ' num2str(rootData.([yFieldName '_OSI'])) ', OSang = ' num2str(rootData.([yFieldName '_OSang']))]);
+            hold off;
+        end
+        
+        function plot_gratingAngleVsCycleAvgPeakFR_NROM_polar(node, cellData)
+            rootData = node.get(1);
+            xvals = rootData.gratingAngle;
+            yFieldName = 'cycleAvgPeakFR';
+            yField = rootData.(yFieldName);
+            yvals = yField.value;
+
+            M = max(abs(yvals));
+            yvals = yvals./M;
+
+            polarerror(xvals*pi/180, yvals, zeros(1,length(xvals)));
+            hold on;
+            polar([0 rootData.([yFieldName '_DSang'])*pi/180], [0 (100*rootData.([yFieldName '_DSI']))], 'r-');
+            polar([0 rootData.([yFieldName '_OSang'])*pi/180], [0 (100*rootData.([yFieldName '_OSI']))], 'g-');
+            xlabel('Grating Angle');
+            ylabel([yFieldName ' (norm.)']);
+            title(['DSI = ' num2str(rootData.([yFieldName '_DSI'])) ', DSang = ' num2str(rootData.([yFieldName '_DSang'])) ...
+                ' and OSI = ' num2str(rootData.([yFieldName '_OSI'])) ', OSang = ' num2str(rootData.([yFieldName '_OSang']))]);
+            hold off;
+        end
+        
+        function plot_gratingAngleVsCycleAvgPeakFR(node, cellData)
+            rootData = node.get(1);
+            xvals = rootData.gratingAngle;
+            yFieldName = 'cycleAvgPeakFR';
+            yField = rootData.(yFieldName);
+            yvals = yField.value;
+
+            plot(xvals, yvals);
+            hold on;
+%             polar([0 rootData.([yFieldName '_DSang'])*pi/180], [0 (100*rootData.([yFieldName '_DSI']))], 'r-');
+%             polar([0 rootData.([yFieldName '_OSang'])*pi/180], [0 (100*rootData.([yFieldName '_OSI']))], 'g-');
+            xlabel('Grating Angle');
+            ylabel([yFieldName ' (' yField(1).units ')']);
+            title(['DSI = ' num2str(rootData.([yFieldName '_DSI'])) ', DSang = ' num2str(rootData.([yFieldName '_DSang'])) ...
+                ' and OSI = ' num2str(rootData.([yFieldName '_OSI'])) ', OSang = ' num2str(rootData.([yFieldName '_OSang']))]);
+            hold off;
+        end
+        
+        function plot_gratingAngleVsCycleAvgPeakFR_NROM(node, cellData)
+            rootData = node.get(1);
+            xvals = rootData.gratingAngle;
+            yFieldName = 'cycleAvgPeakFR';
+            yField = rootData.(yFieldName);
+            yvals = yField.value;
+            M = max(abs(yvals));
+            yvals = yvals./M;
+            plot(xvals, yvals);
+            hold on;
+%             polar([0 rootData.([yFieldName '_DSang'])*pi/180], [0 (100*rootData.([yFieldName '_DSI']))], 'r-');
+%             polar([0 rootData.([yFieldName '_OSang'])*pi/180], [0 (100*rootData.([yFieldName '_OSI']))], 'g-');
+            xlabel('Grating Angle');
+            ylabel([yFieldName ' (norm.)']);
+            title(['DSI = ' num2str(rootData.([yFieldName '_DSI'])) ', DSang = ' num2str(rootData.([yFieldName '_DSang'])) ...
+                ' and OSI = ' num2str(rootData.([yFieldName '_OSI'])) ', OSang = ' num2str(rootData.([yFieldName '_OSang']))]);
+            hold off;
+        end
+        
+        % % % % % % % %
+        
         function plotLeaf(node, cellData)
             leafData = node.get(1);
             if ~isfield(leafData, 'cycleAvg_y')

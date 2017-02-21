@@ -610,6 +610,85 @@ classdef AnnulusAnalysis < AnalysisTree
              xlabel('curInnerDiameter');
              ylabel(['shortInt900_peak (' yField.units ')']);
          end
+         
+         function plot_curInnerDiameterVsstimInterval_outCharge(node, cellData)
+             rootData = node.get(1);
+             xvals = rootData.curInnerDiameter;
+             yField = rootData.stimInterval_outCharge;
+             if strcmp(yField.units, 's')
+                 yvals = yField.median_c;
+             else
+                 yvals = yField.mean_c;
+             end
+             errs = yField.SEM;
+             errorbar(xvals, yvals, errs);
+             xlabel('curInnerDiameter');
+             ylabel(['stimInterval_outCharge (' yField.units ')']);
+         end
+         
+         function plot_curInnerDiameterVsstimInterval_inCharge(node, cellData)
+             rootData = node.get(1);
+             xvals = rootData.curInnerDiameter;
+             yField = rootData.stimInterval_inCharge;
+             if strcmp(yField.units, 's')
+                 yvals = yField.median_c;
+             else
+                 yvals = yField.mean_c;
+             end
+             errs = yField.SEM;
+             errorbar(xvals, yvals, errs);
+             xlabel('curInnerDiameter');
+             ylabel(['stimInterval_outCharge (' yField.units ')']);
+         end
+         
+                  
+         function plot_curInnerDiameterVsstimInterval_outChargeNORM(node, cellData)
+             rootData = node.get(1);
+             xvals = rootData.curInnerDiameter;
+             yField = rootData.stimInterval_outCharge;
+             if strcmp(yField.units, 's')
+                 yvals = yField.median_c;
+             else
+                 yvals = yField.mean_c;
+             end
+             errs = yField.SEM;
+             [M, Mind] = max(abs(yvals));
+             if yvals(Mind) < 0
+                 yvals = -yvals./M;
+             else
+                 yvals = yvals./M;
+             end;
+             errs = errs./M;
+             errorbar(xvals, yvals, errs);
+             xlabel('curInnerDiameter');
+             ylabel(['stimInterval_outCharge (' yField.units ')']);
+         end
+         
+         function plot_curInnerDiameterVsstimInterval_inChargeNORM(node, cellData)
+             rootData = node.get(1);
+             xvals = rootData.curInnerDiameter;
+             yField = rootData.stimInterval_inCharge;
+             if strcmp(yField.units, 's')
+                 yvals = yField.median_c;
+             else
+                 yvals = yField.mean_c;
+             end
+             errs = yField.SEM;
+             [M, Mind] = max(abs(yvals));
+             if yvals(Mind) < 0
+                 yvals = -yvals./M;
+             else
+                 yvals = yvals./M;
+             end;
+            errs = errs./M;
+             errorbar(xvals, yvals, errs);
+             xlabel('curInnerDiameter');
+             ylabel(['stimInterval_outCharge (' yField.units ')']);
+         end
+         
+         
+         
+         
     end
     
 end

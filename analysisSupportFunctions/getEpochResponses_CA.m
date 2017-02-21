@@ -375,11 +375,11 @@ for i=1:L
         outputStruct.ONSET_FRhalfMaxLatency.type = 'singleValue';
         outputStruct.ONSET_FRhalfMaxLatency.value = NaN;
         
-%         %%%%Adam 9/22/15    
-%         outputStruct.ONSET_FRhalfMaxSusLatency.units = 's';
-%         outputStruct.ONSET_FRhalfMaxSusLatency.type = 'singleValue';
-%         outputStruct.ONSET_FRhalfMaxSusLatency.value = NaN;
-%         %%%%
+        %%%%Adam 9/22/15    
+        outputStruct.ONSET_FRhalfMaxSusLatency.units = 's';
+        outputStruct.ONSET_FRhalfMaxSusLatency.type = 'singleValue';
+        outputStruct.ONSET_FRhalfMaxSusLatency.value = NaN;
+        %%%%
         
         %%%%Adam 4/23/16   for use if too few epochs
         outputStruct.ONSET_FRhalfMaxSusLatency20.units = 's';
@@ -467,7 +467,7 @@ for i=1:L
         outputStruct.ONSETsuspauseDiff.type = 'singleValue';
         outputStruct.ONSETsuspauseDiff.value = 0;
         
-        %Amurta 12/10/15
+        %Amurta 12/10/15  - peak ISI 1st epoch
         outputStruct.ONSET_ISI_peak.units = 'ms';
         outputStruct.ONSET_ISI_peak.type = 'singleValue';
         outputStruct.ONSET_ISI_peak.value = [];
@@ -479,7 +479,12 @@ for i=1:L
         
         outputStruct.spikeCount_afterStim.units = 'spikes';
         outputStruct.spikeCount_afterStim.type = 'byEpoch';
-        outputStruct.spikeCount_afterStim.value = ones(1,L).*0;   
+        outputStruct.spikeCount_afterStim.value = ones(1,L).*0; 
+        
+        %Adam 2/21/17 - peak ISI all epochs
+        outputStruct.ONSET_ISI_peakByEpoch.units = 'ms';
+        outputStruct.ONSET_ISI_peakByEpoch.type = 'byEpoch';
+        outputStruct.ONSET_ISI_peakByEpoch.value = [];
         
     end
     
@@ -595,7 +600,13 @@ for i=1:L
             spikeTimes_ONSET = spikeTimes(spikeTimes >= 0 & spikeTimes <= 1);
             outputStruct.ONSET_ISI_peakLatency.value = (spikeTimes_ONSET(ONSET_ISI_peak_index) - intervalStart) * 1E3;
         end
-        %Amurta
+        %Amurta;
+        %Adam (same as Amurta, only all Epochs intead only first
+        
+        ISI_100msTo500ms = diff(spikeTimes((spikeTimes >= intervalStart + 0.1) & (spikeTimes <= intervalStart + 0.5)));
+        outputStruct.ONSET_ISI_peakByEpoch.value(i) = max(ISI_100msTo500ms)* 1E3; %ms
+        %Adam
+        
     end
     
     %offset latency, spike count, duration, fullISI, and mean rate
