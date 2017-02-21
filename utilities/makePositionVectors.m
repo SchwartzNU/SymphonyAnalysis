@@ -15,8 +15,8 @@ function [x_vect,y_vect]=makePositionVectors(x,y,ang,eye)
             
             for k=1:i
                 %calculate vector end points
-                x_vect(k,1) = x(k) + (200*cos(ang(k)));
-                x_vect(k,2) = x(k) - (200*cos(ang(k)));
+                x_vect(k,1) = -x(k) + (200*cos(ang(k)));
+                x_vect(k,2) = -x(k) - (200*cos(ang(k)));
                 y_vect(k,1) = y(k) + (200*sin(ang(k)));
                 y_vect(k,2) = y(k) - (200*sin(ang(k)));
             end
@@ -40,6 +40,6 @@ function [x_vect,y_vect]=makePositionVectors(x,y,ang,eye)
         disp('Error: Abcissae and Ordinates must be of equal length!');
     end
     
-    %x_vect = x_vect.';
-    %y_vect = y_vect.';
+    x_vect = x_vect.';
+    y_vect = y_vect.';
 end           

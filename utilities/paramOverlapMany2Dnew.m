@@ -92,7 +92,7 @@ for paramInd1 = 1:numParams-1
             if mod(paramPairCount,1) == 0
                 figure;
             end;
-            %subplotFigure(paramPairCount, numParameterPairs, 1,1);
+            subplotFigure(paramPairCount, numParameterPairs, 1,1);
             
             scatter(MmainParam1, MmainParam2, 'DisplayName', mainCellType, 'MarkerFaceColor',[1 0 0],...
                 'MarkerEdgeColor',[1 0 0]);

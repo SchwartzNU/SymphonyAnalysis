@@ -84,16 +84,11 @@ elseif strncmp(mode, 'plotSpatial', 11)
 
             if posIndex >= 3
                 gfit = plotSpatial(goodPositions, vals, sprintf('%s at V = %d mV, intensity = %f', smode, voltage, intensity), 1, sign(voltage));
-%                 if ~isnan(gfit)
-%     %             caxis([0, max(vals)]);
-%     %             colormap(flipud(colormap))
-%                     disp(gfit.keys)
-%                     disp(cell2mat(gfit.values))
-%                 else
-%                     disp('NaN fit');
-%                 end
+    %             caxis([0, max(vals)]);
+    %             colormap(flipud(colormap))
             end
-
+                disp(gfit.keys)
+                disp(cell2mat(gfit.values))
             data(vi, ii, 1:2) = {goodPositions, vals};
         end
     end

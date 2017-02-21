@@ -295,19 +295,6 @@ classdef ContrastRespAnalysis < AnalysisTree
             xlabel('contrast');
             ylabel(['ONSET_respIntervalT25 (' yField.units ')']);
         end
-        ONSETlatency
-        
-        function plot_contrastVsONSETlatency(node, cellData)
-            rootData = node.get(1);
-            xvals = rootData.contrast;
-            yField = rootData.ONSETlatency;
-            yvals = yField.mean;
-            plot(xvals, yvals, 'bx-');
-            xlim([min(xvals), max(xvals)]);
-            xlabel('contrast');
-            ylabel(['ONSET_ONSETlatency (' yField.units ')']);
-        end        
-        
         
         function plotData(node, cellData)
             rootData = node.get(1);

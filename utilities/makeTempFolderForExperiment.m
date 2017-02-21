@@ -1,10 +1,9 @@
 function projectFolder = makeTempFolderForExperiment(expName)
 global ANALYSIS_FOLDER;
-global CELL_DATA_FOLDER;
 projectFolder = [ANALYSIS_FOLDER 'Projects' filesep expName '_temp'];
 eval(['!rm -rf ' projectFolder]);
 eval(['!mkdir ' projectFolder]);
-cellNames = ls([CELL_DATA_FOLDER expName '*.mat']);
+cellNames = ls([ANALYSIS_FOLDER 'cellData' filesep expName '*.mat']);
 if ispc
     cellNames = cellstr(cellNames);
 else
