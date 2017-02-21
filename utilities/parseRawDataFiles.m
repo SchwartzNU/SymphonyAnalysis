@@ -15,7 +15,7 @@ end
 for i=1:length(D_raw)
     if any(strfind(D_raw(i).name, expDate)) &&  ~any(strfind(D_raw(i).name, 'metadata'))
         curCellName = D_raw(i).name;
-        curCellName = strtok(curCellName, '.')
+        curCellName = strtok(curCellName, '.');
         
         writeOK = true;
         if strmatch(curCellName, allCellDataNames)
