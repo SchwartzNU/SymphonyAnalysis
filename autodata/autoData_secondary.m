@@ -19,6 +19,9 @@ for ci = 1:size(dtab,1)
         peakValueOn(ci) = nan;
         peakSizeOn(ci) = nan;
         tailSpikesOn(ci) = nan;
+        peakValueOff(ci) = nan;
+        peakSizeOff(ci) = nan;
+        tailSpikesOff(ci) = nan;                
     end
 end
 

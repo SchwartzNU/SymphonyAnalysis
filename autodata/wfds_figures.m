@@ -12,95 +12,74 @@ col_inh = [1 0 0];
 
 selectWfdsOn = cellTypeSelect('ON WFDS');
 selectWfdsOff = cellTypeSelect('OFF WFDS');
+selectFminiOff = cellTypeSelect('F-mini OFF');
 selectULD = cellTypeSelect('UltraLowDefinition');
-selectControl = ~(cellTypeSelect('ON WFDS') | selectWfdsOff | selectULD);
+selectDS = cellTypeSelect('ON-OFF DS transient') | cellTypeSelect('ON DS sustained');
+selectControl = ~(selectWfdsOn | selectWfdsOff | selectULD | selectDS);
 
 set(0,'DefaultAxesFontSize',14)
 
 %% 
 % 
-%% Plot many SMS curves
+%% Plot many SMS curves for two types of cells
 
 % spots multiple sizes
 
-select = selectWfdsOn;
+
+selects = {selectFminiOff, selectWfdsOff};
 
 figure(101);clf;
-handles = tight_subplot(2,2, .1);
-peakSize = [];
-tailSpikes = [];
-axes(handles(1));
+
 for ci = 1:size(dtab,1)
-    if ~select(ci)
+    if selects{1}(ci)
+        col = colo;
+        wid = 3;
+    elseif selects{2}(ci)
+        col = colo2;
+        wid = 1;
+    else
         continue
     end
-    spotSize = dtab{ci, 'SMS_spotSize_sp'}{1};
-    if ~isempty(spotSize)
-        spikes = dtab{ci, 'SMS_onSpikes'}{1};
-        hold on
-        plot(spotSize, spikes);
-    end
-end
-xlabel('spot size um')
-ylabel('spike count on')
-title('sms on')
-hold off
-
-axes(handles(2));
-histogram(dtab{select,'SMS_onSpikes_prefSize'}, 10)
-title('sms preferred spot size')
-
-axes(handles(3));
-histogram(dtab{select,'SMS_onSpikes_tailSpikes'}, 10)
-title('tail spikes')
-
-axes(handles(4));
-histogram(dtab{select,'SMS_onSpikes_peakSpikes'}, 10)
-title('preferred spot spikes')
-
-%% Plot a set of SMS
-
-
-
-%% 
-% 
-%% Population stats for WFDS OFF
-
-% spots multiple sizes
-
-figure(101);clf;
-handles = tight_subplot(1,3);
-peakSize = [];
-tailSpikes = [];
-axes(handles(1));
-for ci = 1:size(dtab,1)
-    if ~selectWfdsOff(ci)
-        continue
-    end
+    
+    
     spotSize = dtab{ci, 'SMS_spotSize_sp'}{1};
     if ~isempty(spotSize)
         spikes = dtab{ci, 'SMS_offSpikes'}{1};
         hold on
-        plot(spotSize, spikes);
-        [m, mi] = max(spikes);
-        peakSize(ci) = spotSize(mi);
-        tailSpikes(ci) = mean(spikes(end-2:end));
+        plot(spotSize, spikes/max(spikes), 'Color', col, 'LineWidth',wid);
     end
 end
 xlabel('spot size um')
 ylabel('spike count off')
 title('sms off')
 hold off
+%%
+selects = {selectFminiOff, selectWfdsOff};
 
-axes(handles(2));
-peakSize(peakSize == 0) = nan;
-histogram(peakSize, 10)
-title('sms peak spot size')
+clf
+handles = tight_subplot(2,2, .1);
+for si = 1:2
+    select = selects{si};
+    axes(handles(1));
+    histogram(dtab{select,'SMS_offSpikes_prefSize'}, 10, 'Normalization', 'Probability')
+    title('sms preferred spot size')
+    hold on
 
-axes(handles(3));
-tailSpikes(tailSpikes == 0) = nan;
-histogram(tailSpikes, 10)
-title('tail spikes')
+    axes(handles(2));
+    histogram(dtab{select,'SMS_offSpikes_tailSpikes'}, 10, 'Normalization', 'Probability')
+    title('tail spikes')
+    hold on
+
+    axes(handles(3));
+    histogram(dtab{select,'SMS_offSpikes_peakSpikes'}, 10, 'Normalization', 'Probability')
+    title('preferred spot spikes')
+    hold on
+end
+
+%% Plot a set of SMS
+
+
+
 %% light step
 
 figure(111)
@@ -121,30 +100,32 @@ histogram(dtab{selectControl,'LS_OFF_sp'}, 'Normalization','pdf')
 hold off
 legend('ON','OFF','other');
 title('ls off spikes')
-%% calculate the best DS
+%% plot the best DS
 
 
     
 %
     
 figure(121);clf;
-handles = tight_subplot(2, 2, .05, .05);
+handles = tight_subplot(2, 2, .08, .05);
 
 axes(handles(1));
-histogram(dtab{cellTypeSelect('ON WFDS'),'best_DSI_sp'}, 12)
+histogram(dtab{cellTypeSelect('ON WFDS'),'best_DSI_sp'}, 12, 'Normalization','pdf')
 hold on
-histogram(dtab{~cellTypeSelect('ON WFDS'),'best_DSI_sp'}, 12)
+histogram(dtab{selectControl,'best_DSI_sp'}, 12, 'Normalization','pdf')
+histogram(dtab{selectDS,'best_DSI_sp'}, 12, 'Normalization','pdf')
 hold off
 title('best DSI')
 
 axes(handles(2));
-boxplot(dtab{:,'best_DSI_sp'}, cellTypeSelect('ON WFDS') + 2 * selectWfdsOff, 'Labels',{'other','wfds on', 'off'})
+sets = selectDS + 2 * selectWfdsOn + 3 * selectWfdsOff;
+boxplot(dtab{:,'best_DSI_sp'}, sets, 'Labels',{'control','DS','wfds on', 'wfds off'})
 title('best DSI')
 
 axes(handles(3));
 polarhistogram(deg2rad(dtab{cellTypeSelect('ON WFDS'),'best_DSang_sp'}), 12)
 hold on
-polarhistogram(deg2rad(dtab{~cellTypeSelect('ON WFDS'),'best_DSang_sp'}), 12)
+polarhistogram(deg2rad(dtab{selectControl,'best_DSang_sp'}), 12)
 hold off
 title('best DS angle')
 

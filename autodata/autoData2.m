@@ -135,7 +135,7 @@ if ~isempty(externalTableFilename)
             externalRow = externalCellDataTable(cellName,:);
             dtab_add(cellName, externalRow.Properties.VariableNames) = externalRow(1,:);
         else
-            a = width(externalCellDataTable(1,:));
+            a = size(externalCellDataTable(1,:), 2);
             dtab_add(cellName, externalCellDataTable.Properties.VariableNames) = num2cell(nan(1,a));
         end
 

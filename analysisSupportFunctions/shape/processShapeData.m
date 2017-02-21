@@ -130,7 +130,7 @@ for p = 1:num_epochs
             responseShape = linspace(1, 0, totalLen);
             responseShape(1:riseLen) = linspace(0,responseShape(riseLen),riseLen);
 
-            e.signalLightOn(tRegion) = responseShape' * intensities(si);
+            e.signalLightOn(tRegion) = responseShape';
         end
 %         e.signalLightOn(tRegion) = intensities(si); % square wave for plotting
     end
