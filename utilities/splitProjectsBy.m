@@ -10,8 +10,15 @@ function [] = splitProjectsBy(varargin)
 global ANALYSIS_FOLDER;
 global CELL_DATA_MASTER;
 
+<<<<<<< Updated upstream
 if ~(exist(CELL_DATA_MASTER, 'dir') == 7)
     disp(['Could not connect to CellDataMaster at ' CELL_DATA_MASTER]);
+=======
+if exist('/Volumes/SchwartzLab/CellDataMaster') == 7
+    cellDataMasterFolder = '/Volumes/SchwartzLab/CellDataMaster';
+else
+    disp('Could not connect to CellDataMaster');
+>>>>>>> Stashed changes
     return;
 else
     cellDataMasterFolder = CELL_DATA_MASTER;
