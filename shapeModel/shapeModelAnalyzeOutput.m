@@ -11,12 +11,13 @@ end
 out_valsByOptions = [];
 
 plot_timeLims = [0.0, sim_endTime];
-timeOffsetSim = -0.21;
-timeOffsetSpikes = -.35;
-ephysScale = 1;
+timeOffsetSim = -.01;
+timeOffsetSpikes = -.3;
+ephysScale = .1;
 simScale = [1, .5; 1, .5] * 1000; % scaling the sim relative to ephys
-combineScaleCurrents = [2, 2; 1, 1]; % voltages, ooi
-combineScaleSpikes = 1;
+combineScaleCurrents = [3, 3; 1, 1]; % voltages; ooi
+combineScaleSpikes = .1;
+additiveOffset = .5; % add to overall output current
 % displayScale = [5,2.2];
 plotYLimsScale = 1;
 fitAnalysisLimits = [.2, 1.5];
@@ -32,7 +33,7 @@ for optionIndex = 1:stim_numOptions
     outputSignals = [];
     outputLabels = {};
     
-%     ang = stim_directions(optionIndex);
+    ang = stim_directions(optionIndex);
     % Output scale
     sim_responseSubunitsCombinedScaled = sim_responseSubunitsCombinedByOption{optionIndex};
     for vi = 1:e_numVoltages
@@ -77,43 +78,56 @@ for optionIndex = 1:stim_numOptions
     outputLabels{end+1} = 'comb_s';
 
     % ephys responses (ex, in, spikes)
-    Esel = T > plot_timeLims(1) & T < plot_timeLims(2);
-    simShift = timeOffsetSim / sim_timeStep;
-    cell_responses = [];
-    
-%     for vi = 1:3 %3 %enables spikes
-%         mn = ephysScale * c_responses{vi, c_angles == ang}.mean;
-% 
-%         mn = combineScale(vi) * resample(mn, round(1/sim_timeStep), 10000);
-%         cell_responses(vi,:) = mn;
-%         rcell = cell_responses(vi,Esel);
-%         if simShift >= 0
-%             outputSignals(end+1,:) = rcell(simShift:end);
-%         else
-%             outputSignals(end+1,:) = [zeros(1,-simShift), rcell(1:end+2*simShift+1)];
-%         end
-%         l = {'ex_e','in_e','spike_e'};
-%         outputLabels{end+1} = l{vi};
-% 
-% %                 if vi < 3
-% %                     plot(T(Esel), mn(Esel))
-% %                 else
-% %                     plot(T(Esel) + timeOffsetSpikes, mn(Esel));
-% %                 end
-% 
-% 
-%     end
-    % ephys combined values
-%     cell_responsesCombined = sum(cell_responses(1:2,:));
-%     rcell = cell_responsesCombined(Esel);
-%     if simShift >= 0
-%         outputSignals(end+1,:) = rcell(simShift:end); %#ok<*SAGROW>
-%     else
-%         outputSignals(end+1,:) = [zeros(1,-simShift), rcell(1:end+2*simShift+1)];
-%     end            
-%     outputLabels{end+1} = 'comb_e';
+    displayEphysResponses = false;
+    if displayEphysResponses
+        Esel = T > plot_timeLims(1) & T < plot_timeLims(2);
+        simShift = timeOffsetSim / sim_timeStep;
+        cell_responses = [];
 
-    % extract values for comparison plot
+        for vi = 1:3 %3 %enables spikes
+            mn = ephysScale * c_responses{vi, c_angles == ang}.mean;
+
+            if vi <= 2
+                scale = combineScaleCurrents(vi,oi);
+            else
+                scale = combineScaleSpikes;
+            end
+            mn = scale * resample(mn, round(1/sim_timeStep), 10000);
+            cell_responses(vi,:) = mn;
+            rcell = cell_responses(vi,Esel);
+            if simShift >= 0
+                outputSignals(end+1,:) = rcell(simShift:end);
+            else
+                outputSignals(end+1,:) = [zeros(1,-simShift), rcell(1:end+2*simShift+1)];
+            end
+            l = {'ex_e','in_e','spike_e'};
+            outputLabels{end+1} = l{vi};
+    % 
+    %         if vi < 3
+    %             plot(T(Esel), mn(Esel))
+    %         else
+    %             plot(T(Esel) + timeOffsetSpikes, mn(Esel));
+    %         end
+
+
+        end
+    end
+    
+    
+%     ephys combined values
+    displayEphysCombinedValues = false;
+    if displayEphysCombinedValues
+        cell_responsesCombined = sum(cell_responses(1:2,:));
+        rcell = cell_responsesCombined(Esel);
+        if simShift >= 0
+            outputSignals(end+1,:) = rcell(simShift:end); %#ok<*SAGROW>
+        else
+            outputSignals(end+1,:) = [zeros(1,-simShift), rcell(1:end+2*simShift+1)];
+        end            
+        outputLabels{end+1} = 'comb_e';
+    end
+
+% % %     extract values for comparison plot
 %             out_valsByOptions(optionIndex, 2) = -1*sum(cell_responsesCombined(cell_responsesCombined < 0)) / sim_dims(1);        
 %             out_valsByOptions(optionIndex, 3) = -1*sum(cell_responses(3,:)) / sim_dims(1);            
     
@@ -127,7 +141,7 @@ for optionIndex = 1:stim_numOptions
     
     if plotCellResponses
         % then plot all the signals together
-        plotSelect = logical([1,1,1,1,1]);
+        plotSelect = logical([1,0,1,0,1,0,0,0,0]);
         plot(Tsim, outputSignals(plotSelect,:)');
         legend(outputLabels(plotSelect),'Location','Best');
         xlim(plot_timeLims);
@@ -207,7 +221,8 @@ if plotResultsByOptions
 %     nonlinOutput = polyfit(out_valsByOptions(:,1), out_valsByOptions(:,3),1);
 %     out_valsByOptions(:,4) = polyval(nonlinOutput, out_valsByOptions(:,1));
 
-    ordering = [5];
+    ordering = [5];%,8,9];
+    dataSetToExport = 5; % this is the one for the overall output comparison
     % ordering = 1;
     for ti = ordering
         angles = deg2rad(stim_directions)';
@@ -216,17 +231,22 @@ if plotResultsByOptions
             signals = outputSignalsByOption{oi};
             values(oi,1) = -sum(signals(ti, signals(ti,:) < 0)) * sim_timeStep;
         end
+        values = values + additiveOffset;
         
 %         outputStruct.(sprintf('byang_%s',outputLabels{ti})) = values;
         
         a = [angles; angles(1)];
         v = [values; values(1)];
+        v = v / mean(v);
         polarplot(a, v)
         hold on
         
-        dsi = abs(sum(exp(sqrt(-1) * angles) .* values) / sum(values))
-        dsiByParamSet(paramSetIndex,1) = dsi;
-        valuesByParamSet(paramSetIndex,:) = values;
+        dsi = abs(sum(exp(sqrt(-1) * angles) .* values) / sum(values));
+        if dataSetToExport == ti
+            dsiByParamSet(paramSetIndex,1) = dsi;
+            valuesByParamSet(paramSetIndex,:) = values;
+            
+        end
         
     end
     hold off

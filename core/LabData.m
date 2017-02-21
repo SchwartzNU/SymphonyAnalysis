@@ -269,6 +269,7 @@ classdef LabData < handle
             if ischar(cellNames)
                 cellNames = {cellNames};
             end
+            tic
             for i=1:length(cellNames)
                 curCellName = cellNames{i};
                 disp(['Analyzing cell ' curCellName ': ' num2str(i) ' of ' num2str(length(cellNames))]);
@@ -295,6 +296,8 @@ classdef LabData < handle
                     end
                 end
             end
+            disp('Analysis complete')
+            toc
         end
         
         function resultTree = collectCells(obj, cellNames)

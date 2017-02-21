@@ -1,16 +1,15 @@
 
-% stim_mode = 'movingBar';
-% numAngles = 12;
-% stim_directions = linspace(0,360,numAngles+1);
-% stim_directions(end) = [];
-% % stim_directions = [210];
-% stim_numOptions = length(stim_directions);
-% 
-% stim_barSpeed = paramValues{paramSetIndex,col_barSpeed};
-% stim_barLength = 500;
-% stim_barWidth = 150;
-% stim_moveTime = sim_endTime + 1.0;
-% stim_intensity = 0.5;
+stim_mode = 'movingBar';
+numAngles = 12;
+stim_directions = linspace(0,360,numAngles+1);
+stim_directions(end) = [];
+stim_numOptions = length(stim_directions);
+
+stim_barSpeed = 500;%paramValues(paramSetIndex,col_barSpeed);
+stim_barLength = 500;
+stim_barWidth = 150;
+stim_moveTime = sim_endTime + 1.0;
+stim_intensity = 0.5;
 
 % SMS
 % stim_mode = 'flashedSpot';
@@ -28,20 +27,20 @@
 % stim_intensity = 0.5;
 % stim_spotPosition = [0,0];
 
-stim_mode = 'driftingTexture';
-numAngles = 9;
-stim_directions = linspace(0,360,numAngles+1);
-stim_directions(end) = [];
-stim_numOptions = length(stim_directions);
-
-stim_texSpeed = 500;
-stim_moveTime = sim_endTime + 1.0;
-stim_meanLevel = 0.5;
-stim_uniformDistribution = 1;
-stim_resScaleFactor = 2;
-stim_randomSeed = 1;
-stim_textureScale = 60;
-stim_movementDelay = 0.5;
+% stim_mode = 'driftingTexture';
+% numAngles = 9;
+% stim_directions = linspace(0,360,numAngles+1);
+% stim_directions(end) = [];
+% stim_numOptions = length(stim_directions);
+% 
+% stim_texSpeed = 500;
+% stim_moveTime = sim_endTime + 1.0;
+% stim_meanLevel = 0.5;
+% stim_uniformDistribution = 1;
+% stim_resScaleFactor = 2;
+% stim_randomSeed = 1;
+% stim_textureScale = 30;
+% stim_movementDelay = 0.5;
 
 stim_lightMatrix_byOption = {};
 

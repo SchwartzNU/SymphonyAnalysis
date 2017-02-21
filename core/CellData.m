@@ -35,6 +35,7 @@ classdef CellData < handle
             %Epoch attributes (protocol properties)
             %and data links
             %EpochDataGroups = info.Groups(1).Groups(2).Groups;
+            %EpochDataGroups = info.Groups(1).Groups(1).Groups(1).Groups(2).Groups;
             
             %search through all EpochGroups (not just first one!!!)
             %GWS fixed on 6/6/14
@@ -182,18 +183,21 @@ classdef CellData < handle
             dataStd = std(M,1);
         end
         
-        function plotMeanData(obj, epochInd, subtractBaseline, lowPass, streamName)
+        function plotMeanData(obj, epochInd, subtractBaseline, lowPass, streamName, ax)
+            if nargin < 6
+                ax = gca;
+            end
             if nargin < 5
                 streamName = 'Amplifier_Ch1';
             end
             if nargin < 4
                 lowPass = [];
             end
-            if nargin < 4
+            if nargin < 3
                 subtractBaseline = true;
             end
             
-            ax = gca;
+
             sampleEpoch = obj.epochs(epochInd(1));
             sampleRate = sampleEpoch.get('sampleRate');
             stimLen = sampleEpoch.get('stimTime')*1E-3; %s
@@ -319,15 +323,17 @@ classdef CellData < handle
             ylabel(ax, 'Trials');
         end
         
-        function plotPSTH(obj, epochInd, binWidth, streamName)
+        function plotPSTH(obj, epochInd, binWidth, streamName, ax)
+            if nargin < 5
+                ax = gca;
+            end
             if nargin < 4
                 streamName = 'Amplifier_Ch1';
             end
             if nargin < 3
                 binWidth = 10;
             end
-            
-            ax = gca;
+
             sampleEpoch = obj.epochs(epochInd(1));
             stimLen = sampleEpoch.get('stimTime')*1E-3; %s
             [spCount, xvals] = obj.getPSTH(epochInd, binWidth, streamName);

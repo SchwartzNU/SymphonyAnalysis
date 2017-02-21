@@ -116,8 +116,7 @@ classdef MovingBarAnalysis < AnalysisTree
             polar([0 rootData.ONSETspikes_OSang*pi/180], [0 (100*rootData.ONSETspikes_OSI)], 'g-');
             xlabel('barAngle');
             ylabel(['ONSETspikes (' yField(1).units ')']);
-            title(['DSI = ' num2str(rootData.ONSETspikes_DSI) ', DSang = ' num2str(rootData.ONSETspikes_DSang) ...
-                ' and OSI = ' num2str(rootData.ONSETspikes_OSI) ', OSang = ' num2str(rootData.ONSETspikes_OSang)]);
+            addDsiOsiVarTitle(rootData, 'ONSETspikes')
             hold off;
         end
         
@@ -133,8 +132,7 @@ classdef MovingBarAnalysis < AnalysisTree
             polar([0 rootData.ONSET_avgTracePeak_OSang*pi/180], [0 (100*rootData.ONSET_avgTracePeak_OSI)], 'g-');
             xlabel('barAngle');
             ylabel(['ONSET_avgTracePeak (' yField.units ')']);
-            title(['DSI = ' num2str(rootData.ONSET_avgTracePeak_DSI) ', DSang = ' num2str(rootData.ONSET_avgTracePeak_DSang) ...
-                ' and OSI = ' num2str(rootData.ONSET_avgTracePeak_OSI) ', OSang = ' num2str(rootData.ONSET_avgTracePeak_OSang)]);
+            addDsiOsiVarTitle(rootData, 'ONSET_avgTracePeak')
             hold off;
         end
         
@@ -150,8 +148,7 @@ classdef MovingBarAnalysis < AnalysisTree
             polar([0 rootData.spikeCount_stimToEnd_OSang*pi/180], [0 (100*rootData.spikeCount_stimToEnd_OSI)], 'g-');
             xlabel('barAngle');
             ylabel(['spikeCount_stimToEnd (' yField.units ')']);
-            title(['DSI = ' num2str(rootData.spikeCount_stimToEnd_DSI) ', DSang = ' num2str(rootData.spikeCount_stimToEnd_DSang) ...
-                ' and OSI = ' num2str(rootData.spikeCount_stimToEnd_OSI) ', OSang = ' num2str(rootData.spikeCount_stimToEnd_OSang)]);
+            addDsiOsiVarTitle(rootData, 'spikeCount_stimToEnd')
             hold off;            
         end
         
@@ -159,15 +156,15 @@ classdef MovingBarAnalysis < AnalysisTree
             rootData = node.get(1);
             chInd = node.getchildren(1);
             L = length(chInd);
-            ax = axes;
+            ax = gca;
             for i=1:L
-                hold(ax, 'on');
                 epochInd = node.get(chInd(i)).epochID;
                 if strcmp(rootData.(rootData.ampModeParam), 'Cell attached')
                     cellData.plotPSTH(epochInd, 10, rootData.deviceName, ax);
                 else
                     cellData.plotMeanData(epochInd, false, [], rootData.deviceName, ax);
                 end
+                hold(ax, 'on');               
             end
             hold(ax, 'off');
         end

@@ -9,10 +9,12 @@ load(sprintf('/Users/sam/analysis/cellData/%s.mat', cellName));
 tEnd = 2.0;
 
 barOrEdge = 1;
+c_responses = {};
 
 % ha = tight_subplot(12, 4);
 
-for vi = 1:4;
+% vi: 1 ex, 2 in, 3 spike rate over time, 4 flat line spike count
+for vi = 1:3
     if strcmp(cellName, '060216Ac2')
         if vi == 1 % ex
             startEpoch = 343;
@@ -89,12 +91,17 @@ for vi = 1:4;
         if vi < 3
             response = epoch.getData('Amplifier_Ch1');
         else
-            spikes = epoch.getSpikes();
-            if vi < 4
-                spikeRate = zeros(size(response));
-                spikeRate(spikes) = 1.0;
-                response = filtfilt(hann(10000 / 10), 1, spikeRate); % 10 ms (100 samples) window filter
-            else
+            spikes = epoch.getSpikes() / 10000;
+            spikes(spikes > tEnd) = [];
+            if vi == 3
+%                 spikeRate = zeros(size(response));
+%                 spikeRate(spikes) = 1.0;
+                tbins = 0:1/10000:tEnd;
+                tbins = [tbins, inf];
+                spikeRate = histcounts(spikes, tbins);
+                response = spikeRate;
+%                 response = filtfilt(hann(10000 / 10), 1, spikeRate); % 10 ms (100 samples) window filter
+            elseif vi == 4
                 response = ones(length(response),1) * length(spikes);
             end
         end
@@ -121,7 +128,7 @@ for vi = 1:4;
         
         epochIndices = find(epochAngles == c_angles(ai));
         mn = mean(responses(epochIndices,:), 1);
-        mn = smooth(mn, 30);
+%         mn = smooth(mn, 30);
         mn = mn(1:10000*tEnd+1);
         baseline = mean(mn(1:0.2*10000));
         mn = mn - baseline;

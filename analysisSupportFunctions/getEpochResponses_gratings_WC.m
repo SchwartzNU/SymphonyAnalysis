@@ -87,7 +87,11 @@ for i=1:L
         
         outputStruct.cycleAvg_y.units = units;
         outputStruct.cycleAvg_y.type = 'combinedAcrossEpochs';
-        outputStruct.cycleAvg_y.value = []; 
+        outputStruct.cycleAvg_y.value = [];
+        
+        outputStruct.minCycleAvg.units = units;
+        outputStruct.minCycleAvg.type = 'combinedAcrossEpochs';
+        outputStruct.minCycleAvg.value = [];
         
         outputStruct.F0amplitude.units = 'pA';
         outputStruct.F0amplitude.type = 'singleValue';
@@ -131,6 +135,7 @@ end
 avgCycle = mean(cycles(2:end,:),1);
 outputStruct.cycleAvg_y.value = avgCycle;
 outputStruct.cycleAvg_x.value = xvals(1:length(avgCycle));
+outputStruct.minCycleAvg.value = min(outputStruct.cycleAvg_y.value);
 
 % Do the FFT.
 ft = fft(avgCycle);

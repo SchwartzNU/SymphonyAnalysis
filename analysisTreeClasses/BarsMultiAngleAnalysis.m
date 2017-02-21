@@ -69,6 +69,20 @@ classdef BarsMultiAngleAnalysis < AnalysisTree
                     tempStruct.ONSETspikes_400ms_baselineSubtracted.value = curNode.spikeCount_ONSET_400ms.value - baselineMean.*0.4; %fix nan and INF here
                     tempStruct.OFFSETspikes_400ms_baselineSubtracted = curNode.OFFSETspikes;
                     tempStruct.OFFSETspikes_400ms_baselineSubtracted.value = curNode.OFFSETspikes.value - baselineMean.*0.4;
+
+                    tempStruct = getEpochResponseStats(tempStruct);
+                    
+                    curNode = mergeIntoNode(curNode, tempStruct);
+                    obj = obj.set(leafIDs(i), curNode);
+                end
+                
+                grandBaselineMean = mean(baseline);
+                for i=1:L %for each leaf node
+                    curNode = obj.get(leafIDs(i));
+                    
+                    tempStruct.spikeCount_stimInterval_grndBlSubt = curNode.spikeCount_stimInterval;
+                    tempStruct.spikeCount_stimInterval_grndBlSubt.value = curNode.spikeCount_stimInterval.value - grandBaselineMean; %assumes 1 sec stim interval
+
                     tempStruct = getEpochResponseStats(tempStruct);
                     
                     curNode = mergeIntoNode(curNode, tempStruct);
@@ -85,8 +99,7 @@ classdef BarsMultiAngleAnalysis < AnalysisTree
                     
                     curNode = mergeIntoNode(curNode, tempStruct);
                     obj = obj.set(leafIDs(i), curNode);
-                end
-                
+                end  
                 
             end
             
@@ -335,6 +348,7 @@ classdef BarsMultiAngleAnalysis < AnalysisTree
         
         
         function plot_barAngleVsspikeCount_stimInt_gblSubt(node, cellData)
+
             rootData = node.get(1);
             xvals = rootData.barAngle;
             yField = rootData.spikeCount_stimInterval_grndBlSubt;
@@ -366,6 +380,7 @@ classdef BarsMultiAngleAnalysis < AnalysisTree
             xlabel('barAngle');
             ylabel(['spikeCount_stimInterval_granBaselineSubtracted_norm (' yField.units ')']);
         end
+
     end
     
 end
