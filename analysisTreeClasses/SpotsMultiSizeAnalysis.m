@@ -570,6 +570,17 @@ classdef SpotsMultiSizeAnalysis < AnalysisTree
             xlabel('Spot Size');
             ylabel(['spikeCount_stimInterval_granBaselineSubtracted_norm (' yField.units ')']);
         end
+        
+        function plot_spotSizeVsONSET_FRmaxLatency(node, cellData)
+            rootData = node.get(1);
+            xvals = rootData.spotSize;
+            yField = rootData.ONSET_FRmaxLatency;
+            yvals = yField.value;
+            plot(xvals, yvals, 'bx-');
+            xlabel('spotSize');
+            ylabel(['ONSET_FRmaxLatency (' yField.units ')']);
+        end
+        
     end
     
 end
