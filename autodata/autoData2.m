@@ -18,6 +18,8 @@ dtab_add = table();
 numTableCells = length(cellFileNames);
 
 %% loop through cells
+analysisIndices = 1:numAnalyses;
+analysisIndices = [2,5,6];
 
 for ci = 1:numTableCells
     
@@ -60,7 +62,7 @@ for ci = 1:numTableCells
     
         % loop through filters
         
-        for ai = 1:numAnalyses
+        for ai = analysisIndices
             
             % check if another cellData for this cell has already given this analysis
             if validAnalyses(ai)
@@ -69,12 +71,13 @@ for ci = 1:numTableCells
             
             analysis = analyses(ai,:);
 
-            atree = doSingleAnalysis(cellNamesInThisCell{sci}, analysis{1,'analysisType'}{1}, [], analysis{1,'epochFilt'}, cellData, analysisTable);
+            [atree, dataSet] = doSingleAnalysis(cellNamesInThisCell{sci}, analysis{1,'analysisType'}{1}, [], analysis{1,'epochFilt'}, cellData, analysisTable);
             hasValidAnalysis = ~isempty(atree);
             
             paramsColumnNames = analysis{1,'columnNames'}{1};
             params = analysis{1,'params'}{1};
             treeVariableMode = analysis{1,'treeVariableMode'};
+            paramsTypeName = analysis{1, 'paramsTypeNames'};
             
             if treeVariableMode == 1
                 if hasValidAnalysis
@@ -101,6 +104,8 @@ for ci = 1:numTableCells
                     data = extractLightStepParamsFromTree(atree, false);
                     if ~isempty(data)
                         data = data(1,3);
+                    else
+                        data = cell(1, length(paramsColumnNames));
                     end
                 else
                     data = cell(1, length(paramsColumnNames));
@@ -109,6 +114,7 @@ for ci = 1:numTableCells
             end
             
             trow{1,paramsColumnNames} = data;
+            trow{1,[paramsTypeName{1} '_dataset']} = {dataSet};
             validAnalyses(ai) = hasValidAnalysis;
         end
     end

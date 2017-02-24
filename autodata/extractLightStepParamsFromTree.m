@@ -14,6 +14,9 @@ function output = extractLightStepParamsFromTree(analysisTree, justGetCellNames)
         if isfield(node, 'cellName')
             cellName = node.cellName;
             li = analysisTree.getchildren(ni);
+            if isempty(li)
+                continue
+            end
             eids = nodes{li}.epochID;
             load(fullfile(CELL_DATA_FOLDER, [cellName, '.mat']))
             data = [];

@@ -1334,7 +1334,7 @@ names = cellNames(sel)
 %% Plot RF offset ovals with angle arrows
 figure(200);clf;
 sel = ~isnan(dtab.spatial_ex_amplitude) & cellTypeSelect('ON WFDS');
-h = tight_subplot(4,3);
+h = tight_subplot(4,4);
 
 cis = find(sel);
 for ci = 1:sum(sel)
@@ -1346,7 +1346,6 @@ for ci = 1:sum(sel)
     
     ellipse(cel.spatial_in_sigma2X, cel.spatial_in_sigma2Y, -cel.spatial_in_angle, cel.spatial_in_centerX, cel.spatial_in_centerY, 'red');
     
-%     legend('Exc','Inh')
     
     plot(cel.spatial_ex_centerX, cel.spatial_ex_centerY, 'blue', 'MarkerSize', 20, 'Marker', '+')
     plot(cel.spatial_in_centerX, cel.spatial_in_centerY, 'red', 'MarkerSize', 20, 'Marker', '+')
@@ -1370,6 +1369,8 @@ for ci = 1:sum(sel)
     set(gca,'xcolor','w','ycolor','w','xtick',[],'ytick',[])
     title(cellNames{cis(ci)})
 end
+disp('Ovals: ex blue, in red, Arrows: image red, MB500 blue, MB1000 green, texture black')
+
 
 %%
 figure(201)

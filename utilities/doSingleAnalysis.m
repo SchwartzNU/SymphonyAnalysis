@@ -1,4 +1,4 @@
-function resultTree = doSingleAnalysis(cellName, analysisClassName, cellFilter, epochFilter, cellData, analysisTable)
+function [resultTree, usedDataSet] = doSingleAnalysis(cellName, analysisClassName, cellFilter, epochFilter, cellData, analysisTable)
 global PREFERENCE_FILES_FOLDER
 
 if nargin < 3
@@ -18,21 +18,20 @@ if nargin < 6
 end
 
 
-
 %find correct row in this table
 Nanalyses = length(analysisTable{1});
-analysisInd = 0;
+analysisIndices = [];
 for i=1:Nanalyses
     if strcmp(analysisTable{2}{i}, analysisClassName)
-        analysisInd = i;
-        break;
+        analysisIndices(end+1) = i;
     end
 end
-if analysisInd == 0
+if isempty(analysisIndices)
     disp(['Error: analysis ' analysisClassName ' not found in DataSetAnalyses.txt']);
     resultTree = [];
     return;
 end
+
 
 %Deal with cell names that include '-Ch1' or '-Ch2'
 %cellName_orig = cellName;
@@ -69,20 +68,22 @@ if ~isempty(cellFilter)
     end
 end
 
-
+usedDataSet = [];
 for i=1:length(dataSetKeys)
     T = [];
     analyzeDataSet = false;
     curDataSet = dataSetKeys{i};
-    if strfind(curDataSet, analysisTable{1}{analysisInd}) %if correct data set type
-        %evaluate epochFilter
-        if ~isempty(epochFilter)
-            filterOut = cellData.filterEpochs(epochFilter.makeQueryString(), cellData.savedDataSets(curDataSet));
-            if length(filterOut) == length(cellData.savedDataSets(curDataSet)) %all epochs match filter
+    for ai = 1:length(analysisIndices) % look for multiple options for the analysis type
+        if strfind(curDataSet, analysisTable{1}{analysisIndices(ai)}) %if correct data set type
+            %evaluate epochFilter
+            if ~isempty(epochFilter)
+                filterOut = cellData.filterEpochs(epochFilter.makeQueryString(), cellData.savedDataSets(curDataSet));
+                if length(filterOut) == length(cellData.savedDataSets(curDataSet)) %all epochs match filter
+                    analyzeDataSet = true;
+                end
+            else
                 analyzeDataSet = true;
             end
-        else
-            analyzeDataSet = true;
         end
     end
     if analyzeDataSet
@@ -117,6 +118,7 @@ for i=1:length(dataSetKeys)
             params.cellName = cellName;
             eval(['T = ' analysisClassName '(cellData,' '''' curDataSet '''' ', params);']);
             T = T.doAnalysis(cellData);
+            usedDataSet = curDataSet;
             
             if ~isempty(T)
                 resultTree = resultTree.graft(1, T);

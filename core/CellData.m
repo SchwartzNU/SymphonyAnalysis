@@ -290,12 +290,16 @@ classdef CellData < handle
             
             % line display
             for i=1:L
+                if isnan(spikeTimes{i})
+                    warning('May need to detect spikes')
+                    continue
+                end
                 spikes = timeAxis_spikes(spikeTimes{i});
                 for st_i = 1:length(spikes)
                     x = spikes(st_i);
                     line([x, x], [i-0.4, i+0.4]);
                 end
-            end            
+            end
             
             % use image display
 %             img = [];
@@ -334,6 +338,9 @@ classdef CellData < handle
                 binWidth = 10;
             end
 
+            if isempty(epochInd)
+                error('No epochs supplied');
+            end
             sampleEpoch = obj.epochs(epochInd(1));
             stimLen = sampleEpoch.get('stimTime')*1E-3; %s
             [spCount, xvals] = obj.getPSTH(epochInd, binWidth, streamName);
