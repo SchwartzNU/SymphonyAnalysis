@@ -100,6 +100,10 @@ classdef ColorResponseAnalysis < AnalysisTree
             ColorResponseAnalysis.plot_ramp(tree, cellData, 'ONSETspikes_mean');
         end
         
+        function plot_ramp_ONSET_peak(tree, cellData)
+            ColorResponseAnalysis.plot_ramp(tree, cellData, 'ONSET_avgTracePeak_value');
+        end
+        
         function plot_ramp_OFFSETspikes(tree, cellData)
             ColorResponseAnalysis.plot_ramp(tree, cellData, 'OFFSETspikes_mean');
         end        
