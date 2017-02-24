@@ -66,36 +66,36 @@ classdef ColorResponseAnalysis < AnalysisTree
     
     methods(Static)
         
-        function plot_colorRatioVsONSETspikes(node, ~)
-            rootData = node.get(1);
-            xvals = rootData.contrast;
-            yField = rootData.ONSETspikes;
-            if strcmp(yField(1).units, 's')
-                yvals = yField.median_c;
-            else
-                yvals = yField.mean_c;
-            end
-            errs = yField.SEM;
-            errorbar(xvals, yvals, errs);
-            xlabel('color');
-            ylabel(['ONSETspikes (' yField.units ')']);
-        end
-        
-        function plot_colorRatioVsOFFSETspikes(node, ~)
-            rootData = node.get(1);
-            xvals = rootData.contrast;
-            yField = rootData.OFFSETspikes;
-            if strcmp(yField(1).units, 's')
-                yvals = yField.median_c;
-            else
-                yvals = yField.mean_c;
-            end
-            errs = yField.SEM;
-            errorbar(xvals, yvals, errs);
-            xlabel('color');
-            ylabel(['OFFSETspikes (' yField.units ')']);
-        end        
-        
+%         function plot_colorRatioVsONSETspikes(node, ~)
+%             rootData = node.get(1);
+%             xvals = rootData.contrast;
+%             yField = rootData.ONSETspikes;
+%             if strcmp(yField(1).units, 's')
+%                 yvals = yField.median_c;
+%             else
+%                 yvals = yField.mean_c;
+%             end
+%             errs = yField.SEM;
+%             errorbar(xvals, yvals, errs);
+%             xlabel('color');
+%             ylabel(['ONSETspikes (' yField.units ')']);
+%         end
+%         
+%         function plot_colorRatioVsOFFSETspikes(node, ~)
+%             rootData = node.get(1);
+%             xvals = rootData.contrast;
+%             yField = rootData.OFFSETspikes;
+%             if strcmp(yField(1).units, 's')
+%                 yvals = yField.median_c;
+%             else
+%                 yvals = yField.mean_c;
+%             end
+%             errs = yField.SEM;
+%             errorbar(xvals, yvals, errs);
+%             xlabel('color');
+%             ylabel(['OFFSETspikes (' yField.units ')']);
+%         end        
+%         
         function plot_ramp_ONSETspikes(tree, cellData)
             ColorResponseAnalysis.plot_ramp(tree, cellData, 'ONSETspikes_mean');
         end
@@ -103,6 +103,10 @@ classdef ColorResponseAnalysis < AnalysisTree
         function plot_ramp_ONSET_peak(tree, cellData)
             ColorResponseAnalysis.plot_ramp(tree, cellData, 'ONSET_avgTracePeak_value');
         end
+        
+        function plot_ramp_stimInterval_charge(tree, cellData)
+            ColorResponseAnalysis.plot_ramp(tree, cellData, 'stimInterval_charge_mean');
+        end        
         
         function plot_ramp_OFFSETspikes(tree, cellData)
             ColorResponseAnalysis.plot_ramp(tree, cellData, 'OFFSETspikes_mean');
@@ -127,7 +131,8 @@ classdef ColorResponseAnalysis < AnalysisTree
                     datanode = tree.get(rampnodes(ri));
                     contrastepoch = cellData.epochs(datanode.epochID(1));
                     contrast = contrastepoch.get('contrast');
-                    colorData.intensity(end+1) = datanode.splitValue / contrast;
+                    intensity = contrastepoch.get('intensity');
+                    colorData.intensity(end+1) = ((datanode.splitValue - intensity) / intensity) / contrast;
                     colorData.response(end+1) = datanode.(variableName);
                 end
                 data{colornode} = colorData;
@@ -150,7 +155,7 @@ classdef ColorResponseAnalysis < AnalysisTree
             end
 %             legend(colors, 'Location', 'north')
             hold off
-            xlabel('varying : step ratio')
+            xlabel('(varying : fixed) ratio')
                 
         end
     end
