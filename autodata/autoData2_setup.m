@@ -1,5 +1,5 @@
 global ANALYSIS_FOLDER;
-cellNamesListLocation = [ANALYSIS_FOLDER 'Projects' filesep 'cellType/F-mini Off/cellNames.txt'];
+cellNamesListLocation = [ANALYSIS_FOLDER 'Projects' filesep 'WFDS On and Off and Controls/cellNames.txt'];
 
 % set this to [] if no external table
 externalTableFilename = 'analysisTrees/automaticData/externalCellDataTable';
@@ -37,6 +37,7 @@ paramsByTree = {{'ONSETspikes_mean', 'OFFSETspikes_mean'};
     {'params'};
     {'params'};
     {'ONSETspikes','ONSETlatency'};};
+paramsTypeNames = {'LS_sp','SMS_sp','DrifTex_sp','DrifGrat_sp','SMS_ex','SMS_in','MB1000','MB500','MB250','LS_params_ex','LS_params_in','Contrast_sp'};
 paramsColumnNames = {{'LS_ON_sp','LS_OFF_sp'};
     {'SMS_spotSize_sp','SMS_onSpikes','SMS_offSpikes','SMS_onDuration'};
     {'DrifTex_mean_sp','DrifTex_DSI_sp','DrifTex_DSang_sp','DrifTex_OSI_sp','DrifTex_OSang_sp','DrifTex_DVar_sp'};
@@ -88,4 +89,5 @@ end
 analyses.treeVariableMode = treeVariableModes';
 analyses.params = paramsByTree;
 analyses.columnNames = paramsColumnNames;
+analyses.paramsTypeNames = paramsTypeNames';
 numAnalyses = size(analyses, 1);

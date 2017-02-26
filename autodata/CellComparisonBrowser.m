@@ -1,7 +1,7 @@
 classdef CellComparisonBrowser < handle
 
 properties
-    fig
+    mainFigure
     dtab
     cellSets = {};
     currentSelection = [];
@@ -22,64 +22,92 @@ methods
       
        obj.initializeGui();
        
-       obj.plotCellResponses();
-       obj.updateSelectedCells();
+       plotConfiguration = struct();
+       plotConfiguration.name = 'new plot name';
+       obj.addNewDataPlot(plotConfiguration);
        
+       obj.updateSelectedCells();
+       obj.updateCellSets();
     end
         
     
     
     function initializeGui(obj)
         
-        obj.fig = figure( ...
+        obj.mainFigure = figure( ...
             'Name',         'CellComparisonBrowser', ...
             'NumberTitle',  'off', ...
             'ToolBar',      'none',...
             'Menubar',      'none');
         
-        obj.handles.mainPanel = uiextras.VBoxFlex('Parent', obj.fig);
+        obj.handles.mainPanel = uiextras.HBox('Parent', obj.mainFigure);
         
-        obj.handles.dataPlot = axes('Parent', obj.handles.mainPanel);
-        obj.handles.dataPlotHandles = zeros(size(obj.dtab, 1), 1);
+        obj.handles.dataPlotFigureHandles = [];
+        obj.handles.dataPlotAxisHandles = [];
         
-        obj.handles.cellLists = uiextras.HBox('Parent', obj.handles.mainPanel);
-        obj.handles.cellListAll_panel = uiextras.BoxPanel('Parent', obj.handles.cellLists, ...
-                'Title', 'All cells      .', ...
-                'FontSize', 12, ...
+        obj.handles.cellLists = uiextras.VBox('Parent', obj.handles.mainPanel);
+        
+        obj.handles.cellLists_top = uiextras.HBox('Parent', obj.handles.cellLists);
+        
+        obj.handles.cellListAll_panel = uiextras.BoxPanel('Parent', obj.handles.cellLists_top, ...
+                'Title', 'All cells       ', ...
                 'Padding', 5);
         obj.handles.cellListAll = uicontrol('Style','listbox',...
                 'Parent', obj.handles.cellListAll_panel, ...
-                'FontSize', 12, ...
                 'Max', 2, ...
-                'String', {'',''},... 
-                'Callback', @obj.listBoxCallback);
+                'String', obj.cellNames);
             
+        obj.handles.cellListSelected_panel = uiextras.BoxPanel('Parent', obj.handles.cellLists_top, ...
+                'Title', 'Selected Cells       ', ...
+                'Padding', 5);
         obj.handles.cellListSelected = uicontrol('Style','listbox',...
-                'Parent', obj.handles.cellLists, ...
-                'FontSize', 12, ...
+                'Parent', obj.handles.cellListSelected_panel, ...
                 'Max', 2, ...
-                'String', {'',''},... 
-                'Callback', @obj.listBoxCallback);
+                'String', {'Selected',''});
         
-        obj.handles.buttonRow = uiextras.HButtonBox('Parent', obj.handles.mainPanel, ...
+        obj.handles.cellSetsBox = uiextras.HBox('Parent', obj.handles.cellLists);
+        
+        obj.handles.cellSetLists = [];
+        obj.handles.cellSetLists_panels = [];
+        for si = 1:length(obj.cellSets)
+            setBox = uiextras.VBox('Parent', obj.handles.cellSetsBox);
+            obj.handles.cellSetLists_panels(si) = uiextras.BoxPanel('Parent', setBox, ...
+                    'Title', [sprintf('Set %g', si) '       '], ...
+                    'Padding', 5);            
+            obj.handles.cellSetLists(si) = uicontrol('Style','listbox',...
+                'Parent', obj.handles.cellSetLists_panels(si), ...
+                'Max', 2, ...
+                'String', {sprintf('set %g', si),''});
+            setButtonRow = uiextras.HButtonBox('Parent', setBox, ...
+                'ButtonSize', [100, 30]);
+            obj.handles.cellSetLists_removeButton = uicontrol('Style', 'pushbutton', ...
+                'Parent', setButtonRow, ...
+                'String', 'Remove', ...
+                'Callback', {@obj.removeCellFromSet, si});
+        end
+            
+        
+        mainButtonRow = uiextras.HButtonBox('Parent', obj.handles.mainPanel, ...
                 'ButtonSize', [100, 50]);
         
         obj.handles.button_analyzeSingleCell = uicontrol('Style', 'pushbutton', ...
-                'Parent', obj.handles.buttonRow, ...
-                'FontSize', 12, ...
+                'Parent', mainButtonRow, ...
                 'String', 'Analyze cell', ...
-                'Callback',@(uiobj,evt)obj.analyzeSingleCell());
+                'Callback', @(uiobj,evt)obj.analyzeSingleCell());
             
-        obj.handles.button_analyzeSingleCell = uicontrol('Style', 'pushbutton', ...
-                'Parent', obj.handles.buttonRow, ...
-                'FontSize', 12, ...
+        obj.handles.button_clearSelection = uicontrol('Style', 'pushbutton', ...
+                'Parent', mainButtonRow, ...
                 'String', 'Clear selection', ...
-                'Callback',@(uiobj,evt)obj.clearSelection());            
+                'Callback', @(uiobj,evt)obj.clearSelection());
         
     end
     
-    function plotCellResponses(obj)
+    function plotCellResponses(obj, figId)
         global CELL_DATA_FOLDER
+        fig = obj.handles.dataPlotFigureHandles(figId);
+        ax = axes('Parent', fig);
+        obj.handles.dataPlotAxisHandles(figId) = ax;
+        obj.handles.dataPlotLineHandles{figId} = zeros(length(obj.cellNames),1);
         
         for ci = 1:size(obj.dtab,1)
         %  set color of lines by group
@@ -101,6 +129,9 @@ methods
 
             dataSet = obj.dtab{ci, 'SMS_sp_dataset'}{1};
             load([CELL_DATA_FOLDER obj.cellNames{ci}])
+            if ~isKey(cellData.savedDataSets, dataSet)
+                continue
+            end
             epochIds = cellData.savedDataSets(dataSet);
             matchingEpochs = [];
             for ei = 1:length(epochIds)
@@ -120,28 +151,36 @@ methods
 
         %     [dataMean, xvals, dataStd, units] = cellData.getMeanData(matchingEpochs, streamName);
             [spCount, xvals] = cellData.getPSTH(matchingEpochs, 40); % bin length in ms
-            obj.handles.dataPlotHandles(ci) = plot(obj.handles.dataPlot, xvals, spCount, 'Color', col, ...
+            lineHandle = plot(ax, xvals, spCount, 'Color', col, ...
                     'LineWidth', 1, ...
                     'ButtonDownFcn', {@obj.cellPlotSelect, ci});
-            hold(obj.handles.dataPlot, 'on')
+            hold(ax, 'on')
+            obj.handles.dataPlotLineHandles{figId}(ci) = lineHandle;
             
         end
-        hold(obj.handles.dataPlot, 'off');
-        xlim(obj.handles.dataPlot, [0,2.5])
+        hold(ax, 'off');
+        xlim(ax, [0,2.5])
     end
     
     
+    function addNewDataPlot(obj, plotConfiguration)
+        dataPlotFigureId = 1 + length(obj.handles.dataPlotFigureHandles);
+        fig = figure( ...
+                'Name',         plotConfiguration.name, ...
+                'NumberTitle',  'off', ...
+                'ToolBar',      'none');
+        obj.handles.dataPlotFigureHandles(dataPlotFigureId) = fig;
+        
+        obj.plotCellResponses(dataPlotFigureId);
+    end
+    
     function cellPlotSelect(obj, ~, ~, ci)
         fprintf('%s: %s %g\n', obj.dtab.cellType{ci}, obj.dtab.Properties.RowNames{ci}, ci);
-        
-
-        
         obj.updateSelectedCells(ci)
     end
     
     function updateSelectedCells(obj, lastSelected)
         if nargin > 1
-        
             if obj.currentSelection(lastSelected) > 0 % deselect
                 obj.currentSelection(lastSelected) = 0;
             else
@@ -161,9 +200,11 @@ methods
                 case 2
                     wid = 4;
             end
-            hand = obj.handles.dataPlotHandles(ci);
-            if hand > 0
-                set(hand, 'LineWidth', wid);
+            for fi = 1:length(obj.handles.dataPlotAxisHandles)
+                lineHandles = obj.handles.dataPlotLineHandles{fi};
+                if lineHandles(ci) > 0
+                    set(lineHandles(ci), 'LineWidth', wid);
+                end
             end
         end
         
@@ -180,9 +221,46 @@ methods
         obj.handles.cellListSelected.Value = val;
     end
     
+    function updateCellSets(obj)
+        for si = 1:length(obj.cellSets)
+            listHandle = obj.handles.cellSetLists(si);
+            cellNamesInSet = obj.cellNames(obj.cellSets{si});
+            set(listHandle, 'String', cellNamesInSet);
+        end
+        for fi = 1:length(obj.handles.dataPlotAxisHandles)
+            lineHandles = obj.handles.dataPlotLineHandles{fi};
+            for ci = 1:length(obj.cellNames)
+                if lineHandles(ci) > 0
+                    
+                    % figure out which set this cell is in (ideally one)
+                    thisCellsSet = [];
+                    for si = 1:length(obj.cellSets)
+                        if obj.cellSets{si}(ci)
+                            thisCellsSet = si;
+                        end
+                        if ~isempty(thisCellsSet)
+                            set(lineHandles(ci), 'Color', obj.colors(thisCellsSet,:));
+                        end
+                    end
+                end
+            end
+        end
+    end
+    
     function clearSelection(obj)
         obj.currentSelection = zeros(size(obj.currentSelection));
         obj.updateSelectedCells();
+    end
+    
+    function removeCellFromSet(obj, ~, ~, cellSetId)
+        setListHandle = obj.handles.cellSetLists(cellSetId);
+        indexInList = get(setListHandle, 'Value');
+        selectedIndices = find(obj.cellSets{cellSetId});
+        ci = selectedIndices(indexInList);
+        set(setListHandle, 'Value',1)
+
+        obj.cellSets{cellSetId}(ci) = 0;
+        obj.updateCellSets();
     end
     
     function analyzeSingleCell(obj, ~)
@@ -200,21 +278,21 @@ methods
         
     end
     
-    function listBoxCallback(obj, hListbox, eventData)
-       lastValue = getappdata(hListbox, 'lastValue');
-       value = get(hListbox, 'Value');
-       if ~isequal(value, lastValue)
-          value2 = setdiff(value, lastValue);
-          if isempty(value2)
-             setappdata(hListbox, 'lastValue', value);
-          else
-             value = value2(1);  % see quirk below
-             setappdata(hListbox, 'lastValue', value);
-             set(hListbox, 'Value', value);
-          end
-       end
-       
-    end    
+%     function listBoxCallback(~, hListbox, ~)
+%        lastValue = getappdata(hListbox, 'lastValue');
+%        value = get(hListbox, 'Value');
+%        if ~isequal(value, lastValue)
+%           value2 = setdiff(value, lastValue);
+%           if isempty(value2)
+%              setappdata(hListbox, 'lastValue', value);
+%           else
+%              value = value2(1);  % see quirk below
+%              setappdata(hListbox, 'lastValue', value);
+%              set(hListbox, 'Value', value);
+%           end
+%        end
+%        
+%     end    
 
 
 end

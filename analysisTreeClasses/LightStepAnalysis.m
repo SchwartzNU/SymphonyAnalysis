@@ -45,6 +45,10 @@ classdef LightStepAnalysis < AnalysisTree
                         'DeviceName', rootData.deviceName,'StartTime', obj.StartTime, 'EndTime', obj.EndTime);
                     end                                        
                 else %whole cell, Vclamp
+                    if ~isfield(curNode, 'epochID')
+                        disp('Missing epochID in curNode for some reason...');
+                        continue
+                    end
                     outputStruct = getEpochResponses_WC(cellData, curNode.epochID, ...
                         'DeviceName', rootData.deviceName,'StartTime', obj.StartTime, 'EndTime', obj.EndTime);
                 end
