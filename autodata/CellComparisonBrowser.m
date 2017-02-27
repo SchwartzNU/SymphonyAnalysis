@@ -4,8 +4,10 @@ properties
     mainFigure
     dtab
     cellSets = {};
+    cellSetNames = {};
     currentSelection = [];
     cellNames
+    numCells
     handles = struct();
     
     colors = [[.1, .3, .7];
@@ -14,17 +16,19 @@ end
 
 methods
     
-    function obj = CellComparisonBrowser(dtab, cellSets)
+    function obj = CellComparisonBrowser(dtab, cellSets, cellSetNames)
        obj.dtab = dtab;
        obj.currentSelection = zeros(size(dtab,1), 1);
        obj.cellNames = dtab.Properties.RowNames;
        obj.cellSets = cellSets;
+       obj.cellSetNames = cellSetNames;
+       obj.numCells = length(obj.cellNames);
       
        obj.initializeGui();
        
-       plotConfiguration = struct();
-       plotConfiguration.name = 'new plot name';
-       obj.addNewDataPlot(plotConfiguration);
+%        plotConfiguration = struct();
+%        plotConfiguration.name = 'new plot name';
+%        obj.addNewDataPlot(plotConfiguration);
        
        obj.updateSelectedCells();
        obj.updateCellSets();
@@ -49,13 +53,15 @@ methods
         
         obj.handles.cellLists_top = uiextras.HBox('Parent', obj.handles.cellLists);
         
+        
+        % % TOP CELL LISTS
         obj.handles.cellListAll_panel = uiextras.BoxPanel('Parent', obj.handles.cellLists_top, ...
                 'Title', 'All cells       ', ...
                 'Padding', 5);
         obj.handles.cellListAll = uicontrol('Style','listbox',...
                 'Parent', obj.handles.cellListAll_panel, ...
                 'Max', 2, ...
-                'String', obj.cellNames);
+                'String', obj.renderCellNames(ones(obj.numCells,1)));
             
         obj.handles.cellListSelected_panel = uiextras.BoxPanel('Parent', obj.handles.cellLists_top, ...
                 'Title', 'Selected Cells       ', ...
@@ -65,8 +71,9 @@ methods
                 'Max', 2, ...
                 'String', {'Selected',''});
         
+            
+        % % CELL SETS
         obj.handles.cellSetsBox = uiextras.HBox('Parent', obj.handles.cellLists);
-        
         obj.handles.cellSetLists = [];
         obj.handles.cellSetLists_panels = [];
         for si = 1:length(obj.cellSets)
@@ -84,9 +91,25 @@ methods
                 'Parent', setButtonRow, ...
                 'String', 'Remove', ...
                 'Callback', {@obj.removeCellFromSet, si});
+            obj.handles.cellSetLists_addSelectedButton = uicontrol('Style', 'pushbutton', ...
+                'Parent', setButtonRow, ...
+                'String', 'Add selected', ...
+                'Callback', {@obj.addSelectedCellToSet, si});
+            obj.handles.cellSetLists_addToSelectionButton = uicontrol('Style', 'pushbutton', ...
+                'Parent', setButtonRow, ...
+                'String', 'Select', ...
+                'Callback', {@obj.addCellToSelection, si});                   
         end
-            
         
+        % % PLOT CONTROLS
+        
+        plotControlBox = uiextras.VBox('Parent', obj.handles.mainPanel);
+        obj.handles.listOfPlotters = uicontrol('Style','listbox',...
+                'Parent', plotControlBox, ...
+                'String', {'Plotters',''});
+        
+            
+        % % MAIN BUTTONS (mostly accessory)
         mainButtonRow = uiextras.HButtonBox('Parent', obj.handles.mainPanel, ...
                 'ButtonSize', [100, 50]);
         
@@ -109,7 +132,7 @@ methods
         obj.handles.dataPlotAxisHandles(figId) = ax;
         obj.handles.dataPlotLineHandles{figId} = zeros(length(obj.cellNames),1);
         
-        for ci = 1:size(obj.dtab,1)
+        for ci = 1:obj.numCells
         %  set color of lines by group
             col = [];
             for si = 1:length(obj.cellSets)
@@ -217,15 +240,16 @@ methods
             val = [];
         end
         
-        obj.handles.cellListSelected.String = obj.cellNames(selectedCells);
+        obj.handles.cellListSelected.String = obj.renderCellNames(selectedCells);
         obj.handles.cellListSelected.Value = val;
     end
     
     function updateCellSets(obj)
         for si = 1:length(obj.cellSets)
             listHandle = obj.handles.cellSetLists(si);
-            cellNamesInSet = obj.cellNames(obj.cellSets{si});
+            cellNamesInSet = obj.renderCellNames(obj.cellSets{si});
             set(listHandle, 'String', cellNamesInSet);
+            set(obj.handles.cellSetLists_panels(si), 'Title', sprintf('Set %g: %s      ', si, obj.cellSetNames{si}));
         end
         for fi = 1:length(obj.handles.dataPlotAxisHandles)
             lineHandles = obj.handles.dataPlotLineHandles{fi};
@@ -263,6 +287,21 @@ methods
         obj.updateCellSets();
     end
     
+    function addSelectedCellToSet(obj, ~, ~, cellSetId)
+        obj.cellSets{cellSetId}(obj.currentSelection) = 1;
+        obj.updateCellSets();
+    end
+    
+    function addCellToSelection(obj, ~, ~, cellSetId)
+        setListHandle = obj.handles.cellSetLists(cellSetId);
+        indexInList = get(setListHandle, 'Value');
+        selectedIndices = find(obj.cellSets{cellSetId});
+        ci = selectedIndices(indexInList);
+        obj.currentSelection(ci) = 1;
+        
+        obj.updateSelectedCells();
+    end
+    
     function analyzeSingleCell(obj, ~)
         cellName = obj.cellNames{obj.currentSelection == 2};
         if isempty(cellName)
@@ -277,6 +316,18 @@ methods
         TreeBrowserGUI(tempTree); 
         
     end
+    
+    function s = renderCellNames(obj, cellSet)
+        s = cell(sum(cellSet), 1);
+        si = 1;
+        for ci = 1:obj.numCells
+            if cellSet(ci)
+                s{si} = sprintf('%s %s', obj.cellNames{ci}, obj.dtab.cellType{ci});
+                si = si + 1;
+            end
+        end
+    end
+            
     
 %     function listBoxCallback(~, hListbox, ~)
 %        lastValue = getappdata(hListbox, 'lastValue');
