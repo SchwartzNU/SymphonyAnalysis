@@ -54,3 +54,5 @@ autocenterOffsetDistance = sqrt(diffX.^2 + diffY.^2);
 autocenterOffsetDistanceNormalized = autocenterOffsetDistance ./ avgSigma;
 autocenterOffsetDirections = angle(diffX + sqrt(-1) * diffY);
 dtab.spatial_exin_offset = autocenterOffsetDistance .* exp(sqrt(-1) * autocenterOffsetDirections);
+dtab.spatial_exin_offset_magnitude = autocenterOffsetDistance;
+dtab.spatial_exin_offset_angle = autocenterOffsetDirections;
