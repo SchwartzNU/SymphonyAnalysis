@@ -26,11 +26,18 @@ for ci = 1:size(dtab,1)
 end
 
 dtab{:,'SMS_onSpikes_prefSize'} = peakSizeOn';
+dtabColumns{'SMS_onSpikes_prefSize', 'type'} = {'single'};
 dtab{:,'SMS_onSpikes_peakSpikes'} = peakValueOn';
+dtabColumns{'SMS_onSpikes_peakSpikes', 'type'} = {'single'};
 dtab{:,'SMS_onSpikes_tailSpikes'} = tailSpikesOn';
+dtabColumns{'SMS_onSpikes_tailSpikes', 'type'} = {'single'};
 dtab{:,'SMS_offSpikes_prefSize'} = peakSizeOff';
+dtabColumns{'SMS_offSpikes_prefSize', 'type'} = {'single'};
 dtab{:,'SMS_offSpikes_peakSpikes'} = peakValueOff';
+dtabColumns{'SMS_offSpikes_peakSpikes', 'type'} = {'single'};
 dtab{:,'SMS_offSpikes_tailSpikes'} = tailSpikesOff';
+dtabColumns{'SMS_offSpikes_tailSpikes', 'type'} = {'single'};
+
 
 %% Best DS
 
@@ -44,6 +51,9 @@ for ci = 1:numCells
     dtab{ci,'best_DSang_sp'} = angs(i);
     dtab{ci,'best_source'} = {src(i)};
 end
+dtabColumns{'best_DSI_sp', 'type'} = {'single'};
+dtabColumns{'best_DSang_sp', 'type'} = {'single'};
+dtabColumns{'best_source', 'type'} = {'string'};
 
 %% Autocenter offset
 
@@ -56,3 +66,6 @@ autocenterOffsetDirections = angle(diffX + sqrt(-1) * diffY);
 dtab.spatial_exin_offset = autocenterOffsetDistance .* exp(sqrt(-1) * autocenterOffsetDirections);
 dtab.spatial_exin_offset_magnitude = autocenterOffsetDistance;
 dtab.spatial_exin_offset_angle = autocenterOffsetDirections;
+dtabColumns{'spatial_exin_offset', 'type'} = {'single'};
+dtabColumns{'spatial_exin_offset_magnitude', 'type'} = {'single'};
+dtabColumns{'spatial_exin_offset_angle', 'type'} = {'single'};

@@ -52,6 +52,8 @@ paramsColumnNames = {{'LS_ON_sp','LS_OFF_sp'};
     {'Contrast_contrastVal_sp','Contrast_onSpikes','Contrast_onLatency'};};
 %%
 analyses = table();
+dtabColumns = table();
+
 for fi = 1:length(filterFileNames)
     fname = filterFileNames{fi};
     load(fname, 'filterData','filterPatternString','analysisType');
@@ -84,6 +86,31 @@ for fi = 1:length(filterFileNames)
     end
     epochFilt.pattern = filterPatternString;
     analyses{fi,'epochFilt'} = epochFilt;
+    
+    % Make columns table
+    columnNames = paramsColumnNames{fi};
+    for ci = 1:length(columnNames)
+        independent = [];
+        
+        if ci == 1 && treeVariableModes(fi) == 0 % pull off the first column to use as the independent
+            ctype = 'dataset';
+        else
+        
+            switch treeVariableModes(fi)
+                case 1 % single values
+                    ctype = 'single';
+                case 0 % vectors
+                    ctype = 'vector';
+                    independent = columnNames(1);
+                case 2 % extracted params
+                    ctype = 'vector';
+            end
+        end
+        dtabColumns{columnNames{ci}, {'type','independent'}} = {ctype, independent};
+    end
+    dtabColumns{[paramsTypeNames{fi} '_dataset'],{'type'}} = {'dataset'};
+    
+        
 end
 
 analyses.treeVariableMode = treeVariableModes';
@@ -91,3 +118,9 @@ analyses.params = paramsByTree;
 analyses.columnNames = paramsColumnNames;
 analyses.paramsTypeNames = paramsTypeNames';
 numAnalyses = size(analyses, 1);
+
+dtabColumns{'cellType', 'type'} = {'string'};
+dtabColumns{'location_x', 'type'} = {'single'};
+dtabColumns{'location_y', 'type'} = {'single'};
+dtabColumns{'eye', 'type'} = {'single'};
+dtabColumns{'QualityRating', 'type'} = {'single'};

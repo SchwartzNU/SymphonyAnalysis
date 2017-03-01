@@ -3,6 +3,7 @@ classdef CellComparisonBrowser < handle
 properties
     mainFigure
     dtab
+    dtabColumns
     cellSets = {};
     cellSetNames = {};
     currentSelection = [];
@@ -16,8 +17,9 @@ end
 
 methods
 
-function obj = CellComparisonBrowser(dtab, cellSets, cellSetNames)
+function obj = CellComparisonBrowser(dtab, dtabColumns, cellSets, cellSetNames)
     obj.dtab = dtab;
+    obj.dtabColumns = dtabColumns;
     obj.currentSelection = zeros(size(dtab,1), 1);
     obj.cellNames = dtab.Properties.RowNames;
     obj.cellSets = cellSets;

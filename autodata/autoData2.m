@@ -169,6 +169,9 @@ if ~isempty(externalTableFilename)
 %     end
 
     %
+    for vi = 1:length(externalRow.Properties.VariableNames)
+        dtabColumns{externalRow.Properties.VariableNames{vi}, 'type'} = {'single'};
+    end
 
     disp('Loaded external data table')
     toc
@@ -211,7 +214,7 @@ numCells = size(dtab, 1);
 cellNames = dtab.Properties.RowNames;
 
 if ~isempty(outputSaveFilename)
-    save(outputSaveFilename, 'dtab','cellNames','numCells','cellTypeSelect');
+    save(outputSaveFilename, 'dtab','dtabColumns','cellNames','numCells','cellTypeSelect');
     fprintf('saved data to %s \n', outputSaveFilename);
 end
 
