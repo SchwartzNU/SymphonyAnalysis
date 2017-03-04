@@ -104,6 +104,11 @@ classdef BarsMultiAngleAnalysis < AnalysisTree
             rootData.singleValParamList = singleValParamList;
             rootData.collectedParamList = collectedParamList;
             obj = obj.set(1, rootData);
+            
+            % Fitting FB curves to 2 cosine waves - David 3-3-17
+            rootData = obj.get(1);
+            rootData = AddCosFit(rootData);
+            obj = obj.set(1, rootData);
         end
         
     end
@@ -344,6 +349,24 @@ classdef BarsMultiAngleAnalysis < AnalysisTree
             errorbar(xvals, yvals, errs);
             xlabel('barAngle');
             ylabel(['spikeCount_stimInterval_granBaselineSubtracted (' yField.units ')']);
+            
+            hold on
+            xvals2 = 1:180;
+            yvals2 = TwoCos(rootData.spikeCount_stimInterval_grndBlSubt.beta,xvals2);
+            plot(xvals2, yvals2);
+            
+            beta1 = num2str(rootData.spikeCount_stimInterval_grndBlSubt.beta(1));
+            beta2 = num2str(rootData.spikeCount_stimInterval_grndBlSubt.beta(2));
+            beta3 = num2str(rootData.spikeCount_stimInterval_grndBlSubt.beta(3));
+            beta4 = num2str(rootData.spikeCount_stimInterval_grndBlSubt.beta(4));
+            beta5 = num2str(rootData.spikeCount_stimInterval_grndBlSubt.beta(5));
+            title(['f(x) = ' beta1 ' + ' beta2 'cos(2x + ' beta3 ') + ' beta4 'cos(4x + ' beta5 ')']);
+            hold off;
+            function y = TwoCos(beta,x)
+
+                y = beta(1) + beta(2)*cosd(2*(x + beta(3))) + beta(4)*cosd(4*(x + beta(5)));
+
+            end
         end
         
         function plot_barAngleVsspikeCount_stimInt_gblSubtNORM(node, cellData)
@@ -363,6 +386,7 @@ classdef BarsMultiAngleAnalysis < AnalysisTree
             xlabel('barAngle');
             ylabel(['spikeCount_stimInterval_granBaselineSubtracted_norm (' yField.units ')']);
         end 
+        
     end
     
 end
