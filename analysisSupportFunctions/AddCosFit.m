@@ -9,7 +9,7 @@ function rootData = AddCosFit(rootData)
         end
 
         if beta(4) < 0 
-            beta(5) = beta(5) + 90;
+            beta(5) = beta(5) + 45;
             beta(4) = -1 * beta(4);
         end
 
