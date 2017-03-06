@@ -4,12 +4,12 @@ function rootData = AddCosFit(rootData)
         beta = nlinfit(rootData.barAngle, rootData.spikeCount_stimInterval_grndBlSubt.mean_c ,@TwoCos,beta0);
 
         if beta(2) < 0 
-            beta(3) = beta(3) + 180;
+            beta(3) = beta(3) + 90;
             beta(2) = -1 * beta(2);
         end
 
         if beta(4) < 0 
-            beta(5) = beta(5) + 180;
+            beta(5) = beta(5) + 90;
             beta(4) = -1 * beta(4);
         end
 
