@@ -360,11 +360,11 @@ classdef BarsMultiAngleAnalysis < AnalysisTree
             beta3 = num2str(rootData.spikeCount_stimInterval_grndBlSubt.beta(3));
             beta4 = num2str(rootData.spikeCount_stimInterval_grndBlSubt.beta(4));
             beta5 = num2str(rootData.spikeCount_stimInterval_grndBlSubt.beta(5));
-            title(['f(x) = ' beta1 ' + ' beta2 'cos(2(x + ' beta3 ')) + ' beta4 'cos(4(x + ' beta5 '))']);
+            title(['f(x) = ' beta1 ' + ' beta2 'cos(2(x - ' beta3 ')) + ' beta4 'cos(4(x - ' beta5 '))']);
             hold off;
             function y = TwoCos(beta,x)
 
-                y = beta(1) + beta(2)*cosd(2*(x + beta(3))) + beta(4)*cosd(4*(x + beta(5)));
+                y = beta(1) + beta(2)*cosd(2*(x - beta(3))) + beta(4)*cosd(4*(x - beta(5)));
 
             end
         end

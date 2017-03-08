@@ -36,7 +36,7 @@ function rootData = AddCosFit(rootData)
 
     function y = TwoCos(beta,x)
 
-        y = beta(1) + beta(2)*cosd(2*(x + beta(3))) + beta(4)*cosd(4*(x + beta(5)));
+        y = beta(1) + beta(2)*cosd(2*(x - beta(3))) + beta(4)*cosd(4*(x - beta(5)));
 
     end
 end
