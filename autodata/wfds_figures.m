@@ -1418,3 +1418,10 @@ threshold = .6
 
 cellNames(var >= threshold & cellTypeSelect('ON WFDS')) % | var > prctile(var, 90)
 
+%% Is DSI related to position relative to OTZ?
+
+figure(997)
+distanceFromOtz = abs(dtab.location_y - 100);
+
+lm = fitlm(distanceFromOtz(selectWfdsOn), dtab.best_DSI_sp(selectWfdsOn))
+plot(lm)

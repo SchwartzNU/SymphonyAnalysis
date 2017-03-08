@@ -67,29 +67,29 @@ classdef ColorResponseAnalysis < AnalysisTree
     methods(Static)
               
         function plot_ramp_ONSETspikes(tree, cellData)
-            ColorResponseAnalysis.plot_ramp(tree, cellData, 'ONSETspikes_mean');
+            ColorResponseAnalysis.plot_ramp(tree, cellData, 'spikeCount_stimInterval');
         end
 
         function plot_ramp_OFFSETspikes(tree, cellData)
-            ColorResponseAnalysis.plot_ramp(tree, cellData, 'OFFSETspikes_mean');
+            ColorResponseAnalysis.plot_ramp(tree, cellData, 'OFFSETspikes');
         end
         
         function plot_ramp_ONSET_peak(tree, cellData)
-            ColorResponseAnalysis.plot_ramp(tree, cellData, 'ONSET_avgTracePeak_value');
+            ColorResponseAnalysis.plot_ramp(tree, cellData, 'ONSET_avgTracePeak');
         end
         
         function plot_ramp_stimInterval_charge(tree, cellData)
-            ColorResponseAnalysis.plot_ramp(tree, cellData, 'stimInterval_charge_mean');
+            ColorResponseAnalysis.plot_ramp(tree, cellData, 'stimInterval_charge');
         end
         
         
-        function plot_swap_ONSETspikes(tree, cellData)
-            ColorResponseAnalysis.plot_swap(tree, cellData, 'ONSETspikes_mean');
-        end
-
-        function plot_swap_OFFSETspikes(tree, cellData)
-            ColorResponseAnalysis.plot_swap(tree, cellData, 'OFFSETspikes_mean');
-        end
+%         function plot_swap_ONSETspikes(tree, cellData)
+%             ColorResponseAnalysis.plot_swap(tree, cellData, 'ONSETspikes');
+%         end
+% 
+%         function plot_swap_OFFSETspikes(tree, cellData)
+%             ColorResponseAnalysis.plot_swap(tree, cellData, 'OFFSETspikes');
+%         end
                 
        
         function plot_swap(tree, cellData, variableName)
@@ -126,6 +126,7 @@ classdef ColorResponseAnalysis < AnalysisTree
                 colorData = struct();
                 colorData.intensity = [];
                 colorData.response = [];
+                colorData.responseSem = [];
                 currentStepColorNode = tree.get(colorNodeIds(colornode));
                 colors{colornode} = currentStepColorNode.splitValue;
                 rampnodes = tree.getchildren(colorNodeIds(colornode));
@@ -138,7 +139,8 @@ classdef ColorResponseAnalysis < AnalysisTree
                     contrast = contrastepoch.get('contrast');
                     intensity = contrastepoch.get('intensity');
                     colorData.intensity(end+1) = ((datanode.splitValue - intensity) / intensity) / contrast;
-                    colorData.response(end+1) = datanode.(variableName);
+                    colorData.response(end+1) = datanode.(variableName).mean;
+                    colorData.responseSem(end+1) = datanode.(variableName).SEM;
                 end
                 data{colornode} = colorData;
             end
@@ -153,7 +155,7 @@ classdef ColorResponseAnalysis < AnalysisTree
                         color = [0, .8, .1];
                 end
                
-                plot(d.intensity, d.response, 'Color', color, 'LineWidth', 3);
+                errorbar(d.intensity, d.response, d.responseSem, 'Color', color, 'LineWidth', 3);
                
                 hold on
                 
