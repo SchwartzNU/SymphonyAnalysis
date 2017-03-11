@@ -640,6 +640,7 @@ classdef LabDataGUI < handle
         
         function runDetectSpikes(obj)
             if ~isempty(obj.curCellData)
+                disp('Launching spike detector GUI');
                 obj.curCellData.detectSpikes();
             end
         end

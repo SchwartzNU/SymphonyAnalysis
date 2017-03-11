@@ -1,17 +1,28 @@
 function [] = saveAndSyncCellData(cellData)
-global ANALYSIS_FOLDER;
+global CELL_DATA_FOLDER;
 global CELL_DATA_MASTER;
 global SYNC_TO_SERVER;
-do_sync = true;
 
+save([CELL_DATA_FOLDER cellData.savedFileName '.mat'], 'cellData');
+
+if ~SYNC_TO_SERVER
+    return
+end
+
+do_sync = true;
 cellDataStatusFileLocation = [CELL_DATA_MASTER 'CellDataStatus.txt'];
 
+
+% local file mod time
+localFileInfo = dir([CELL_DATA_FOLDER cellData.savedFileName '.mat']);
+localModDate = localFileInfo.datenum;
+
 % Determine server mod time
-if exist(CELL_DATA_MASTER, 'dir') == 7 %sever is connected and CellDataMaster folder is found
+if exist(CELL_DATA_MASTER, 'dir') == 7 %server is connected and CellDataMaster folder is found
     disp('CellDataMaster found');
     try
-        fileinfo = dir([CELL_DATA_MASTER cellData.savedFileName '.mat']);
-        serverModDate = fileinfo.datenum;
+        remoteFileInfo = dir([CELL_DATA_MASTER cellData.savedFileName '.mat']);
+        serverModDate = remoteFileInfo.datenum;
     catch
         serverModDate = 0;
     end
@@ -21,10 +32,6 @@ else
     serverModDate = 0;
 end
 
-
-save([ANALYSIS_FOLDER 'cellData' filesep cellData.savedFileName '.mat'], 'cellData');
-fileinfo = dir([ANALYSIS_FOLDER 'cellData' filesep cellData.savedFileName '.mat']);
-localModDate = fileinfo.datenum;
 
 fprintf('Local file is %g sec newer than server file\n',(localModDate - serverModDate) * 86400)
 fileCopySlopTimeSec = 40;
@@ -36,13 +43,11 @@ end
 
 if serverModDate + fileCopySlopTimeSec/86400 > localModDate
 %     disp([cellData.savedFileName ': File is less than 120 seconds updated relative to server... waiting to sync']);
-    do_sync = 0;
+    do_sync = false;
 end
 
 
-
-
-if do_sync && SYNC_TO_SERVER
+if do_sync
     %syncing stuff here
     FILE_IO_TIMEOUT = 1; %s
     BUSY_STATUS_TIMEOUT = 5; %s
