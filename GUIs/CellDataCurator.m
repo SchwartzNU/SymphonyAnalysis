@@ -348,7 +348,6 @@ classdef CellDataCurator < handle
                 obj.handles.diaryPlotLine = plot(obj.handles.diaryPlotAxes, xvals(inDataSetInd), displayVals(inDataSetInd), 'go', 'MarkerFaceColor', 'g');
                 
                 plot(obj.handles.diaryPlotAxes, xvals(obj.selectedEpochInd), displayVals(obj.selectedEpochInd), 'bo', 'MarkerFaceColor', 'r');
-                ylabel(obj.handles.diaryPlotAxes, displayParam);
                 
                 set(obj.handles.diaryPlotAxes, 'YtickMode', 'auto', 'YtickLabelMode', 'auto');
                 set(obj.handles.diaryPlotAxes, 'Ylim', [min(displayVals) - .1 * range(displayVals) - .1, max(displayVals) + .1 * range(displayVals) + .1]);
@@ -370,6 +369,7 @@ classdef CellDataCurator < handle
                 %text labels here
             end
             
+            ylabel(obj.handles.diaryPlotAxes, displayParam);
             if strcmp(xmode, 'epochNum')
                 xlabel('Epoch Number');
             else
