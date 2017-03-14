@@ -67,12 +67,16 @@ classdef ColorResponseAnalysis < AnalysisTree
     methods(Static)
               
         function plot_ramp_ONSETspikes(tree, cellData)
-            ColorResponseAnalysis.plot_ramp(tree, cellData, 'spikeCount_stimInterval');
+            ColorResponseAnalysis.plot_ramp(tree, cellData, {'spikeCount_stimInterval'});
         end
 
         function plot_ramp_OFFSETspikes(tree, cellData)
-            ColorResponseAnalysis.plot_ramp(tree, cellData, 'spikeCount_afterStim');
+            ColorResponseAnalysis.plot_ramp(tree, cellData, {'spikeCount_afterStim'});
         end
+        
+        function plot_ramp_Spikes(tree, cellData)
+            ColorResponseAnalysis.plot_ramp(tree, cellData, {'spikeCount_stimInterval', 'spikeCount_afterStim'});
+        end        
         
         function plot_ramp_ONSET_peak(tree, cellData)
             ColorResponseAnalysis.plot_ramp(tree, cellData, 'ONSET_avgTracePeak');
@@ -92,78 +96,94 @@ classdef ColorResponseAnalysis < AnalysisTree
 %         end
                 
        
-        function plot_swap(tree, cellData, variableName)
-            warning('this doesnt work yet')
-            colorNodeIds = tree.getchildren(1);
-            data = {};
-            colornode = 1
-            colorData = struct();
-            colorData.intensity = [];
-            colorData.response = [];
-            currentStepColorNode = tree.get(colorNodeIds(colornode));
-            colors{colornode} = currentStepColorNode.splitValue;
-            rampnodes = tree.getchildren(colorNodeIds(colornode));
-
-            % get contrast from sample epoch
-
-            for ri = 1:length(rampnodes)
-                datanode = tree.get(rampnodes(ri));
-                contrastepoch = cellData.epochs(datanode.epochID(1));
-                contrast = contrastepoch.get('contrast');
-                intensity = contrastepoch.get('intensity');
-                colorData.intensity(end+1) = ((datanode.splitValue - intensity) / intensity) / contrast;
-                colorData.response(end+1) = datanode.(variableName);
-            end
-            data{colornode} = colorData;
+%         function plot_swap(tree, cellData, variableName)
+%             warning('this doesnt work yet')
+%             colorNodeIds = tree.getchildren(1);
+%             data = {};
+%             colornode = 1;
+%             colorData = struct();
+%             colorData.intensity = [];
+%             colorData.response = [];
+%             currentStepColorNode = tree.get(colorNodeIds(colornode));
+%             colors{colornode} = currentStepColorNode.splitValue;
+%             rampnodes = tree.getchildren(colorNodeIds(colornode));
+% 
+%             % get contrast from sample epoch
+% 
+%             for ri = 1:length(rampnodes)
+%                 datanode = tree.get(rampnodes(ri));
+%                 contrastepoch = cellData.epochs(datanode.epochID(1));
+%                 contrast = contrastepoch.get('contrast');
+%                 intensity = contrastepoch.get('intensity');
+%                 colorData.intensity(end+1) = ((datanode.splitValue - intensity) / intensity) / contrast;
+%                 colorData.response(end+1) = datanode.(variableName);
+%             end
+%             data{colornode} = colorData;
+%             
+%         end
             
-        end
-            
-        function plot_ramp(tree, cellData, variableName)
-            colorNodeIds = tree.getchildren(1);
-            data = {};
-            colors = {};
-            for colornode = 1:length(colorNodeIds)
-                colorData = struct();
-                colorData.intensity = [];
-                colorData.response = [];
-                colorData.responseSem = [];
-                currentStepColorNode = tree.get(colorNodeIds(colornode));
-                colors{colornode} = currentStepColorNode.splitValue;
-                rampnodes = tree.getchildren(colorNodeIds(colornode));
+        function plot_ramp(tree, cellData, variables)
+            legends = {};
+            for vi = 1:length(variables)
+                variableName = variables{vi};
                 
-                % get contrast from sample epoch
-                
-                for ri = 1:length(rampnodes)
-                    datanode = tree.get(rampnodes(ri));
-                    contrastepoch = cellData.epochs(datanode.epochID(1));
-                    contrast = contrastepoch.get('contrast');
-                    intensity = contrastepoch.get('intensity');
-                    colorData.intensity(end+1) = ((datanode.splitValue - intensity) / intensity) / contrast;
-                    colorData.response(end+1) = datanode.(variableName).mean;
-                    colorData.responseSem(end+1) = datanode.(variableName).SEM;
+                colorNodeIds = tree.getchildren(1);
+                data = {};
+                colors = {};
+                for colornode = 1:length(colorNodeIds)
+                    colorData = struct();
+                    colorData.intensity = [];
+                    colorData.response = [];
+                    colorData.responseSem = [];
+                    currentStepColorNode = tree.get(colorNodeIds(colornode));
+                    if ~strcmp(currentStepColorNode.splitParam, 'colorPattern2')
+                        return
+                    end
+                    colors{colornode} = currentStepColorNode.splitValue;
+                    rampnodes = tree.getchildren(colorNodeIds(colornode));
+
+                    % get contrast from sample epoch
+
+                    for ri = 1:length(rampnodes)
+                        datanode = tree.get(rampnodes(ri));
+                        contrastepoch = cellData.epochs(datanode.epochID(1));
+                        contrast = contrastepoch.get('contrast');
+                        intensity = contrastepoch.get('intensity');
+                        colorData.intensity(end+1) = ((datanode.splitValue - intensity) / intensity) / contrast;
+                        colorData.response(end+1) = datanode.(variableName).mean;
+                        colorData.responseSem(end+1) = datanode.(variableName).SEM;
+                    end
+                    data{colornode} = colorData;
                 end
-                data{colornode} = colorData;
-            end
-            for ci = 1:length(colors)
-                d = data{ci};
-                switch colors{ci}
-                    case 'uv'
-                        color = [.3, 0, .9];
-                    case 'blue'
-                        color = [0, .5, 1];
-                    case 'green'
-                        color = [0, .8, .1];
+                for ci = 1:length(colors)
+                    d = data{ci};
+                    switch colors{ci}
+                        case 'uv'
+                            color = [.3, 0, .9];
+                        case 'blue'
+                            color = [0, .5, 1];
+                        case 'green'
+                            color = [0, .8, .1];
+                    end
+                    if vi == 1
+%                         yyaxis left
+                        dash = '-';
+                        legends{end+1} = sprintf('%s varying, On', colors{ci});
+                    else
+%                         yyaxis right
+                        dash = '--';
+                        legends{end+1} = sprintf('%s varying, Off', colors{ci});
+                    end
+                    errorbar(d.intensity, d.response, d.responseSem, dash, 'Color', color, 'LineWidth', 3);
+                    
+                    hold on
+
                 end
-               
-                errorbar(d.intensity, d.response, d.responseSem, 'Color', color, 'LineWidth', 3);
-               
-                hold on
-                
+    %             legend(colors, 'Location', 'north')
             end
-%             legend(colors, 'Location', 'north')
             hold off
             xlabel('(varying : fixed) contrast ratio')
-                
+%             legend(legends, 'Location','Best');
         end
     end
     
