@@ -189,6 +189,10 @@ for i=1:L
         outputStruct.spikeCount_stimInterval.type = 'byEpoch';
         outputStruct.spikeCount_stimInterval.value = zeros(1,L);
         
+        outputStruct.spikeCount_afterStim.units = 'spikes';
+        outputStruct.spikeCount_afterStim.type = 'byEpoch';
+        outputStruct.spikeCount_afterStim.value = zeros(1,L);        
+        
         outputStruct.spikeRate_stimInterval.units = 'Hz';
         outputStruct.spikeRate_stimInterval.type = 'byEpoch';
         outputStruct.spikeRate_stimInterval.value = ones(1,L) * NaN;
@@ -488,12 +492,16 @@ for i=1:L
     %now we go through each response type in its own block
     
     %count spikes in stimulus interval
-    spikeCount = length(find(spikeTimes >= intervalStart & spikeTimes < intervalEnd));
+    spikeCount = sum(spikeTimes >= intervalStart & spikeTimes < intervalEnd);
     outputStruct.spikeCount_stimInterval.value(i) = spikeCount;
     outputStruct.spikeRate_stimInterval.value(i) = spikeCount/responseIntervalLen;
     
+    %count spikes after stimulus end
+    spikeCount = sum(spikeTimes >= intervalEnd);
+    outputStruct.spikeCount_afterStim.value(i) = spikeCount;
+    
     %count spikes in stimulus to end interval
-    spikeCount = length(find(spikeTimes >= intervalStart));
+    spikeCount = sum(spikeTimes >= intervalStart);
     outputStruct.spikeCount_stimToEnd.value(i) = spikeCount;
     
     %count spikes in some other intervals

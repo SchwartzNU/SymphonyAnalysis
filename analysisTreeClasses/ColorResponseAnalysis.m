@@ -71,7 +71,7 @@ classdef ColorResponseAnalysis < AnalysisTree
         end
 
         function plot_ramp_OFFSETspikes(tree, cellData)
-            ColorResponseAnalysis.plot_ramp(tree, cellData, 'OFFSETspikes');
+            ColorResponseAnalysis.plot_ramp(tree, cellData, 'spikeCount_afterStim');
         end
         
         function plot_ramp_ONSET_peak(tree, cellData)
