@@ -343,13 +343,15 @@ classdef CellDataCurator < handle
         
             if isnumeric(displayVals)   
                 hold(obj.handles.diaryPlotAxes, 'on');
-                inDataSetInd = ismember(obj.dataSet, obj.epochsInDataSets);                
+                inDataSetInd = ismember(obj.dataSet, obj.epochsInDataSets);
                 obj.handles.diaryPlotLine = plot(obj.handles.diaryPlotAxes, xvals(~inDataSetInd), displayVals(~inDataSetInd), 'bo');
                 obj.handles.diaryPlotLine = plot(obj.handles.diaryPlotAxes, xvals(inDataSetInd), displayVals(inDataSetInd), 'go', 'MarkerFaceColor', 'g');
                 
-                plot(obj.handles.diaryPlotAxes, xvals(obj.selectedEpochInd), displayVals(obj.selectedEpochInd), 'bo', ...
-                    'MarkerFaceColor', 'r');
+                plot(obj.handles.diaryPlotAxes, xvals(obj.selectedEpochInd), displayVals(obj.selectedEpochInd), 'bo', 'MarkerFaceColor', 'r');
                 ylabel(obj.handles.diaryPlotAxes, displayParam);
+                
+                set(obj.handles.diaryPlotAxes, 'YtickMode', 'auto', 'YtickLabelMode', 'auto');
+                set(obj.handles.diaryPlotAxes, 'Ylim', [min(displayVals) - .1 * range(displayVals) - .1, max(displayVals) + .1 * range(displayVals) + .1]);
             else
                 uniqueVals = unique(displayVals);
                 valInd = zeros(1,length(displayVals));
@@ -358,17 +360,12 @@ classdef CellDataCurator < handle
                 end
                 hold(obj.handles.diaryPlotAxes, 'on');
                 inDataSetInd = ismember(obj.dataSet, obj.epochsInDataSets);
-                
 
-                
                 obj.handles.diaryPlotLine = plot(obj.handles.diaryPlotAxes, xvals(~inDataSetInd), valInd(~inDataSetInd), 'bo');
                 obj.handles.diaryPlotLine = plot(obj.handles.diaryPlotAxes, xvals(inDataSetInd), valInd(inDataSetInd), 'go', 'MarkerFaceColor', 'g');
 
-                plot(obj.handles.diaryPlotAxes, xvals(obj.selectedEpochInd), valInd(obj.selectedEpochInd), 'bo', ...
-                    'MarkerFaceColor', 'r');
-                set(obj.handles.diaryPlotAxes, 'Ytick', unique(valInd), ...
-                    'YtickLabel', uniqueVals);
-                
+                plot(obj.handles.diaryPlotAxes, xvals(obj.selectedEpochInd), valInd(obj.selectedEpochInd), 'bo', 'MarkerFaceColor', 'r');
+                set(obj.handles.diaryPlotAxes, 'Ytick', unique(valInd), 'YtickLabel', uniqueVals);
                 set(obj.handles.diaryPlotAxes, 'Ylim', [0 max(valInd)+1]);
                 %text labels here
             end
@@ -379,7 +376,6 @@ classdef CellDataCurator < handle
                 xlabel('Epoch Time (sec)');
             end  
             hold(obj.handles.diaryPlotAxes, 'off');
-            
             
             set(obj.handles.diaryPlotAxes, 'ButtonDownFcn', @(uiobj,evt)obj.diaryPlotClick);
         end
