@@ -188,7 +188,7 @@ classdef SpikeDetectorGUI < handle
         
         function updateAllSpikeTimes(obj)           
             for index = obj.epochIndicesList
-                set(obj.fig, 'Name', sprintf('Detecting spikes: epoch %g', obj.epochIndicesList(epoch)));
+%                 set(obj.fig, 'Name', sprintf('Detecting spikes: epoch %g', obj.epochIndicesList(index)));
                 drawnow;
                 obj.detectSpikes(index);
             end
@@ -201,13 +201,12 @@ classdef SpikeDetectorGUI < handle
         end
 
         function updateFutureSpikeTimes(obj)
-            for i=1:length(obj.epochIndicesList)
+            for index=1:length(obj.epochIndicesList)
                 
-                if i < obj.curEpochListIndex
+                if index < obj.curEpochListIndex
                     continue
                 end
-                
-                set(obj.fig, 'Name', sprintf('Detecting spikes: epoch %g', obj.epochIndicesList(epoch)));
+%                 set(obj.fig, 'Name', sprintf('Detecting spikes: epoch %g', obj.epochIndicesList(index)));
                 drawnow;
                 obj.detectSpikes(index);
             end
