@@ -74,16 +74,16 @@ classdef ColorResponseAnalysis < AnalysisTree
             ColorResponseAnalysis.plot_ramp(tree, cellData, {'spikeCount_afterStim'});
         end
         
-        function plot_ramp_Spikes(tree, cellData)
+        function plot0_ramp_Spikes(tree, cellData)
             ColorResponseAnalysis.plot_ramp(tree, cellData, {'spikeCount_stimInterval', 'spikeCount_afterStim'});
         end        
         
         function plot_ramp_ONSET_peak(tree, cellData)
-            ColorResponseAnalysis.plot_ramp(tree, cellData, 'ONSET_avgTracePeak');
+            ColorResponseAnalysis.plot_ramp(tree, cellData, {'ONSET_avgTracePeak'});
         end
         
         function plot_ramp_stimInterval_charge(tree, cellData)
-            ColorResponseAnalysis.plot_ramp(tree, cellData, 'stimInterval_charge');
+            ColorResponseAnalysis.plot_ramp(tree, cellData, {'stimInterval_charge'});
         end
         
         
@@ -147,9 +147,11 @@ classdef ColorResponseAnalysis < AnalysisTree
                     for ri = 1:length(rampnodes)
                         datanode = tree.get(rampnodes(ri));
                         contrastepoch = cellData.epochs(datanode.epochID(1));
-                        contrast = contrastepoch.get('contrast');
-                        intensity = contrastepoch.get('intensity');
-                        colorData.intensity(end+1) = ((datanode.splitValue - intensity) / intensity) / contrast;
+                        fixedContrast = contrastepoch.get('contrast');
+                        baseIntensity = contrastepoch.get('baseColor');
+                        baseIntensity = baseIntensity(2);
+                        varyingContrast = datanode.splitValue;
+                        colorData.intensity(end+1) = ((varyingContrast - baseIntensity) / baseIntensity) / fixedContrast;
                         colorData.response(end+1) = datanode.(variableName).mean;
                         colorData.responseSem(end+1) = datanode.(variableName).SEM;
                     end
