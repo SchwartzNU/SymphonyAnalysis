@@ -32,13 +32,15 @@ function rootData = AddCosFit(rootData)
         %Hack Adam 3/6/17
         for J = 1:5
             rootData.spikeCount_stimInterval_grndBlSubt.(['beta',num2str(J)]) = beta(J);
+            %Hack to also save them as scalars in analysis node
+            rootData.(['beta',num2str(J)]) = beta(J);
         end;
         %fit quality
         rootData.spikeCount_stimInterval_grndBlSubt.fitMSE = sqrt(MSE);
         rootData.spikeCount_stimInterval_grndBlSubt.fitMSEoverA0 = sqrt(MSE)./beta(1);
-        %rootData.spikeCount_stimInterval_grndBlSubt.fitR2 = sqrt(mean(R.^2))./beta(1);
-        %rootData.spikeCount_stimInterval_grndBlSubt.fitR1 = mean(abs(R))./beta(1);
-        %rootData.spikeCount_stimInterval_grndBlSubt.fitR2abs = sqrt(mean(R.^2));
+        %Hack to also save them as scalars in analysis node
+        rootData.fitMSE = sqrt(MSE);
+        rootData.fitMSEoverA0 = sqrt(MSE)./beta(1);
     end
 
     function y = TwoCos(beta,x)
