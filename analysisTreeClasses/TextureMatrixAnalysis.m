@@ -21,7 +21,7 @@ classdef TextureMatrixAnalysis < AnalysisTree
             obj = obj.copyAnalysisParams(params);
             dataSet = cellData.savedDataSets(dataSetName);
             obj = obj.copyParamsFromSampleEpoch(cellData, dataSet, ...
-                {'RstarMean', params.ampModeParam});
+                {'RstarMean', 'maskSize', params.ampModeParam});
             acrossSeedTree = obj.buildCellTree(1, cellData, dataSet, {'pixelBlur', 'randSeed'});
             acrossBlurTree = obj.buildCellTree(1, cellData, dataSet, {'randSeed', 'pixelBlur'});
             
