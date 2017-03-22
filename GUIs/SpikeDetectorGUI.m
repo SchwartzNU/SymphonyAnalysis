@@ -149,7 +149,33 @@ classdef SpikeDetectorGUI < handle
                 obj.threshold = str2double(get(obj.handles.thresholdEdit, 'String'));
                 
                 if strcmp(obj.mode, 'Simple threshold')
-                    st = getThresCross(response, obj.threshold,sign(obj.threshold));
+                    st = getThresCross(response, obj.threshold, sign(obj.threshold));
+                    
+                    % refine spike locations to tips
+                    if obj.threshold < 0
+                        for si = 1:length(st)
+                            sp = st(si);
+                            while response(sp) > response(sp+1)
+                                sp = sp+1;
+                            end
+                            while response(sp) > response(sp-1)
+                                sp = sp-1;
+                            end
+                            st(si) = sp;
+                        end
+                    else
+                        for si = 1:length(st)
+                            sp = st(si);
+                            while response(sp) < response(sp+1)
+                                sp = sp+1;
+                            end
+                            while response(sp) < response(sp-1)
+                                sp = sp-1;
+                            end
+                            st(si) = sp;
+                        end
+                    end
+                    
 %                 elseif strcmp(obj.mode, 'advanced')
 %                     disp('not quite yet')
                 elseif strcmp(epoch.get('ampMode'), 'Cell attached')
