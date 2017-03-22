@@ -411,7 +411,7 @@ classdef SpikeDetectorGUI < handle
             plot(obj.handles.primaryAxes, t(obj.spikeTimes), obj.data(obj.spikeTimes), 'ro', 'MarkerSize', 10, 'linewidth', 2);
             if strcmp(obj.mode, 'Simple threshold')
                 xax = xlim(obj.handles.primaryAxes);
-                line(obj.handles.primaryAxes, xax, [1,1]*obj.threshold, 'LineStyle', '--');
+                line(xax, [1,1]*obj.threshold, 'LineStyle', '--', 'Parent', obj.handles.secondaryAxes);
             end
             title(obj.handles.primaryAxes, 'Raw data');
             hold(obj.handles.primaryAxes, 'off');
@@ -422,11 +422,11 @@ classdef SpikeDetectorGUI < handle
             plot(obj.handles.secondaryAxes, t(obj.spikeTimes), obj.filteredData(obj.spikeTimes), 'ro', 'MarkerSize', 10, 'linewidth', 2);
             xax = xlim(obj.handles.secondaryAxes);
             
-            line(obj.handles.secondaryAxes, xax, 1*[1,1]*obj.noiseLevel, 'LineStyle', '-', 'Color', 'r');
-            line(obj.handles.secondaryAxes, xax, -1*[1,1]*obj.noiseLevel, 'LineStyle', '-', 'Color', 'r');
+            line(xax, 1*[1,1]*obj.noiseLevel, 'LineStyle', '-', 'Color', 'r', 'Parent', obj.handles.secondaryAxes);
+            line(xax, -1*[1,1]*obj.noiseLevel, 'LineStyle', '-', 'Color', 'r', 'Parent', obj.handles.secondaryAxes);
             if strcmp(obj.mode, 'advanced')
-                line(obj.handles.secondaryAxes, xax, obj.threshold*[1,1]*obj.noiseLevel, 'LineStyle', '--', 'Color', 'r');
-%                 line(obj.handles.secondaryAxes, xax, -5*[1,1]*obj.noiseLevel, 'LineStyle', '--', 'Color', 'r');
+                line(xax, obj.threshold*[1,1]*obj.noiseLevel, 'LineStyle', '--', 'Color', 'r', 'Parent', obj.handles.secondaryAxes);
+%                 line(xax, -5*[1,1]*obj.noiseLevel, 'LineStyle', '--', 'Color', 'r', 'Parent', obj.handles.secondaryAxes);
             end
 %             legend(obj.handles.secondaryAxes, 'test', 'Location', 'Best')
             hold(obj.handles.secondaryAxes, 'off');
