@@ -12,7 +12,9 @@ classdef SpikeDetectorGUI < handle
         sampleRate
         streamName
         epochsInDataSets
-        dataFilter
+        spikeFilter
+        filteredData
+        noiseLevel
     end
     
     methods
@@ -23,13 +25,14 @@ classdef SpikeDetectorGUI < handle
                 obj.streamName = streamName;
             end
 
-%             if obj.sampleRate ~= 10000
-%                 sr = obj.sampleRate;
-%             else
-%                 sr = 10000;
-%             end
-%             obj.dataFilter = designfilt('bandpassiir', 'StopbandFrequency1', 100, 'PassbandFrequency1', 200, 'PassbandFrequency2', 3000, 'StopbandFrequency2', 3500, 'StopbandAttenuation1', 60, 'PassbandRipple', 1, 'StopbandAttenuation2', 60, 'SampleRate', sr);          
             
+            % to generate the spike filter, do:
+%             spikeFilter = designfilt('bandpassiir', 'StopbandFrequency1', 200, 'PassbandFrequency1', 300, 'PassbandFrequency2', 3000, 'StopbandFrequency2', 3500, 'StopbandAttenuation1', 60, 'PassbandRipple', 1, 'StopbandAttenuation2', 60, 'SampleRate', 10000);
+%             save('SymphonyAnalysis/utilities/spikeFilter.mat', 'spikeFilter')
+
+            sf = load('utilities/spikeFilter.mat');
+            obj.spikeFilter = sf.spikeFilter;
+
             obj.cellData = cellData;
 %             obj.epochIndicesList = epochIndicesList; % don't even use it if we're just overwriting it
             obj.mode = params.spikeDetectorMode;
@@ -37,6 +40,9 @@ classdef SpikeDetectorGUI < handle
             obj.curEpochListIndex = 1;
             obj.initializeEpochsInDataSetsList();
             obj.epochIndicesList = sort(unique(obj.epochsInDataSets));
+            if isempty(obj.epochIndicesList)
+                error('No data set epochs found, may need curation');
+            end
             
             obj.buildUI();
             
@@ -75,7 +81,7 @@ classdef SpikeDetectorGUI < handle
                 'String', 'Spike detector mode');
             obj.handles.detectorModeMenu = uicontrol('Parent', L_info, ...
                 'Style', 'popupmenu', ...
-                'String', {'Standard deviations above noise', 'Simple threshold'});
+                'String', {'Standard deviations above noise', 'Simple threshold', 'advanced'});
             if strcmp(obj.mode, 'Stdev')
                 set(obj.handles.detectorModeMenu, 'value', 1);
             else
@@ -89,8 +95,8 @@ classdef SpikeDetectorGUI < handle
                 'String', num2str(obj.threshold), ...
                 'Callback', @(uiobj, evt)obj.updateSpikeTimes());
             obj.handles.reDetectButton = uicontrol('Parent', L_info, ...
-                'Style', 'pushbutton', ...
-                'String', 'Re-detect spikes', ...
+                'Style', 'pushbutton', 'FontWeight', 'bold', 'FontSize', 14, ...
+                'String', 'Detect spikes', ...
                 'Callback', @(uiobj, evt)obj.updateSpikeTimes());
             obj.handles.clearSpikesButton = uicontrol('Parent', L_info, ...
                 'Style', 'pushbutton', ...
@@ -102,12 +108,15 @@ classdef SpikeDetectorGUI < handle
                 'Callback', @(uiobj, evt)obj.clickThreshold());            
             obj.handles.selectValidSpikesButton = uicontrol('Parent', L_info, ...
                 'Style', 'pushbutton', ...
-                'String', 'Select region', ...
+                'String', 'Select valid region', ...
                 'Callback', @(uiobj, evt)obj.selectValidSpikes());
             
             L_plotAndButtons = uiextras.HBox('Parent', L_main);
-            obj.handles.ax = axes('Parent', L_plotAndButtons, ...
+            L_plotBox = uiextras.VBox('Parent', L_plotAndButtons);
+            obj.handles.primaryAxes = axes('Parent', L_plotBox, ...
                 'ButtonDownFcn', @axisZoomCallback);
+            obj.handles.secondaryAxes = axes('Parent', L_plotBox);
+%             L_plotBox.Heights = [-1, -1];
             
             sideButtonBlock = uiextras.VBox('Parent', L_plotAndButtons);
             obj.handles.applyToAllButton = uicontrol('Parent', sideButtonBlock, ...
@@ -176,8 +185,40 @@ classdef SpikeDetectorGUI < handle
                         end
                     end
                     
-%                 elseif strcmp(obj.mode, 'advanced')
-%                     disp('not quite yet')
+                elseif strcmp(obj.mode, 'advanced')
+                    [fresponse, noise] = obj.filterResponse(response);
+                    st = getThresCross(fresponse, noise * obj.threshold, sign(obj.threshold));
+                    % clear edges that occur due to filtering
+                    st(st > length(fresponse)-100) = [];
+                    st(st < 100) = [];
+                    
+                    % refine spike locations to tips
+                    if obj.threshold < 0
+                        for si = 1:length(st)
+                            sp = st(si);
+                            
+                            while response(sp) > response(sp+1)
+                                sp = sp+1;
+                            end
+                            while response(sp) > response(sp-1)
+                                sp = sp-1;
+                            end
+                            st(si) = sp;
+                        end
+                    else
+                        for si = 1:length(st)
+                            sp = st(si);
+                            while response(sp) < response(sp+1)
+                                sp = sp+1;
+                            end
+                            while response(sp) < response(sp-1)
+                                sp = sp-1;
+                            end
+                            st(si) = sp;
+                        end
+                    end
+                    
+                    
                 elseif strcmp(epoch.get('ampMode'), 'Cell attached')
                     spikeResults = SpikeDetector_simple(response, 1./obj.sampleRate, obj.threshold);
                     st = spikeResults.sp;
@@ -260,6 +301,7 @@ classdef SpikeDetectorGUI < handle
             obj.data = epoch.getData(obj.streamName);
             obj.data = obj.data - mean(obj.data);
             obj.data = obj.data';
+            [obj.filteredData, obj.noiseLevel] = obj.filterResponse(obj.data);
             
             %load spike times if they are present
             if strcmp(obj.streamName, 'Amplifier_Ch1')
@@ -300,15 +342,18 @@ classdef SpikeDetectorGUI < handle
         
         function clickThreshold(obj)
             [~,y] = ginput(1);
+            if strcmp(obj.mode, 'advanced')
+                y = y / obj.noiseLevel;
+            end
             obj.threshold = y;
-            obj.mode = 'Simple threshold';
+%             obj.mode = 'Simple threshold';
             set(obj.handles.thresholdEdit, 'String', num2str(obj.threshold, 2));
-            set(obj.handles.detectorModeMenu, 'Value', 2);
+%             set(obj.handles.detectorModeMenu, 'Value', 2);
             obj.updateSpikeTimes()
         end
         
         function selectValidSpikes(obj)
-            selection = getrect(obj.handles.ax);
+            selection = getrect(obj.handles.primaryAxes);
             times = obj.spikeTimes / obj.sampleRate;
             amps = obj.data(obj.spikeTimes);
 
@@ -355,18 +400,44 @@ classdef SpikeDetectorGUI < handle
         
         function updateUI(obj)
             t = (0:length(obj.data)-1) / obj.sampleRate;
-            plot(obj.handles.ax, t, obj.data, 'k');
-            hold(obj.handles.ax, 'on');
-            plot(obj.handles.ax, t(obj.spikeTimes), obj.data(obj.spikeTimes), 'ro', 'MarkerSize', 10, 'linewidth', 2);
+            plot(obj.handles.primaryAxes, t, obj.data, 'k');
+            hold(obj.handles.primaryAxes, 'on');
+            plot(obj.handles.primaryAxes, t(obj.spikeTimes), obj.data(obj.spikeTimes), 'ro', 'MarkerSize', 10, 'linewidth', 2);
             if strcmp(obj.mode, 'Simple threshold')
-                xax = xlim();
-                line(xax, [1,1]*obj.threshold, 'LineStyle', '--');
+                xax = xlim(obj.handles.primaryAxes);
+                line(obj.handles.primaryAxes, xax, [1,1]*obj.threshold, 'LineStyle', '--');
             end
-            hold(obj.handles.ax, 'off');
-            xlim(obj.handles.ax, [min(t), max(t)]);
+            title(obj.handles.primaryAxes, 'Raw data');
+            hold(obj.handles.primaryAxes, 'off');
+            xlim(obj.handles.primaryAxes, [min(t), max(t)]);
+            
+            plot(obj.handles.secondaryAxes, t, obj.filteredData, 'k');
+            hold(obj.handles.secondaryAxes, 'on');
+            plot(obj.handles.secondaryAxes, t(obj.spikeTimes), obj.filteredData(obj.spikeTimes), 'ro', 'MarkerSize', 10, 'linewidth', 2);
+            xax = xlim(obj.handles.secondaryAxes);
+            
+            line(obj.handles.secondaryAxes, xax, 1*[1,1]*obj.noiseLevel, 'LineStyle', '-', 'Color', 'r');
+            line(obj.handles.secondaryAxes, xax, -1*[1,1]*obj.noiseLevel, 'LineStyle', '-', 'Color', 'r');
+            if strcmp(obj.mode, 'advanced')
+                line(obj.handles.secondaryAxes, xax, obj.threshold*[1,1]*obj.noiseLevel, 'LineStyle', '--', 'Color', 'r');
+%                 line(obj.handles.secondaryAxes, xax, -5*[1,1]*obj.noiseLevel, 'LineStyle', '--', 'Color', 'r');
+            end
+%             legend(obj.handles.secondaryAxes, 'test', 'Location', 'Best')
+            hold(obj.handles.secondaryAxes, 'off');
+            title(obj.handles.secondaryAxes, 'Filtered version for advanced detector');
+            xlim(obj.handles.secondaryAxes, [min(t), max(t)]);
+            
             displayName = obj.cellData.epochs(obj.epochIndicesList(obj.curEpochListIndex)).get('displayName');
             set(obj.fig, 'Name',['Spike Detector: Epoch ' num2str(obj.epochIndicesList(obj.curEpochListIndex)) ' (' displayName '): ' num2str(length(obj.spikeTimes)) ' spikes']);
             drawnow
+        end
+        
+        function [fdata, noise] = filterResponse(obj, fdata)
+            fdata = [zeros(1,1000), fdata, zeros(1,1000)];
+            fdata = filtfilt(obj.spikeFilter, fdata);
+            fdata = fdata(1001:(end-1000));
+%             noise = std(fdata);
+            noise = median(abs(fdata) / 0.6745);
         end
         
         function keyHandler(obj, evt)
