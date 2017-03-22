@@ -348,9 +348,18 @@ classdef SpikeDetectorGUI < handle
         
         function clickThreshold(obj)
             [~,y] = ginput(1);
-            if strcmp(obj.mode, 'advanced')
+            ax = gca();
+            if(ax == obj.handles.primaryAxes)
+                obj.mode = 'Simple threshold';
+                set(obj.handles.detectorModeMenu, 'Value', 2);
+            elseif(ax == obj.handles.secondaryAxes)
+                obj.mode = 'advanced';
+                set(obj.handles.detectorModeMenu, 'Value', 3);
                 y = y / obj.noiseLevel;
+            else
+                return
             end
+                
             obj.threshold = y;
 %             obj.mode = 'Simple threshold';
             set(obj.handles.thresholdEdit, 'String', num2str(obj.threshold, 2));
@@ -411,7 +420,7 @@ classdef SpikeDetectorGUI < handle
             plot(obj.handles.primaryAxes, t(obj.spikeTimes), obj.data(obj.spikeTimes), 'ro', 'MarkerSize', 10, 'linewidth', 2);
             if strcmp(obj.mode, 'Simple threshold')
                 xax = xlim(obj.handles.primaryAxes);
-                line(xax, [1,1]*obj.threshold, 'LineStyle', '--', 'Parent', obj.handles.secondaryAxes);
+                line(xax, [1,1]*obj.threshold, 'LineStyle', '-', 'Color', 'g', 'Parent', obj.handles.primaryAxes);
             end
             title(obj.handles.primaryAxes, 'Raw data');
             hold(obj.handles.primaryAxes, 'off');
@@ -425,7 +434,7 @@ classdef SpikeDetectorGUI < handle
             line(xax, 1*[1,1]*obj.noiseLevel, 'LineStyle', '-', 'Color', 'r', 'Parent', obj.handles.secondaryAxes);
             line(xax, -1*[1,1]*obj.noiseLevel, 'LineStyle', '-', 'Color', 'r', 'Parent', obj.handles.secondaryAxes);
             if strcmp(obj.mode, 'advanced')
-                line(xax, obj.threshold*[1,1]*obj.noiseLevel, 'LineStyle', '--', 'Color', 'r', 'Parent', obj.handles.secondaryAxes);
+                line(xax, obj.threshold*[1,1]*obj.noiseLevel, 'LineStyle', '-', 'Color', 'g', 'Parent', obj.handles.secondaryAxes);
 %                 line(xax, -5*[1,1]*obj.noiseLevel, 'LineStyle', '--', 'Color', 'r', 'Parent', obj.handles.secondaryAxes);
             end
 %             legend(obj.handles.secondaryAxes, 'test', 'Location', 'Best')
