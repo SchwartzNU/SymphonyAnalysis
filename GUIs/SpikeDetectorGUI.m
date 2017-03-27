@@ -208,7 +208,9 @@ classdef SpikeDetectorGUI < handle
                     if obj.threshold < 0
                         for si = 1:length(st)
                             sp = st(si);
-                            
+                            if sp < 100 || sp > length(response) - 100
+                                continue
+                            end
                             while response(sp) > response(sp+1)
                                 sp = sp+1;
                             end
@@ -220,6 +222,9 @@ classdef SpikeDetectorGUI < handle
                     else
                         for si = 1:length(st)
                             sp = st(si);
+                            if sp < 100 || sp > length(response) - 100
+                                continue
+                            end                             
                             while response(sp) < response(sp+1)
                                 sp = sp+1;
                             end
