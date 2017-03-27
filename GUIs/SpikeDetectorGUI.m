@@ -56,8 +56,8 @@ classdef SpikeDetectorGUI < handle
             obj.fig = figure( ...
                 'Name',         ['Spike Detector: Epoch ' num2str(obj.epochIndicesList(obj.curEpochListIndex))], ...
                 'NumberTitle',  'off', ...
-                'ToolBar',      'none',...
-                'Menubar',      'none', ...
+                'Menubar',      'none', ...                         
+                'ToolBar',      'figure',...
                 'Position', [0 0.4*bounds(4), 1000, 500], ...
                 'KeyPressFcn',@(uiobj,evt)obj.keyHandler(evt));
             
@@ -203,9 +203,6 @@ classdef SpikeDetectorGUI < handle
                 elseif strcmp(obj.mode, 'advanced')
                     [fresponse, noise] = obj.filterResponse(response);
                     st = getThresCross(fresponse, noise * obj.threshold, sign(obj.threshold));
-                    % clear edges that occur due to filtering
-                    st(st > length(fresponse)-100) = [];
-                    st(st < 100) = [];
                     
                     % refine spike locations to tips
                     if obj.threshold < 0
@@ -404,6 +401,8 @@ classdef SpikeDetectorGUI < handle
         function saveNow(obj)
             saveAndSyncCellData(obj.cellData);
             disp('Saved');
+            set(obj.fig, 'Name','Saved');
+            drawnow
         end
         
         function skipBackward10(obj)
@@ -444,7 +443,6 @@ classdef SpikeDetectorGUI < handle
             line(xax, -1*[1,1]*obj.noiseLevel, 'LineStyle', '--', 'Color', 'r', 'Parent', obj.handles.secondaryAxes);
             if strcmp(obj.mode, 'advanced')
                 line(xax, obj.threshold*[1,1]*obj.noiseLevel, 'LineStyle', '-', 'Color', 'g', 'Parent', obj.handles.secondaryAxes);
-%                 line(xax, -5*[1,1]*obj.noiseLevel, 'LineStyle', '--', 'Color', 'r', 'Parent', obj.handles.secondaryAxes);
             end
 %             legend(obj.handles.secondaryAxes, 'test', 'Location', 'Best')
             hold(obj.handles.secondaryAxes, 'off');
@@ -457,9 +455,9 @@ classdef SpikeDetectorGUI < handle
         end
         
         function [fdata, noise] = filterResponse(obj, fdata)
-            fdata = [zeros(1,1000), fdata, zeros(1,1000)];
+            fdata = [fdata(1) + zeros(1,2000), fdata, fdata(end) + zeros(1,2000)];
             fdata = filtfilt(obj.spikeFilter, fdata);
-            fdata = fdata(1001:(end-1000));
+            fdata = fdata(2001:(end-2000));
 %             noise = std(fdata);
             noise = median(abs(fdata) / 0.6745);
         end
