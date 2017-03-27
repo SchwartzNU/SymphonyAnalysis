@@ -1,10 +1,10 @@
-classdef ColorResponseAnalysis < AnalysisTree
+classdef ColorIsoResponseAnalysis < AnalysisTree
     properties
         
     end
     
     methods
-        function obj = ColorResponseAnalysis(cellData, dataSetName, params)
+        function obj = ColorIsoResponseAnalysis(cellData, dataSetName, params)
             if nargin < 3
                 params.deviceName = 'Amplifier_Ch1';
             end
@@ -14,13 +14,13 @@ classdef ColorResponseAnalysis < AnalysisTree
                 params.ampModeParam = 'amp2Mode';
             end
             
-            nameStr = [cellData.savedFileName ': ' dataSetName ': ColorResponseAnalysis'];
+            nameStr = [cellData.savedFileName ': ' dataSetName ': ColorIsoResponseAnalysis'];
             obj = obj.setName(nameStr);
             dataSet = cellData.savedDataSets(dataSetName);
             obj = obj.copyAnalysisParams(params);
             obj = obj.copyParamsFromSampleEpoch(cellData, dataSet, ...
                 {'RstarMean', params.ampModeParam});
-            obj = obj.buildCellTree(1, cellData, dataSet, {'colorChangeMode', 'colorPattern2', 'intensity2'});
+            obj = obj.buildCellTree(1, cellData, dataSet, {'displayName'});
         end
         
         function obj = doAnalysis(obj, cellData)
@@ -47,80 +47,15 @@ classdef ColorResponseAnalysis < AnalysisTree
                 obj = obj.set(leafIDs(i), curNode);
             end
             
-            obj = obj.percolateUp(leafIDs, ...
-                'splitValue', 'contrast', 'sortColors');
-                            
-            [byEpochParamList, singleValParamList, collectedParamList] = getParameterListsByType(curNode);
-            obj = obj.percolateUp(leafIDs, byEpochParamList, byEpochParamList);
-            obj = obj.percolateUp(leafIDs, singleValParamList, singleValParamList);
-            obj = obj.percolateUp(leafIDs, collectedParamList, collectedParamList);
-                        
-            rootData = obj.get(1);
-            rootData.byEpochParamList = byEpochParamList;
-            rootData.singleValParamList = singleValParamList;
-            rootData.collectedParamList = collectedParamList;
-            rootData.stimParameterList = {'baseColor'};
-            obj = obj.set(1, rootData);
         end
     end
     
     methods(Static)
-              
-        function plot_ramp_ONSETspikes(tree, cellData)
-            ColorResponseAnalysis.plot_ramp(tree, cellData, {'spikeCount_stimInterval'});
-        end
 
-        function plot_ramp_OFFSETspikes(tree, cellData)
-            ColorResponseAnalysis.plot_ramp(tree, cellData, {'spikeCount_afterStim'});
-        end
-        
         function plot0_ramp_Spikes(tree, cellData)
             ColorResponseAnalysis.plot_ramp(tree, cellData, {'spikeCount_stimInterval', 'spikeCount_afterStim'});
-        end        
-        
-        function plot_ramp_ONSET_peak(tree, cellData)
-            ColorResponseAnalysis.plot_ramp(tree, cellData, {'ONSET_avgTracePeak'});
         end
         
-        function plot_ramp_stimInterval_charge(tree, cellData)
-            ColorResponseAnalysis.plot_ramp(tree, cellData, {'stimInterval_charge'});
-        end
-        
-        
-%         function plot_swap_ONSETspikes(tree, cellData)
-%             ColorResponseAnalysis.plot_swap(tree, cellData, 'ONSETspikes');
-%         end
-% 
-%         function plot_swap_OFFSETspikes(tree, cellData)
-%             ColorResponseAnalysis.plot_swap(tree, cellData, 'OFFSETspikes');
-%         end
-                
-       
-%         function plot_swap(tree, cellData, variableName)
-%             warning('this doesnt work yet')
-%             colorNodeIds = tree.getchildren(1);
-%             data = {};
-%             colornode = 1;
-%             colorData = struct();
-%             colorData.intensity = [];
-%             colorData.response = [];
-%             currentStepColorNode = tree.get(colorNodeIds(colornode));
-%             colors{colornode} = currentStepColorNode.splitValue;
-%             rampnodes = tree.getchildren(colorNodeIds(colornode));
-% 
-%             % get contrast from sample epoch
-% 
-%             for ri = 1:length(rampnodes)
-%                 datanode = tree.get(rampnodes(ri));
-%                 contrastepoch = cellData.epochs(datanode.epochID(1));
-%                 contrast = contrastepoch.get('contrast');
-%                 intensity = contrastepoch.get('intensity');
-%                 colorData.intensity(end+1) = ((datanode.splitValue - intensity) / intensity) / contrast;
-%                 colorData.response(end+1) = datanode.(variableName);
-%             end
-%             data{colornode} = colorData;
-%             
-%         end
             
         function plot_ramp(tree, cellData, variables)
             legends = {};
