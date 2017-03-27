@@ -352,6 +352,13 @@ classdef CellDataCurator < handle
                 set(obj.handles.diaryPlotAxes, 'YtickMode', 'auto', 'YtickLabelMode', 'auto');
                 set(obj.handles.diaryPlotAxes, 'Ylim', [min(displayVals) - .1 * range(displayVals) - .1, max(displayVals) + .1 * range(displayVals) + .1]);
             else
+                % remove nans
+                for i = 1:length(displayVals)
+                    if isnan(displayVals{i})
+                        displayVals{i} = '-unset-';
+                    end
+                end
+                
                 uniqueVals = unique(displayVals);
                 valInd = zeros(1,length(displayVals));
                 for i=1:length(uniqueVals)
