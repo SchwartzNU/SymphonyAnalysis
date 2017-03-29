@@ -50,6 +50,18 @@ classdef EpochData < handle
                     set(startLine, 'Parent', ax);
                     set(endLine, 'Parent', ax);
                 end
+
+                if strcmp(streamName, 'Amplifier_Ch1')
+                    spikesField = 'spikes_ch1';
+                else
+                    spikesField = 'spikes_ch2';
+                end
+                spikeTimes = obj.get(spikesField);
+                if ~isnan(spikeTimes)
+                    [data, xvals] = obj.getData(streamName);
+                    plot(ax, xvals(spikeTimes), data(spikeTimes), 'rx');
+                end                
+                
                 xlabel(ax, 'Time (s)');
                 ylabel(ax, units);
                 hold(ax, 'off');
