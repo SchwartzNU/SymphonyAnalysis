@@ -167,12 +167,12 @@ classdef SpikeDetectorGUI < handle
                 obj.threshold = str2double(get(obj.handles.thresholdEdit, 'String'));
                 
                 if strcmp(obj.mode, 'Simple threshold')
-                    st = getThresCross(response, obj.threshold, sign(obj.threshold));
+                    spikeIndices = getThresCross(response, obj.threshold, sign(obj.threshold));
                     
                     % refine spike locations to tips
                     if obj.threshold < 0
-                        for si = 1:length(st)
-                            sp = st(si);
+                        for si = 1:length(spikeIndices)
+                            sp = spikeIndices(si);
                             if sp < 100 || sp > length(response) - 100
                                 continue
                             end
@@ -182,11 +182,11 @@ classdef SpikeDetectorGUI < handle
                             while response(sp) > response(sp-1)
                                 sp = sp-1;
                             end
-                            st(si) = sp;
+                            spikeIndices(si) = sp;
                         end
                     else
-                        for si = 1:length(st)
-                            sp = st(si);
+                        for si = 1:length(spikeIndices)
+                            sp = spikeIndices(si);
                             if sp < 100 || sp > length(response) - 100
                                 continue
                             end                            
@@ -196,18 +196,18 @@ classdef SpikeDetectorGUI < handle
                             while response(sp) < response(sp-1)
                                 sp = sp-1;
                             end
-                            st(si) = sp;
+                            spikeIndices(si) = sp;
                         end
                     end
                     
                 elseif strcmp(obj.mode, 'advanced')
                     [fresponse, noise] = obj.filterResponse(response);
-                    st = getThresCross(fresponse, noise * obj.threshold, sign(obj.threshold));
+                    spikeIndices = getThresCross(fresponse, noise * obj.threshold, sign(obj.threshold));
                     
                     % refine spike locations to tips
                     if obj.threshold < 0
-                        for si = 1:length(st)
-                            sp = st(si);
+                        for si = 1:length(spikeIndices)
+                            sp = spikeIndices(si);
                             if sp < 100 || sp > length(response) - 100
                                 continue
                             end
@@ -217,11 +217,11 @@ classdef SpikeDetectorGUI < handle
                             while response(sp) > response(sp-1)
                                 sp = sp-1;
                             end
-                            st(si) = sp;
+                            spikeIndices(si) = sp;
                         end
                     else
-                        for si = 1:length(st)
-                            sp = st(si);
+                        for si = 1:length(spikeIndices)
+                            sp = spikeIndices(si);
                             if sp < 100 || sp > length(response) - 100
                                 continue
                             end                             
@@ -231,31 +231,30 @@ classdef SpikeDetectorGUI < handle
                             while response(sp) < response(sp-1)
                                 sp = sp-1;
                             end
-                            st(si) = sp;
+                            spikeIndices(si) = sp;
                         end
                     end
                     
-                    
                 elseif strcmp(epoch.get('ampMode'), 'Cell attached')
                     spikeResults = SpikeDetector_simple(response, 1./obj.sampleRate, obj.threshold);
-                    st = spikeResults.sp;
+                    spikeIndices = spikeResults.sp;
                 else %different spike dtector for Iclamp data
                     spikeResults = SpikeDetector_simple_Iclamp(response, 1./obj.sampleRate, obj.threshold);
-                    st = spikeResults.sp;
+                    spikeIndices = spikeResults.sp;
                 end
                 
                 %remove double-counted spikes
-                if  length(st) >= 2
-                    ISItest = diff(st);
-                    st = st([(ISItest > 0.001) true]);
+                if length(spikeIndices) >= 2
+                    ISItest = diff(spikeIndices);
+                    spikeIndices = spikeIndices([(ISItest > (0.001 * obj.sampleRate)) true]);
                 end
 
             else
-                st = [];
+                spikeIndices = [];
             end
             
             if index == obj.curEpochListIndex
-                obj.spikeTimes = st; % for plotting now
+                obj.spikeTimes = spikeIndices; % for plotting now
             end
 
             % save spikes in the epoch
@@ -265,7 +264,7 @@ classdef SpikeDetectorGUI < handle
                 channel = 'spikes_ch2';
             end
 
-            epoch.attributes(channel) = st;
+            epoch.attributes(channel) = spikeIndices;
 
         end
         
