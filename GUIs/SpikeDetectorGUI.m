@@ -463,9 +463,9 @@ classdef SpikeDetectorGUI < handle
             fdata = [fdata(1) + zeros(1,2000), fdata, fdata(end) + zeros(1,2000)];
             fdata = filtfilt(obj.spikeFilter, fdata);
             fdata = fdata(2001:(end-2000));
-%             noise = std(fdata);
             noise = median(abs(fdata) / 0.6745);
         end
+        
         
         function keyHandler(obj, evt)
             switch evt.Key

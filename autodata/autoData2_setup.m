@@ -93,7 +93,7 @@ for fi = 1:length(filterFileNames)
         independent = [];
         
         if ci == 1 && treeVariableModes(fi) == 0 % pull off the first column to use as the independent
-            ctype = 'dataset';
+            ctype = 'vector';
         else
         
             switch treeVariableModes(fi)
