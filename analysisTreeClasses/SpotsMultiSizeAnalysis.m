@@ -148,15 +148,17 @@ classdef SpotsMultiSizeAnalysis < AnalysisTree
             rootData = obj.get(1);
             % Adam 2/25/17
             
-            rootData = addWidthScalars(rootData, 'spotSize', {'spikeCount_stimInterval_grndBlSubt'});
-            rootData = addWidthScalars(rootData, 'spotSize',{'spikeCount_stimInterval_grndBlSubt'}, 'fixedVal',1200);
-            rootData = addWidthScalars(rootData, 'spotSize',{'spikeCount_stimInterval_grndBlSubt'}, 'fixedVal',600);
-            supression1200 = 1-(rootData.spikeCount_stimInterval_grndBlSubt_spotSizeFixed1200/...
-                rootData.spikeCount_stimInterval_grndBlSubt_spotSizeByMax);
-            rootData.spikeCount_stimInterval_grndBlSubt_SMSsupression1200 = supression1200;
-            supression600 = 1-(rootData.spikeCount_stimInterval_grndBlSubt_spotSizeFixed600/...
-                rootData.spikeCount_stimInterval_grndBlSubt_spotSizeByMax);
-            rootData.spikeCount_stimInterval_grndBlSubt_SMSsupression600 = supression600;
+            if strcmp(rootData.(rootData.ampModeParam), 'Cell attached')
+                rootData = addWidthScalars(rootData, 'spotSize', {'spikeCount_stimInterval_grndBlSubt'});
+                rootData = addWidthScalars(rootData, 'spotSize',{'spikeCount_stimInterval_grndBlSubt'}, 'fixedVal',1200);
+                rootData = addWidthScalars(rootData, 'spotSize',{'spikeCount_stimInterval_grndBlSubt'}, 'fixedVal',600);
+                supression1200 = 1-(rootData.spikeCount_stimInterval_grndBlSubt_spotSizeFixed1200/...
+                    rootData.spikeCount_stimInterval_grndBlSubt_spotSizeByMax);
+                rootData.spikeCount_stimInterval_grndBlSubt_SMSsupression1200 = supression1200;
+                supression600 = 1-(rootData.spikeCount_stimInterval_grndBlSubt_spotSizeFixed600/...
+                    rootData.spikeCount_stimInterval_grndBlSubt_spotSizeByMax);
+                rootData.spikeCount_stimInterval_grndBlSubt_SMSsupression600 = supression600;
+            end;
             % End Adam 2/25/17
             rootData.byEpochParamList = byEpochParamList;
             rootData.singleValParamList = singleValParamList;
