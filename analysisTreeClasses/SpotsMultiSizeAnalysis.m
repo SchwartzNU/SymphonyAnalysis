@@ -192,7 +192,7 @@ classdef SpotsMultiSizeAnalysis < AnalysisTree
             title(sprintf('Pref Size: %g µm', bestSize));            
         end
         
-        function plot0_spotSizeVsspikeCount_afterStim(node, cellData)
+        function plot1_spotSizeVsspikeCount_afterStim(node, cellData)
             rootData = node.get(1);
             xvals = rootData.spotSize;
             yField = rootData.spikeCount_afterStim;

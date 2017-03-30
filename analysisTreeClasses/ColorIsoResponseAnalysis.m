@@ -1,6 +1,6 @@
 classdef ColorIsoResponseAnalysis < AnalysisTree
     properties
-        epochData
+        
     end
     
     methods
@@ -32,13 +32,13 @@ classdef ColorIsoResponseAnalysis < AnalysisTree
                 sessionNode = obj.get(sessionNodes(i));
                 
                 sessionEpochs = obj.getchildren(sessionNodes(i));
-                epochData = {};
+                epochData = cell(length(sessionEpochs), 1);
                 
                 for ei = 1:length(sessionEpochs)
                     curEpochNode = obj.get(sessionEpochs(ei));
-                
+                    
                     e = struct();
-
+                    
                     epoch = cellData.epochs(curEpochNode.epochID);
                     e.baseIntensity1 = epoch.get('baseIntensity1');
                     e.baseIntensity2 = epoch.get('baseIntensity2');
@@ -46,7 +46,7 @@ classdef ColorIsoResponseAnalysis < AnalysisTree
                     e.colorPattern2 = epoch.get('colorPattern2');
                     e.contrast1 = epoch.get('contrast1');
                     e.contrast2 = epoch.get('contrast2');
-
+                    
                     if strcmp(rootData.(rootData.ampModeParam), 'Cell attached')
                         outputStruct = getEpochResponses_CA(cellData, curEpochNode.epochID, ...
                             'DeviceName', rootData.deviceName);
@@ -63,25 +63,24 @@ classdef ColorIsoResponseAnalysis < AnalysisTree
                     epochData{ei} = e;
                 end
                 
-                e
                 sessionNode.epochData = epochData;
                 obj = obj.set(sessionNodes(i), sessionNode);
             end
         end
         
     end
-        
     
-    methods(Static)    
-        function [pointData, interpolant] = analyzeData(epochData)
+    
+    methods(Static)
+        function [pointData, interpolant] = analyzeData(epochData, variable)
             % collect all the epochs into a response table
             responseData = [];
             for ei = 1:length(epochData)
                 e = epochData{ei};
-                response = e.node.spikeCount_stimToEnd_mean;
+                response = e.node.(variable);
                 responseData(end+1,:) = [e.contrast1, e.contrast2, response];
             end
-
+            
             % combine responses into points
             [points, ~, indices] = unique(responseData(:,[1,2]), 'rows');
             for i = 1:size(points,1)
@@ -100,40 +99,48 @@ classdef ColorIsoResponseAnalysis < AnalysisTree
             
         end
         
-
-       function plotIsoResponseSurface(tree, cellData)
-%             colorPattern1
-%             contrastRange1
-%             interpolant
-%             pointData
-%             plotRange2
+        
+        function plot0_surfaceSpikesStiminterval(tree, ~)
+            ColorIsoResponseAnalysis.plotIsoResponseSurface(tree, 'spikeCount_stimToEnd_mean');
+        end
+        
+        function plot1_surfaceSpikesAfterStiminterval(tree, ~)
+            ColorIsoResponseAnalysis.plotIsoResponseSurface(tree, 'spikeCount_afterStim_mean');
+        end        
+        
+        function plotIsoResponseSurface(tree, variable)
+            %             colorPattern1
+            %             contrastRange1
+            %             interpolant
+            %             pointData
+            %             plotRange2
             epochData = tree.get(1).epochData;
             baseIntensity1 = epochData{1}.baseIntensity1;
             baseIntensity2 = epochData{1}.baseIntensity2;
             colorPattern1 = epochData{1}.colorPattern1;
             colorPattern2 = epochData{1}.colorPattern2;
-        
-            [pointData, interpolant] = ColorIsoResponseAnalysis.analyzeData(epochData);
+            
+            [pointData, interpolant] = ColorIsoResponseAnalysis.analyzeData(epochData, variable);
             ax = gca();
             hold(ax, 'on');
-
+            
             if ~isempty(pointData)
                 if ~isempty(interpolant)
-%                     try
-                        c1p = linspace(min(pointData(:,1)), max(pointData(:,1)), 20);
-                        c2p = linspace(min(pointData(:,2)), max(pointData(:,2)), 20);
-                        [C1p, C2p] = meshgrid(c1p, c2p);
-                        int = interpolant(C1p, C2p);
-%                         f = fspecial('average');
-%                         int = imfilter(int, f);
-                        s = pcolor(ax, C1p, C2p, int)
-                        shading(ax, 'interp');
-                        set(s, 'PickableParts', 'none');
-                        
-                        contour(ax, C1p, C2p, int, 'k', 'ShowText','on', 'PickableParts', 'none')
-%                     end
+                    %                     try
+                    c1p = linspace(min(pointData(:,1)), max(pointData(:,1)), 20);
+                    c2p = linspace(min(pointData(:,2)), max(pointData(:,2)), 20);
+                    [C1p, C2p] = meshgrid(c1p, c2p);
+                    int = interpolant(C1p, C2p);
+                    %                         f = fspecial('average');
+                    %                         int = imfilter(int, f);
+                    s = pcolor(ax, C1p, C2p, int);
+                    shading(ax, 'interp');
+                    set(s, 'PickableParts', 'none');
+                    
+                    contour(ax, C1p, C2p, int, 'k', 'ShowText','on', 'PickableParts', 'none')
+                    %                     end
                 end
-
+                
                 % observations
                 for oi = 1:size(pointData,1)
                     siz = 80;
@@ -141,7 +148,7 @@ classdef ColorIsoResponseAnalysis < AnalysisTree
                     scatter(ax, pointData(oi,1), pointData(oi,2), siz, 'CData', pointData(oi,3), ...
                         'LineWidth', 1, 'MarkerEdgeColor', edg, 'MarkerFaceColor', 'flat')
                 end
-            end            
+            end
             
             % draw some nice on/off divider lines, and contrast boundary lines
             plotRange1 = xlim(ax);
@@ -156,13 +163,13 @@ classdef ColorIsoResponseAnalysis < AnalysisTree
             ylabel(ax, colorPattern2);
             xlim(ax, plotRange1 + [-.1, .1]);
             ylim(ax, plotRange2 + [-.1, .1]);
-% %             set(ax,'LooseInset',get(ax,'TightInset'))
+            % %             set(ax,'LooseInset',get(ax,'TightInset'))
             hold(ax, 'off');
-       end
+        end
         
-       
         
-        function plot0_ramp_Spikes(tree, cellData)
+        
+        function plot2_ramp_Spikes(tree, cellData)
             nodeIds = tree.getchildren(1);
             variables = {'spikeCount_stimInterval_mean', 'spikeCount_afterStim_mean'};
             
@@ -221,7 +228,7 @@ classdef ColorIsoResponseAnalysis < AnalysisTree
                 end
                 responses(ei,:) = responseByEpochId(id,:);
             end
-
+            
             epochIsUvVarying = epochIsUvVarying == 1;
             
             ax = gca();
@@ -232,7 +239,7 @@ classdef ColorIsoResponseAnalysis < AnalysisTree
             
             % off
             plot(ax, contrastRatios(epochIsUvVarying), responses(epochIsUvVarying,2), 'o', 'Color',[.3, 0, .9])
-            plot(ax, contrastRatios(~epochIsUvVarying), responses(~epochIsUvVarying,2), 'o', 'Color',[0, .8, .1])            
+            plot(ax, contrastRatios(~epochIsUvVarying), responses(~epochIsUvVarying,2), 'o', 'Color',[0, .8, .1])
             hold(ax, 'off');
             
         end
@@ -246,7 +253,7 @@ end
 %             legends = {};
 %             for vi = 1:length(variables)
 %                 variableName = variables{vi};
-%                 
+%
 %                 colorNodeIds = tree.getchildren(1);
 %                 data = {};
 %                 colors = {};
@@ -261,9 +268,9 @@ end
 %                     end
 %                     colors{colornode} = currentStepColorNode.splitValue;
 %                     rampnodes = tree.getchildren(colorNodeIds(colornode));
-% 
+%
 %                     % get contrast from sample epoch
-% 
+%
 %                     for ri = 1:length(rampnodes)
 %                         datanode = tree.get(rampnodes(ri));
 %                         contrastepoch = cellData.epochs(datanode.epochID(1));
@@ -297,9 +304,9 @@ end
 %                         legends{end+1} = sprintf('%s varying, Off', colors{ci});
 %                     end
 %                     errorbar(d.intensity, d.response, d.responseSem, dash, 'Color', color, 'LineWidth', 3);
-%                     
+%
 %                     hold on
-% 
+%
 %                 end
 %     %             legend(colors, 'Location', 'north')
 %             end
