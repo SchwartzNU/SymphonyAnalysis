@@ -74,7 +74,7 @@ classdef SpikeDetectorGUI < handle
             obj.handles.saveNowButton = uicontrol('Parent', L_info, ...
                 'Style', 'pushbutton', ...
                 'String', 'Save & Sync', ...
-                'Callback', @(uiobj, evt)obj.saveNow(), ...
+                'Callback', @(uiobj, evt)obj.autoSave(true), ...
                 'KeyPressFcn',@(uiobj,evt)obj.keyHandler(evt));            
             
             uicontrol('Parent', L_info, ...
@@ -272,9 +272,7 @@ classdef SpikeDetectorGUI < handle
         function updateSpikeTimes(obj)
             obj.detectSpikes(obj.curEpochListIndex);
             
-            if obj.handles.autoSaveCheckbox.Value
-                saveAndSyncCellData(obj.cellData);
-            end            
+            obj.autoSave();         
             
             obj.updateUI();
         end
@@ -286,9 +284,7 @@ classdef SpikeDetectorGUI < handle
                 obj.detectSpikes(index);
             end
             
-            if obj.handles.autoSaveCheckbox.Value
-                saveAndSyncCellData(obj.cellData);
-            end
+            obj.autoSave();
             
             obj.updateUI();
         end
@@ -304,12 +300,23 @@ classdef SpikeDetectorGUI < handle
                 obj.detectSpikes(index);
             end
             
-            if obj.handles.autoSaveCheckbox.Value
-                saveAndSyncCellData(obj.cellData);
-            end
+            obj.autoSave();
             
             obj.updateUI();
-        end        
+        end
+        
+        function autoSave(obj, force)
+            if nargin == 1
+                force = false;
+            end
+            if force || obj.handles.autoSaveCheckbox.Value
+                set(obj.fig, 'Name', 'Saving');
+                drawnow;
+                saveAndSyncCellData(obj.cellData);
+                set(obj.fig, 'Name', 'Saved');
+                drawnow;
+            end
+        end
         
         function loadCurrentEpochResponse(obj)
             epoch = obj.cellData.epochs(obj.epochIndicesList(obj.curEpochListIndex));
@@ -349,9 +356,8 @@ classdef SpikeDetectorGUI < handle
             
             epoch.attributes(channel) = obj.spikeTimes;
         
-            if obj.handles.autoSaveCheckbox.Value
-                saveAndSyncCellData(obj.cellData);
-            end
+            obj.autoSave();
+            
             obj.updateUI();
             
         end
@@ -396,18 +402,12 @@ classdef SpikeDetectorGUI < handle
             
             epoch.attributes(channel) = obj.spikeTimes;
             
-            if obj.handles.autoSaveCheckbox.Value
-                saveAndSyncCellData(obj.cellData);
-            end
+            obj.autoSave();
+            
             obj.updateUI();
         end
         
-        function saveNow(obj)
-            saveAndSyncCellData(obj.cellData);
-            disp('Saved');
-            set(obj.fig, 'Name','Saved');
-            drawnow
-        end
+
         
         function skipBackward10(obj)
             obj.curEpochListIndex = max(obj.curEpochListIndex-10, 1);
