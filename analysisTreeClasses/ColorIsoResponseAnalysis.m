@@ -30,6 +30,7 @@ classdef ColorIsoResponseAnalysis < AnalysisTree
             
             for i=1:numSessions %for each leaf node
                 sessionNode = obj.get(sessionNodes(i));
+                sessionId = sessionNode.splitValue;
                 
                 sessionEpochs = obj.getchildren(sessionNodes(i));
                 epochData = cell(length(sessionEpochs), 1);
@@ -64,6 +65,23 @@ classdef ColorIsoResponseAnalysis < AnalysisTree
                 end
                 
                 sessionNode.epochData = epochData;
+                
+                variable = 'spikeCount_stimInterval_mean';
+                [pointData, ~] = ColorIsoResponseAnalysis.analyzeData(epochData, variable);
+
+                % fit the pointdata to a simple model and add the parameters to the tree
+                if size(pointData,1) > 3
+                    sessionNode.model = fitlm(pointData(:,1:2), pointData(:,3),'linear','RobustOpts','on');
+                    sessionNode.modelCoefs = sessionNode.model.Coefficients.Estimate';
+                    sessionNode.modelCoefs_pValues = sessionNode.model.Coefficients.pValue';
+                else
+                    
+                    sessionNode.model = [];
+                    sessionNode.modelCoefs = [];
+                    sessionNode.modelCoefs_pValues = [];
+                end
+                
+                
                 obj = obj.set(sessionNodes(i), sessionNode);
             end
         end
@@ -101,7 +119,7 @@ classdef ColorIsoResponseAnalysis < AnalysisTree
         
         
         function plot0_surfaceSpikesStiminterval(tree, ~)
-            ColorIsoResponseAnalysis.plotIsoResponseSurface(tree, 'spikeCount_stimToEnd_mean');
+            ColorIsoResponseAnalysis.plotIsoResponseSurface(tree, 'spikeCount_stimInterval_mean');
         end
         
         function plot1_surfaceSpikesAfterStiminterval(tree, ~)
@@ -120,8 +138,11 @@ classdef ColorIsoResponseAnalysis < AnalysisTree
             colorPattern1 = epochData{1}.colorPattern1;
             colorPattern2 = epochData{1}.colorPattern2;
             
+            model = tree.get(1).model
+            
             [pointData, interpolant] = ColorIsoResponseAnalysis.analyzeData(epochData, variable);
             ax = gca();
+            cla(ax)
             hold(ax, 'on');
             
             if ~isempty(pointData)

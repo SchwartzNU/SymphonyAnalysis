@@ -19,7 +19,7 @@ numTableCells = length(cellFileNames);
 
 %% loop through cells
 analysisIndices = 1:numAnalyses;
-analysisIndices = [2,5,6];
+% analysisIndices = [2,5,6];
 
 for ci = 1:numTableCells
     
@@ -85,7 +85,7 @@ for ci = 1:numTableCells
                     paramForCells(cellfun(@isempty, paramForCells)) = {nan};
                     data = paramForCells';
                     data = cell2mat(data);
-                    if size(data,1) > 1 % sometimes the filter catches two data sets... so pick the first one
+                    if size(data,1) > 1 % sometimes the filter catches multiple data sets... so pick the first one
                         data = data(1,:);
                     end
                 else
@@ -110,9 +110,21 @@ for ci = 1:numTableCells
                 else
                     data = cell(1, length(paramsColumnNames));
                 end
-
+                
+            elseif treeVariableMode == 3 % single vector param (like model coefs), like 1 except has [] fill
+                if hasValidAnalysis
+                    [~, ~, paramForCells] = allParamsAcrossCells(atree, params);
+                    paramForCells(cellfun(@isempty, paramForCells)) = {[]};
+                    data = paramForCells';
+%                     data = cell2mat(data);
+%                     data = data{1}
+                    if size(data,1) > 1 % sometimes the filter catches multiple data sets... so pick the last one
+                        data = data(end,:);
+                    end
+                else
+                    data = cell(1, length(paramsColumnNames));
+                end
             end
-            
             trow{1,paramsColumnNames} = data;
             trow{1,[paramsTypeName{1} '_dataset']} = {dataSet};
             validAnalyses(ai) = hasValidAnalysis;
