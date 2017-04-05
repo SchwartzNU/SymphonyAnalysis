@@ -982,7 +982,11 @@ classdef CellDataCurator < handle
         end
         
         function saveCellData(obj)
+            set(obj.fig, 'Name', 'Saving');
+            drawnow;
             saveAndSyncCellData(obj.cellData);
+            set(obj.fig, 'Name', 'Saved');
+            drawnow;            
         end
         
         function saveFilter(obj)

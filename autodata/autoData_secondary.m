@@ -69,3 +69,4 @@ dtab.spatial_exin_offset_angle = autocenterOffsetDirections;
 dtabColumns{'spatial_exin_offset', 'type'} = {'single'};
 dtabColumns{'spatial_exin_offset_magnitude', 'type'} = {'single'};
 dtabColumns{'spatial_exin_offset_angle', 'type'} = {'single'};
+

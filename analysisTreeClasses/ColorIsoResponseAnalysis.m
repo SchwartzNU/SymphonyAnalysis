@@ -71,12 +71,12 @@ classdef ColorIsoResponseAnalysis < AnalysisTree
 
                 % fit the pointdata to a simple model and add the parameters to the tree
                 if size(pointData,1) > 3
-                    sessionNode.model = fitlm(pointData(:,1:2), pointData(:,3),'linear','RobustOpts','on');
-                    sessionNode.modelCoefs = sessionNode.model.Coefficients.Estimate';
-                    sessionNode.modelCoefs_pValues = sessionNode.model.Coefficients.pValue';
+                    model = fitlm(pointData(:,1:2), pointData(:,3),'linear','RobustOpts','on');
+                    sessionNode.modelCoefs = model.Coefficients.Estimate';
+                    sessionNode.modelCoefs_pValues = model.Coefficients.pValue';
                 else
                     
-                    sessionNode.model = [];
+%                     sessionNode.model = [];
                     sessionNode.modelCoefs = [];
                     sessionNode.modelCoefs_pValues = [];
                 end
@@ -132,18 +132,23 @@ classdef ColorIsoResponseAnalysis < AnalysisTree
             %             interpolant
             %             pointData
             %             plotRange2
-            epochData = tree.get(1).epochData;
+            sessionNode = tree.get(1);
+            if ~isfield(sessionNode,'epochData')
+                return
+            end
+            epochData = sessionNode.epochData;
             baseIntensity1 = epochData{1}.baseIntensity1;
             baseIntensity2 = epochData{1}.baseIntensity2;
             colorPattern1 = epochData{1}.colorPattern1;
             colorPattern2 = epochData{1}.colorPattern2;
             
-            model = tree.get(1).model
+            modelCoefs = sessionNode.modelCoefs;
+            modelCoefs_pValues = sessionNode.modelCoefs_pValues;
             
             [pointData, interpolant] = ColorIsoResponseAnalysis.analyzeData(epochData, variable);
             ax = gca();
             cla(ax)
-            hold(ax, 'on');
+            
             
             if ~isempty(pointData)
                 if ~isempty(interpolant)
@@ -157,7 +162,7 @@ classdef ColorIsoResponseAnalysis < AnalysisTree
                     s = pcolor(ax, C1p, C2p, int);
                     shading(ax, 'interp');
                     set(s, 'PickableParts', 'none');
-                    
+                    hold(ax, 'on');
                     contour(ax, C1p, C2p, int, 'k', 'ShowText','on', 'PickableParts', 'none')
                     %                     end
                 end
@@ -168,6 +173,7 @@ classdef ColorIsoResponseAnalysis < AnalysisTree
                     edg = 'k';
                     scatter(ax, pointData(oi,1), pointData(oi,2), siz, 'CData', pointData(oi,3), ...
                         'LineWidth', 1, 'MarkerEdgeColor', edg, 'MarkerFaceColor', 'flat')
+                    hold(ax, 'on');
                 end
             end
             
@@ -185,6 +191,7 @@ classdef ColorIsoResponseAnalysis < AnalysisTree
             xlim(ax, plotRange1 + [-.1, .1]);
             ylim(ax, plotRange2 + [-.1, .1]);
             % %             set(ax,'LooseInset',get(ax,'TightInset'))
+            title(sprintf('LM fit coefs (P-val log10): UV: %.2g (%.1g) Green: %.2g (%.1g)', modelCoefs(3), log10(modelCoefs_pValues(3)), modelCoefs(2), log10(modelCoefs_pValues(2))), 'FontSize',14);
             hold(ax, 'off');
             
             
