@@ -15,3 +15,9 @@ xlabel('X and green')
 ylabel('Y and UV')
 axis equal
 % axis square
+
+figure(66);clf;
+
+plot(dtab.location_y(~opponent), dtab.colorUVslope(~opponent) ./ dtab.colorGreenslope(~opponent), 'o', 'MarkerEdgeColor','b')
+xlabel('Y position')
+ylabel('UV sensitivity / green sensitivity')

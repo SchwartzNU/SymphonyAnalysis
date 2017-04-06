@@ -130,6 +130,7 @@ classdef ColorResponseAnalysis < AnalysisTree
                 colorNodeIds = tree.getchildren(1);
                 data = {};
                 colors = {};
+                
                 for colornode = 1:length(colorNodeIds)
                     colorData = struct();
                     colorData.intensity = [];
@@ -157,6 +158,7 @@ classdef ColorResponseAnalysis < AnalysisTree
                     end
                     data{colornode} = colorData;
                 end
+                titleString = '';
                 for ci = 1:length(colors)
                     d = data{ci};
                     switch colors{ci}
@@ -178,10 +180,16 @@ classdef ColorResponseAnalysis < AnalysisTree
                     end
                     errorbar(d.intensity, d.response, d.responseSem, dash, 'Color', color, 'LineWidth', 3);
                     
+                    model = fitlm(d.intensity, d.response,'linear','RobustOpts','on');
+                    disp('');
+                    modelCoefs = model.Coefficients.Estimate';
+                    modelCoefs_pValues = model.Coefficients.pValue';
+                    titleString = [titleString, sprintf('%s: %.2g (%.1g) ', colors{ci}, modelCoefs(2), log10(modelCoefs_pValues(2)))];
                     hold on
 
                 end
     %             legend(colors, 'Location', 'north')
+                title(titleString);
             end
             hold off
             xlabel('(varying : fixed) contrast ratio')
