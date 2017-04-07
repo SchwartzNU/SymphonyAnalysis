@@ -474,6 +474,16 @@ for i=1:L
         outputStruct.ONSET_ISI_peakLatency.type = 'singleValue';
         outputStruct.ONSET_ISI_peakLatency.value = [];
         
+        % Sam 4/7/17
+        outputStruct.spikeCount_movingBarLeadingEdge.units = 'spikes';
+        outputStruct.spikeCount_movingBarLeadingEdge.type = 'byEpoch';
+        outputStruct.spikeCount_movingBarLeadingEdge.value = zeros(1,L);
+        
+        % Sam 4/7/17
+        outputStruct.spikeCount_movingBarTrailingEdge.units = 'spikes';
+        outputStruct.spikeCount_movingBarTrailingEdge.type = 'byEpoch';
+        outputStruct.spikeCount_movingBarTrailingEdge.value = zeros(1,L);        
+        
     end
     
     curEpoch = cellData.epochs(epochInd(i));
@@ -483,10 +493,11 @@ for i=1:L
     spikeTimes = spikeTimes / sampleRate;
     
     %TEMP HACK: This is to remove crazy refractory preiod violations from the spike detector
-    if  length(spikeTimes) >= 2
-        ISItest = diff(spikeTimes);
-        spikeTimes = spikeTimes([(ISItest > 0.0015) true]);
-    end;
+    % removed by fixing the spike detector code, and this code never worked anyway
+%     if length(spikeTimes) >= 2
+%         ISItest = diff(spikeTimes);
+%         spikeTimes = spikeTimes([(ISItest > 0.0015) true]);
+%     end;
     % % %
     
     %now we go through each response type in its own block
@@ -505,41 +516,46 @@ for i=1:L
     outputStruct.spikeCount_stimToEnd.value(i) = spikeCount;
     
     %count spikes in some other intervals
-    spikeCount = length(find(spikeTimes >= intervalStart & spikeTimes < intervalStart + 0.1));
+    spikeCount = sum(spikeTimes >= intervalStart & spikeTimes < intervalStart + 0.1);
     outputStruct.spikeCount_stimTo100ms.value(i) = spikeCount;
-    spikeCount = length(find(spikeTimes >= intervalStart & spikeTimes < intervalStart + 0.2));
+    spikeCount = sum(spikeTimes >= intervalStart & spikeTimes < intervalStart + 0.2);
     outputStruct.spikeCount_stimTo200ms.value(i) = spikeCount;
-    spikeCount = length(find(spikeTimes >= intervalStart + 0.1));
+    spikeCount = sum(spikeTimes >= intervalStart + 0.1);
     outputStruct.spikeCount_stimAfter100ms.value(i) = spikeCount;
-    spikeCount = length(find(spikeTimes >= intervalStart + 0.2));
+    spikeCount = sum(spikeTimes >= intervalStart + 0.2);
     outputStruct.spikeCount_stimAfter200ms.value(i) = spikeCount;
-    spikeCount = length(find(spikeTimes >= intervalStart + 0.5));
+    spikeCount = sum(spikeTimes >= intervalStart + 0.5);
     outputStruct.spikeCount_stimAfter500ms.value(i) = spikeCount;    
     
     %count spikes in 400 ms after onset and offset
     if responseIntervalLen >= 0.4
-        spikeCount = length(find(spikeTimes >= intervalStart & spikeTimes < intervalStart + 0.4));
+        spikeCount = sum(spikeTimes >= intervalStart & spikeTimes < intervalStart + 0.4);
         outputStruct.spikeCount_ONSET_400ms.value(i) = spikeCount;
     end
     if intervalEnd + 0.4 <= xvals(end)
-        spikeCount = length(find(spikeTimes >= intervalEnd & spikeTimes < intervalEnd + 0.4));
+        spikeCount = sum(spikeTimes >= intervalEnd & spikeTimes < intervalEnd + 0.4);
         outputStruct.spikeCount_OFFSET_400ms.value(i) = spikeCount;
     end
     
     %count spikes in 200 ms after onset
     if responseIntervalLen >= 0.2
-        spikeCount = length(find(spikeTimes >= intervalStart & spikeTimes < intervalStart + 0.2));
+        spikeCount = sum(spikeTimes >= intervalStart & spikeTimes < intervalStart + 0.2);
         outputStruct.spikeCount_ONSET_200ms.value(i) = spikeCount;
     end
     
     %count spikes 200 ms after onset (removing initial burst from SbC)
     if responseIntervalLen > 0.2
-        spikeCount = length(find(spikeTimes >= intervalStart + 0.2 & spikeTimes < intervalEnd));
+        spikeCount = sum(spikeTimes >= intervalStart + 0.2 & spikeTimes < intervalEnd);
         outputStruct.spikeCount_ONSET_after200ms.value(i) = spikeCount;
     end
     
     %count spikes 100 ms offset till epoch end
-    tailSpikeCount = length(find(spikeTimes >= intervalEnd + 0.1 & spikeTimes < intervalEnd+tailTime));
+    tailSpikeCount = sum(spikeTimes >= intervalEnd + 0.1 & spikeTimes < intervalEnd+tailTime);
+    
+    % moving bar leading and trailing edges (approximately at this point)
+    centerTime = (intervalEnd - intervalStart)/2;
+    outputStruct.spikeCount_movingBarLeadingEdge.value(i) = sum(spikeTimes >= intervalStart & spikeTimes < centerTime);
+    outputStruct.spikeCount_movingBarTrailingEdge.value(i) = sum(spikeTimes >= centerTime & spikeTimes < intervalEnd);
     
     %subtract baseline
     spikeCount_baselineSubtracted = spikeCount - meanBaselineRate.*responseIntervalLen; %division?? should be *. luckily it's usually 1.

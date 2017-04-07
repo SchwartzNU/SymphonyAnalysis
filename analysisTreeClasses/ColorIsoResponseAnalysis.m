@@ -41,12 +41,15 @@ classdef ColorIsoResponseAnalysis < AnalysisTree
                     e = struct();
                     
                     epoch = cellData.epochs(curEpochNode.epochID);
-                    e.baseIntensity1 = epoch.get('baseIntensity1');
-                    e.baseIntensity2 = epoch.get('baseIntensity2');
-                    e.colorPattern1 = epoch.get('colorPattern1');
-                    e.colorPattern2 = epoch.get('colorPattern2');
-                    e.contrast1 = epoch.get('contrast1');
-                    e.contrast2 = epoch.get('contrast2');
+                    e.parameters = containers.Map();
+                    e.parameters('baseIntensity1') = epoch.get('baseIntensity1');
+                    e.parameters('baseIntensity2') = epoch.get('baseIntensity2');
+                    e.parameters('colorPattern1') = epoch.get('colorPattern1');
+                    e.parameters('colorPattern2') = epoch.get('colorPattern2');
+                    e.parameters('contrast1') = epoch.get('contrast1');
+                    e.parameters('contrast2') = epoch.get('contrast2');
+                    e.ignore = false;
+               
                     
                     if strcmp(rootData.(rootData.ampModeParam), 'Cell attached')
                         outputStruct = getEpochResponses_CA(cellData, curEpochNode.epochID, ...
@@ -59,27 +62,18 @@ classdef ColorIsoResponseAnalysis < AnalysisTree
                         outputStruct = getEpochResponseStats(outputStruct);
                         curEpochNode = mergeIntoNode(curEpochNode, outputStruct);
                     end
+
+                    e.signal = epoch.getData('Amplifier_Ch1');
+                    e.t = (1:numel(e.signal)) / 10000;
+                    e.spikeFrames = epoch.getSpikes(rootData.deviceName);
+                    e.spikeTimes = e.t(e.spikeFrames);
                     
-                    e.node = curEpochNode;
+                    e.response = curEpochNode;
+                    
                     epochData{ei} = e;
                 end
                 
                 sessionNode.epochData = epochData;
-                
-                variable = 'spikeCount_stimInterval_mean';
-                [pointData, ~] = ColorIsoResponseAnalysis.analyzeData(epochData, variable);
-
-                % fit the pointdata to a simple model and add the parameters to the tree
-                if size(pointData,1) > 3
-                    model = fitlm(pointData(:,1:2), pointData(:,3),'linear','RobustOpts','on');
-                    sessionNode.modelCoefs = model.Coefficients.Estimate';
-                    sessionNode.modelCoefs_pValues = model.Coefficients.pValue';
-                else
-                    
-%                     sessionNode.model = [];
-                    sessionNode.modelCoefs = [];
-                    sessionNode.modelCoefs_pValues = [];
-                end
                 
                 
                 obj = obj.set(sessionNodes(i), sessionNode);
@@ -95,8 +89,7 @@ classdef ColorIsoResponseAnalysis < AnalysisTree
             responseData = [];
             for ei = 1:length(epochData)
                 e = epochData{ei};
-                response = e.node.(variable);
-                responseData(end+1,:) = [e.contrast1, e.contrast2, response];
+                responseData(end+1,:) = [e.parameters('contrast1'), e.parameters('contrast2'), e.response.(variable)];
             end
             
             % combine responses into points
@@ -124,7 +117,25 @@ classdef ColorIsoResponseAnalysis < AnalysisTree
         
         function plot1_surfaceSpikesAfterStiminterval(tree, ~)
             ColorIsoResponseAnalysis.plotIsoResponseSurface(tree, 'spikeCount_afterStim_mean');
-        end        
+        end
+        
+        function plot2_launchGui(tree, cellData)
+            sessionNode = tree.get(1);
+            if ~isfield(sessionNode,'epochData')
+                return
+            end
+            epochData = sessionNode.epochData;
+            sampleEpoch = epochData{1};
+            baseIntensity1 = sampleEpoch.parameters('baseIntensity1');
+            baseIntensity2 = sampleEpoch.parameters('baseIntensity2');
+            colorPattern1 = sampleEpoch.parameters('colorPattern1');
+            colorPattern2 = sampleEpoch.parameters('colorPattern2');
+            
+            gui = ColorIsoResponseFigure('baseIntensity1', baseIntensity1, 'baseIntensity2', baseIntensity2, ...
+                'colorNames', {colorPattern1, colorPattern2}, ...
+                'epochData', epochData, 'variable', 'spikeCount_stimInterval_mean');
+            
+        end
         
         function plotIsoResponseSurface(tree, variable)
             %             colorPattern1
@@ -137,13 +148,14 @@ classdef ColorIsoResponseAnalysis < AnalysisTree
                 return
             end
             epochData = sessionNode.epochData;
-            baseIntensity1 = epochData{1}.baseIntensity1;
-            baseIntensity2 = epochData{1}.baseIntensity2;
-            colorPattern1 = epochData{1}.colorPattern1;
-            colorPattern2 = epochData{1}.colorPattern2;
+            sampleEpoch = epochData{1};
+            baseIntensity1 = sampleEpoch.parameters('baseIntensity1');
+            baseIntensity2 = sampleEpoch.parameters('baseIntensity2');
+            colorPattern1 = sampleEpoch.parameters('colorPattern1');
+            colorPattern2 = sampleEpoch.parameters('colorPattern2');
             
-            modelCoefs = sessionNode.modelCoefs;
-            modelCoefs_pValues = sessionNode.modelCoefs_pValues;
+%             modelCoefs = sessionNode.modelCoefs;
+%             modelCoefs_pValues = sessionNode.modelCoefs_pValues;
             
             [pointData, interpolant] = ColorIsoResponseAnalysis.analyzeData(epochData, variable);
             ax = gca();
@@ -191,7 +203,7 @@ classdef ColorIsoResponseAnalysis < AnalysisTree
             xlim(ax, plotRange1 + [-.1, .1]);
             ylim(ax, plotRange2 + [-.1, .1]);
             % %             set(ax,'LooseInset',get(ax,'TightInset'))
-            title(sprintf('LM fit coefs (P-val log10): UV: %.2g (%.1g) Green: %.2g (%.1g)', modelCoefs(3), log10(modelCoefs_pValues(3)), modelCoefs(2), log10(modelCoefs_pValues(2))), 'FontSize',14);
+%             title(sprintf('LM fit coefs (P-val log10): UV: %.2g (%.1g) Green: %.2g (%.1g)', modelCoefs(3), log10(modelCoefs_pValues(3)), modelCoefs(2), log10(modelCoefs_pValues(2))), 'FontSize',14);
             hold(ax, 'off');
             
             

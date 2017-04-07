@@ -141,8 +141,8 @@ classdef MovingBarAnalysis < AnalysisTree
             xvals = rootData.barAngle;
             yField = rootData.spikeCount_stimToEnd;
             yvals = yField.mean_c;
-            polarerror(xvals*pi/180, yvals, zeros(1,length(xvals)));
-            
+            errs = yField.SEM;
+            polarerror(xvals*pi/180, yvals, errs);            
             hold on;
             polar([0 rootData.spikeCount_stimToEnd_DSang*pi/180], [0 (100*rootData.spikeCount_stimToEnd_DSI)], 'r-');
             polar([0 rootData.spikeCount_stimToEnd_OSang*pi/180], [0 (100*rootData.spikeCount_stimToEnd_OSI)], 'g-');
@@ -150,6 +150,38 @@ classdef MovingBarAnalysis < AnalysisTree
             ylabel(['spikeCount_stimToEnd (' yField.units ')']);
             addDsiOsiVarTitle(rootData, 'spikeCount_stimToEnd')
             hold off;            
+        end
+        
+        function plot_barAngleVsspikeCount_movingBarLeadingEdge(node, cellData)
+            rootData = node.get(1);
+            xvals = rootData.barAngle;
+            yField = rootData.spikeCount_movingBarLeadingEdge;
+            yvals = yField.mean_c;
+            errs = yField.SEM;
+            polarerror(xvals*pi/180, yvals, errs);            
+            hold on;
+            polar([0 rootData.spikeCount_stimToEnd_DSang*pi/180], [0 (100*rootData.spikeCount_stimToEnd_DSI)], 'r-');
+            polar([0 rootData.spikeCount_stimToEnd_OSang*pi/180], [0 (100*rootData.spikeCount_stimToEnd_OSI)], 'g-');
+            xlabel('barAngle');
+            ylabel(['spikeCount_movingBarLeadingEdge (' yField.units ')']);
+            addDsiOsiVarTitle(rootData, 'spikeCount_movingBarLeadingEdge')
+            hold off;            
+        end
+        
+        function plot_barAngleVsspikeCount_movingBarTrailingEdge(node, cellData)
+            rootData = node.get(1);
+            xvals = rootData.barAngle;
+            yField = rootData.spikeCount_movingBarTrailingEdge;
+            yvals = yField.mean_c;
+            errs = yField.SEM;
+            polarerror(xvals*pi/180, yvals, errs);            
+            hold on;
+            polar([0 rootData.spikeCount_stimToEnd_DSang*pi/180], [0 (100*rootData.spikeCount_stimToEnd_DSI)], 'r-');
+            polar([0 rootData.spikeCount_stimToEnd_OSang*pi/180], [0 (100*rootData.spikeCount_stimToEnd_OSI)], 'g-');
+            xlabel('barAngle');
+            ylabel(['spikeCount_movingBarTrailingEdge (' yField.units ')']);
+            addDsiOsiVarTitle(rootData, 'spikeCount_movingBarTrailingEdge')
+            hold off;
         end
         
         function plotMeanTraces(node, cellData)
