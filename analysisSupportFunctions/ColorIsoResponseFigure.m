@@ -39,7 +39,8 @@ classdef ColorIsoResponseFigure < handle
         
         handles
         figureHandle
-        variable
+        selectedVariable
+        variables
     end
     
     properties (Dependent)
@@ -66,7 +67,7 @@ classdef ColorIsoResponseFigure < handle
             obj.baseIntensity1 = ip.Results.baseIntensity1;
             obj.baseIntensity2 = ip.Results.baseIntensity2;
             obj.colorNames = ip.Results.colorNames;
-            obj.variable = ip.Results.variable;
+            obj.selectedVariable = ip.Results.variable;
             obj.epochData = ip.Results.epochData;
             
             obj.plotRange1 = obj.contrastRange1;
@@ -82,7 +83,7 @@ classdef ColorIsoResponseFigure < handle
         function createUi(obj)
             
             import appbox.*;
-            obj.figureHandle = figure(242);
+            obj.figureHandle = figure();
             
             set(obj.figureHandle, 'MenuBar', 'none');
             set(obj.figureHandle, 'GraphicsSmoothing', 'on');
@@ -91,7 +92,12 @@ classdef ColorIsoResponseFigure < handle
             obj.handles.figureBox = uix.HBoxFlex('Parent', obj.figureHandle, 'Spacing',10);
             
             obj.handles.measurementDataBox = uix.VBoxFlex('Parent', obj.handles.figureBox, 'Spacing', 10);
-          
+            
+            obj.handles.variableSelection = uicontrol('Parent', obj.handles.measurementDataBox, ...
+                                    'Style','popupmenu', ...
+                                    'String',{'',''}, ...
+                                    'Callback', @obj.selectVariable);
+
             obj.handles.dataTable = uitable('Parent', obj.handles.measurementDataBox, ...
                                     'ColumnName', {'contr 1', 'contr 2', 'mean', 'VMR', 'rep'}, ...
                                     'ColumnWidth', {60, 60, 40, 40, 40}, ...
@@ -102,7 +108,7 @@ classdef ColorIsoResponseFigure < handle
                                     'CellSelectionCallback', @obj.singlePointTableSelect);
 
             obj.handles.epochSelectionAxes = axes('Parent', obj.handles.measurementDataBox);
-            obj.handles.measurementDataBox.Heights = [-2, -.5, -1];
+            obj.handles.measurementDataBox.Heights = [30, -2, -.5, -1];
             
             obj.handles.isoDataBox = uix.VBox('Parent', obj.handles.figureBox, 'Spacing', 10);
             obj.handles.dataDisplayText = uicontrol('Parent',obj.handles.isoDataBox,...
@@ -117,12 +123,25 @@ classdef ColorIsoResponseFigure < handle
         function analyzeData(obj)
             % collect all the epochs into a response table
             responseData = [];
+            
+            % get the data variable names
+            e = obj.epochData{1};
+            vars = fieldnames(e.response);
+            obj.variables = {'Select variable'};
+            for i = 1:length(vars)
+                if isnumeric(e.response.(vars{i}))
+                    obj.variables{end+1,1} = vars{i};
+                end
+            end
+            obj.handles.variableSelection.String = obj.variables;
+            
             for ei = 1:length(obj.epochData)
                 e = obj.epochData{ei};
                 if e.ignore
                     continue
                 end
-                responseData(end+1,:) = [e.parameters('contrast1'), e.parameters('contrast2'), e.response.(obj.variable)];
+                
+                responseData(end+1,:) = [e.parameters('contrast1'), e.parameters('contrast2'), e.response.(obj.selectedVariable)];
             end
 
             % combine responses into points
@@ -156,6 +175,13 @@ classdef ColorIsoResponseFigure < handle
         
         end
         
+        function selectVariable(obj, menu, ~)
+            newVar = menu.String{menu.Value};
+            obj.selectedVariable = newVar;
+            obj.analyzeData();
+            obj.updateUi();
+        end
+        
         
         function updateUi(obj)
             % update next stimulus table
@@ -174,7 +200,7 @@ classdef ColorIsoResponseFigure < handle
                         continue
                     end
                     if point(1) == e.parameters('contrast1') && point(2) == e.parameters('contrast2')
-                        pointTable(end+1,:) = [ei, e.response.(obj.variable)];
+                        pointTable(end+1,:) = [ei, e.response.(obj.selectedVariable)];
                     end
                 end
                 obj.handles.singlePointTable.Data = pointTable;
@@ -198,7 +224,9 @@ classdef ColorIsoResponseFigure < handle
                         shading(obj.handles.isoAxes, 'interp');
                         set(s, 'PickableParts', 'none');
                         
-                        contour(obj.handles.isoAxes, C1p, C2p, int, 'k', 'ShowText','on', 'PickableParts', 'none')
+                        if abs(max(int(:)) - min(int(:))) > 0
+                            contour(obj.handles.isoAxes, C1p, C2p, int, 'k', 'ShowText','on', 'PickableParts', 'none')
+                        end
                     end
                 end
 
