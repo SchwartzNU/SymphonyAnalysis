@@ -57,8 +57,10 @@ classdef SearchQuery < hgsetget %search query object to use with searchLeafNodes
                 if ischar(self.values{i})
                     if strcmp(self.operators{i},'==') %and the condition is equality, do a strcmp
                         s = ['strcmp(M.get(' '''' self.fieldnames{i} '''' '),' '''' self.values{i} '''' ')'];
+                    elseif strcmp(self.operators{i},'~=') %and the condition is inequality, do a ~strcmp
+                        s = ['~strcmp(M.get(' '''' self.fieldnames{i} '''' '),' '''' self.values{i} '''' ')'];
                     else
-                        disp('Error: only equality can be tested for strings');
+                        disp('Error: only equality or inequality can be tested for strings');
                     end
                 elseif iscell(self.values{i})
                     for j=1:length(self.values{i})

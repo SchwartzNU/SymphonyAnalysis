@@ -41,13 +41,14 @@ classdef ColorIsoResponseAnalysis < AnalysisTree
                     e = struct();
                     
                     epoch = cellData.epochs(curEpochNode.epochID);
-                    e.parameters = containers.Map();
-                    e.parameters('baseIntensity1') = epoch.get('baseIntensity1');
-                    e.parameters('baseIntensity2') = epoch.get('baseIntensity2');
-                    e.parameters('colorPattern1') = epoch.get('colorPattern1');
-                    e.parameters('colorPattern2') = epoch.get('colorPattern2');
-                    e.parameters('contrast1') = epoch.get('contrast1');
-                    e.parameters('contrast2') = epoch.get('contrast2');
+                    e.parameters = epoch.attributes;
+%                     e.parameters('baseIntensity1') = epoch.get('baseIntensity1');
+%                     e.parameters('baseIntensity2') = epoch.get('baseIntensity2');
+%                     e.parameters('colorPattern1') = epoch.get('colorPattern1');
+%                     e.parameters('colorPattern2') = epoch.get('colorPattern2');
+%                     e.parameters('contrast1') = epoch.get('contrast1');
+%                     e.parameters('contrast2') = epoch.get('contrast2');
+%                     if is
                     e.ignore = false;
                
                     
@@ -111,15 +112,16 @@ classdef ColorIsoResponseAnalysis < AnalysisTree
         end
         
         
-        function plot0_surfaceSpikesStiminterval(tree, ~)
+        function plot1_surfaceSpikesStiminterval(tree, ~)
             ColorIsoResponseAnalysis.plotIsoResponseSurface(tree, 'spikeCount_stimInterval_mean');
         end
         
-        function plot1_surfaceSpikesAfterStiminterval(tree, ~)
+        function plot2_surfaceSpikesAfterStiminterval(tree, ~)
             ColorIsoResponseAnalysis.plotIsoResponseSurface(tree, 'spikeCount_afterStim_mean');
         end
         
-        function plot2_launchGui(tree, cellData)
+        
+        function plot0_launchGui(tree, cellData)
             sessionNode = tree.get(1);
             if ~isfield(sessionNode,'epochData')
                 return
@@ -212,81 +214,88 @@ classdef ColorIsoResponseAnalysis < AnalysisTree
         end
         
         
-%         
-%         function plot2_ramp_Spikes(tree, cellData)
-%             nodeIds = tree.getchildren(1);
-%             variables = {'spikeCount_stimInterval_mean', 'spikeCount_afterStim_mean'};
-%             
-%             % get all responses and epoch ids
-%             epochIdByNode = [];
-%             responseByEpochId = [];
-%             for ni = 1:length(nodeIds)
-%                 nodeId = nodeIds(ni);
-%                 epochNode = tree.get(nodeId);
-%                 epochIdByNode(end+1) = epochNode.epochID;
-%                 for vi = 1:length(variables)
-%                     responseByEpochId(epochNode.epochID, vi) = epochNode.(variables{vi});
-%                 end
-%             end
-%             
-%             
-%             % get all contrasts to figure out the fixed value
-%             allRampEpochs = [];
-%             contrasts = [];
-%             
-%             for ei = 1:length(epochIdByNode)
-%                 id = epochIdByNode(ei);
-%                 epoch = cellData.epochs(id);
-%                 if ~strcmp(epoch.get('stimulusMode'), 'ramp')
-%                     continue
-%                 end
-%                 allRampEpochs(end+1) = id;
-%                 contrasts(end+1) = epoch.get('contrast1');
-%                 contrasts(end+1) = epoch.get('contrast2');
-%             end
-%             
-%             % separate the epochs by which color is varying
-%             fixedStepContrast = mode(contrasts);
-%             uvVaryingEpochs = [];
-%             greenVaryingEpochs = [];
-%             epochIsUvVarying = [];
-%             contrastRatios = [];
-%             responses = [];
-%             for ei = 1:length(allRampEpochs)
-%                 id = allRampEpochs(ei);
-%                 epoch = cellData.epochs(id);
-%                 
-%                 if epoch.get('contrast1') == fixedStepContrast
-%                     varyingPattern = 'colorPattern2';
-%                     contrastRatios(ei) = epoch.get('contrast2') / epoch.get('contrast1');
-%                 else
-%                     varyingPattern = 'colorPattern1';
-%                     contrastRatios(ei) = epoch.get('contrast1') / epoch.get('contrast2');
-%                 end
-%                 if strcmp(epoch.get(varyingPattern), 'uv')
-%                     uvVaryingEpochs(ei) = id;
-%                     epochIsUvVarying(ei) = true;
-%                 else
-%                     greenVaryingEpochs(ei) = id;
-%                     epochIsUvVarying(ei) = false;
-%                 end
-%                 responses(ei,:) = responseByEpochId(id,:);
-%             end
-%             
-%             epochIsUvVarying = epochIsUvVarying == 1;
-%             
-%             ax = gca();
-%             hold(ax, 'on');
-%             % on
-%             errorbar(ax, contrastRatios(epochIsUvVarying), responses(epochIsUvVarying,1), zeros(sum(epochIsUvVarying),1), 'o', 'Color',[.3, 0, .9])
-%             plot(ax, contrastRatios(~epochIsUvVarying), responses(~epochIsUvVarying,1), 'o', 'Color',[0, .8, .1])
-%             
-%             % off
-%             plot(ax, contrastRatios(epochIsUvVarying), responses(epochIsUvVarying,2), 'o', 'Color',[.3, 0, .9])
-%             plot(ax, contrastRatios(~epochIsUvVarying), responses(~epochIsUvVarying,2), 'o', 'Color',[0, .8, .1])
-%             hold(ax, 'off');
-%             
-%         end
+        
+        function plot3_ramp_Spikes(tree, cellData)
+            sessionNode = tree.get(1);
+            if ~isfield(sessionNode,'epochData')
+                return
+            end
+            epochData = sessionNode.epochData;
+            sampleEpoch = epochData{1};
+            baseIntensity1 = sampleEpoch.parameters('baseIntensity1');
+            baseIntensity2 = sampleEpoch.parameters('baseIntensity2');
+            colorPattern1 = sampleEpoch.parameters('colorPattern1');
+            colorPattern2 = sampleEpoch.parameters('colorPattern2');
+            
+            
+            variables = {'spikeCount_stimInterval_mean', 'spikeCount_afterStim_mean'};
+            pointDatas = {};
+            for i = 1:length(variables)
+                [pointData, ~] = ColorIsoResponseAnalysis.analyzeData(epochData, variables{i});
+                pointDatas{i} = pointData;
+            end
+            
+            
+            ax = gca();
+            cla(ax)
+           
+            
+            % get all contrasts to figure out the fixed value
+            allRampEpochs = [];
+            contrasts = [];
+            
+            for ei = 1:length(epochData)
+                epoch = epochData{ei};
+                if ~strcmp(epoch.parameters('stimulusMode'), 'ramp')
+                    continue
+                end
+                allRampEpochs(end+1) = id;
+                contrasts(end+1) = epoch.parameters('contrast1');
+                contrasts(end+1) = epoch.parameters('contrast2');
+            end
+            
+            % separate the epochs by which color is varying
+            fixedStepContrast = mode(contrasts);
+            uvVaryingEpochs = [];
+            greenVaryingEpochs = [];
+            epochIsUvVarying = [];
+            contrastRatios = [];
+            responses = [];
+            for ei = 1:length(allRampEpochs)
+                id = allRampEpochs(ei);
+                epoch = cellData.epochs(id);
+                
+                if epoch.get('contrast1') == fixedStepContrast
+                    varyingPattern = 'colorPattern2';
+                    contrastRatios(ei) = epoch.get('contrast2') / epoch.get('contrast1');
+                else
+                    varyingPattern = 'colorPattern1';
+                    contrastRatios(ei) = epoch.get('contrast1') / epoch.get('contrast2');
+                end
+                if strcmp(epoch.get(varyingPattern), 'uv')
+                    uvVaryingEpochs(ei) = id;
+                    epochIsUvVarying(ei) = true;
+                else
+                    greenVaryingEpochs(ei) = id;
+                    epochIsUvVarying(ei) = false;
+                end
+                responses(ei,:) = responseByEpochId(id,:);
+            end
+            
+            epochIsUvVarying = epochIsUvVarying == 1;
+            
+            ax = gca();
+            hold(ax, 'on');
+            % on
+            errorbar(ax, contrastRatios(epochIsUvVarying), responses(epochIsUvVarying,1), zeros(sum(epochIsUvVarying),1), 'o', 'Color',[.3, 0, .9])
+            plot(ax, contrastRatios(~epochIsUvVarying), responses(~epochIsUvVarying,1), 'o', 'Color',[0, .8, .1])
+            
+            % off
+            plot(ax, contrastRatios(epochIsUvVarying), responses(epochIsUvVarying,2), 'o', 'Color',[.3, 0, .9])
+            plot(ax, contrastRatios(~epochIsUvVarying), responses(~epochIsUvVarying,2), 'o', 'Color',[0, .8, .1])
+            hold(ax, 'off');
+            
+        end
         
     end
     

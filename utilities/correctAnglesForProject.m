@@ -1,16 +1,16 @@
 function correctAnglesForProject(projFolder)
 
+global CELL_DATA_FOLDER
 global ANALYSIS_FOLDER
-cellData_folder = [ANALYSIS_FOLDER 'cellData' filesep];
 
 if nargin == 0
-    projFolder = uigetdir;
+    projFolder = uigetdir([ANALYSIS_FOLDER 'Projects' filesep]);
 end
 
 
 fid = fopen([projFolder filesep 'cellNames.txt'], 'r');
 if fid < 0
-    errordlg(['Error: cellNames.txt not found in ' projFolder]);
+    error(['Error: cellNames.txt not found in ' projFolder]);
     return;
 end
 temp = textscan(fid, '%s', 'delimiter', '\n');
@@ -32,7 +32,7 @@ numFiles = length(files);
 % angles are relative to moving bar towards direction
 for fi = numFiles:-1:1
     fprintf('processing cellData %d of %d: %s\n', fi, numFiles, files{fi})
-    fname = fullfile(cellData_folder, [files{fi}, '.mat']);
+    fname = fullfile(CELL_DATA_FOLDER, [files{fi}, '.mat']);
     load(fname)
     
     
