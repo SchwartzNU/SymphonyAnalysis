@@ -183,6 +183,30 @@ classdef TextureMatrixAnalysis < AnalysisTree
             obj = obj.percolateUp(randSeedParents, singleValParamList, singleValParamList);
             obj = obj.percolateUp(randSeedParents, collectedParamList, collectedParamList);
             
+            %Texture scale x-axis; fitting. Adam 4/13/17; 
+            %Next - adapt to Symphony2 data too 
+            blurRootDataID = childrenByValue(obj, 1, 'name', 'Across seed tree');
+            blurRootData = obj.get(blurRootDataID);
+            %Convert blur sigma pixels > microns> "texture spatial scale" (see Mani and Schwartz 2017)
+            blurToSpatScale = [-0.01509 3.81 0.405]; %from "blurToTrueSpatialScale_2016.m"
+            pixelBlur = blurRootData.pixelBlur;
+            whichRig = blurRootData.cellName(7);
+            if strcmp(whichRig, 'A')
+                micronBlur = pixelBlur*1.38;
+            else
+                %Rig B standard projector!
+                micronBlur = pixelBlur*2.3;
+            end;
+            blurRootData.micronBlur = micronBlur;
+            blurRootData.textureScale = polyval(blurToSpatScale, micronBlur);
+            
+%             %Add fit info
+%             blurRootData = addHillFit(blurRootData);
+%             
+% 
+%             obj = obj.set(blurRootDataID, blurRootData);
+%             %%%%%%%%%%%%%%%            
+            
         end
         
     end
@@ -432,43 +456,35 @@ classdef TextureMatrixAnalysis < AnalysisTree
         
         function plotMeanData_spkStimInt_gblSubt(node, cellData)
             blurRootData = node.get(childrenByValue(node, 1, 'name', 'Across seed tree'));
-            xvals = blurRootData.pixelBlur;
+%             xvals = blurRootData.pixelBlur;
+            xvals = blurRootData.textureScale;
             yMean = blurRootData.spikeCount_stimInterval_grndBlSubt.mean_c;
             yMeanErr = blurRootData.spikeCount_stimInterval_grndBlSubt.SEM_c;
-            errorbar(xvals, yMean, yMeanErr,'r');
-            xlabel('Pixel blur');
+            errorbar(xvals, yMean, yMeanErr);
+%             xlabel('Pixel blur');
+            xlabel('Texture scale');
             ylabel('Spike count gblSubt');
+            
+%             hold('on');
+%             xfit = 0:0.5:max(xvals);
+%             yfit = Heq(blurRootData.beta, xfit);
+%             plot(xfit,yfit);
+            
             hold('off');
         end
         
-        %         function plotMeanData_spkStimInt_gblSubtNORM(node, cellData)
-        %             rootData = node.get(1);
-        %             xvals = rootData.curInnerDiameter;
-        %             yField = rootData.spikeCount_stimInterval_grndBlSubt;
-        %             if strcmp(yField.units, 's')
-        %                 yvals = yField.median_c;
-        %             else
-        %                 yvals = yField.mean_c;
-        %             end
-        %             errs = yField.SEM;
-        %             M = max(abs(yvals));
-        %             yvals = yvals./M;
-        %             errs = errs./M;
-        %             errorbar(xvals, yvals, errs);
-        %             xlabel('inner diameter');
-        %             ylabel(['spikeCount_stimInterval_granBaselineSubtracted (' yField.units ')']);
-        %         end
-        
         function plotMeanData_spkStimInt_gblSubtNORM(node, cellData)
             blurRootData = node.get(childrenByValue(node, 1, 'name', 'Across seed tree'));
-            xvals = blurRootData.pixelBlur;
+%             xvals = blurRootData.pixelBlur;
+            xvals = blurRootData.textureScale;
             yMean = blurRootData.spikeCount_stimInterval_grndBlSubt.mean_c;
             yMeanErr = blurRootData.spikeCount_stimInterval_grndBlSubt.SEM_c;
             M = max(abs(yMean));
             yMean = yMean./M;
             yMeanErr = yMeanErr./M;
             errorbar(xvals, yMean, yMeanErr,'r');
-            xlabel('Pixel blur');
+%             xlabel('Pixel blur');
+            xlabel('Texture scale');
             ylabel('Spike count gblSubt (norm)');
             hold('off');
         end

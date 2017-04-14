@@ -55,6 +55,8 @@ classdef ContrastRespAnalysis < AnalysisTree
             if strcmp(rootData.(rootData.ampModeParam), 'Cell attached')
                 %baseline subtraction
                 grandBaselineMean = mean(baseline);
+                stimTime_s = cellData.epochs(leafIDs(1)).get('stimTime')*1e-3;
+                
                 for i=1:L %for each leaf node
                     curNode = obj.get(leafIDs(i));
                     
@@ -77,6 +79,9 @@ classdef ContrastRespAnalysis < AnalysisTree
                     tempStruct.ONSETspikes_after200ms_grandBaselineSubtracted = curNode.spikeCount_ONSET_after200ms;
                     tempStruct.ONSETspikes_after200ms_grandBaselineSubtracted.value = curNode.spikeCount_ONSET_after200ms.value - grandBaselineMean.*0.8; %assumes 1 sec stim interval
                     tempStruct = getEpochResponseStats(tempStruct);
+                    tempStruct.spikeCount_stimInterval_grndBlSubt = curNode.spikeCount_stimInterval;
+                    tempStruct.spikeCount_stimInterval_grndBlSubt.value = curNode.spikeCount_stimInterval.value - grandBaselineMean *stimTime_s;
+                    
                     
                     curNode = mergeIntoNode(curNode, tempStruct);
                     obj = obj.set(leafIDs(i), curNode);
@@ -335,6 +340,38 @@ classdef ContrastRespAnalysis < AnalysisTree
             ylabel(['ONSETspikes_grandBaselineSubtracted (' yField.units ')']);
         end
 
+        function plot_contrastVsspikeCount_stimInt_gblSubt(node, cellData)
+            rootData = node.get(1);
+            xvals = rootData.contrast;
+            yField = rootData.spikeCount_stimInterval_grndBlSubt;
+            if strcmp(yField.units, 's')
+                yvals = yField.median_c;
+            else
+                yvals = yField.mean_c;
+            end
+            errs = yField.SEM;
+            errorbar(xvals, yvals, errs);
+            xlabel('contrast');
+            ylabel(['spikeCount_stimInterval_granBaselineSubtracted (' yField.units ')']);
+        end
+        
+         function plot_contrastVsspikeCount_stimInt_gblSubtNORM(node, cellData)
+            rootData = node.get(1);
+            xvals = rootData.contrast;
+            yField = rootData.spikeCount_stimInterval_grndBlSubt;
+            if strcmp(yField.units, 's')
+                yvals = yField.median_c;
+            else
+                yvals = yField.mean_c;
+            end
+            errs = yField.SEM;
+            M = max(abs(yvals));
+            yvals = yvals./M;
+            errs = errs./M;
+            errorbar(xvals, yvals, errs);
+            xlabel('contrast');
+            ylabel(['spikeCount_stimInterval_granBaselineSubtracted (' yField.units ')']);
+         end
         
     end
     
