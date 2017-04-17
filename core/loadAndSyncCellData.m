@@ -2,6 +2,7 @@ function cellData = loadAndSyncCellData(cellDataName)
 global ANALYSIS_FOLDER;
 global SYNC_TO_SERVER;
 global CELL_DATA_MASTER;
+global SERVER_ROOT;
 cellData_local = [];
 cellData = [];
 do_local_to_server_copy = false;
@@ -27,7 +28,7 @@ end
 if SYNC_TO_SERVER
     if exist(CELL_DATA_MASTER, 'dir') == 7 %sever is connected and CellDataMaster folder is found
 %         disp('CellDataMaster found');
-        cellDataStatusFileLocation = [CELL_DATA_MASTER 'CellDataStatus.txt'];
+        cellDataStatusFileLocation = [SERVER_ROOT 'CellDataStatus.txt'];
         try
             fileinfo = dir([CELL_DATA_MASTER cellDataName '.mat']);
             serverModDate = fileinfo.datenum;

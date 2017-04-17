@@ -1,6 +1,7 @@
 function [] = saveAndSyncCellData(cellData)
 global CELL_DATA_FOLDER;
 global CELL_DATA_MASTER;
+global SERVER_ROOT;
 global SYNC_TO_SERVER;
 SERVER_TIME_OFFSET = 60;
 
@@ -11,7 +12,7 @@ if ~SYNC_TO_SERVER
 end
 
 do_sync = true;
-cellDataStatusFileLocation = [CELL_DATA_MASTER 'CellDataStatus.txt'];
+cellDataStatusFileLocation = [SERVER_ROOT 'CellDataStatus.txt'];
 
 
 % local file mod time
