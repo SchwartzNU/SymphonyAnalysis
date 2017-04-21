@@ -3,6 +3,8 @@ classdef TextureMatrixAnalysis < AnalysisTree
     properties
         StartTime = 0;
         EndTime = 0;
+        xAxisName = 'pixelBlur';
+        seedFieldName = 'randSeed';
     end
     
     methods
@@ -16,14 +18,26 @@ classdef TextureMatrixAnalysis < AnalysisTree
                 params.ampModeParam = 'amp2Mode';
             end
             
+            
+            if cellData.get('symphonyVersion') == 2
+                %Symphony2
+                obj.xAxisName = 'textureScale';
+                obj.seedFieldName = 'randomSeed';
+            else
+                %Symphony1
+                obj.xAxisName = 'pixelBlur';
+                obj.seedFieldName = 'randSeed';
+            end;
+            
             nameStr = [cellData.savedFileName ': ' dataSetName ': TextureMatrixAnalysis'];
             obj = obj.setName(nameStr);
             obj = obj.copyAnalysisParams(params);
             dataSet = cellData.savedDataSets(dataSetName);
+
             obj = obj.copyParamsFromSampleEpoch(cellData, dataSet, ...
                 {'RstarMean', 'maskSize', params.ampModeParam});
-            acrossSeedTree = obj.buildCellTree(1, cellData, dataSet, {'pixelBlur', 'randSeed'});
-            acrossBlurTree = obj.buildCellTree(1, cellData, dataSet, {'randSeed', 'pixelBlur'});
+            acrossSeedTree = obj.buildCellTree(1, cellData, dataSet, {obj.xAxisName, obj.seedFieldName});
+            acrossBlurTree = obj.buildCellTree(1, cellData, dataSet, {obj.seedFieldName, obj.xAxisName});
             
             nodeData = acrossSeedTree.get(1);
             nodeData.name = 'Across seed tree';
@@ -85,14 +99,14 @@ classdef TextureMatrixAnalysis < AnalysisTree
             end
             
             
-            randSeedLeaves = getTreeLevel(obj, 'randSeed');
+            randSeedLeaves = getTreeLevel(obj, obj.seedFieldName);
             randSeedLeaves = intersect(randSeedLeaves,leafIDs);
-            pixelBlurLeaves = getTreeLevel(obj, 'pixelBlur');
+            pixelBlurLeaves = getTreeLevel(obj, obj.xAxisName);
             pixelBlurLeaves = intersect(pixelBlurLeaves,leafIDs);
             
             % percolate up randSeedLeaves subtree
             obj = obj.percolateUp(randSeedLeaves, ...
-                'splitValue', 'randSeed');
+                'splitValue', obj.seedFieldName);
             
             
             [byEpochParamList, singleValParamList, collectedParamList] = getParameterListsByType(curNode);
@@ -102,7 +116,7 @@ classdef TextureMatrixAnalysis < AnalysisTree
             
             % percolate up pixelBlurLeaves subtree
             obj = obj.percolateUp(pixelBlurLeaves, ...
-                'splitValue', 'pixelBlur');
+                'splitValue', obj.xAxisName);
             
             [byEpochParamList, singleValParamList, collectedParamList] = getParameterListsByType(curNode);
             obj = obj.percolateUp(pixelBlurLeaves, byEpochParamList, byEpochParamList);
@@ -114,7 +128,7 @@ classdef TextureMatrixAnalysis < AnalysisTree
             rootData.byEpochParamList = byEpochParamList;
             rootData.singleValParamList = singleValParamList;
             rootData.collectedParamList = collectedParamList;
-            rootData.stimParameterList = {'randSeed','curInnerDiameter'};
+            rootData.stimParameterList = {obj.seedFieldName,obj.xAxisName};
             obj = obj.set(1, rootData);
             % % %
             
@@ -169,16 +183,16 @@ classdef TextureMatrixAnalysis < AnalysisTree
             %                 'var_ratio', 'var_ratio', ...
             %                 'SNR', 'SNR', ...
             %                 'meanVals', 'meanVals', ...
-            %                 'splitValue', 'pixelBlur');
+            %                 'splitValue', xAxisName);
             
             obj = obj.percolateUp(pixelBlurParents, ...
-                'splitValue', 'pixelBlur');
+                'splitValue', obj.xAxisName);
             obj = obj.percolateUp(pixelBlurParents, byEpochParamList, byEpochParamList);
             obj = obj.percolateUp(pixelBlurParents, singleValParamList, singleValParamList);
             obj = obj.percolateUp(pixelBlurParents, collectedParamList, collectedParamList);
             
             obj = obj.percolateUp(randSeedParents, ...
-                'splitValue', 'randSeed');
+                'splitValue', obj.seedFieldName);
             obj = obj.percolateUp(randSeedParents, byEpochParamList, byEpochParamList);
             obj = obj.percolateUp(randSeedParents, singleValParamList, singleValParamList);
             obj = obj.percolateUp(randSeedParents, collectedParamList, collectedParamList);
@@ -188,24 +202,45 @@ classdef TextureMatrixAnalysis < AnalysisTree
             blurRootDataID = childrenByValue(obj, 1, 'name', 'Across seed tree');
             blurRootData = obj.get(blurRootDataID);
             %Convert blur sigma pixels > microns> "texture spatial scale" (see Mani and Schwartz 2017)
-            blurToSpatScale = [-0.01509 3.81 0.405]; %from "blurToTrueSpatialScale_2016.m"
-            pixelBlur = blurRootData.pixelBlur;
-            whichRig = blurRootData.cellName(7);
+            %from "blurToTrueSpatialScale2017.m"
+            
+            pa = [-0.0001403,-0.02534,5.799,-1.387];
+            pb = [-5.049e-05,-0.01521,5.799,-2.312]; 
+            
+            whichRig = blurRootData.cellName(7);     
+            
+            if strcmp(obj.xAxisName, 'pixelBlur')
+                %Symphony1, determine micron blur from pixels/micron ratio.
+                pixelBlur = blurRootData.pixelBlur;
+                pixelBlur(pixelBlur == 0) = 1;
+                if strcmp(whichRig, 'A')
+                    micronBlur = pixelBlur*1.38;
+                else
+                    %Rig B standard projector!
+                    micronBlur = pixelBlur*2.3;
+                end;
+            else
+                %Symphony2 - x axis is actually micron blur...sigma or
+                %2sigma???
+                micronBlur = blurRootData.textureScale/2;
+            end;
+      
             if strcmp(whichRig, 'A')
-                micronBlur = pixelBlur*1.38;
+                blurToSpatScale = pa;
             else
                 %Rig B standard projector!
-                micronBlur = pixelBlur*2.3;
+                blurToSpatScale = pb;
             end;
-            blurRootData.micronBlur = micronBlur;
-            blurRootData.textureScale = polyval(blurToSpatScale, micronBlur);
             
-%             %Add fit info
+            blurRootData.micronBlur = micronBlur;
+            blurRootData.textureHalfMaxScale = polyval(blurToSpatScale, micronBlur);
+            %Add fit info
 %             blurRootData = addHillFit(blurRootData);
-%             
-% 
-%             obj = obj.set(blurRootDataID, blurRootData);
-%             %%%%%%%%%%%%%%%            
+%             blurRootData = addSpapsFit(blurRootData);
+            blurRootData = addLinearInterp(blurRootData);  
+
+            obj = obj.set(blurRootDataID, blurRootData);
+            %%%%%%%%%%%%%%%            
             
         end
         
@@ -215,10 +250,11 @@ classdef TextureMatrixAnalysis < AnalysisTree
         
         function plotAllData(node, cellData)
             seedChildren = node.getchildren(childrenByValue(node, 1, 'name', 'Across blur tree'));
+            blurParent = node.get(childrenByValue(node, 1, 'name', 'Across seed tree'));
+            xvals = blurParent.textureHalfMaxScale;
             %            c = ['b', 'r', 'g', 'k', 'm'];
             for i=1:length(seedChildren);
                 curNode = node.get(seedChildren(i));
-                xvals = curNode.pixelBlur;
                 %                 yvals = curNode.overEpochs_ONSETspikes.mean_c;
                 %                 yerrs = curNode.overEpochs_ONSETspikes.SEM;
                 yvals = curNode.overEpochs_spikeCount_stimInterval_baselineSubtracted.mean_c;
@@ -242,10 +278,11 @@ classdef TextureMatrixAnalysis < AnalysisTree
         
         function plotAllData_gbl(node, cellData)
             seedChildren = node.getchildren(childrenByValue(node, 1, 'name', 'Across blur tree'));
+            blurParent = node.get(childrenByValue(node, 1, 'name', 'Across seed tree'));
+            xvals = blurParent.textureHalfMaxScale;
             %            c = ['b', 'r', 'g', 'k', 'm'];
             for i=1:length(seedChildren)      %i=[1,4]
                 curNode = node.get(seedChildren(i));
-                xvals = curNode.pixelBlur;
                 %                 yvals = curNode.overEpochs_ONSETspikes.mean_c;
                 %                 yerrs = curNode.overEpochs_ONSETspikes.SEM;
                 yvals = curNode.overEpochs_spikeCount_stimInterval_grndBlSubt.mean_c;
@@ -269,10 +306,12 @@ classdef TextureMatrixAnalysis < AnalysisTree
         
         function plotAllData_stimToEnd_gbl(node, cellData)
             seedChildren = node.getchildren(childrenByValue(node, 1, 'name', 'Across blur tree'));
+            blurParent = node.get(childrenByValue(node, 1, 'name', 'Across seed tree'));
+            xvals = blurParent.textureHalfMaxScale;
             %            c = ['b', 'r', 'g', 'k', 'm'];
             for i=1:length(seedChildren)      %i=[1,4]
                 curNode = node.get(seedChildren(i));
-                xvals = curNode.pixelBlur;
+                
                 %                 yvals = curNode.overEpochs_ONSETspikes.mean_c;
                 %                 yerrs = curNode.overEpochs_ONSETspikes.SEM;
                 yvals = curNode.overEpochs_spikeCount_stimToEnd_grndBlSubt.mean_c;
@@ -296,10 +335,11 @@ classdef TextureMatrixAnalysis < AnalysisTree
         
         function plotAllData_ONSETspikes(node, cellData)
             seedChildren = node.getchildren(childrenByValue(node, 1, 'name', 'Across blur tree'));
+            blurParent = node.get(childrenByValue(node, 1, 'name', 'Across seed tree'));
+            xvals = blurParent.textureHalfMaxScale;
             %            c = ['b', 'r', 'g', 'k', 'm'];
             for i=1:length(seedChildren);
                 curNode = node.get(seedChildren(i));
-                xvals = curNode.pixelBlur;
                 yvals = curNode.overEpochs_ONSETspikes.mean_c;
                 yerrs = curNode.overEpochs_ONSETspikes.SEM;
                 %plot(xvals, yvals, [c(mod(i,5)+1) 'o']);
@@ -319,10 +359,11 @@ classdef TextureMatrixAnalysis < AnalysisTree
         
         function plotAllData_OFFspikes_blSubt(node, cellData)
             seedChildren = node.getchildren(childrenByValue(node, 1, 'name', 'Across blur tree'));
+            blurParent = node.get(childrenByValue(node, 1, 'name', 'Across seed tree'));
+            xvals = blurParent.textureHalfMaxScale;
             %            c = ['b', 'r', 'g', 'k', 'm'];
             for i=1:length(seedChildren);
                 curNode = node.get(seedChildren(i));
-                xvals = curNode.pixelBlur;
                 yvals = curNode.overEpochs_spikeCount_tailInterval_baselineSubtracted.mean_c;
                 yerrs = curNode.overEpochs_spikeCount_tailInterval_baselineSubtracted.SEM;
                 %plot(xvals, yvals, [c(mod(i,5)+1) 'o']);
@@ -342,10 +383,11 @@ classdef TextureMatrixAnalysis < AnalysisTree
         
         function plotAllData_ONSET_FRmax(node, cellData)
             seedChildren = node.getchildren(childrenByValue(node, 1, 'name', 'Across blur tree'));
+            blurParent = node.get(childrenByValue(node, 1, 'name', 'Across seed tree'));
+            xvals = blurParent.textureHalfMaxScale;
             %            c = ['b', 'r', 'g', 'k', 'm'];
             for i=1:length(seedChildren);
                 curNode = node.get(seedChildren(i));
-                xvals = curNode.pixelBlur;
                 yvals = curNode.overEpochs_ONSET_FRmax.value;
                 %yerrs = curNode.overEpochs_ONSET_FRmax.SEM;
                 %plot(xvals, yvals, [c(mod(i,5)+1) 'o']);
@@ -365,10 +407,11 @@ classdef TextureMatrixAnalysis < AnalysisTree
         
         function plotAllData_ONSETpeakInstantaneousFR(node, cellData)
             seedChildren = node.getchildren(childrenByValue(node, 1, 'name', 'Across blur tree'));
+            blurParent = node.get(childrenByValue(node, 1, 'name', 'Across seed tree'));
+            xvals = blurParent.textureHalfMaxScale;
             %            c = ['b', 'r', 'g', 'k', 'm'];
             for i=1:length(seedChildren);
                 curNode = node.get(seedChildren(i));
-                xvals = curNode.pixelBlur;
                 yvals = curNode.overEpochs_ONSETpeakInstantaneousFR.mean_c;
                 yerrs = curNode.overEpochs_ONSETpeakInstantaneousFR.SEM;
                 %plot(xvals, yvals, [c(mod(i,5)+1) 'o']);
@@ -413,7 +456,7 @@ classdef TextureMatrixAnalysis < AnalysisTree
         
         function plotMeanDataNorm(node, cellData)
             blurRootData = node.get(childrenByValue(node, 1, 'name', 'Across seed tree'));
-            xvals = blurRootData.pixelBlur;
+            xvals = blurRootData.textureHalfMaxScale;
             yMean = blurRootData.spikeCount_stimInterval_baselineSubtracted.mean_c;
             yMeanErr = blurRootData.spikeCount_stimInterval_baselineSubtracted.SEM_c;
             M = max(yMean);
@@ -427,7 +470,7 @@ classdef TextureMatrixAnalysis < AnalysisTree
         
         function plotMeanDataNormOFF(node, cellData)
             blurRootData = node.get(childrenByValue(node, 1, 'name', 'Across seed tree'));
-            xvals = blurRootData.pixelBlur;
+            xvals = blurRootData.textureHalfMaxScale;
             yMean = blurRootData.spikeCount_tailInterval_baselineSubtracted.mean_c;
             yMeanErr = blurRootData.spikeCount_tailInterval_baselineSubtracted.SEM_c;
             M = max(yMean);
@@ -457,26 +500,27 @@ classdef TextureMatrixAnalysis < AnalysisTree
         function plotMeanData_spkStimInt_gblSubt(node, cellData)
             blurRootData = node.get(childrenByValue(node, 1, 'name', 'Across seed tree'));
 %             xvals = blurRootData.pixelBlur;
-            xvals = blurRootData.textureScale;
+            xvals = blurRootData.textureHalfMaxScale;
             yMean = blurRootData.spikeCount_stimInterval_grndBlSubt.mean_c;
             yMeanErr = blurRootData.spikeCount_stimInterval_grndBlSubt.SEM_c;
             errorbar(xvals, yMean, yMeanErr);
 %             xlabel('Pixel blur');
-            xlabel('Texture scale');
+            xlabel('Texture half max scale');
             ylabel('Spike count gblSubt');
             
-%             hold('on');
-%             xfit = 0:0.5:max(xvals);
-%             yfit = Heq(blurRootData.beta, xfit);
-%             plot(xfit,yfit);
-            
+            hold('on');
+            xfit = min(xvals):0.5:max(xvals);
+            %yfit = Heq(blurRootData.beta, xfit);
+            yfit = feval(blurRootData.fitresult, xfit);
+            plot(xfit,yfit);
+            plot(blurRootData.crossing,feval(blurRootData.fitresult,blurRootData.crossing),'o')         
             hold('off');
         end
         
         function plotMeanData_spkStimInt_gblSubtNORM(node, cellData)
             blurRootData = node.get(childrenByValue(node, 1, 'name', 'Across seed tree'));
 %             xvals = blurRootData.pixelBlur;
-            xvals = blurRootData.textureScale;
+            xvals = blurRootData.textureHalfMaxScale;
             yMean = blurRootData.spikeCount_stimInterval_grndBlSubt.mean_c;
             yMeanErr = blurRootData.spikeCount_stimInterval_grndBlSubt.SEM_c;
             M = max(abs(yMean));
@@ -484,14 +528,14 @@ classdef TextureMatrixAnalysis < AnalysisTree
             yMeanErr = yMeanErr./M;
             errorbar(xvals, yMean, yMeanErr,'r');
 %             xlabel('Pixel blur');
-            xlabel('Texture scale');
+            xlabel('Texture half max scale');
             ylabel('Spike count gblSubt (norm)');
             hold('off');
         end
         
         function plotMeanData_stimToEnd_gblSubtNORM(node, cellData)
             blurRootData = node.get(childrenByValue(node, 1, 'name', 'Across seed tree'));
-            xvals = blurRootData.pixelBlur;
+            xvals = blurRootData.textureHalfMaxScale;
             yMean = blurRootData.spikeCount_stimToEnd_grndBlSubt.mean_c;
             yMeanErr = blurRootData.spikeCount_stimToEnd_grndBlSubt.SEM_c;
             M = max(abs(yMean));
@@ -505,7 +549,7 @@ classdef TextureMatrixAnalysis < AnalysisTree
         
         function plotMeanData_stimToEnd_gblSubt(node, cellData)
             blurRootData = node.get(childrenByValue(node, 1, 'name', 'Across seed tree'));
-            xvals = blurRootData.pixelBlur;
+            xvals = blurRootData.textureHalfMaxScale;
             yMean = blurRootData.spikeCount_stimToEnd_grndBlSubt.mean_c;
             yMeanErr = blurRootData.spikeCount_stimToEnd_grndBlSubt.SEM_c;
             errorbar(xvals, yMean, yMeanErr,'r');

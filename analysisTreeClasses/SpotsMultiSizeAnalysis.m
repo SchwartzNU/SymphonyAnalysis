@@ -147,7 +147,6 @@ classdef SpotsMultiSizeAnalysis < AnalysisTree
             %to add more here
             rootData = obj.get(1);
             % Adam 2/25/17
-            
             if strcmp(rootData.(rootData.ampModeParam), 'Cell attached')
                 rootData = addWidthScalars(rootData, 'spotSize', {'spikeCount_stimInterval_grndBlSubt'});
                 rootData = addWidthScalars(rootData, 'spotSize',{'spikeCount_stimInterval_grndBlSubt'}, 'fixedVal',1200);
@@ -158,6 +157,9 @@ classdef SpotsMultiSizeAnalysis < AnalysisTree
                 supression600 = 1-(rootData.spikeCount_stimInterval_grndBlSubt_spotSizeFixed600/...
                     rootData.spikeCount_stimInterval_grndBlSubt_spotSizeByMax);
                 rootData.spikeCount_stimInterval_grndBlSubt_SMSsupression600 = supression600;
+                
+                %Adam 4/21/17
+                rootData = addSumOfGaussFit(rootData);
             end;
             % End Adam 2/25/17
             rootData.byEpochParamList = byEpochParamList;
@@ -577,9 +579,17 @@ classdef SpotsMultiSizeAnalysis < AnalysisTree
                 yvals = yField.mean_c;
             end
             errs = yField.SEM;
-            errorbar(xvals, yvals, errs);
+            errorbar(xvals, yvals, errs, '.');
             xlabel('spotSize');
-            ylabel(['spikeCount_stimInterval_granBaselineSubtracted (' yField.units ')']);
+            ylabel(['spikeCount_stimInterval_granBaselineSubtracted (' yField.units ')']); 
+            
+            hold('on');
+            xfit = min(xvals):max(xvals);
+            yfit = feval(rootData.fitresult, xfit);
+            plot(xfit,yfit);
+            plot(rootData.fitMax,feval(rootData.fitresult,rootData.fitMax),'o');
+            hold('off');
+
         end
         
          function plot_spotSizeVsspikeCount_stimInt_gblSubtNORM(node, cellData)

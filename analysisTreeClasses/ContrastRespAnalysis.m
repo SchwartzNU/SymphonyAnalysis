@@ -117,6 +117,9 @@ classdef ContrastRespAnalysis < AnalysisTree
             rootData.singleValParamList = singleValParamList;
             rootData.collectedParamList = collectedParamList;
             rootData.stimParameterList = {'contrast'};
+            
+            rootData = addLinearInterpToCR(rootData);  
+            
             obj = obj.set(1, rootData);
         end
     end
@@ -353,6 +356,19 @@ classdef ContrastRespAnalysis < AnalysisTree
             errorbar(xvals, yvals, errs);
             xlabel('contrast');
             ylabel(['spikeCount_stimInterval_granBaselineSubtracted (' yField.units ')']);
+
+            hold('on');
+            xfit = min(xvals):0.02:max(xvals);
+            %yfit = Heq(blurRootData.beta, xfit);
+            yfit = feval(rootData.fitresult, xfit);
+            plot(xfit,yfit);
+
+            plot(rootData.onCrossing,feval(rootData.fitresult,rootData.onCrossing),'o');
+            plot(rootData.onCrossingSup,feval(rootData.fitresult,rootData.onCrossingSup),'o');
+            plot(rootData.offCrossing,feval(rootData.fitresult,rootData.offCrossing),'o');
+            plot(rootData.offCrossing,feval(rootData.fitresult,rootData.offCrossingSup),'o');
+            
+            hold('off');
         end
         
          function plot_contrastVsspikeCount_stimInt_gblSubtNORM(node, cellData)

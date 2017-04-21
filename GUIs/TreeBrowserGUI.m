@@ -882,7 +882,7 @@ classdef TreeBrowserGUI < handle
             z=1;
             for i=1:L
                 %D{i,1} = allFields{i};
-                if isstruct(curNodeData.(allFields{i}))
+                if isstruct(curNodeData.(allFields{i})) || isobject(curNodeData.(allFields{i}))
                     %do nothing, don't add struct
                     %D{i,2} = '<struct>';
                 elseif iscell(curNodeData.(allFields{i}))

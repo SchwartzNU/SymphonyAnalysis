@@ -55,12 +55,14 @@ for i=1:length(plotLines)
     
     s.([line_prefix '_Y']) = get(curLine,'YData');
     X = get(curLine,'XData');
-    if max(diff(diff(X))) == 0 %linear X scale
-        s.([line_prefix '_start']) = X(1);
-        s.([line_prefix '_delta']) = X(2) - X(1);
-    else %separate X wave
-        s.([line_prefix '_X']) = X;
-    end
+%     if max(diff(diff(X))) == 0 %linear X scale
+%         s.([line_prefix '_start']) = X(1);
+%         s.([line_prefix '_delta']) = X(2) - X(1);
+%     else %separate X wave
+%         s.([line_prefix '_X']) = X;
+%     end
+    s.([line_prefix '_X']) = X; %Otherwise doesn't export an x-axis...Adam 4/21/17
+    
     if isprop(curLine,'Color')
         s.([line_prefix '_color']) = get(curLine,'Color');
     end
