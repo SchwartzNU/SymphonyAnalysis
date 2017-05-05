@@ -80,9 +80,9 @@ classdef ContrastRespAnalysis < AnalysisTree
                     tempStruct.ONSETspikes_after200ms_grandBaselineSubtracted.value = curNode.spikeCount_ONSET_after200ms.value - grandBaselineMean.*0.8; %assumes 1 sec stim interval
                     tempStruct = getEpochResponseStats(tempStruct);
                     tempStruct.spikeCount_stimInterval_grndBlSubt = curNode.spikeCount_stimInterval;
-                    tempStruct.spikeCount_stimInterval_grndBlSubt.value = curNode.spikeCount_stimInterval.value - grandBaselineMean *stimTime_s;
+                    tempStruct.spikeCount_stimInterval_grndBlSubt.value = curNode.spikeCount_stimInterval.value - grandBaselineMean*stimTime_s;
                     
-                    
+                    tempStruct = getEpochResponseStats(tempStruct);
                     curNode = mergeIntoNode(curNode, tempStruct);
                     obj = obj.set(leafIDs(i), curNode);
                 end
