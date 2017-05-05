@@ -366,7 +366,7 @@ classdef ContrastRespAnalysis < AnalysisTree
             plot(rootData.onCrossing,feval(rootData.fitresult,rootData.onCrossing),'o');
             plot(rootData.onCrossingSup,feval(rootData.fitresult,rootData.onCrossingSup),'o');
             plot(rootData.offCrossing,feval(rootData.fitresult,rootData.offCrossing),'o');
-            plot(rootData.offCrossing,feval(rootData.fitresult,rootData.offCrossingSup),'o');
+            plot(rootData.offCrossingSup,feval(rootData.fitresult,rootData.offCrossingSup),'o');
             
             hold('off');
         end
