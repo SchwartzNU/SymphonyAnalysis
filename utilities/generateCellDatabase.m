@@ -87,14 +87,10 @@ fprintf('Processing %g cells\n', numCells);
 cellDataTable = table();
 tic
 for ci = 1:numCells
-    fprintf('Processing %g/%g %s\n', ci, numCells, cellName);
     cellName = cellNames{ci};
     trow = table();
     
-    if isempty(cellName)
-        disp('empty name')
-        continue
-    end
+    fprintf('Processing %g/%g %s\n', ci, numCells, cellName);
     
 %     trow{1, 'cellName'} = {cellName};
     
