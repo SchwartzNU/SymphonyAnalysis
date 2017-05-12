@@ -17,11 +17,11 @@ end
 saveFileLocation = [SERVER_ROOT 'cellDatabase' filesep 'cellDatabaseSaveFile.mat'];
 
 %% Get Filters
-filterDirectory = [ANALYSIS_FOLDER 'SymphonyAnalysis' filesep 'cellDatabase' filesep 'filters/'];
+filterDirectory = [SERVER_ROOT 'cellDatabase' filesep 'filters/'];
 filterDirResult = dir([filterDirectory '*.mat']);
 filterFileNames = {};
 filterTable = table();
-warning('off','MATLAB:table:RowsAddedNewVars')
+warning('off', 'MATLAB:table:RowsAddedExistingVars')
 
 for fi = 1:length(filterDirResult)
     filterShortName = filterDirResult(fi).name;
@@ -61,7 +61,7 @@ for fi = 1:length(filterDirResult)
     
 end
 numFilters = size(filterTable, 1);
-disp('Loaded filters')
+fprintf('Loaded %g filters\n', numFilters)
 
 %%  Get Cells
 
