@@ -3,8 +3,8 @@
 % function returnStruct = noiseFilter(cellData, epochIndices, model)
 
 %% load data
-load cellData/102816Ac3.mat
-epochIndices = 311:319;
+% load cellData/102816Ac3.mat
+% epochIndices = 311:319;
 
 % load cellData/102516Ac2.mat
 % epochIndices = [167];
@@ -21,8 +21,8 @@ epochIndices = 311:319;
 % epochIndices = 30;
 
 % WC on wfds
-% load cellData/121616Ac7.mat 
-% epochIndices = 63;
+load cellData/121616Ac7.mat 
+epochIndices = 63;
 
 %% organize epochs
 
@@ -62,11 +62,12 @@ end
 repeatSeeds = uniqueSeeds(uniqueSeedCounts > 1);
 if ~isempty(repeatSeeds)
     repeatSeed = repeatSeeds(1);
+    repeatRunEpochIndices = epochIndices(seedByEpoch == repeatSeed);
 else
     repeatSeed = [];
+    repeatRunEpochIndices = [];
 end
 singleSeeds = uniqueSeeds(uniqueSeedCounts == 1);
-repeatRunEpochIndices = epochIndices(seedByEpoch == repeatSeed);
 
 singleRunEpochIndices = [];
 for ei = 1:numberOfEpochs
@@ -236,7 +237,7 @@ if useDelayedCopy
     nim = nim.add_subunits( {'lin'}, -1, 'init_filts', {delayed_filt});
 else
     nim = nim.add_subunits( {'lin'}, -1);
-end    
+end
 
 % add subunit as an OFF filter
 % nim = nim.fit_filters( response, Xstim, 'silent', 1);
@@ -253,18 +254,26 @@ end
 % fit upstream nonlinearities
 
 nonpar_reg = 20; % set regularization value
+useNonparametricSubunitNonlinearity = false;
 enforceMonotonicSubunitNonlinearity = false;
-nim = nim.init_nonpar_NLs( Xstim, 'lambda_nld2', nonpar_reg, 'NLmon', enforceMonotonicSubunitNonlinearity);
+if useNonparametricSubunitNonlinearity
+    nim = nim.init_nonpar_NLs( Xstim, 'lambda_nld2', nonpar_reg, 'NLmon', enforceMonotonicSubunitNonlinearity);
+end
 
 % use this later:
 % nim = nim.init_spkhist( 20, 'doubling_time', 5 );
 
-numFittingLoops = 3;
+numFittingLoops = 2;
 
 for fi = 1:numFittingLoops
     nim = nim.fit_filters( response, Xstim, 'silent', 1);
-    nim = nim.fit_upstreamNLs( response, Xstim, 'silent', 1);
+    
+    if useNonparametricSubunitNonlinearity
+        nim = nim.fit_upstreamNLs( response, Xstim, 'silent', 1);
+    end
+    
     nim = nim.fit_spkNL(response, Xstim, 'silent', 1);
+    
     [ll, responsePrediction_s, mod_internals] = nim.eval_model(response, Xstim);
     r2 = 1-mean((response-responsePrediction_s).^2)/var(response);
 end
@@ -275,7 +284,7 @@ generatingFunction = mod_internals.G;
 subunitOutputLN = mod_internals.fgint;
 subunitOutputL = mod_internals.gint;
 
-% Display model components
+%% Display model components
 colorsBySubunit = [1,0,.5; 0,.5,1; 0,1,.9; 1,.3,0];
 
 figure(200);clf;
