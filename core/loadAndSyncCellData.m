@@ -72,7 +72,7 @@ if SYNC_TO_SERVER
         end
         
         if ~file_opened
-            disp(['Unable to open CellDataStatus.txt at' cellDataStatusFileLocation]);
+            disp(['Unable to open CellDataStatus.txt at ' cellDataStatusFileLocation]);
             return;
         end
         

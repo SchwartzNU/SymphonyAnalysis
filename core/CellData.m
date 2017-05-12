@@ -280,6 +280,7 @@ classdef CellData < handle
                 [spikeTimes{i}, timeAxis_spikes] = obj.epochs(epochInd(i)).getSpikes(streamName);
             end
             ax = gca;
+            cla(ax);
             hold(ax, 'on');
             
             % point display
