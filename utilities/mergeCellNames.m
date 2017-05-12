@@ -31,5 +31,5 @@ for i=1:length(cellNames)
     curName = cellDataNameToCellName(mergedCells, cellNames{i});
     cellNames_new{i} = curName;    
 end
-
+fclose(fid);
 cellNames_new = unique(cellNames_new);

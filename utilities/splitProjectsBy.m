@@ -16,7 +16,7 @@ if ~(exist(CELL_DATA_MASTER, 'dir') == 7)
 else
     cellDataMasterFolder = CELL_DATA_MASTER;
 end
-    
+
 
 if nargin==1
     splitKey = varargin{1};
@@ -84,6 +84,7 @@ elseif strcmp(splitKey, 'hasDataSet')
                     projMap(dataSetPrefix) = {cellDataBaseNames{i}};
                 end
             end
+            fclose([cellDataMasterFolder filesep cellDataBaseNames{i}]);
         end
     end
 elseif strcmp(splitKey, 'cellTypeWithDataSets')
@@ -132,6 +133,7 @@ elseif strcmp(splitKey, 'cellTypeWithDataSets')
                     end
                 end
             end
+            fclose([cellDataMasterFolder filesep cellDataBaseNames{i}]);
         end
     end
 elseif strcmp(splitKey, 'cellType') %cell type
@@ -143,9 +145,9 @@ elseif strcmp(splitKey, 'cellType') %cell type
             cellType = cellData.cellType;
             has2cells = false;
             if strfind(cellType, ';') %two parts
-               [cellType1, cellType2] = strtok(cellType, ';');
-               cellType2 = cellType2(2:end);
-               has2cells = true;
+                [cellType1, cellType2] = strtok(cellType, ';');
+                cellType2 = cellType2(2:end);
+                has2cells = true;
             end
             if has2cells
                 if projMap.isKey(cellType1)
@@ -168,6 +170,7 @@ elseif strcmp(splitKey, 'cellType') %cell type
                     projMap(cellType) = {cellDataBaseNames{i}};
                 end
             end
+            fclose([cellDataMasterFolder filesep cellDataBaseNames{i}]);
         end
         
     end
@@ -187,6 +190,7 @@ else %cell tag
             else
                 projMap(tagVal) = {cellDataBaseNames{i}};
             end
+            fclose([cellDataMasterFolder filesep cellDataBaseNames{i}]);
         end
         
     end
