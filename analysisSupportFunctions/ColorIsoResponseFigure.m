@@ -106,17 +106,27 @@ classdef ColorIsoResponseFigure < handle
                                     'ColumnName', {'index', 'response'}, ...
                                     'ColumnWidth', {60, 60}, ...
                                     'CellSelectionCallback', @obj.singlePointTableSelect);
-
+            obj.handles.displayMeanResponseCheckbox = uicontrol('Style', 'checkbox', ...
+                        'Value', true, ...
+                        'String', 'Mean response',...
+                        'Parent', obj.handles.measurementDataBox);
             obj.handles.epochSelectionAxes = axes('Parent', obj.handles.measurementDataBox);
-            obj.handles.measurementDataBox.Heights = [30, -2, -.5, -1];
+            obj.handles.measurementDataBox.Heights = [30, -2, -.5, 20, -1];
             
             obj.handles.isoDataBox = uix.VBox('Parent', obj.handles.figureBox, 'Spacing', 10);
             obj.handles.dataDisplayText = uicontrol('Parent',obj.handles.isoDataBox,...
                                     'Style','text', 'String', '','FontSize',14);
             obj.handles.isoAxes = axes('Parent', obj.handles.isoDataBox);
             obj.handles.isoDataBox.Heights = [20,-1];
+            
+            
+            obj.handles.modelBox = uix.VBox('Parent', obj.handles.figureBox);
+            uicontrol('Style', 'pushbutton', ...
+                'String', 'Export for model',...
+                'Parent', obj.handles.modelBox,...
+                'Callback', @(a,b) obj.exportDataForModel());
                     
-            obj.handles.figureBox.Widths = [300, -1];
+            obj.handles.figureBox.Widths = [300, -1, 30];
         end
         
         
@@ -180,6 +190,42 @@ classdef ColorIsoResponseFigure < handle
             obj.selectedVariable = newVar;
             obj.analyzeData();
             obj.updateUi();
+        end
+        
+        function exportDataForModel(obj, ~, ~)
+            
+            fprintf('export data to %s', pwd)
+            
+            % 
+            response = [];
+            stimulus = [];
+            
+            for ei = 1:length(obj.epochData)
+                e = obj.epochData{ei};
+                if e.ignore
+                    continue
+                end
+                
+                r = e.signal;
+                response = horzcat(response, r');
+                
+                % generate spot flash
+%                 t = e.t;
+                t = (1/100:1/100:max(e.t)) - 1/100;
+
+                startTime = e.parameters('preTime') / 1000;
+                endTime = e.parameters('stimTime') / 1000 + startTime;
+                
+                on = t > startTime & t <= endTime;
+%                 stim = vertcat(e.parameters('intensity1') * on + e.parameters('baseIntensity1') * ~on, e.parameters('intensity2') * on + e.parameters('baseIntensity2') * ~on);
+                stim = vertcat(e.parameters('contrast1') * on, e.parameters('contrast2') * on);
+                stimulus = horzcat(stimulus, stim);
+            end                
+            epochData = obj.epochData;
+            whos stimulus
+            whos response
+            save('colorIsoExportedForModel','response','stimulus', 'epochData');
+            
         end
         
         
@@ -273,16 +319,40 @@ classdef ColorIsoResponseFigure < handle
             if ~isempty(obj.selectedPoint)
                 cla(obj.handles.epochSelectionAxes);
                 point = obj.selectedPoint(1,:);
-                for ei = 1:length(obj.epochData)
-                    e = obj.epochData{ei};
-                    if all([e.parameters('contrast1'), e.parameters('contrast2')] == point)
-                        signal = e.signal;
-                        signal = signal - median(signal(1:1000));
-                        hold(obj.handles.epochSelectionAxes, 'on')
-                        plot(obj.handles.epochSelectionAxes, e.t, signal);
-                        plot(obj.handles.epochSelectionAxes, e.spikeTimes, signal(e.spikeFrames), '.');
-                        hold(obj.handles.epochSelectionAxes, 'off')
+                
+                if ~obj.handles.displayMeanResponseCheckbox.Value
+
+                    for ei = 1:length(obj.epochData)
+                        e = obj.epochData{ei};
+                        if all([e.parameters('contrast1'), e.parameters('contrast2')] == point)
+                            if e.ignore
+                                continue
+                            end                            
+                            signal = e.signal;
+                            signal = signal - median(signal(1:1000));
+                            hold(obj.handles.epochSelectionAxes, 'on')
+                            plot(obj.handles.epochSelectionAxes, e.t, signal);
+                            plot(obj.handles.epochSelectionAxes, e.spikeTimes, signal(e.spikeFrames), '.');
+                            hold(obj.handles.epochSelectionAxes, 'off')
+                        end
                     end
+                else
+                    signals = [];
+                    for ei = 1:length(obj.epochData)
+                        e = obj.epochData{ei};
+                        if all([e.parameters('contrast1'), e.parameters('contrast2')] == point) 
+                            if e.ignore
+                                continue
+                            end
+                            signal = e.signal;
+                            signal = signal - median(signal(1:1000));
+                            signals(end+1,:) = signal;
+                        end
+                    end
+                    signal = mean(signals, 1);
+                    hold(obj.handles.epochSelectionAxes, 'on')
+                    plot(obj.handles.epochSelectionAxes, e.t, signal);
+                    hold(obj.handles.epochSelectionAxes, 'off')     
                 end
                 set(obj.handles.epochSelectionAxes,'LooseInset',get(obj.handles.isoAxes,'TightInset'))
             end
