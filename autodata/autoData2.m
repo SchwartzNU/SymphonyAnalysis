@@ -57,6 +57,13 @@ for ci = 1:numTableCells
                 qr = nan;
             end
             trow{1, 'QualityRating'} = qr;
+            
+            if isKey(tags, 'Genotype')
+                g = tags('Genotype');
+            else
+                g = nan;
+            end
+            trow{1, 'Genotype'} = g;
         end
 
     
