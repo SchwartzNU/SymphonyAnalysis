@@ -19,6 +19,10 @@ classdef CellDatabaseGUI < handle
             saveFileLocation = [SERVER_ROOT 'cellDatabase' filesep 'cellDatabaseSaveFile.mat'];
             c = load(saveFileLocation);
             disp('Loaded database from server')
+            secSinceUpdate = etime(clock, c.updateTime);
+            elapsedDays = datestr(secSinceUpdate/(24*60*60), 'DD');
+            elapsedHours = datestr(secSinceUpdate/(24*60*60), 'HH');
+            fprintf('Database was updated %s days, %s hours ago\n',elapsedDays, elapsedHours)
             
             obj.cellDataTable = c.cellDataTable;
             obj.filterTable = c.filterTable;

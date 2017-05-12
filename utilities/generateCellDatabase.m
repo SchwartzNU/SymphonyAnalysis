@@ -85,7 +85,7 @@ fprintf('Processing %g cells\n', numCells);
 
 %% Process cells
 cellDataTable = table();
-
+tic
 for ci = 1:numCells
     fprintf('Processing %g/%g %s\n', ci, numCells, cellName);
     cellName = cellNames{ci};
@@ -144,6 +144,9 @@ for ci = 1:numCells
     cellDataTable(cellName,:) = trow;
 end
 
-save(saveFileLocation, 'cellDataTable', 'filterTable');
+updateTime = clock();
+
+save(saveFileLocation, 'cellDataTable', 'filterTable', 'updateTime');
 
 disp('done')
+toc
