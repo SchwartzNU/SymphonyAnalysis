@@ -1,4 +1,4 @@
-function [resultTree, usedDataSet] = doSingleAnalysis(cellName, analysisClassName, cellFilter, epochFilter, cellData, analysisTable)
+function [resultTree, usedDataSet] = doSingleAnalysis(cellName, analysisClassName, cellFilter, epochFilter, cellData, analysisTable, skipAnalysis)
 global PREFERENCE_FILES_FOLDER
 
 if nargin < 3
@@ -9,7 +9,7 @@ if nargin < 4
 end
 % cell data is loaded below
 
-if nargin < 6
+if nargin < 6 || isempty(analysisTable)
 %Open DataSetsAnalyses.txt file that defines the mapping between data set
 %names and analysis classes
     fid = fopen([PREFERENCE_FILES_FOLDER 'DataSetAnalyses.txt'], 'r');
@@ -17,13 +17,17 @@ if nargin < 6
     fclose(fid);
 end
 
+if nargin < 7
+    skipAnalysis = false;
+end
+
 
 %find correct row in this table
 Nanalyses = length(analysisTable{1});
 analysisIndices = [];
-for i=1:Nanalyses
-    if strcmp(analysisTable{2}{i}, analysisClassName)
-        analysisIndices(end+1) = i;
+for dsi=1:Nanalyses
+    if strcmp(analysisTable{2}{dsi}, analysisClassName)
+        analysisIndices(end+1) = dsi;
     end
 end
 if isempty(analysisIndices)
@@ -69,10 +73,11 @@ if ~isempty(cellFilter)
 end
 
 usedDataSet = [];
-for i=1:length(dataSetKeys)
+hasValidDataSet = false;
+for dsi=1:length(dataSetKeys)
     T = [];
     analyzeDataSet = false;
-    curDataSet = dataSetKeys{i};
+    curDataSet = dataSetKeys{dsi};
     for ai = 1:length(analysisIndices) % look for multiple options for the analysis type
         if strfind(curDataSet, analysisTable{1}{analysisIndices(ai)}) %if correct data set type
             %evaluate epochFilter
@@ -86,6 +91,14 @@ for i=1:length(dataSetKeys)
             end
         end
     end
+    if analyzeDataSet
+        hasValidDataSet = true;
+    end
+    
+    if skipAnalysis
+        continue
+    end
+
     if analyzeDataSet
         usePrefs = false;
         %         if ~isempty(cellData.prefsMapName)
@@ -131,4 +144,8 @@ end
 if length(resultTree.Node) == 1 %if nothing found for this cell
     %return empty so this does not get grafted onto anything
     resultTree = [];
+end
+
+if skipAnalysis
+    resultTree = hasValidDataSet;
 end

@@ -1,17 +1,20 @@
-function [] = checkoutRawDataForProject
+function [] = checkoutRawDataForProject(cellNames)
 global ANALYSIS_FOLDER;
 global RAW_DATA_FOLDER;
 global RAW_DATA_MASTER;
-projFolder = uigetdir([ANALYSIS_FOLDER 'Projects' filesep], 'Choose project folder');
 
-fid = fopen([projFolder filesep 'cellNames.txt'], 'r');
-if fid < 0
-    errordlg(['Error: cellNames.txt not found in ' projFolder]);
-    return;
+if nargin < 1
+    projFolder = uigetdir([ANALYSIS_FOLDER 'Projects' filesep], 'Choose project folder');
+
+    fid = fopen([projFolder filesep 'cellNames.txt'], 'r');
+    if fid < 0
+        errordlg(['Error: cellNames.txt not found in ' projFolder]);
+        return;
+    end
+    temp = textscan(fid, '%s', 'delimiter', '\n');
+    cellNames = temp{1};
+    fclose(fid);
 end
-temp = textscan(fid, '%s', 'delimiter', '\n');
-cellNames = temp{1};
-fclose(fid);
 
 fprintf('Checking for %g files\n', length(cellNames));
 
