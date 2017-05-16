@@ -7,6 +7,9 @@ externalTableFilename = 'analysisTrees/automaticData/externalCellDataTable';
 % output save location, set to [] to not save
 outputSaveFilename = 'analysisTrees/automaticData/autodata';
 
+
+warning('off', 'MATLAB:table:RowsAddedExistingVars')
+
 %% load filter/analysis list
 filterFileNames = {'analysisTrees/automaticData/filter light step CA.mat';
     'analysisTrees/automaticData/filter sms CA.mat';

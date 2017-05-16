@@ -2,7 +2,7 @@ function cellNames_new = mergeCellNames(cellNames)
 global PREFERENCE_FILES_FOLDER;
 
 %read in MergedCells.txt file
-fid = fopen([PREFERENCE_FILES_FOLDER filesep 'MergedCells.txt']);
+fid = fopen([PREFERENCE_FILES_FOLDER 'MergedCells.txt']);
 fline = 'temp';
 z=1;
 mergedCells = {};
