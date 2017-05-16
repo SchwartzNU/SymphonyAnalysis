@@ -37,7 +37,7 @@ classdef CellDatabaseGUI < handle
         function buildUI(obj)
             
             obj.fig = figure( ...
-                'Name',         'Cell Database GUI', ...
+                'Name',         sprintf('Cell Database GUI: %g cells',size(obj.cellDataTable, 1)), ...
                 'NumberTitle',  'off', ...
                 'ToolBar',      'none',...
                 'Menubar',      'none');
@@ -145,6 +145,38 @@ classdef CellDatabaseGUI < handle
             obj.handles.cellNameList_panel.Title = sprintf('Filtered Cell Names (%g)     ', length(cellNames)); 
         end
 
+        function mergedCells = processMergedCells(obj)
+            % this function expands each cell name entry to include all merged cells,
+            % then uses 'unique' to remove the duplicates
+            
+            global PREFERENCE_FILES_FOLDER
+            fid = fopen([PREFERENCE_FILES_FOLDER 'MergedCells.txt']);
+            fline = 'temp';
+            mergedCells = obj.currentCellNames;
+            zi = 1; % track output index
+            while ~isempty(fline)
+                fline = fgetl(fid);
+                if isempty(fline)
+                    break;
+                end
+                if fline == -1
+                    break;
+                end
+               
+                names = strsplit(fline,'\t');
+                
+                for ci = 1:length(mergedCells)
+                    newName = mergedCells{ci};
+                    for mi = 1:length(names)
+                        if strcmp(names{mi}, mergedCells{ci})
+                        	newName = strjoin(names,',');
+                        end
+                    end
+                    mergedCells{ci} = newName;
+                end
+            end
+            mergedCells = unique(mergedCells);
+        end
         
         function generateProject(obj)
             global ANALYSIS_FOLDER
@@ -152,6 +184,8 @@ classdef CellDatabaseGUI < handle
                 warning('No cells match all criteria')
                 return
             end
+            
+            mergedCells = processMergedCells(obj);
             
             projectName = inputdlg('Project name for ');
             if isempty(projectName)
@@ -166,11 +200,11 @@ classdef CellDatabaseGUI < handle
                 end
                 mkdir(dirName);
                 fileId = fopen([dirName filesep 'cellNames.txt'], 'w');
-                for r = 1:length(obj.currentCellNames)
-                    fprintf(fileId, '%s\n', obj.currentCellNames{r});
+                for r = 1:length(mergedCells)
+                    fprintf(fileId, '%s\n', mergedCells{r});
                 end
                 fclose(fileId);
-                fprintf('Wrote %g cells to %s\n', length(obj.currentCellNames), dirName);
+                fprintf('Wrote %g cells (after merging) to %s\n', length(mergedCells), dirName);
             end
         end
         

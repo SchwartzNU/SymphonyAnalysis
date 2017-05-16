@@ -94,8 +94,12 @@ for ci = 1:numCells
     
 %     trow{1, 'cellName'} = {cellName};
     
-    c = load([CELL_DATA_MASTER cellName '.mat']); %load cellData
-    cellData = c.cellData;
+    try
+        c = load([CELL_DATA_MASTER cellName '.mat']); %load cellData
+        cellData = c.cellData;
+    catch
+        continue
+    end
 
     % add basic info from cellData
     loc = cellData.location;
