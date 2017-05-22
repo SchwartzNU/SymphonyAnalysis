@@ -8,15 +8,10 @@ classdef ColorIsoResponseFigure < handle
         spikeDetector
         analysisRegion
         devices
-        
-        nextContrast1
-        nextContrast2
+
         baseIntensity1
         baseIntensity2
         stimulusInfo
-        nextStimulus = [];
-        nextStimulusInfo
-        nextStimulusInfoOutput
         colorNames
 %         stimulusModes = {'default','ramp'};
         
@@ -86,6 +81,7 @@ classdef ColorIsoResponseFigure < handle
             obj.figureHandle = figure();
             
             set(obj.figureHandle, 'MenuBar', 'none');
+            set(obj.figureHandle, 'NumberTitle', 'off');
             set(obj.figureHandle, 'GraphicsSmoothing', 'on');
             set(obj.figureHandle, 'DefaultAxesFontSize',8, 'DefaultTextFontSize',8);
             
@@ -136,6 +132,12 @@ classdef ColorIsoResponseFigure < handle
             
             % get the data variable names
             e = obj.epochData{1};
+            p = e.parameters;
+            
+            dataSetName = sprintf('Diam: %g Voltage: %g Annulus: %g NDF: %g', p('spotDiameter'),p('ampHoldSignal'),p('annulusMode'),p('NDF'));
+            set(obj.figureHandle, 'Name', dataSetName);
+
+            
             vars = fieldnames(e.response);
             obj.variables = {'Select variable'};
             for i = 1:length(vars)
@@ -230,8 +232,6 @@ classdef ColorIsoResponseFigure < handle
         
         
         function updateUi(obj)
-            % update next stimulus table
-            obj.handles.nextStimulusTable.Data = obj.nextStimulus;
             
             % update point data table
             obj.handles.dataTable.Data = obj.pointData;
@@ -288,12 +288,6 @@ classdef ColorIsoResponseFigure < handle
                     scatter(obj.handles.isoAxes, obj.pointData(oi,1), obj.pointData(oi,2), siz, 'CData', obj.pointData(oi,3), ...
                         'LineWidth', 1, 'MarkerEdgeColor', edg, 'MarkerFaceColor', 'flat', 'ButtonDownFcn', {@obj.isoPlotPointClick, oi})
                 end
-            end
-            
-            % next stimulus points
-            if ~isempty(obj.nextStimulus)
-                scatter(obj.handles.isoAxes, obj.nextStimulus(:,1), obj.nextStimulus(:,2), 60, 'CData', [1,1,1], ...
-                    'LineWidth', 2, 'MarkerEdgeColor', 'k', 'Marker', 'x')
             end
             
             % plot click points

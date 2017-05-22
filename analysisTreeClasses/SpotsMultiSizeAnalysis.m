@@ -624,6 +624,37 @@ classdef SpotsMultiSizeAnalysis < AnalysisTree
              xlabel('spotSize');
              ylabel(['stimAfter200_charge (' yField.units ')']);
          end
+       
+         
+        function plot_spotSizeVsOFFSET_peak400ms(node, cellData)
+            rootData = node.get(1);
+            xvals = rootData.spotSize;
+            yField = rootData.OFFSET_peak400ms;
+            if strcmp(yField.units, 's')
+            yvals = yField.median_c;
+            else
+            yvals = yField.mean_c;
+            end
+            errs = yField.SEM;
+            errorbar(xvals, yvals, errs);
+            xlabel('spotSize');
+            ylabel(['OFFSET_peak400ms (' yField.units ')']);
+        end
+        
+        function plot_spotSizeVsOFFSET_charge400ms(node, cellData)
+            rootData = node.get(1);
+            xvals = rootData.spotSize;
+            yField = rootData.OFFSET_charge400ms;
+            if strcmp(yField.units, 's')
+            yvals = yField.median_c;
+            else
+            yvals = yField.mean_c;
+            end
+            errs = yField.SEM;
+            errorbar(xvals, yvals, errs);
+            xlabel('spotSize');
+            ylabel(['OFFSET_charge400ms (' yField.units ')']);
+        end        
          
     end
     

@@ -128,14 +128,27 @@ classdef ColorIsoResponseAnalysis < AnalysisTree
             end
             epochData = sessionNode.epochData;
             sampleEpoch = epochData{1};
-            baseIntensity1 = sampleEpoch.parameters('baseIntensity1');
-            baseIntensity2 = sampleEpoch.parameters('baseIntensity2');
+            
+            try
+                baseIntensity1 = sampleEpoch.parameters('baseIntensity1');
+                baseIntensity2 = sampleEpoch.parameters('baseIntensity2');
+            catch
+                baseIntensity1 = sampleEpoch.parameters('meanLevel1');
+                baseIntensity2 = sampleEpoch.parameters('meanLevel2');
+                
+            end
             colorPattern1 = sampleEpoch.parameters('colorPattern1');
             colorPattern2 = sampleEpoch.parameters('colorPattern2');
             
+            if sampleEpoch.parameters('ampHoldSignal') == 0
+                var = 'spikeCount_stimInterval_mean';
+            else
+                var = 'stimInterval_charge_mean';
+            end
+            
             gui = ColorIsoResponseFigure('baseIntensity1', baseIntensity1, 'baseIntensity2', baseIntensity2, ...
                 'colorNames', {colorPattern1, colorPattern2}, ...
-                'epochData', epochData, 'variable', 'spikeCount_stimInterval_mean');
+                'epochData', epochData, 'variable', var);
             
         end
         
