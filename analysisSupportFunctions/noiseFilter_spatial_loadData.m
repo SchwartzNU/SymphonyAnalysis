@@ -25,7 +25,7 @@
 % load cellData/051617Bc4.mat
 % epochIndicesNoise = 661:671; % wc -60
 % epochIndicesNoise = 672:679; % wc 20
-epochIndicesNoise = [];
+% epochIndicesNoise = [];
 
 % epochIndicesColor = 216:251; % center, wc -60
 % epochIndicesColor = 467:474; % annulus, wc -60
@@ -35,8 +35,23 @@ epochIndicesNoise = [];
 % epochIndicesColor = 252:283; % center, wc 20
 % epochIndicesColor = 435:466; % annulus, wc 20
 % epochIndicesColor = 284:323; % full field, wc 20
-epochIndicesColor = [252:323, 435:466]; % wc 20, center & annulus & whole field
+% epochIndicesColor = [252:323, 435:466]; % wc 20, center & annulus & whole field
 % epochIndicesColor = [];
+
+
+% WC F mini On
+% load cellData/042617Bc3.mat
+epochIndicesNoise = [];
+
+% epochIndicesColor = 248:277; % center, wc -60
+% epochIndicesColor = 278:319; % full field, wc -60
+epochIndicesColor = [248:319]; % wc -60, center & whole field
+
+% epochIndicesColor = 442:475; % center, wc 20
+% epochIndicesColor = 476:533; % annulus, wc 20
+% epochIndicesColor = 320:345; % full field, wc 20
+% epochIndicesColor = [442:533, 320:345]; % wc 20, center & annulus & whole field
+
 
 responseScaleColor = .3;
 

@@ -167,7 +167,7 @@ legend('response','prediction')
 ylabel('overall output')
 
 linkaxes(handles, 'x')
-xlim([1, 50])
+xlim([1, 10])
 
 pan xon
 

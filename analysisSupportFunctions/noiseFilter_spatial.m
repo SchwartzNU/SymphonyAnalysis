@@ -74,7 +74,7 @@ while r2 < r2MinimumThreshold
 nim = NIM(params_stim, [], [], 'spkNL', 'exp');
 
 
-numAdditiveSubunits = 6;
+numAdditiveSubunits = 2;
 useSavedNimSubunitFilters = 0;
 
 for si = 1:numAdditiveSubunits
@@ -114,7 +114,7 @@ nim = nim.fit_filters( response, Xstim, 'silent', 1);
 
 % fit upstream nonlinearities
 
-nonpar_reg = 500; % set regularization value
+nonpar_reg = 200; % set regularization value
 useNonparametricSubunitNonlinearity = true;
 enforceMonotonicSubunitNonlinearity = true; % slow and unreliable
 if useNonparametricSubunitNonlinearity
@@ -125,7 +125,7 @@ end
 % nim = nim.init_spkhist( 20, 'doubling_time', 5 );
 tic
 numFittingLoops = 10;
-nim = nim.set_reg_params('d2t', 200);
+nim = nim.set_reg_params('d2t', 100);
 nim = nim.set_reg_params('d2x', 0);
 
 r2 = 0;
