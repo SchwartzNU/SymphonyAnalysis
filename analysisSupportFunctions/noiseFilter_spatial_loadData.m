@@ -23,12 +23,30 @@
 
 % WC F mini Off
 % load cellData/051617Bc4.mat
-epochIndicesNoise = 661:671; % wc -60
+% epochIndicesNoise = 661:671; % wc -60
 % epochIndicesNoise = 672:679; % wc 20
-epochIndicesColor = 216:251; % center, wc -60
-responseScaleColor = 0.2;
+epochIndicesNoise = [];
+
+% epochIndicesColor = 216:251; % center, wc -60
+% epochIndicesColor = 467:474; % annulus, wc -60
+% epochIndicesColor = 324:371; % full field, wc -60
+% epochIndicesColor = [216:251, 467:474, 324:371]; % wc -60, center & annulus & whole field
+
+% epochIndicesColor = 252:283; % center, wc 20
+% epochIndicesColor = 435:466; % annulus, wc 20
+% epochIndicesColor = 284:323; % full field, wc 20
+epochIndicesColor = [252:323, 435:466]; % wc 20, center & annulus & whole field
+% epochIndicesColor = [];
+
+responseScaleColor = .3;
 
 allEpochs = [epochIndicesColor,epochIndicesNoise];
+frameRate = 60;
+sampleRate = 10000;
+
+stimFilter = designfilt('lowpassfir','PassbandFrequency',6, ...          
+    'StopbandFrequency',8,'PassbandRipple',0.5, 'SampleRate', frameRate, ...     
+    'StopbandAttenuation',65,'DesignMethod','kaiserwin');
 
 %% color iso epochs
 numberOfEpochs = length(epochIndicesColor);
@@ -50,10 +68,20 @@ for ei = 1:numberOfEpochs
     on = t > startTime & t <= endTime;
     %                 stim = vertcat(e.parameters('intensity1') * on + e.parameters('baseIntensity1') * ~on, e.parameters('intensity2') * on + e.parameters('baseIntensity2') * ~on);
     meanStim = zeros(size(t));
+    
+    % select the location
     if epoch.get('spotDiameter') < 300 && ~epoch.get('annulusMode')
         % center only
         stim = vertcat(epoch.get('contrast1') * on, epoch.get('contrast2') * on, meanStim, meanStim);
+    elseif epoch.get('annulusMode')
+        % surround only
+        stim = vertcat(meanStim, meanStim, epoch.get('contrast1') * on, epoch.get('contrast2') * on);
+    else
+        stim = vertcat(epoch.get('contrast1') * on, epoch.get('contrast2') * on);
+        stim = vertcat(stim,stim);
     end
+    
+    
     stimulusColorIso = horzcat(stimulusColorIso, stim);
     
 end
@@ -81,7 +109,7 @@ numberOfEpochs = length(epochIndicesNoise);
 if ~isempty(epochIndicesNoise)
     seedByEpoch = [];
     for ei=1:numberOfEpochs
-        epoch = cellData.epochs(epochIndices(ei));
+        epoch = cellData.epochs(epochIndicesNoise(ei));
         centerNoiseSeed = epoch.get('centerNoiseSeed');
         surroundNoiseSeed = epoch.get('surroundNoiseSeed');
         stimulusAreaMode = epoch.get('currentStimulus');
@@ -114,10 +142,7 @@ if ~isempty(epochIndicesNoise)
 
 
     % frameRate = cellData.epochs(epochIndices(1)).get('patternRate');
-    frameRate = 60;
-    stimFilter = designfilt('lowpassfir','PassbandFrequency',6, ...          
-        'StopbandFrequency',8,'PassbandRipple',0.5, 'SampleRate', frameRate, ...     
-        'StopbandAttenuation',65,'DesignMethod','kaiserwin');
+
 
     sampleRate = cellData.epochs(epochIndicesNoise(1)).get('sampleRate');
     % responseFilter = designfilt('highpassiir','PassbandFrequency',3, ...          
@@ -308,7 +333,7 @@ end
 
 
 responseAllEpochs = resample(responseAllEpochs, frameRate, sampleRate);
-responseAllEpochs = responseAllEpochs - prctile(responseAllEpochs, 10);
+responseAllEpochs = responseAllEpochs - prctile(responseAllEpochs, 50);
 
 responseAllEpochs(responseAllEpochs < 0) = 0;
 
@@ -323,3 +348,6 @@ plot(handles(2), responseAllEpochs)
 legend(handles(2), '1','2','3','4','5','6')
 % plot(handles(3), repeatMarkerFull)
 linkaxes(handles, 'x')
+
+%%
+noiseFilter_spatial
