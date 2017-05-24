@@ -634,6 +634,7 @@ classdef LabDataGUI < handle
         
         function openCellDataCurator(obj)
             if ~isempty(obj.curCellData)
+                disp('Launching cell data curator GUI');
                 CellDataCurator(obj.curCellData);
             end
         end
@@ -646,6 +647,7 @@ classdef LabDataGUI < handle
         end
         
         function analyzeAndBrowseCell(obj)
+            disp('Launching analysis GUI');
             set(obj.fig, 'Name', ['LabDataGUI' ' (analyzing cell)']);
             drawnow;
             if ~isempty(obj.curCellName)

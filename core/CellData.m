@@ -130,6 +130,8 @@ classdef CellData < handle
             end
             
             allKeys = unique(fullKeySet);
+            [~,sortOrder] = sort(upper(allKeys)); % unique sorting puts capital letters before lowercase, so resort properly
+            allKeys = allKeys(sortOrder);
         end
         
         function [params, vals] = getNonMatchingParamVals(obj, epochInd, excluded)
