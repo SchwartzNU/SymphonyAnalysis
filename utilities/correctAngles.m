@@ -13,6 +13,8 @@ function cd = correctAngles(cd, cellName)
     elseif strfind(cellName,'B')
 %         rig = 'B';
         rigAngle = 270;
+    else
+        rigAngle = 0; % 
     end
     
     %% loop through epochs

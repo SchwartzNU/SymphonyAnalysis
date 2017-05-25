@@ -134,9 +134,14 @@ classdef ColorIsoResponseFigure < handle
             e = obj.epochData{1};
             p = e.parameters;
             
-            dataSetName = sprintf('Diam: %g Voltage: %g Annulus: %g NDF: %g', p('spotDiameter'),p('ampHoldSignal'),p('annulusMode'),p('NDF'));
-            set(obj.figureHandle, 'Name', dataSetName);
-
+            try
+                if isKey(p, 'annulusMode')
+                    dataSetName = sprintf('Diam: %g Voltage: %g Annulus: %g NDF: %g', p('spotDiameter'),p('ampHoldSignal'),p('annulusMode'),p('NDF'));
+                else
+                    dataSetName = sprintf('Diam: %g Voltage: %g Annulus: 0 NDF: %g', p('spotDiameter'),p('ampHoldSignal'),p('NDF'));
+                end
+                set(obj.figureHandle, 'Name', dataSetName);
+            end
             
             vars = fieldnames(e.response);
             obj.variables = {'Select variable'};
@@ -353,7 +358,9 @@ classdef ColorIsoResponseFigure < handle
             
 
             % display model output
-            obj.handles.dataDisplayText.String = sprintf('LM fit coefs (P-val log10): UV: %.2g (%.1g) Green: %.2g (%.1g)', obj.modelCoefs(3,1), log10(obj.modelCoefs(3,2)), obj.modelCoefs(2,1), log10(obj.modelCoefs(2,2)));
+            if ~isempty(obj.modelCoefs)
+                obj.handles.dataDisplayText.String = sprintf('LM fit coefs (P-val log10): UV: %.2g (%.1g) Green: %.2g (%.1g)', obj.modelCoefs(3,1), log10(obj.modelCoefs(3,2)), obj.modelCoefs(2,1), log10(obj.modelCoefs(2,2)));
+            end
         end
         
         function dataTableSelect(obj, ~, data)
