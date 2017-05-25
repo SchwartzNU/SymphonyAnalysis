@@ -955,6 +955,7 @@ classdef LabDataGUI < handle
             cellNames = temp{1};
             fclose(fid);
             
+            cellNamesForDisplay = {};
             allLoadedParts = [];
             for i=1:length(cellNames)
                 disp(['Loading ' cellNames{i} ': cell ' num2str(i) ' of ' num2str(length(cellNames))]);
@@ -1012,6 +1013,7 @@ classdef LabDataGUI < handle
                             if sum(strcmp(allLoadedParts, [cellNames{i} '-Ch1'])) == 0
                                 obj.labData.addCell([cellNames{i} '-Ch1'], cellType);
                                 obj.fullCellList = [obj.fullCellList [cellNames{i} '-Ch1']];
+                                cellNamesForDisplay{end+1} = sprintf('%s-Ch1', cellNames{i});
                             end
                             cellType = ch2Type;
                             if isempty(cellType)
@@ -1021,6 +1023,7 @@ classdef LabDataGUI < handle
                             if sum(strcmp(allLoadedParts, [cellNames{i} '-Ch2'])) == 0
                                 obj.labData.addCell([cellNames{i} '-Ch2'], cellType);
                                 obj.fullCellList = [obj.fullCellList [cellNames{i} '-Ch2']];
+                                cellNamesForDisplay{end+1} = sprintf('%s-Ch2', cellNames{i});
                             end
                         end
                     else
@@ -1034,6 +1037,12 @@ classdef LabDataGUI < handle
                     if ~twoCellsAdded
                         %add cell to list
                         obj.fullCellList = [obj.fullCellList cellNames{i}];
+                        if cellData.savedDataSets.Count > 0
+                            datasetString = sprintf('| %g', length(cellData.savedDataSets));
+                        else
+                            datasetString = '';
+                        end
+                        cellNamesForDisplay{end+1} = sprintf('%s | %s %s', cellNames{i}, cellType, datasetString);
                         obj.labData.addCell(cellNames{i}, cellType);
                     end
                     
@@ -1072,7 +1081,7 @@ classdef LabDataGUI < handle
             obj.allCellTags = unique(obj.allCellTags);
             
             %obj.fullCellDataList
-            set(obj.handles.allCellsListbox, 'String', obj.fullCellList);
+            set(obj.handles.allCellsListbox, 'String', cellNamesForDisplay);
             
             obj.updateEpochFilterTable();
             
