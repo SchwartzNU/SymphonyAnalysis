@@ -1013,7 +1013,7 @@ classdef LabDataGUI < handle
                             if sum(strcmp(allLoadedParts, [cellNames{i} '-Ch1'])) == 0
                                 obj.labData.addCell([cellNames{i} '-Ch1'], cellType);
                                 obj.fullCellList = [obj.fullCellList [cellNames{i} '-Ch1']];
-                                cellNamesForDisplay{end+1} = sprintf('%s-Ch1', cellNames{i});
+                                cellNamesForDisplay{end+1} = sprintf('%s-Ch1 | %s', cellNames{i}, cellType);
                             end
                             cellType = ch2Type;
                             if isempty(cellType)
@@ -1023,7 +1023,7 @@ classdef LabDataGUI < handle
                             if sum(strcmp(allLoadedParts, [cellNames{i} '-Ch2'])) == 0
                                 obj.labData.addCell([cellNames{i} '-Ch2'], cellType);
                                 obj.fullCellList = [obj.fullCellList [cellNames{i} '-Ch2']];
-                                cellNamesForDisplay{end+1} = sprintf('%s-Ch2', cellNames{i});
+                                cellNamesForDisplay{end+1} = sprintf('%s-Ch2 | %s', cellNames{i}, cellType);
                             end
                         end
                     else
@@ -1042,7 +1042,12 @@ classdef LabDataGUI < handle
                         else
                             datasetString = '';
                         end
-                        cellNamesForDisplay{end+1} = sprintf('%s | %s %s', cellNames{i}, cellType, datasetString);
+                        if strcmp(cellType, 'unclassified')
+                            cellNamesForDisplay{end+1} = sprintf('%s %s', cellNames{i}, datasetString);
+                        else
+                            cellNamesForDisplay{end+1} = sprintf('%s | %s %s', cellNames{i}, cellType, datasetString);
+                        end
+                        
                         obj.labData.addCell(cellNames{i}, cellType);
                     end
                     
@@ -1319,7 +1324,7 @@ classdef LabDataGUI < handle
             
             cellData_proj_folder = uigetdir([ANALYSIS_FOLDER filesep 'Projects'], 'Choose project folder');
             %add to cellNames text file, creating it if necessary
-            if ~exist([cellData_proj_folder filesep 'cellNames.txt'], 'file');
+            if ~exist([cellData_proj_folder filesep 'cellNames.txt'], 'file')
                 fid = fopen([cellData_proj_folder filesep 'cellNames.txt'], 'w');
             else
                 fid = fopen([cellData_proj_folder filesep 'cellNames.txt'], 'a');
