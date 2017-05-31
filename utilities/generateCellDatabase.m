@@ -48,6 +48,8 @@ for fi = 1:length(filterDirResult)
                     value{z} = strtrim(token);
                     z=z+1;
                 end
+            elseif isletter(value_str(1)) % call it char if the first entry is a char
+                value = value_str;
             else
                 value = str2num(value_str); %#ok<ST2NM>
             end
