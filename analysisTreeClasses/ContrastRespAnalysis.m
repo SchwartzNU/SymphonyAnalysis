@@ -119,6 +119,7 @@ classdef ContrastRespAnalysis < AnalysisTree
             rootData.stimParameterList = {'contrast'};
             
             rootData = addLinearInterpToCR(rootData);  
+            %rootData = addSpapsFit(rootData);  
             
             obj = obj.set(1, rootData);
         end

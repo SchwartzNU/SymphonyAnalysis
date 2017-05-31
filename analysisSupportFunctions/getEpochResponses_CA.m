@@ -374,7 +374,11 @@ for i=1:L
         outputStruct.ONSET_FRmaxLatency.units = 's';
         outputStruct.ONSET_FRmaxLatency.type = 'singleValue';
         outputStruct.ONSET_FRmaxLatency.value = NaN;
-        
+        %%% Adam 5/15/17
+        outputStruct.stimInt20_FRmax.units = 'Hz';
+        outputStruct.stimInt20_FRmax.type = 'singleValue';
+        outputStruct.stimInt20_FRmax.value = NaN;
+        %%%%%
         outputStruct.ONSET_FRhalfMaxLatency.units = 's';
         outputStruct.ONSET_FRhalfMaxLatency.type = 'singleValue';
         outputStruct.ONSET_FRhalfMaxLatency.value = NaN;
@@ -681,6 +685,7 @@ ONSETresponseEndTime_max = max(ONSETresponseEndTime_all);
 OFFSETresponseStartTime_min = min(OFFSETresponseStartTime_all);
 OFFSETresponseEndTime_max = max(OFFSETresponseEndTime_all);
 [psth, xvals] = cellData.getPSTH(epochInd, ip.Results.BinWidth, ip.Results.DeviceName);
+[psth20, xvals20] = cellData.getPSTH(epochInd, 20, ip.Results.DeviceName);
 
 %%%%%%%%%Adam 8/27/15 temp hack centerOfMassLatency
 respOffs = 0.15;
@@ -688,8 +693,11 @@ stimXvals = xvals((xvals >= respOffs)&(xvals <= 1 + respOffs));
 stimPsth = psth((xvals >= respOffs)&(xvals <= 1 + respOffs)); 
 comTime = sum(stimXvals.*stimPsth)/sum(stimPsth);
 outputStruct.centerOfMassLatency.value = comTime;
-%%%%%%%%%%
-
+%%%%%%%%%%%Adam 5/15/17 
+%stimXvals20 = xvals20((xvals20 >= intervalStart)&(xvals20 <= intervalEnd)); 
+stimPsth20 = psth20((xvals20 >= intervalStart)&(xvals20 <= intervalEnd));
+outputStruct.stimInt20_FRmax.value = max(stimPsth20);
+%%%%%
 
 %PSTH fit
 if ip.Results.FitPSTH > 0
@@ -800,6 +808,7 @@ if ONSETresponseEndTime_max > ONSETresponseStartTime_min
         maxLoc = maxLoc(1);
         outputStruct.ONSET_FRmaxLatency.value = xvals_onset(maxLoc);
     end
+
     outputStruct.ONSET_FRrampLatency.value = outputStruct.ONSET_FRmaxLatency.value - nanmedian(outputStruct.ONSETlatency.value); %latency from start to peak
     FRthres = outputStruct.ONSET_FRmax.value / 2; %half max
     if FRthres>0

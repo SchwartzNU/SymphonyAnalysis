@@ -552,6 +552,21 @@ classdef TextureMatrixAnalysis < AnalysisTree
             hold('off');
         end
         
+        function plotMeanData_stimIntFRmax20_gblSubt(node, cellData)
+            blurRootData = node.get(childrenByValue(node, 1, 'name', 'Across seed tree'));
+%             xvals = blurRootData.pixelBlur;
+            xvals = blurRootData.halfMaxScale;
+            yMean = blurRootData.stimInt20_FRmax.mean_c;
+            yMeanErr = blurRootData.spikeCount_stimInterval_grndBlSubt.SEM_c;
+            errorbar(xvals, yMean, yMeanErr);
+%             xlabel('Pixel blur');
+            xlabel('Texture half max scale');
+            ylabel('FR max');
+         end
+        
+        
+        
+        
         function plotMeanData_spkStimInt_gblSubtNORM(node, cellData)
             blurRootData = node.get(childrenByValue(node, 1, 'name', 'Across seed tree'));
 %             xvals = blurRootData.pixelBlur;
