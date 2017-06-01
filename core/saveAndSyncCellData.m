@@ -3,7 +3,7 @@ global CELL_DATA_FOLDER;
 global CELL_DATA_MASTER;
 global SERVER_ROOT;
 global SYNC_TO_SERVER;
-SERVER_TIME_OFFSET = 60;
+SERVER_TIME_OFFSET = 0;
 
 save([CELL_DATA_FOLDER cellData.savedFileName '.mat'], 'cellData');
 
@@ -36,7 +36,7 @@ end
 
 
 fprintf('Local file is %g sec newer than server file\n',(localModDate - serverModDate) * 86400)
-fileCopySlopTimeSec = 30 + SERVER_TIME_OFFSET;
+fileCopySlopTimeSec = 20 + SERVER_TIME_OFFSET;
 
 if serverModDate > localModDate + fileCopySlopTimeSec/86400
     disp([cellData.savedFileName ': A newer copy of the file exists on the server. Please reload before continuing']);

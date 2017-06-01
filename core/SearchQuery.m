@@ -68,12 +68,12 @@ classdef SearchQuery < hgsetget %search query object to use with searchLeafNodes
                             if j==1
                                 s = ['(M.get(' '''' self.fieldnames{i} '''' ')' self.operators{i} self.values{i}{j}];
                             elseif j < length(self.values{i})
-                                s = [s, ' || ' 'M.get(' '''' self.fieldnames{i} '''' ')' self.operators{i} self.values{i}{j}];
+                                s = [s, ' || ' 'all(M.get(' '''' self.fieldnames{i} '''' ')' self.operators{i} self.values{i}{j} ')'];
                             else
-                                s = [s, ' || ' 'M.get(' '''' self.fieldnames{i} '''' ')' self.operators{i} self.values{i}{j} ')'];
+                                s = [s, ' || ' 'all(M.get(' '''' self.fieldnames{i} '''' ')' self.operators{i} self.values{i}{j} '))'];
                             end
                             
-                        elseif strcmp(self.operators{i},'==') %and the condition is equality, do a strcmp
+                        elseif strcmp(self.operators{i},'==') %string, and the condition is equality, do a strcmp
                             
                             if j==1
                                 s = ['(strcmp(M.get(' '''' self.fieldnames{i} '''' '),'  '''' num2str(self.values{i}{j}) '''' ')'];
@@ -99,7 +99,7 @@ classdef SearchQuery < hgsetget %search query object to use with searchLeafNodes
                             end
                         end
                     else
-                        s = ['M.get(' '''' self.fieldnames{i} '''' ')' self.operators{i} num2str(self.values{i})];
+                        s = ['all(M.get(' '''' self.fieldnames{i} '''' ')' self.operators{i} num2str(self.values{i}) ')'];
                     end
                 end
                 queryString = regexprep(queryString, ['@' num2str(i)], s, 'once');
