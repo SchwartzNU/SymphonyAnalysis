@@ -41,16 +41,28 @@
 
 % WC F mini On
 % load cellData/042617Bc3.mat
-epochIndicesNoise = [];
+% epochIndicesNoise = [];
 
 % epochIndicesColor = 248:277; % center, wc -60
 % epochIndicesColor = 278:319; % full field, wc -60
-epochIndicesColor = [248:319]; % wc -60, center & whole field
+% epochIndicesColor = [248:319]; % wc -60, center & whole field
 
 % epochIndicesColor = 442:475; % center, wc 20
 % epochIndicesColor = 476:533; % annulus, wc 20
 % epochIndicesColor = 320:345; % full field, wc 20
 % epochIndicesColor = [442:533, 320:345]; % wc 20, center & annulus & whole field
+
+
+% Off trans alpha noise flicker CA, Jason in Finland
+% load cellData/032717Ac1.mat
+% epochIndicesNoise = 94:193;
+% epochIndicesColor = [];
+
+% Off trans alpha color noise CA
+load cellData/053117Bc4
+epochIndicesNoise = 99:102; % center surround
+% epochIndicesNoise = 103:115; % vertical strip, 6 segments
+epochIndicesColor = [];
 
 
 responseScaleColor = .3;
@@ -102,6 +114,7 @@ for ei = 1:numberOfEpochs
 end
 stimulusAllEpochs = stimulusColorIso';
 
+
 %% noise epochs
 
 % locationByEpoch = [];
@@ -125,9 +138,19 @@ if ~isempty(epochIndicesNoise)
     seedByEpoch = [];
     for ei=1:numberOfEpochs
         epoch = cellData.epochs(epochIndicesNoise(ei));
-        centerNoiseSeed = epoch.get('centerNoiseSeed');
-        surroundNoiseSeed = epoch.get('surroundNoiseSeed');
-        stimulusAreaMode = epoch.get('currentStimulus');
+        if strcmp(epoch.get('displayName'), 'Center Surround Noise')
+            centerNoiseSeed = epoch.get('centerNoiseSeed');
+            surroundNoiseSeed = epoch.get('surroundNoiseSeed');
+            stimulusAreaMode = epoch.get('currentStimulus');
+        elseif strcmp(epoch.get('displayName'), 'White Noise Flicker')
+            centerNoiseSeed = epoch.get('randSeed');
+            surroundNoiseSeed = nan;
+            stimulusAreaMode = 'Center';
+        elseif strcmp(epoch.get('displayName'), 'Spatial Noise')
+            centerNoiseSeed = epoch.get('centerNoiseSeed');
+            surroundNoiseSeed = nan;
+            stimulusAreaMode = 'Spatial';
+        end
 
         seedByEpoch(ei,:) = [centerNoiseSeed, surroundNoiseSeed];
     end
@@ -141,11 +164,13 @@ if ~isempty(epochIndicesNoise)
     repeatSeeds = uniqueCenterSeeds(uniqueSeedCounts > 1);
     if ~isempty(repeatSeeds)
         repeatSeed = repeatSeeds(1);
+        repeatRunEpochIndices = epochIndicesNoise(seedByEpoch == repeatSeed);
     else
         repeatSeed = [];
+        repeatRunEpochIndices = [];
     end
     singleSeeds = uniqueCenterSeeds(uniqueSeedCounts == 1);
-    repeatRunEpochIndices = epochIndicesNoise(seedByEpoch == repeatSeed);
+    
 
     singleRunEpochIndices = [];
     for ei = 1:numberOfEpochs
@@ -167,7 +192,7 @@ end
 
 legString = {'center green','center uv','surround green','surround uv'};
 
-%% generate responses and stims, then glue them all together
+%% generate stims, then glue them all together
 stimulusNoise = [];
 repeatMarkerFull = [];
 
@@ -177,6 +202,9 @@ for ei=1:numberOfEpochs
 
     epoch = cellData.epochs(epochIndicesNoise(ei));
     stimulusAreaMode = epoch.get('currentStimulus');
+    if isnan(stimulusAreaMode)
+        stimulusAreaMode = 'Center';
+    end
     isRepeatSeed = any(seedByEpoch(ei,1) == repeatSeeds);
     if averageRepeatSeedEpochs && ~isRepeatSeed
         continue
@@ -203,9 +231,15 @@ for ei=1:numberOfEpochs
         locations = 1:2;
     end  
     
+    if ~isnan(epoch.get('frameDwell'))
+        frameDwell = epoch.get('frameDwell');
+    else
+        frameDwell = 1;
+    end    
+    
     if strcmp(epoch.get('colorNoiseMode'), '2 patterns')
         means = [epoch.get('meanLevel1'), epoch.get('meanLevel2')];
-        contrast = epoch.get('contrastValues');
+        contrasts = [epoch.get('contrast1'), epoch.get('contrast2')];
         for location = locations
             noiseStream = RandStream('mt19937ar', 'Seed', seedByEpoch(ei,location));
             
@@ -216,7 +250,7 @@ for ei=1:numberOfEpochs
                     
                     if fi > preFrames && fi <= preFrames + stimFrames
                     
-                        stim = mn + contrast * mn * noiseStream.randn();
+                        stim = mn + contrasts(color) * mn * noiseStream.randn();
                         if stim < 0
                             stim = 0;
                         elseif stim > mn * 2
@@ -239,15 +273,16 @@ for ei=1:numberOfEpochs
         end
                 
         
-    else
+    elseif strcmp(epoch.get('displayName'), 'Center Surround Noise')
         % old one pattern mode code
         for location = locations
             stimLocation = [];
             stimLocation(1:preFrames, 1) = zeros(preFrames, 1);
 
             noiseStream = RandStream('mt19937ar', 'Seed', seedByEpoch(ei,location));
+            
 
-            for fi = preFrames+1:floor(stimFrames/epoch.get('frameDwell'))
+            for fi = preFrames+1:floor(stimFrames/frameDwell')
                 stimLocation(fi, 1) = noiseStream.randn;
             end
             ml = epoch.get('meanLevel');
@@ -266,6 +301,39 @@ for ei=1:numberOfEpochs
         elseif strcmp(stimulusAreaMode, 'Surround')
             stimulus(:,1) =  epoch.get('meanLevel') + zeros(size(stimulus,1), 1);
         end 
+       
+        
+    elseif strcmp(epoch.get('displayName'), 'White Noise Flicker')
+        location = 1;
+        
+        rng(seedByEpoch(ei,1));
+        
+        mn = epoch.get('meanLevel');
+        contrast = epoch.get('noiseSD');
+        stim = [];
+        for fi = 1:floor((stimFrames + postFrames + preFrames)/frameDwell)
+            if fi > preFrames && fi <= preFrames + stimFrames
+
+                stim = mn + contrast * mn * randn();
+                if stim < 0
+                    stim = 0;
+                elseif stim > mn * 2
+                    stim = mn * 2;
+                elseif stim > 1
+                    stim = 1;
+                end
+            else
+                stim = mn;
+            end
+
+            % convert to contrast
+            stim = (stim ./ mn) - 1;
+
+            stimulus(fi, 1) = stim;
+
+        end    
+        
+        
         
     end
 
@@ -282,15 +350,17 @@ stimulusAllEpochs = [stimulusAllEpochs; stimulusNoise];
 
 %% Responses
 responseAllEpochs = [];
+resampleNeeded = true;
 for ei=1:length(allEpochs)
     epoch = cellData.epochs(allEpochs(ei));
 
     % generate response
 
     if strcmp(epoch.get('ampMode'), 'Cell attached')
-%         spikeTimes = epoch.get('spikes_ch1') / sampleRate;
-%         response = NIM.Spks2Robs(spikeTimes, 1/frameRate, size(stimulus,1) );
-%         useOutputNonlinearity = true;
+        spikeTimes = epoch.get('spikes_ch1') / sampleRate;
+        response = NIM.Spks2Robs(spikeTimes, 1/frameRate, size(epoch.getData('Amplifier_Ch1')) / sampleRate * frameRate );
+        useOutputNonlinearity = true;
+        resampleNeeded = false;
     else
         useOutputNonlinearity = false;
         
@@ -346,8 +416,9 @@ if averageRepeatSeedEpochs
 %     repeatMarkerFull = mean(repeatMarkerFull, 2);
 end
 
-
-responseAllEpochs = resample(responseAllEpochs, frameRate, sampleRate);
+if resampleNeeded
+    responseAllEpochs = resample(responseAllEpochs, frameRate, sampleRate);
+end
 responseAllEpochs = responseAllEpochs - prctile(responseAllEpochs, 50);
 
 responseAllEpochs(responseAllEpochs < 0) = 0;
@@ -360,7 +431,7 @@ legend(handles(1), legString)
 plot(handles(2), responseAllEpochs)
 % hold(handles(2), 'on')
 % plot(handles(2), mean(responseFull, 2), 'k')
-legend(handles(2), '1','2','3','4','5','6')
+% legend(handles(2), '1','2','3','4','5','6')
 % plot(handles(3), repeatMarkerFull)
 linkaxes(handles, 'x')
 

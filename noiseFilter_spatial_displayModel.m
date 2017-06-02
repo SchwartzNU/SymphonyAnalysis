@@ -5,13 +5,12 @@ colorsByColor = [0, .7, .0;
 figure(199);clf;
 numSubunits = length(nim.subunits);
 
-handles = tight_subplot(numSubunits,1, .05);
-
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % subunit filters
+handles = tight_subplot(numSubunits,1, .05);
 
 filterTime = (1:nLags)-1;
 filterTime = filterTime * stim_dt;
@@ -30,7 +29,7 @@ for si = 1:numSubunits
         h(fi) = plot(filterTime, filters(:,fi), 'LineWidth',2, 'LineStyle',style, 'Color', c);
         hold on
         line([0,max(filterTime)],[0,0],'Color','k', 'LineStyle',':');
-
+        xlabel('time before output')
     end
     legend(h(:), legString)
     if si == 1
@@ -41,14 +40,49 @@ end
 % legend({'center green','center uv','surround green','surround uv'})
 % linkaxes(handles)
 
-figure(200);clf;
-handles = tight_subplot(numSubunits,1, .05);
+% filters in FFT
+figure(209);clf;
+handles = tight_subplot(numSubunits, 1, .05);
+
+
+h = [];
+for si = 1:numSubunits
+    axes(handles(si));
+    h = [];
+    filters = reshape(nim.subunits(si).filtK, [], numSpatialDimensions);
+    for fi = 1:size(filters,2)
+        
+        filtfft = abs(fft(filters(:,fi)));
+        n = length(filters(:,fi));
+        freqaxis = (0:n-1)*((1/stim_dt)/n);
+        filtfft = filtfft(1:ceil(n/2));
+        freqaxis = freqaxis(1:ceil(n/2));
+        
+        c = colorsByColor(mod(fi-1, 2)+1,:);
+        if fi >= 3 % surround dashed
+            style = '--';
+        else
+            style = '-';
+        end
+        h(fi) = plot(freqaxis, filtfft, 'LineWidth',2, 'LineStyle',style, 'Color', c);
+        hold on
+%         line([0,max(filterTime)],[0,0],'Color','k', 'LineStyle',':');
+        xlabel('freq (Hz)')
+    end
+    legend(h(:), legString)
+    if si == 1
+        title('subunit filter FFT')
+    end
+end
+
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % subunit generator & output nonlinearity
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+figure(200);clf;
+handles = tight_subplot(numSubunits,1, .05);
 
 for si=1:numSubunits
     axes(handles(si));
@@ -87,7 +121,7 @@ for si=1:numSubunits
         title('subunit generator & output nonlinearity')
     end
     
-    xticks('auto')
+%     xticks('auto')
     xticklabels('auto')
 end
 
@@ -122,7 +156,7 @@ legend('generator + offset', 'output NL')
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-% Display time signals
+%% Display time signals
 
 figure(201);clf;
 warning('off', 'MATLAB:legend:IgnoringExtraEntries')
@@ -167,7 +201,7 @@ legend('response','prediction')
 ylabel('overall output')
 
 linkaxes(handles, 'x')
-xlim([1, 10])
+xlim([1, 5])
 
 pan xon
 
@@ -176,33 +210,56 @@ pan xon
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-% step response
-figure(206);clf;
-handles = tight_subplot(2,2, .1);
-stepStartTime = 0.5;
-stepEndTime = 1.0;
-offsetTime = 1.5;
-titles = {'center green','center uv','surround green','surround uv'};
+%% step response
 
-t = (0:1/updateRate:3)';
-for ci = 1:4
-    artificialStim = zeros(size(t,1), 4);
-    artificialStim(t >= stepStartTime & t <= stepEndTime, ci) = 1;
-    artificialStim(t - offsetTime >= stepStartTime & t - offsetTime <= stepEndTime, ci) = -1;
+if numSpatialDimensions > 1
+    % color
+    figure(206);clf;
+    handles = tight_subplot(2,2, .1);
+    stepStartTime = 0.5;
+    stepEndTime = 1.0;
+    offsetTime = 1.5;
+    titles = {'center green','center uv','surround green','surround uv'};
+
+    t = (0:1/updateRate:3)';
+    for ci = 1:4
+        artificialStim = zeros(size(t,1), 4);
+        artificialStim(t >= stepStartTime & t <= stepEndTime, ci) = 1;
+        artificialStim(t - offsetTime >= stepStartTime & t - offsetTime <= stepEndTime, ci) = -1;
+        artXstim = NIM.create_time_embedding(artificialStim, params_stim);
+        [~, artResponsePrediction_s] = nim.eval_model([], artXstim);
+
+        axes(handles(ci))
+        plot(t, artificialStim);
+
+        hold on
+        plot(t, artResponsePrediction_s, 'LineWidth',3)
+    %     legend('stimulus','response')
+        title(titles{ci})
+    end
+else
+
+
+    figure(206);clf;
+    stepStartTime = 0.5;
+    stepEndTime = 1.0;
+    offsetTime = 1.5;
+
+    t = (0:1/updateRate:3)';
+    artificialStim = zeros(size(t,1), 1);
+    artificialStim(t >= stepStartTime & t <= stepEndTime) = 1;
+    artificialStim(t - offsetTime >= stepStartTime & t - offsetTime <= stepEndTime) = -1;
     artXstim = NIM.create_time_embedding(artificialStim, params_stim);
     [~, artResponsePrediction_s] = nim.eval_model([], artXstim);
-    
-    axes(handles(ci))
+
     plot(t, artificialStim);
-    
+
     hold on
     plot(t, artResponsePrediction_s, 'LineWidth',3)
+    title('Light step response prediction')
 %     legend('stimulus','response')
-    title(titles{ci})
+    
 end
-
-
-
 
 
 

@@ -114,9 +114,9 @@ nim = nim.fit_filters( response, Xstim, 'silent', 1);
 
 % fit upstream nonlinearities
 
-nonpar_reg = 200; % set regularization value
+nonpar_reg = 1000; % set regularization value
 useNonparametricSubunitNonlinearity = true;
-enforceMonotonicSubunitNonlinearity = true; % slow and unreliable
+enforceMonotonicSubunitNonlinearity = true;
 if useNonparametricSubunitNonlinearity
     nim = nim.init_nonpar_NLs( Xstim, 'lambda_nld2', nonpar_reg, 'NLmon', enforceMonotonicSubunitNonlinearity);
 end
@@ -131,12 +131,16 @@ nim = nim.set_reg_params('d2x', 0);
 r2 = 0;
 for fi = 1:numFittingLoops
     fprintf('Fit loop %g of %g \n', fi, numFittingLoops);
-    nim = nim.fit_filters( response, Xstim, 'silent', 1, 'fit_offsets', 1);
-    if useNonparametricSubunitNonlinearity
-        nim = nim.fit_upstreamNLs( response, Xstim, 'silent', 1);
+    try
+        nim = nim.fit_filters( response, Xstim, 'silent', 1, 'fit_offsets', 1);
+        if useNonparametricSubunitNonlinearity
+            nim = nim.fit_upstreamNLs( response, Xstim, 'silent', 1);
+        end
+        nim = nim.fit_spkNL(response, Xstim, 'silent', 1);
+        [ll, responsePrediction, mod_internals] = nim.eval_model(response, Xstim);
+    catch
+        break;
     end
-    nim = nim.fit_spkNL(response, Xstim, 'silent', 1);
-    [ll, responsePrediction, mod_internals] = nim.eval_model(response, Xstim);
     
     prev_r2 = r2;
     r2 = 1-mean((response-responsePrediction).^2)/var(response);
