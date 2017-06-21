@@ -1,4 +1,4 @@
-function [D_sorted, D_target, D_others, D_origOrder, indexVals_sorted, geneNames_sorted, targetInd, othersInd] = selectiveExpressionMatrix(D, cellTypes, geneNames, selection, Ngenes, method)
+sfunction [D_sorted, D_target, D_others, D_origOrder, indexVals_sorted, geneNames_sorted, targetInd, othersInd] = selectiveExpressionMatrix(D, cellTypes, geneNames, selection, Ngenes, method)
 if ischar(selection)
     selectedType = selection;
     targetInd = find(strcmp(selectedType, cellTypes));
