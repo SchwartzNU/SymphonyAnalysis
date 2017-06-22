@@ -20,7 +20,7 @@ end
 
 %X-axis Grid
 for i=1:(length(uniqueTypes_sorted)-1)
-    rectangle('Position', [cumsum_NofEach_sorted(i)+.5 0 NofEach_sorted(i+1) length(cellType)])
+    rectangle('Position', [cumsum_NofEach_sorted(i)+.5 0 NofEach_sorted(i+1) length(allGeneNames)])
 end
         
        
