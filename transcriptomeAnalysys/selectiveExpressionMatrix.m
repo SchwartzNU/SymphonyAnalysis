@@ -58,15 +58,37 @@ switch method
             [~, indexVals(i)] = ttest2(targetVals, otherVals, 'tail', 'right');
         end
         [indexVals_sorted, ind] = sort(indexVals, 'ascend');
+        geneNames_sorted = geneNames(ind(1:Ngenes));
+        D_origOrder = D(ind(1:Ngenes), :);
+        D_target = D(ind(1:Ngenes), targetInd);
+        D_others = D(ind(1:Ngenes), othersInd);
+        D_sorted = [D_target, D_others];
+        
+        thresVal = .1;
+        D_thres = D_sorted>thresVal;
+        falseNeg_scaling = 0.35;
+        indexVals =zeros(1,Ngenes);
+        for i=1:Ngenes
+            targetFrac = sum(D_thres(i,targetInd))./length(targetInd);
+            otherFrac = sum(D_thres(i,othersInd))./length(targetInd);      
+            indexVals(i) = falseNeg_scaling*targetFrac - (1-falseNeg_scaling)*otherFrac;
+        end
+        [indexVals_sorted, ind] = sort(indexVals, 'descend');
+        
+        geneNames_sorted = geneNames_sorted(ind);
+        D_origOrder = D_origOrder(ind, :);
+        D_target = D_target(ind,:);
+        D_others = D_others(ind,:);
+        D_sorted = D_sorted(ind,:);
 end
-    
-geneNames_sorted = geneNames(ind);
 
-geneNames_sorted = geneNames_sorted(1:Ngenes);
-D_origOrder = D(ind(1:Ngenes), :);
-D_target = D(ind(1:Ngenes), targetInd);
-D_others = D(ind(1:Ngenes), othersInd);
-D_sorted = [D_target, D_others];
+if ~strcmp(method, 'multi-step')
+    geneNames_sorted = geneNames(ind(1:Ngenes));
+    D_origOrder = D(ind(1:Ngenes), :);
+    D_target = D(ind(1:Ngenes), targetInd);
+    D_others = D(ind(1:Ngenes), othersInd);
+    D_sorted = [D_target, D_others];
+end
 
 %method is one of the following options:
 % threshold
