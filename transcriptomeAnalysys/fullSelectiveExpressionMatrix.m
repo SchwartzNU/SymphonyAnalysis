@@ -1,4 +1,11 @@
-function [D_full, uniqueTypes_sorted, NofEach_sorted, allGeneNames] = fullSelectiveExpressionMatrix(D, cellTypes, geneNames, Ngenes, method)
+function [D_full, uniqueTypes_sorted, NofEach_sorted, allGeneNames] = fullSelectiveExpressionMatrix(D, cellTypes, geneNames, Ngenes, method, directionPref)
+if ~isempty(directionPref)
+    for i=1:length(cellTypes)
+        if ~strcmp(directionPref{i}, '-')
+            cellTypes{i} = [cellTypes{i} ':' directionPref{i}];
+        end
+    end
+end
 uniqueTypes = unique(cellTypes);
 
 Ntypes = length(uniqueTypes);
