@@ -27,19 +27,18 @@ end
 %ind
 D_sorted = D(:,ind);
 cellTypes = cellTypes(ind);
-
+targetInd_all = ind;
 %make full matrix
 D_full = zeros(Ngenes*Ntestable,length(cellTypes));
 allGeneNames = [];
-targetInd_all = [];
+
 curInd = 1;
 for i=1:Ntypes
     if NofEach_sorted(i) > 2
-        [~, ~, ~, curD, ~, geneNames_sorted, targetInd] = ...
+        [~, ~, ~, curD, ~, geneNames_sorted] = ...
             selectiveExpressionMatrix(D_sorted, cellTypes, geneNames, uniqueTypes_sorted{i}, Ngenes, method);
         D_full(curInd:curInd+Ngenes-1,:) = curD;
         allGeneNames = [allGeneNames; geneNames_sorted]; 
-        targetInd_all = [targetInd_all, targetInd];
         curInd = curInd+Ngenes;
     end    
 end
