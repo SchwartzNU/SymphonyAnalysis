@@ -9,7 +9,7 @@ imagesc(log(D_full))
 
 %Axis Setup
 ax=gca;
-set(ax,'TickDir','out','yTickLabel',allGeneNames, 'ytick',(1:size(D_full,1)), 'xTickLabel',uniqueTypes_sorted, 'xtick',xtickByCellType+.5, 'xTickLabelRotation',45);
+set(ax,'yTickLabel',allGeneNames, 'ytick',(1:size(D_full,1)), 'xTickLabel',uniqueTypes_sorted, 'xtick',xtickByCellType+.5, 'xTickLabelRotation',45);
 
 %Grid Generation
 
@@ -20,7 +20,7 @@ end
 
 %X-axis Grid
 for i=1:(length(uniqueTypes_sorted)-1)
-    rectangle('Position', [cumsum_NofEach_sorted(i)+.5 0 NofEach_sorted(i+1) length(allGeneNames)+.5])
+    rectangle('Position', [cumsum_NofEach_sorted(i)+.5 0 NofEach_sorted(i+1) length(allGeneNames)])
 end
         
        

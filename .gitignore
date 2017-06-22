@@ -12,5 +12,3 @@ shapeModel/shapeModel_v0.zip
 *.h5
 lib/*
 autodata/autoData2_setup.m
-
-autodata/autoData2_setup.m
