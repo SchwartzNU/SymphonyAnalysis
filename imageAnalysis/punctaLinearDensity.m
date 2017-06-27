@@ -74,3 +74,4 @@ end
 
 imageFilter=fspecial('gaussian',50,6);
 densityMap_filtered = nanconv(densityMap,imageFilter,'nanout');
+nanmean(densityMap(:))

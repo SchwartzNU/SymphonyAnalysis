@@ -62,4 +62,5 @@ Xpos = allX(countedPunctaInd);
 Ypos = allY(countedPunctaInd);
 
 
+save('punctaPoints.mat')
 
