@@ -136,9 +136,9 @@ classdef ColorIsoResponseFigure < handle
             
             try
                 if isKey(p, 'annulusMode')
-                    dataSetName = sprintf('Diam: %g Voltage: %g Annulus: %g NDF: %g', p('spotDiameter'),p('ampHoldSignal'),p('annulusMode'),p('NDF'));
+                    dataSetName = sprintf('Diam: %g Voltage: %g Annulus: %g NDF: %g GreenLED: %g uvLED: %g', p('spotDiameter'),p('ampHoldSignal'),p('annulusMode'),p('NDF'),p('greenLED'),p('uvLED'));
                 else
-                    dataSetName = sprintf('Diam: %g Voltage: %g Annulus: 0 NDF: %g', p('spotDiameter'),p('ampHoldSignal'),p('NDF'));
+                    dataSetName = sprintf('Diam: %g Voltage: %g Annulus: 0 NDF: %g GreenLED: %g uvLED: %g', p('spotDiameter'),p('ampHoldSignal'),p('NDF'),p('greenLED'),p('uvLED'));
                 end
                 set(obj.figureHandle, 'Name', dataSetName);
             end
