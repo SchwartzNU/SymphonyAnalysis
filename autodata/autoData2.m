@@ -61,9 +61,9 @@ for ci = 1:numTableCells
             if isKey(tags, 'Genotype')
                 g = tags('Genotype');
             else
-                g = nan;
+                g = '';
             end
-            trow{1, 'Genotype'} = g;
+            trow{1, 'Genotype'} = {g};
         end
 
     
