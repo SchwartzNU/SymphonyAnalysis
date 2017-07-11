@@ -106,10 +106,14 @@ classdef CellDatabaseGUI < handle
             filterSelectedIndices = obj.handles.filterSelection.Value;
             
             cellsHaveDataSet = [];
-            for fi = 1:length(filterSelectedIndices)
-                index = filterSelectedIndices(fi);
-                filterVariableName = obj.filterTable.filterVariableName{index};
-                cellsHaveDataSet(fi,:) = obj.cellDataTable.(filterVariableName);
+            if isempty(filterSelectedIndices)
+                cellsHaveDataSet = ones(1, size(obj.cellDataTable,1)); % no filters => all cells OK
+            else
+                for fi = 1:length(filterSelectedIndices)
+                    filterIndex = filterSelectedIndices(fi);
+                    filterVariableName = obj.filterTable.filterVariableName{filterIndex};
+                    cellsHaveDataSet(fi,:) = obj.cellDataTable.(filterVariableName);
+                end
             end
             
             cellsHaveDataSet = all(cellsHaveDataSet, 1);
