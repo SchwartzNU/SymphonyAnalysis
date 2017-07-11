@@ -319,7 +319,7 @@ classdef SpotsMultiSizeAnalysis < AnalysisTree
                 plot([firingEnd firingEnd], [upperLim lowerLim], 'LineStyle','--','Color',[1 0 0]);
                 plot([burstBound burstBound], [upperLim lowerLim], 'LineStyle','--');
                 hold off
-            end;
+            end
             if isfield(nodeData, 'OFFSETlatency') && ~isnan(nodeData.OFFSETlatency.value(1))
                 %draw lines here
                 hold on
@@ -654,7 +654,37 @@ classdef SpotsMultiSizeAnalysis < AnalysisTree
             errorbar(xvals, yvals, errs);
             xlabel('spotSize');
             ylabel(['OFFSET_charge400ms (' yField.units ')']);
-        end        
+        end
+        
+        function plot_spotSizeVsONSET_peak400ms(node, cellData)
+            rootData = node.get(1);
+            xvals = rootData.spotSize;
+            yField = rootData.ONSET_peak400ms;
+            if strcmp(yField.units, 's')
+            yvals = yField.median_c;
+            else
+            yvals = yField.mean_c;
+            end
+            errs = yField.SEM;
+            errorbar(xvals, yvals, errs);
+            xlabel('spotSize');
+            ylabel(['ONSET_peak400ms (' yField.units ')']);
+        end
+        
+        function plot_spotSizeVsONSET_charge400ms(node, cellData)
+            rootData = node.get(1);
+            xvals = rootData.spotSize;
+            yField = rootData.ONSET_charge400ms;
+            if strcmp(yField.units, 's')
+            yvals = yField.median_c;
+            else
+            yvals = yField.mean_c;
+            end
+            errs = yField.SEM;
+            errorbar(xvals, yvals, errs);
+            xlabel('spotSize');
+            ylabel(['ONSET_charge400ms (' yField.units ')']);
+        end          
          
     end
     
