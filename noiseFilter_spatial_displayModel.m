@@ -21,17 +21,18 @@ for si = 1:numSubunits
     filters = reshape(nim.subunits(si).filtK, [], numSpatialDimensions);
     for fi = 1:size(filters,2)
         c = colorsByColor(mod(fi-1, 2)+1,:);
-        if fi >= 3 % surround dashed
+        if numSpatialDimensions == 4 && fi >= 3 % surround dashed
             style = '--';
         else
             style = '-';
         end
         h(fi) = plot(filterTime, filters(:,fi), 'LineWidth',2, 'LineStyle',style, 'Color', c);
+
         hold on
         line([0,max(filterTime)],[0,0],'Color','k', 'LineStyle',':');
-        xlabel('time before output')
+%         xlabel('time before output')
     end
-    legend(h(:), legString)
+    legend(h(:), locationNames)
     if si == 1
         title('subunit linear filters')
     end
@@ -57,19 +58,19 @@ for si = 1:numSubunits
         freqaxis = (0:n-1)*((1/stim_dt)/n);
         filtfft = filtfft(1:ceil(n/2));
         freqaxis = freqaxis(1:ceil(n/2));
-        
         c = colorsByColor(mod(fi-1, 2)+1,:);
-        if fi >= 3 % surround dashed
+        if numSpatialDimensions == 4 && fi >= 3 % surround dashed
             style = '--';
         else
             style = '-';
         end
         h(fi) = plot(freqaxis, filtfft, 'LineWidth',2, 'LineStyle',style, 'Color', c);
+
         hold on
 %         line([0,max(filterTime)],[0,0],'Color','k', 'LineStyle',':');
         xlabel('freq (Hz)')
     end
-    legend(h(:), legString)
+    legend(h(:), locationNames)
     if si == 1
         title('subunit filter FFT')
     end
@@ -166,18 +167,22 @@ handles = tight_subplot(3,1,0, [.05,.01], .05);
 axes(handles(1));
 t = linspace(0, length(stimulus) / frameRate, length(stimulus));
 for fi = 1:size(stimulusFiltered,2)
-    c = colorsByColor(mod(fi-1, 2)+1,:);
-    if fi >= 3 % surround dashed
-        style = '--';
+    if numSpatialDimensions == 4
+        c = colorsByColor(mod(fi-1, 2)+1,:);
+        if fi >= 3 % surround dashed
+            style = '--';
+        else
+            style = '-';
+        end
+        plot(t, stimulusFiltered(:,fi), 'Color', c, 'LineStyle',style)
     else
-        style = '-';
+        plot(t, stimulusFiltered(:,fi))
     end
-    plot(t, stimulusFiltered(:,fi), 'Color', c, 'LineStyle',style)
     hold on
 end
 grid on
 ylabel('stimulus lowpass')
-legend(legString)
+legend(locationNames)
 
 axes(handles(2))
 for si = 1:numSubunits
@@ -212,14 +217,13 @@ pan xon
 
 %% step response
 
-if numSpatialDimensions > 1
+if numSpatialDimensions == 4
     % color
     figure(206);clf;
     handles = tight_subplot(2,2, .1);
     stepStartTime = 0.5;
     stepEndTime = 1.0;
     offsetTime = 1.5;
-    titles = {'center green','center uv','surround green','surround uv'};
 
     t = (0:1/updateRate:3)';
     for ci = 1:4
@@ -235,9 +239,9 @@ if numSpatialDimensions > 1
         hold on
         plot(t, artResponsePrediction_s, 'LineWidth',3)
     %     legend('stimulus','response')
-        title(titles{ci})
+        title(locationNames{ci})
     end
-else
+elseif numSpatialDimensions == 2;
 
 
     figure(206);clf;
@@ -262,4 +266,33 @@ else
 end
 
 
+%% spatial filters along a line
+if numSpatialDimensions > 4
+    figure(219);clf;
+    % subunit filters
+    handles = tight_subplot(numSpatialDimensions/2, 1, 0);
 
+    filterTime = (1:nLags)-1;
+    filterTime = filterTime * stim_dt;
+    h = [];
+    for si = 1
+        
+        h = [];
+        filters = reshape(nim.subunits(si).filtK, [], numSpatialDimensions);
+        for fi = 1:size(filters,2)
+            axes(handles(floor((fi-1) / 2) + 1));
+            c = colorsByColor(mod(fi-1, 2)+1,:);
+            
+            h(fi) = plot(filterTime, filters(:,fi), 'LineWidth',2, 'LineStyle',style, 'Color', c);
+
+            hold on
+            line([0,max(filterTime)],[0,0],'Color','k', 'LineStyle',':');
+            set(gca,'Xdir','reverse')
+%             xlabel('time before output')
+            if fi == 1
+                title('filters for subunit 1 by position')
+            end
+        end
+
+    end
+end

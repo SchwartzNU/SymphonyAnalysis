@@ -38,10 +38,20 @@
 % epochIndicesColor = [252:323, 435:466]; % wc 20, center & annulus & whole field
 % epochIndicesColor = [];
 
+% load cellData/061317Bc2.mat
+% epochIndicesNoise = 766:768; % center surround wc -60
+% epochIndicesColor = [];
+
+load cellData/062717Bc2.mat
+epochIndicesNoise = 161:164;%169; % spatial noise vertical color bar
+epochIndicesColor = [];
+
+
 
 % WC F mini On
 % load cellData/042617Bc3.mat
 % epochIndicesNoise = [];
+
 
 % epochIndicesColor = 248:277; % center, wc -60
 % epochIndicesColor = 278:319; % full field, wc -60
@@ -53,16 +63,22 @@
 % epochIndicesColor = [442:533, 320:345]; % wc 20, center & annulus & whole field
 
 
+% wc f mini On 2
+% load cellData/061317Bc5.mat
+% epochIndicesNoise = 112:116; % wc -60
+% epochIndicesColor = [];
+
+
 % Off trans alpha noise flicker CA, Jason in Finland
 % load cellData/032717Ac1.mat
 % epochIndicesNoise = 94:193;
 % epochIndicesColor = [];
 
 % Off trans alpha color noise CA
-load cellData/053117Bc4
-epochIndicesNoise = 99:102; % center surround
+% load cellData/053117Bc4
+% epochIndicesNoise = 99:102; % center surround
 % epochIndicesNoise = 103:115; % vertical strip, 6 segments
-epochIndicesColor = [];
+% epochIndicesColor = [];
 
 
 responseScaleColor = .3;
@@ -74,6 +90,8 @@ sampleRate = 10000;
 stimFilter = designfilt('lowpassfir','PassbandFrequency',6, ...          
     'StopbandFrequency',8,'PassbandRipple',0.5, 'SampleRate', frameRate, ...     
     'StopbandAttenuation',65,'DesignMethod','kaiserwin');
+
+locationNames = {};
 
 %% color iso epochs
 numberOfEpochs = length(epochIndicesColor);
@@ -147,7 +165,7 @@ if ~isempty(epochIndicesNoise)
             surroundNoiseSeed = nan;
             stimulusAreaMode = 'Center';
         elseif strcmp(epoch.get('displayName'), 'Spatial Noise')
-            centerNoiseSeed = epoch.get('centerNoiseSeed');
+            centerNoiseSeed = epoch.get('noiseSeed');
             surroundNoiseSeed = nan;
             stimulusAreaMode = 'Spatial';
         end
@@ -190,7 +208,6 @@ if ~isempty(epochIndicesNoise)
     %     'StopbandAttenuation',50,'DesignMethod','butter');
 end
 
-legString = {'center green','center uv','surround green','surround uv'};
 
 %% generate stims, then glue them all together
 stimulusNoise = [];
@@ -203,7 +220,11 @@ for ei=1:numberOfEpochs
     epoch = cellData.epochs(epochIndicesNoise(ei));
     stimulusAreaMode = epoch.get('currentStimulus');
     if isnan(stimulusAreaMode)
-        stimulusAreaMode = 'Center';
+        if strcmp(epoch.get('displayName'), 'Spatial Noise')
+            stimulusAreaMode = 'Spatial';
+        else
+            stimulusAreaMode = 'Center';
+        end
     end
     isRepeatSeed = any(seedByEpoch(ei,1) == repeatSeeds);
     if averageRepeatSeedEpochs && ~isRepeatSeed
@@ -225,10 +246,16 @@ for ei=1:numberOfEpochs
     
     if strcmp(stimulusAreaMode, 'Center')
         locations = 1;
+        numSeedsPerEpoch = 2;
     elseif strcmp(stimulusAreaMode, 'Surround')
         locations = 2;
+        numSeedsPerEpoch = 2;
+    elseif strcmp(stimulusAreaMode, 'Spatial')
+        locations = 1:(epoch.get('resolutionX') * epoch.get('resolutionY'));
+        numSeedsPerEpoch = 1;
     else
         locations = 1:2;
+        numSeedsPerEpoch = 2;
     end  
     
     if ~isnan(epoch.get('frameDwell'))
@@ -240,38 +267,84 @@ for ei=1:numberOfEpochs
     if strcmp(epoch.get('colorNoiseMode'), '2 patterns')
         means = [epoch.get('meanLevel1'), epoch.get('meanLevel2')];
         contrasts = [epoch.get('contrast1'), epoch.get('contrast2')];
-        for location = locations
-            noiseStream = RandStream('mt19937ar', 'Seed', seedByEpoch(ei,location));
+        
+        if ~strcmp(stimulusAreaMode, 'Spatial')
+            locationNames = {'center green','center uv','surround green','surround uv'};
             
+            
+            for location = locations
+                if numSeedsPerEpoch > 1 % separate seed for center and surround
+                    noiseStream = RandStream('mt19937ar', 'Seed', seedByEpoch(ei,location));
+                else 
+                    noiseStream = RandStream('mt19937ar', 'Seed', seedByEpoch(ei,1));
+                end
+                for fi = 1:floor((stimFrames + postFrames + preFrames)/epoch.get('frameDwell'))
+                    for color = 1:2
+
+                        mn = means(color);
+
+                        if fi > preFrames && fi <= preFrames + stimFrames
+
+                            stim = mn + contrasts(color) * mn * noiseStream.randn();
+                            if stim < 0
+                                stim = 0;
+                            elseif stim > mn * 2
+                                stim = mn * 2; % probably important to be symmetrical to whiten the stimulus
+                            elseif stim > 1
+                                stim = 1;
+                            end
+                        else
+                            stim = mn;
+                        end
+
+                        % convert to contrast
+                        stim = (stim ./ mn) - 1;
+
+                        stimulus(fi, (location - 1) * 2 + color) = stim;
+
+                    end
+                end
+
+            end
+        else % spatial mode
+            noiseStream = RandStream('mt19937ar', 'Seed', seedByEpoch(ei,1));
+            for i=1:max(locations)
+                locationNames{end+1,1} = sprintf('%g green', i);
+                locationNames{end+1,1} = sprintf('%g uv', i);
+            end
             for fi = 1:floor((stimFrames + postFrames + preFrames)/epoch.get('frameDwell'))
                 for color = 1:2
+                    for location = locations
 
-                    mn = means(color);
-                    
-                    if fi > preFrames && fi <= preFrames + stimFrames
-                    
-                        stim = mn + contrasts(color) * mn * noiseStream.randn();
-                        if stim < 0
-                            stim = 0;
-                        elseif stim > mn * 2
-                            stim = mn * 2; % probably important to be symmetrical to whiten the stimulus
-                        elseif stim > 1
-                            stim = 1;
+                        mn = means(color);
+
+                        if fi > preFrames && fi <= preFrames + stimFrames
+
+                            stim = mn + contrasts(color) * mn * noiseStream.randn();
+                            if stim < 0
+                                stim = 0;
+                            elseif stim > mn * 2
+                                stim = mn * 2; % probably important to be symmetrical to whiten the stimulus
+                            elseif stim > 1
+                                stim = 1;
+                            end
+                        else
+                            stim = mn;
                         end
-                    else
-                        stim = mn;
-                    end
-                    
-                    % convert to contrast
-                    stim = (stim ./ mn) - 1;
-                    
-                    stimulus(fi, (location - 1) * 2 + color) = stim;
 
+                        % convert to contrast
+                        stim = (stim ./ mn) - 1;
+
+                        column = (location - 1) * 2 + color;
+                        stimulus(fi, column) = stim;
+
+                    end
                 end
+
             end
             
         end
-                
+        
         
     elseif strcmp(epoch.get('displayName'), 'Center Surround Noise')
         % old one pattern mode code
@@ -427,7 +500,7 @@ responseAllEpochs(responseAllEpochs < 0) = 0;
 figure(6);clf;
 handles = tight_subplot(2,1);
 plot(handles(1), stimulusAllEpochs)
-legend(handles(1), legString)
+legend(handles(1), locationNames)
 plot(handles(2), responseAllEpochs)
 % hold(handles(2), 'on')
 % plot(handles(2), mean(responseFull, 2), 'k')
