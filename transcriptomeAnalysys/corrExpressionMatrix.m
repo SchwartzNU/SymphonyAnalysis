@@ -4,8 +4,8 @@ uniqueTypes = unique(cellTypes);
 Ntypes = length(uniqueTypes);
 corrPValues = zeros(1,Ntypes);
 
-%D = D*1000;
-%D(D<2) = 1;
+D = D*1000;
+D(D<2) = 1;
 
 % Make correlation matrix comparing each cell to every other
 R=corrcoef(D);
@@ -60,7 +60,7 @@ if(graph == 1)
     xticklabels(uniqueTypes);
     xtickangle(45);
     
-    signif = refline(0,0.5);
+    signif = refline(0,0.05);
     signif.Color = 'r';
     
     grid on;
