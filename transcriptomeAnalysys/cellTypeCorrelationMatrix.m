@@ -1,4 +1,11 @@
-function [uniqueTypes, corrPValues] = corrExpressionMatrix(D, cellTypes, graph)
+function [uniqueTypes, corrPValues] = cellTypeCorrelationMatrix(D, cellTypes, directionPref, graph)
+if ~isempty(directionPref)
+    for i=1:length(cellTypes)
+        if ~strcmp(directionPref{i}, '-')
+            cellTypes{i} = [cellTypes{i} ':' directionPref{i}];
+        end
+    end
+end
 
 uniqueTypes = unique(cellTypes);
 Ntypes = length(uniqueTypes);
@@ -6,6 +13,7 @@ corrPValues = zeros(1,Ntypes);
 
 D = D*1000;
 D(D<2) = 1;
+D = log(D);
 
 % Make correlation matrix comparing each cell to every other
 R=corrcoef(D);
@@ -54,7 +62,7 @@ end
 
 if(graph == 1)
     figure;
-    semilogy(corrPValues);
+    semilogy([1:length(corrPValues)], corrPValues, 'bx');
 
     xticks(1:length(uniqueTypes));
     xticklabels(uniqueTypes);
@@ -64,5 +72,8 @@ if(graph == 1)
     signif.Color = 'r';
     
     grid on;
+else
+end
+
 end
 
