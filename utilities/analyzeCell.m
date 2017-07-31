@@ -36,11 +36,12 @@ cellAnalysisTree = cellAnalysisTree.set(1, nodeData);
 
 Nanalyses = length(analysisTable{1});
 
-for i=1:length(dataSetKeys);
+for i=1:length(dataSetKeys)
     curDataSet = dataSetKeys{i};
     for j=1:Nanalyses
         T = [];
-        if strfind(curDataSet, analysisTable{1}{j}) %only 1 should match
+        dataSetNameResult = strfind(curDataSet, analysisTable{1}{j});
+        if dataSetNameResult == 1 % matches the name of an analysis on the first character
             curAnalysisClass = analysisTable{2}{j};
             usePrefs = false;
             if ~isempty(prefsMap)
@@ -70,6 +71,7 @@ for i=1:length(dataSetKeys);
                 params.class = curAnalysisClass;
                 params.cellName = cellName;
                 eval(['T = ' curAnalysisClass '(cellData,' '''' curDataSet '''' ', params);']);
+                
                 T = T.doAnalysis(cellData);
                 
                 if ~isempty(T)
@@ -77,8 +79,6 @@ for i=1:length(dataSetKeys);
                 end
             end
         end
-        
-        
     end
 end
 
