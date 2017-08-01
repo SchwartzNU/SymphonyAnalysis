@@ -125,8 +125,8 @@ classdef MovingBarAnalysis < AnalysisTree
             xvals = rootData.barAngle;
             yField = rootData.ONSET_avgTracePeak;
             yvals = yField.value;
-            polarerror(xvals*pi/180, yvals, zeros(1,length(xvals)));
             
+            polarerror(xvals*pi/180, yvals, zeros(1,length(xvals)));
             hold on;
             polar([0 rootData.ONSET_avgTracePeak_DSang*pi/180], [0 (100*rootData.ONSET_avgTracePeak_DSI)], 'r-');
             polar([0 rootData.ONSET_avgTracePeak_OSang*pi/180], [0 (100*rootData.ONSET_avgTracePeak_OSI)], 'g-');
@@ -183,6 +183,72 @@ classdef MovingBarAnalysis < AnalysisTree
             addDsiOsiVarTitle(rootData, 'spikeCount_movingBarTrailingEdge')
             hold off;
         end
+        
+        function plot_barAngleVscharge_movingBarLeadingEdge(node, cellData)
+            rootData = node.get(1);
+            xvals = rootData.barAngle;
+            yField = rootData.charge_movingBarLeadingEdge;
+
+            yvals = yField.mean_c
+            polarerror(xvals*pi/180, yvals, zeros(1,length(xvals)));
+            
+            hold on;
+            polar([0 rootData.charge_movingBarLeadingEdge_DSang*pi/180], [0 (100*rootData.charge_movingBarLeadingEdge_DSI)], 'r-');
+            polar([0 rootData.charge_movingBarLeadingEdge_OSang*pi/180], [0 (100*rootData.charge_movingBarLeadingEdge_OSI)], 'g-');
+            ylabel(['charge_movingBarLeadingEdge (' yField.units ')']);
+            addDsiOsiVarTitle(rootData, 'charge_movingBarLeadingEdge')
+            hold off;
+        end        
+        
+        
+        function plot_barAngleVscharge_movingBarTrailingEdge(node, cellData)
+            rootData = node.get(1);
+            xvals = rootData.barAngle;
+            yField = rootData.charge_movingBarTrailingEdge;
+
+            yvals = yField.mean_c
+            polarerror(xvals*pi/180, yvals, zeros(1,length(xvals)));
+            
+            hold on;
+            polar([0 rootData.charge_movingBarTrailingEdge_DSang*pi/180], [0 (100*rootData.charge_movingBarTrailingEdge_DSI)], 'r-');
+            polar([0 rootData.charge_movingBarTrailingEdge_OSang*pi/180], [0 (100*rootData.charge_movingBarTrailingEdge_OSI)], 'g-');
+            ylabel(['charge_movingBarTrailingEdge (' yField.units ')']);
+            addDsiOsiVarTitle(rootData, 'charge_movingBarTrailingEdge')
+            hold off;
+        end     
+        
+        function plot_barAngleVspeak_movingBarLeadingEdge(node, cellData)
+            rootData = node.get(1);
+            xvals = rootData.barAngle;
+            yField = rootData.peak_movingBarLeadingEdge;
+
+            yvals = yField.mean_c
+            polarerror(xvals*pi/180, yvals, zeros(1,length(xvals)));
+            
+            hold on;
+            polar([0 rootData.peak_movingBarLeadingEdge_DSang*pi/180], [0 (100*rootData.peak_movingBarLeadingEdge_DSI)], 'r-');
+            polar([0 rootData.peak_movingBarLeadingEdge_OSang*pi/180], [0 (100*rootData.peak_movingBarLeadingEdge_OSI)], 'g-');
+            ylabel(['peak_movingBarLeadingEdge (' yField.units ')']);
+            addDsiOsiVarTitle(rootData, 'peak_movingBarLeadingEdge')
+            hold off;
+        end              
+        
+        function plot_barAngleVspeak_movingBarTrailingEdge(node, cellData)
+            rootData = node.get(1);
+            xvals = rootData.barAngle;
+            yField = rootData.peak_movingBarTrailingEdge;
+
+            yvals = yField.mean_c
+            polarerror(xvals*pi/180, yvals, zeros(1,length(xvals)));
+            
+            hold on;
+            polar([0 rootData.peak_movingBarTrailingEdge_DSang*pi/180], [0 (100*rootData.peak_movingBarTrailingEdge_DSI)], 'r-');
+            polar([0 rootData.peak_movingBarTrailingEdge_OSang*pi/180], [0 (100*rootData.peak_movingBarTrailingEdge_OSI)], 'g-');
+            ylabel(['peak_movingBarTrailingEdge (' yField.units ')']);
+            addDsiOsiVarTitle(rootData, 'peak_movingBarTrailingEdge')
+            hold off;
+        end             
+        
         
         function plotMeanTraces(node, cellData)
             rootData = node.get(1);
