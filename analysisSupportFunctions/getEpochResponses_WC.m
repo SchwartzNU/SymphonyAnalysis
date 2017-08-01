@@ -75,7 +75,6 @@ for i=1:L
         stimData200 = [];
     end
     
-    
     if responseIntervalLen >= 0.4
         stimData400 = data(xvals > 0 & xvals <= 0.4);
     else
@@ -102,6 +101,11 @@ for i=1:L
     else
         stimData_next1000 = [];
     end
+    
+    % moving bar data segments
+    centerTime = (intervalEnd - intervalStart)/2 + .2;
+    dataBeforeCenter = data(xvals > (centerTime - 1) & xvals < centerTime);
+    dataAfterCenter = data(xvals > centerTime & xvals < (centerTime + 1));
     
     Mstim(i,:) = stimData;   
     Mtrans(i,:) = transData;
@@ -253,6 +257,26 @@ for i=1:L
         outputStruct.ONSETsusPeak.units = units;
         outputStruct.ONSETsusPeak.type = 'byEpoch';
         outputStruct.ONSETsusPeak.value = ones(1,L) * NaN;
+        
+        % Sam 7/31/17
+        outputStruct.charge_movingBarLeadingEdge.units = 'pC';
+        outputStruct.charge_movingBarLeadingEdge.type = 'byEpoch';
+        outputStruct.charge_movingBarLeadingEdge.value = ones(1,L) * NaN;
+        
+        % Sam 7/31/17
+        outputStruct.charge_movingBarTrailingEdge.units = 'pC';
+        outputStruct.charge_movingBarTrailingEdge.type = 'byEpoch';
+        outputStruct.charge_movingBarTrailingEdge.value = ones(1,L) * NaN;
+        
+       % Sam 8/1/17
+        outputStruct.peak_movingBarLeadingEdge.units = 'pC';
+        outputStruct.peak_movingBarLeadingEdge.type = 'byEpoch';
+        outputStruct.peak_movingBarLeadingEdge.value = ones(1,L) * NaN;
+        
+        % Sam 8/1/17
+        outputStruct.peak_movingBarTrailingEdge.units = 'pC';
+        outputStruct.peak_movingBarTrailingEdge.type = 'byEpoch';
+        outputStruct.peak_movingBarTrailingEdge.value = ones(1,L) * NaN;        
     end
     
     %stimToEnd
@@ -299,7 +323,7 @@ for i=1:L
         else %inward current larger
             outputStruct.ONSET_peak400ms.value(i) = min(stimData400);
         end
-        outputStruct.ONSET_charge400ms.value(i) = sum(stimData400) * 0.4 / sampleRate;
+%         outputStruct.ONSET_charge400ms.value(i) = sum(stimData400) * 0.4 / sampleRate;
     end
     
     %ONSET
@@ -309,7 +333,7 @@ for i=1:L
         else %inward current larger
             outputStruct.ONSET_peak1000ms.value(i) = min(stimData1000);
         end
-        outputStruct.ONSET_charge1000ms.value(i) = sum(stimData1000) * 1 / sampleRate;
+%         outputStruct.ONSET_charge1000ms.value(i) = sum(stimData1000) * 1 / sampleRate;
     end
     
     %ONSET
@@ -319,7 +343,7 @@ for i=1:L
         else %inward current larger
             outputStruct.ONSET_peak_next1000ms.value(i) = min(stimData_next1000);
         end
-        outputStruct.ONSET_charge_next1000ms.value(i) = sum(stimData_next1000) * 1 / sampleRate;
+%         outputStruct.ONSET_charge_next1000ms.value(i) = sum(stimData_next1000) * 1 / sampleRate;
     end
     
     %ONSET
@@ -329,7 +353,7 @@ for i=1:L
         else %inward current larger
             outputStruct.ONSET_peak400ms.value(i) = min(stimData400);
         end
-        outputStruct.ONSET_charge400ms.value(i) = sum(stimData400) * 0.4 / sampleRate;
+%         outputStruct.ONSET_charge400ms.value(i) = sum(stimData400) * 0.4 / sampleRate;
     end
     
     
@@ -349,8 +373,29 @@ for i=1:L
         else %inward current larger
             outputStruct.OFFSET_peak400ms.value(i) = min(postData400);
         end
-        outputStruct.OFFSET_charge400ms.value(i) = sum(postData400) * 0.4 / sampleRate;
+%         outputStruct.OFFSET_charge400ms.value(i) = sum(postData400) * 0.4 / sampleRate;
     end
+    
+    % moving bar leading and trailing edges
+    
+    outputStruct.charge_movingBarLeadingEdge.value(i) = sum(dataBeforeCenter) / sampleRate;
+    outputStruct.charge_movingBarTrailingEdge.value(i) = sum(dataAfterCenter) / sampleRate;
+    
+    if ~isempty(dataBeforeCenter)
+        if abs(max(dataBeforeCenter)) > abs(min(dataBeforeCenter)) %outward current larger
+            outputStruct.peak_movingBarLeadingEdge.value(i) = max(dataBeforeCenter);
+        else %inward current larger
+            outputStruct.peak_movingBarLeadingEdge.value(i) = min(dataBeforeCenter);
+        end
+    end    
+    
+    if ~isempty(dataAfterCenter)
+        if abs(max(dataAfterCenter)) > abs(min(dataAfterCenter)) %outward current larger
+            outputStruct.peak_movingBarTrailingEdge.value(i) = max(dataAfterCenter);
+        else %inward current larger
+            outputStruct.peak_movingBarTrailingEdge.value(i) = min(dataAfterCenter);
+        end
+    end        
     
 end
 

@@ -486,7 +486,7 @@ for i=1:L
         % Sam 4/7/17
         outputStruct.spikeCount_movingBarTrailingEdge.units = 'spikes';
         outputStruct.spikeCount_movingBarTrailingEdge.type = 'byEpoch';
-        outputStruct.spikeCount_movingBarTrailingEdge.value = zeros(1,L);        
+        outputStruct.spikeCount_movingBarTrailingEdge.value = zeros(1,L);
         
     end
     
@@ -557,7 +557,7 @@ for i=1:L
     tailSpikeCount = sum(spikeTimes >= intervalEnd + 0.1 & spikeTimes < intervalEnd+tailTime);
     
     % moving bar leading and trailing edges (approximately at this point)
-    centerTime = (intervalEnd - intervalStart)/2;
+    centerTime = (intervalEnd - intervalStart)/2 + .2;
     outputStruct.spikeCount_movingBarLeadingEdge.value(i) = sum(spikeTimes >= intervalStart & spikeTimes < centerTime);
     outputStruct.spikeCount_movingBarTrailingEdge.value(i) = sum(spikeTimes >= centerTime & spikeTimes < intervalEnd);
     
