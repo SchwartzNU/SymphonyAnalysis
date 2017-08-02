@@ -323,7 +323,7 @@ for i=1:L
         else %inward current larger
             outputStruct.ONSET_peak400ms.value(i) = min(stimData400);
         end
-%         outputStruct.ONSET_charge400ms.value(i) = sum(stimData400) * 0.4 / sampleRate;
+        outputStruct.ONSET_charge400ms.value(i) = sum(stimData400) * 0.4 / sampleRate;
     end
     
     %ONSET
@@ -333,7 +333,7 @@ for i=1:L
         else %inward current larger
             outputStruct.ONSET_peak1000ms.value(i) = min(stimData1000);
         end
-%         outputStruct.ONSET_charge1000ms.value(i) = sum(stimData1000) * 1 / sampleRate;
+        outputStruct.ONSET_charge1000ms.value(i) = sum(stimData1000) * 1 / sampleRate;
     end
     
     %ONSET
@@ -343,7 +343,7 @@ for i=1:L
         else %inward current larger
             outputStruct.ONSET_peak_next1000ms.value(i) = min(stimData_next1000);
         end
-%         outputStruct.ONSET_charge_next1000ms.value(i) = sum(stimData_next1000) * 1 / sampleRate;
+        outputStruct.ONSET_charge_next1000ms.value(i) = sum(stimData_next1000) * 1 / sampleRate;
     end
     
     %ONSET
@@ -353,7 +353,7 @@ for i=1:L
         else %inward current larger
             outputStruct.ONSET_peak400ms.value(i) = min(stimData400);
         end
-%         outputStruct.ONSET_charge400ms.value(i) = sum(stimData400) * 0.4 / sampleRate;
+        outputStruct.ONSET_charge400ms.value(i) = sum(stimData400) * 0.4 / sampleRate;
     end
     
     
@@ -373,20 +373,17 @@ for i=1:L
         else %inward current larger
             outputStruct.OFFSET_peak400ms.value(i) = min(postData400);
         end
-%         outputStruct.OFFSET_charge400ms.value(i) = sum(postData400) * 0.4 / sampleRate;
+        outputStruct.OFFSET_charge400ms.value(i) = sum(postData400) * 0.4 / sampleRate;
     end
     
-    % moving bar leading and trailing edges
-    
-    outputStruct.charge_movingBarLeadingEdge.value(i) = sum(dataBeforeCenter) / sampleRate;
-    outputStruct.charge_movingBarTrailingEdge.value(i) = sum(dataAfterCenter) / sampleRate;
-    
+    % moving bar leading and trailing edges  
     if ~isempty(dataBeforeCenter)
         if abs(max(dataBeforeCenter)) > abs(min(dataBeforeCenter)) %outward current larger
             outputStruct.peak_movingBarLeadingEdge.value(i) = max(dataBeforeCenter);
         else %inward current larger
             outputStruct.peak_movingBarLeadingEdge.value(i) = min(dataBeforeCenter);
         end
+        outputStruct.charge_movingBarLeadingEdge.value(i) = sum(dataBeforeCenter) * 1.0 / sampleRate;
     end    
     
     if ~isempty(dataAfterCenter)
@@ -395,6 +392,7 @@ for i=1:L
         else %inward current larger
             outputStruct.peak_movingBarTrailingEdge.value(i) = min(dataAfterCenter);
         end
+        outputStruct.charge_movingBarTrailingEdge.value(i) = sum(dataAfterCenter) * 1.0 / sampleRate;
     end        
     
 end
