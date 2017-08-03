@@ -1056,6 +1056,7 @@ classdef TreeBrowserGUI < handle
             selectedNodes = get(obj.guiTree, 'selectedNodes');
             curNodeIndex = get(selectedNodes(1), 'Value');
             nodeData = obj.analysisTree.get(curNodeIndex);
+            %mode = 'Whole cell';
             mode = getMode(obj.analysisTree, curNodeIndex);
             device = getDevice(obj.analysisTree, curNodeIndex);
             if strcmp(mode, 'Cell attached')
