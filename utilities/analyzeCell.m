@@ -42,7 +42,9 @@ for i=1:length(dataSetKeys)
         T = [];
         dataSetNameResult = strfind(curDataSet, analysisTable{1}{j});
         if dataSetNameResult == 1 % matches the name of an analysis on the first character
+            
             curAnalysisClass = analysisTable{2}{j};
+            fprintf('Running analysis %s on dataset %s\n', curAnalysisClass, curDataSet)
             usePrefs = false;
             if ~isempty(prefsMap)
                 [hasKey, keyName] = hasMatchingKey(prefsMap, curDataSet); %loading particular parameters from prefsMap
