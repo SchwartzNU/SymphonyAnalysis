@@ -178,7 +178,38 @@ classdef SpotsMultiSizeAnalysis < AnalysisTree
     
     methods(Static)
         
-        function plot0_spotSizeVsspikeCount_stimInterval(node, cellData)
+        function plot0_spotSizeVsspikeCounts_beforeAndAfterStim(node, cellData)
+            rootData = node.get(1);
+            xvals = rootData.spotSize;
+            yField = rootData.spikeCount_stimInterval;
+            if strcmp(yField.units, 's')
+                yvals = yField.median_c;
+            else
+                yvals = yField.mean_c;
+            end
+            errs = yField.SEM;
+            errorbar(xvals, yvals, errs, 'c');
+            [~,i] = max(yvals);
+            bestSize = xvals(i);
+            title(sprintf('Pref On Size: %g µm', bestSize));                
+            
+            yField = rootData.spikeCount_afterStim;
+            if strcmp(yField.units, 's')
+                yvals = yField.median_c;
+            else
+                yvals = yField.mean_c;
+            end
+            errs = yField.SEM;
+            hold on
+            errorbar(xvals, yvals, errs, 'k');            
+            hold off
+            
+            xlabel('spotSize');
+            ylabel(['spikeCount_stimIntervals (' yField.units ')']);
+        end
+        
+        
+        function plot1_spotSizeVsspikeCount_stimInterval(node, cellData)
             rootData = node.get(1);
             xvals = rootData.spotSize;
             yField = rootData.spikeCount_stimInterval;
@@ -196,7 +227,7 @@ classdef SpotsMultiSizeAnalysis < AnalysisTree
             title(sprintf('Pref Size: %g µm', bestSize));            
         end
         
-        function plot1_spotSizeVsspikeCount_afterStim(node, cellData)
+        function plot2_spotSizeVsspikeCount_afterStim(node, cellData)
             rootData = node.get(1);
             xvals = rootData.spotSize;
             yField = rootData.spikeCount_afterStim;
