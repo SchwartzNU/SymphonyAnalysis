@@ -1,5 +1,5 @@
 global ANALYSIS_FOLDER;
-cellNamesListLocation = [ANALYSIS_FOLDER 'Projects' filesep 'WFDS On and Off and Controls/cellNames.txt'];
+cellNamesListLocation = [ANALYSIS_FOLDER 'Projects' filesep 'F mini On and Off/cellNames.txt'];
 
 % set this to [] if no external table
 externalTableFilename = 'analysisTrees/automaticData/externalCellDataTable';
@@ -12,11 +12,13 @@ warning('off', 'MATLAB:table:RowsAddedExistingVars')
 
 %% load filter/analysis list
 filterFileNames = {'analysisTrees/automaticData/filter light step CA.mat';
-    'analysisTrees/automaticData/filter sms CA.mat';
+    'analysisTrees/automaticData/filter sms mean0 CA.mat';
+    'analysisTrees/automaticData/filter sms meanHigh CA.mat';
     'analysisTrees/automaticData/filter drifting texture CA.mat';
     'analysisTrees/automaticData/filter drifting gratings CA.mat';
     'analysisTrees/automaticData/filter sms WC -60.mat';
     'analysisTrees/automaticData/filter sms WC 20.mat';
+    'analysisTrees/automaticData/filter moving bar 2000 narrow CA.mat';
     'analysisTrees/automaticData/filter moving bar 1000 narrow CA.mat';
     'analysisTrees/automaticData/filter moving bar 500 narrow CA.mat';
     'analysisTrees/automaticData/filter moving bar 250 narrow CA.mat';
@@ -26,10 +28,11 @@ filterFileNames = {'analysisTrees/automaticData/filter light step CA.mat';
     };
 
 % 1 for single params (Light step on spike count mean), 0 for vectors (spike count by spot size), 2 for extracting params for a curve
-treeVariableModes = [1,0,1,1,0,0,1,1,1,2,2,0]; 
+treeVariableModes = [1,0,0,1,1,0,0,1,1,1,1,2,2,0]; 
 
-paramsByTree = {{'ONSETspikes_mean', 'OFFSETspikes_mean'};
-    {'ONSETspikes','OFFSETspikes','ONSETrespDuration'};
+paramsByTree = {{'spikeCount_stimInterval_mean', 'spikeCount_afterStim_mean'};
+    {'spikeCount_stimInterval','spikeCount_afterStim','ONSETrespDuration'};
+    {'spikeCount_stimInterval','spikeCount_afterStim','ONSETrespDuration'};
     {'spikeCount_stimAfter500ms_mean','spikeCount_stimAfter500ms_DSI', 'spikeCount_stimAfter500ms_DSang','spikeCount_stimAfter500ms_OSI', 'spikeCount_stimAfter500ms_OSang', 'spikeCount_stimAfter500ms_DVar'};
     {'F1amplitude_mean','F1amplitude_DSI','F1amplitude_DSang','F1amplitude_OSI','F1amplitude_OSang','F1amplitude_DVar'}
     {'stimInterval_charge','ONSET_peak'};
@@ -37,16 +40,19 @@ paramsByTree = {{'ONSETspikes_mean', 'OFFSETspikes_mean'};
     {'spikeCount_stimInterval_mean','spikeCount_stimInterval_DSI', 'spikeCount_stimInterval_DSang','spikeCount_stimInterval_OSI', 'spikeCount_stimInterval_OSang', 'spikeCount_stimInterval_DVar'};
     {'spikeCount_stimInterval_mean','spikeCount_stimInterval_DSI', 'spikeCount_stimInterval_DSang','spikeCount_stimInterval_OSI', 'spikeCount_stimInterval_OSang', 'spikeCount_stimInterval_DVar'};
     {'spikeCount_stimInterval_mean','spikeCount_stimInterval_DSI', 'spikeCount_stimInterval_DSang','spikeCount_stimInterval_OSI', 'spikeCount_stimInterval_OSang', 'spikeCount_stimInterval_DVar'};
+    {'spikeCount_stimInterval_mean','spikeCount_stimInterval_DSI', 'spikeCount_stimInterval_DSang','spikeCount_stimInterval_OSI', 'spikeCount_stimInterval_OSang', 'spikeCount_stimInterval_DVar'};
     {'params'};
     {'params'};
     {'ONSETspikes','ONSETlatency'};};
-paramsTypeNames = {'LS_sp','SMS_sp','DrifTex_sp','DrifGrat_sp','SMS_ex','SMS_in','MB1000','MB500','MB250','LS_params_ex','LS_params_in','Contrast_sp'};
+paramsTypeNames = {'LS_sp','SMS_mean0_sp','SMS_meanHigh_sp','DrifTex_sp','DrifGrat_sp','SMS_ex','SMS_in','MB2000','MB1000','MB500','MB250','LS_params_ex','LS_params_in','Contrast_sp'};
 paramsColumnNames = {{'LS_ON_sp','LS_OFF_sp'};
-    {'SMS_spotSize_sp','SMS_onSpikes','SMS_offSpikes','SMS_onDuration'};
+    {'SMS_mean0_spotSize_sp','SMS_mean0_onSpikes','SMS_mean0_offSpikes','SMS_mean0_onDuration'};
+    {'SMS_meanHigh_spotSize_sp','SMS_meanHigh_onSpikes','SMS_meanHigh_offSpikes','SMS_meanHigh_onDuration'};
     {'DrifTex_mean_sp','DrifTex_DSI_sp','DrifTex_DSang_sp','DrifTex_OSI_sp','DrifTex_OSang_sp','DrifTex_DVar_sp'};
     {'DrifGrat_mean_sp','DrifGrat_DSI_sp','DrifGrat_DSang_sp','DrifGrat_OSI_sp','DrifGrat_OSang_sp','DrifGrat_DVar_sp'};
     {'SMS_spotSize_ex','SMS_charge_ex','SMS_peak_ex'};
     {'SMS_spotSize_in','SMS_charge_in','SMS_peak_in'};
+    {'MB_2000_mean_sp','MB_2000_DSI_sp','MB_2000_DSang_sp','MB_2000_OSI_sp','MB_2000_OSang_sp','MB_2000_DVar_sp'};   
     {'MB_1000_mean_sp','MB_1000_DSI_sp','MB_1000_DSang_sp','MB_1000_OSI_sp','MB_1000_OSang_sp','MB_1000_DVar_sp'};
     {'MB_500_mean_sp','MB_500_DSI_sp','MB_500_DSang_sp','MB_500_OSI_sp','MB_500_OSang_sp','MB_500_DVar_sp'};
     {'MB_250_mean_sp','MB_250_DSI_sp','MB_250_DSang_sp','MB_250_OSI_sp','MB_250_OSang_sp','MB_250_DVar_sp'};
@@ -80,6 +86,8 @@ for fi = 1:length(filterFileNames)
                     value{z} = strtrim(token);
                     z=z+1;
                 end
+            elseif isletter(value_str(1)) % call it char if the first entry is a char
+                value = value_str;
             else
                 value = str2num(value_str); %#ok<ST2NM>
             end

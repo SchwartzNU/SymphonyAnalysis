@@ -10,12 +10,12 @@ colo2 = [.68, .1, .2];
 col_exc = [0 0 1];
 col_inh = [1 0 0];
 
-selectWfdsOn = cellTypeSelect('ON WFDS');
-selectWfdsOff = cellTypeSelect('OFF WFDS');
-selectFminiOff = cellTypeSelect('F-mini OFF');
-selectULD = cellTypeSelect('UltraLowDefinition');
-selectDS = cellTypeSelect('ON-OFF DS transient') | cellTypeSelect('ON DS sustained');
-selectControl = ~(selectWfdsOn | selectWfdsOff | selectULD | selectDS);
+selectWfdsOn = cellTypeSelect('ON WFDS') | cellTypeSelect('F-mini ON');
+selectWfdsOff = cellTypeSelect('OFF WFDS') | cellTypeSelect('F-mini OFF');
+% selectFminiOff = cellTypeSelect('F-mini OFF');
+% selectULD = cellTypeSelect('UltraLowDefinition');
+% selectDS = cellTypeSelect('ON-OFF DS transient') | cellTypeSelect('ON DS sustained');
+% selectControl = ~(selectWfdsOn | selectWfdsOff | selectDS);
 
 set(0,'DefaultAxesFontSize',14)
 
@@ -26,14 +26,14 @@ set(0,'DefaultAxesFontSize',14)
 % spots multiple sizes
 
 
-selects = {selectFminiOff, selectWfdsOff};
+selects = {selectWfdsOn, selectWfdsOff};
 
 figure(101);clf;
 
 for ci = 1:size(dtab,1)
     if selects{1}(ci)
         col = colo;
-        wid = 3;
+        wid = 1;
     elseif selects{2}(ci)
         col = colo2;
         wid = 1;
@@ -42,16 +42,17 @@ for ci = 1:size(dtab,1)
     end
     
     
-    spotSize = dtab{ci, 'SMS_spotSize_sp'}{1};
+    spotSize = dtab{ci, 'SMS_mean0_spotSize_sp'}{1};
     if ~isempty(spotSize)
-        spikes = dtab{ci, 'SMS_offSpikes'}{1};
+        spikes = dtab{ci, 'SMS_mean0_offSpikes'}{1};
         hold on
-        plot(spotSize, spikes/max(spikes), 'Color', col, 'LineWidth',wid);
+        plot(spotSize, spikes, 'Color', col, 'LineWidth',wid);
     end
 end
+ylim([0,40])
 xlabel('spot size um')
-ylabel('spike count off')
-title('sms off')
+ylabel('spike count on')
+title('sms on')
 hold off
 %%
 selects = {selectFminiOff, selectWfdsOff};
@@ -80,26 +81,28 @@ end
 
 
 
-%% light step
+%% light step spike count histogram
 
 figure(111)
 subplot(1,2,1)
-histogram(dtab{cellTypeSelect('ON WFDS'),'LS_ON_sp'},'Normalization','pdf')
+histogram(dtab{selectWfdsOn,'SMS_onSpikes_peakSpikes'},10,'Normalization','pdf')
 hold on
-histogram(dtab{selectWfdsOff,'LS_ON_sp'}, 'Normalization','pdf')
-histogram(dtab{selectControl,'LS_ON_sp'}, 'Normalization','pdf')
+histogram(dtab{selectWfdsOff,'SMS_onSpikes_peakSpikes'},10, 'Normalization','pdf')
+histogram(dtab{cellTypeSelect('OFF WFDS'),'SMS_onSpikes_peakSpikes'},10, 'Normalization','pdf')
+% histogram(dtab{selectControl,'LS_ON_sp'}, 'Normalization','pdf')
 hold off
-legend('ON','OFF','other');
-title('ls on spikes')
+legend('F mini ON','F mini OFF','WFDS OFF');
+title('sms peak on spikes')
 
 subplot(1,2,2)
-histogram(dtab{cellTypeSelect('ON WFDS'),'LS_OFF_sp'}, 'Normalization','pdf')
+histogram(dtab{selectWfdsOn,'SMS_offSpikes_peakSpikes'},10, 'Normalization','pdf')
 hold on
-histogram(dtab{selectWfdsOff,'LS_OFF_sp'}, 'Normalization','pdf')
-histogram(dtab{selectControl,'LS_OFF_sp'}, 'Normalization','pdf')
+histogram(dtab{selectWfdsOff,'SMS_offSpikes_peakSpikes'},10, 'Normalization','pdf')
+histogram(dtab{cellTypeSelect('OFF WFDS'),'SMS_offSpikes_peakSpikes'},10, 'Normalization','pdf')
+% histogram(dtab{selectControl,'LS_OFF_sp'}, 'Normalization','pdf')
 hold off
-legend('ON','OFF','other');
-title('ls off spikes')
+legend('F mini ON','F mini OFF','WFDS OFF');
+title('sms peak off spikes')
 %% plot the best DS
 
 
@@ -110,7 +113,7 @@ figure(121);clf;
 handles = tight_subplot(2, 2, .08, .05);
 
 axes(handles(1));
-histogram(dtab{cellTypeSelect('ON WFDS'),'best_DSI_sp'}, 12, 'Normalization','pdf')
+histogram(dtab{selectWfdsOn,'best_DSI_sp'}, 12, 'Normalization','pdf')
 hold on
 histogram(dtab{selectControl,'best_DSI_sp'}, 12, 'Normalization','pdf')
 histogram(dtab{selectDS,'best_DSI_sp'}, 12, 'Normalization','pdf')
@@ -123,7 +126,7 @@ boxplot(dtab{:,'best_DSI_sp'}, sets, 'Labels',{'control','DS','wfds on', 'wfds o
 title('best DSI')
 
 axes(handles(3));
-polarhistogram(deg2rad(dtab{cellTypeSelect('ON WFDS'),'best_DSang_sp'}), 12)
+polarhistogram(deg2rad(dtab{selectWfdsOn,'best_DSang_sp'}), 12)
 hold on
 polarhistogram(deg2rad(dtab{selectControl,'best_DSang_sp'}), 12)
 hold off
@@ -131,9 +134,9 @@ title('best DS angle')
 
 axes(handles(4));
 above = dtab{:, 'location_y'} > 0;
-polarhistogram(deg2rad(dtab{cellTypeSelect('ON WFDS') & above,'best_DSang_sp'}), 12)
+polarhistogram(deg2rad(dtab{selectWfdsOn & above,'best_DSang_sp'}), 12)
 hold on
-polarhistogram(deg2rad(dtab{cellTypeSelect('ON WFDS') & ~above,'best_DSang_sp'}), 12)
+polarhistogram(deg2rad(dtab{selectWfdsOn & ~above,'best_DSang_sp'}), 12)
 hold off
 title('WFDS vertical pos comparison')
 legend('above midline','below midline');
@@ -145,27 +148,27 @@ handles = tight_subplot(3, 2, .05, .05);
 
 
 axes(handles(1));
-histogram(dtab{cellTypeSelect('ON WFDS'),'MB_1000_DSI_sp'}, 12)
+histogram(dtab{selectWfdsOn,'MB_1000_DSI_sp'}, 12)
 title('MB 1000 DSI')
 
 axes(handles(2));
-polarhistogram(deg2rad(dtab{cellTypeSelect('ON WFDS'),'MB_1000_DSang_sp'}), 12)
+polarhistogram(deg2rad(dtab{selectWfdsOn,'MB_1000_DSang_sp'}), 12)
 title('MB 1000 DS angle')
 
 axes(handles(3));
-histogram(dtab{cellTypeSelect('ON WFDS'),'MB_500_DSI_sp'}, 12)
+histogram(dtab{selectWfdsOn,'MB_500_DSI_sp'}, 12)
 title('MB 500 DSI')
 
 axes(handles(4));
-polarhistogram(deg2rad(dtab{cellTypeSelect('ON WFDS'),'MB_500_DSang_sp'}), 12)
+polarhistogram(deg2rad(dtab{selectWfdsOn,'MB_500_DSang_sp'}), 12)
 title('MB 500 DS angle')
 
 axes(handles(5));
-histogram(dtab{cellTypeSelect('ON WFDS'),'MB_250_DSI_sp'}, 12)
+histogram(dtab{selectWfdsOn,'MB_250_DSI_sp'}, 12)
 title('MB 250 DSI')
 
 axes(handles(6));
-polarhistogram(deg2rad(dtab{cellTypeSelect('ON WFDS'),'MB_250_DSang_sp'}), 12)
+polarhistogram(deg2rad(dtab{selectWfdsOn,'MB_250_DSang_sp'}), 12)
 title('MB 250 DS angle')
 %% DSI over speed
 
@@ -174,18 +177,23 @@ handles = tight_subplot(1, 2, .05, .1, .1);
 
 axes(handles(1));
 for i = 1:numCells
-    plot([250, 500, 1000],dtab{i,{'MB_250_DSI_sp', 'MB_500_DSI_sp', 'MB_1000_DSI_sp'}})
+    if sum(~isnan(dtab{i,{'MB_250_mean_sp', 'MB_500_mean_sp', 'MB_1000_mean_sp','MB_2000_mean_sp'}}), 2) < 3
+        continue
+    end
+    plot([250, 500, 1000, 2000],dtab{i,{'MB_250_mean_sp', 'MB_500_mean_sp', 'MB_1000_mean_sp', 'MB_2000_mean_sp'}}, 'o-')
     hold on
 end
+% legend(cellNames(all(~isnan(dtab{:,{'MB_250_mean_sp', 'MB_500_mean_sp', 'MB_1000_mean_sp', 'MB_2000_mean_sp'}}), 2)))
 xlabel('speed')
-ylabel('DSI')
+ylabel('moving bar mean spike count')
+title('F mini On')
 hold off
 
 axes(handles(2));
-plot(dtab{cellTypeSelect('ON WFDS'),'MB_1000_DSI_sp'} .* exp(sqrt(-1) * deg2rad(dtab{cellTypeSelect('ON WFDS'),'MB_1000_DSang_sp'})), 'o')
+plot(dtab{selectWfdsOn,'MB_1000_DSI_sp'} .* exp(sqrt(-1) * deg2rad(dtab{selectWfdsOn,'MB_1000_DSang_sp'})), 'o')
 hold on
-plot(dtab{cellTypeSelect('ON WFDS'),'MB_500_DSI_sp'} .* exp(sqrt(-1) * deg2rad(dtab{cellTypeSelect('ON WFDS'),'MB_500_DSang_sp'})), 'o')
-plot(dtab{cellTypeSelect('ON WFDS'),'MB_250_DSI_sp'} .* exp(sqrt(-1) * deg2rad(dtab{cellTypeSelect('ON WFDS'),'MB_250_DSang_sp'})), 'o')
+plot(dtab{selectWfdsOn,'MB_500_DSI_sp'} .* exp(sqrt(-1) * deg2rad(dtab{selectWfdsOn,'MB_500_DSang_sp'})), 'o')
+plot(dtab{selectWfdsOn,'MB_250_DSI_sp'} .* exp(sqrt(-1) * deg2rad(dtab{selectWfdsOn,'MB_250_DSang_sp'})), 'o')
 title('DS (index and direction)')
 legend('1000','500','250')
 
@@ -210,9 +218,9 @@ autocenterOffsetDirections = angle(dtab.spatial_exin_offset);
 autocenterOffsetDistance = abs(dtab.spatial_exin_offset);
 
 axes(handles(1));
-plot(autocenterOffsetDistance(cellTypeSelect('ON WFDS')) .* exp(sqrt(-1) * autocenterOffsetDirections(cellTypeSelect('ON WFDS'))), 'ob')
+plot(autocenterOffsetDistance(selectWfdsOn) .* exp(sqrt(-1) * autocenterOffsetDirections(selectWfdsOn)), 'ob')
 hold on
-plot(autocenterOffsetDistance(~cellTypeSelect('ON WFDS')) .* exp(sqrt(-1) * autocenterOffsetDirections(~cellTypeSelect('ON WFDS'))), 'or')
+plot(autocenterOffsetDistance(~selectWfdsOn) .* exp(sqrt(-1) * autocenterOffsetDirections(~selectWfdsOn)), 'or')
 hold off
 line([-10,10],[0,0])
 line([0,0],[-10,10])
@@ -221,9 +229,9 @@ title('spatial offset Ex from In')
 legend('WFDS','Other')
 
 axes(handles(2));
-plot(autocenterOffsetDistanceNormalized(cellTypeSelect('ON WFDS')) .* exp(sqrt(-1) * autocenterOffsetDirections(cellTypeSelect('ON WFDS'))), 'ob')
+plot(autocenterOffsetDistanceNormalized(selectWfdsOn) .* exp(sqrt(-1) * autocenterOffsetDirections(selectWfdsOn)), 'ob')
 hold on
-plot(autocenterOffsetDistanceNormalized(~cellTypeSelect('ON WFDS')) .* exp(sqrt(-1) * autocenterOffsetDirections(~cellTypeSelect('ON WFDS'))), 'or')
+plot(autocenterOffsetDistanceNormalized(~selectWfdsOn) .* exp(sqrt(-1) * autocenterOffsetDirections(~selectWfdsOn)), 'or')
 hold off
 line([-1,1],[0,0])
 line([0,0],[-1,1])
@@ -233,7 +241,7 @@ legend('WFDS','Other')
 
 
 axes(handles(3));
-boxplot(autocenterOffsetDistance, cellTypeSelect('ON WFDS'), 'Labels',{'other','wfds'})
+boxplot(autocenterOffsetDistance, selectWfdsOn, 'Labels',{'other','wfds'})
 % histogram(autocenterOffsetDistance(selectWfds), 10)
 % hold on
 % histogram(autocenterOffsetDistance(~selectWfds), 10)
@@ -243,54 +251,63 @@ title('magnitude of spatial offset')
 % legend('WFDS','Other')
 
 axes(handles(4));
-boxplot(autocenterOffsetDistanceNormalized, cellTypeSelect('ON WFDS'), 'Labels',{'other','wfds'})
+boxplot(autocenterOffsetDistanceNormalized, selectWfdsOn, 'Labels',{'other','wfds'})
 title('magnitude of spatial offset (norm)')
 
 
 axes(handles(5));
-polarhistogram(autocenterOffsetDirections(cellTypeSelect('ON WFDS')), 10)
+polarhistogram(autocenterOffsetDirections(selectWfdsOn), 10)
 hold on
-polarhistogram(autocenterOffsetDirections(~cellTypeSelect('ON WFDS')), 10)
+% polarhistogram(autocenterOffsetDirections(~selectWfdsOn), 10)
 hold off
 title('angle of spatial offset')
 
 axes(handles(6));
 spatialToTextureDiff = dtab.best_DSang_sp - rad2deg(autocenterOffsetDirections);
-polarhistogram(deg2rad(spatialToTextureDiff(cellTypeSelect('ON WFDS'))), 10)
+polarhistogram(deg2rad(spatialToTextureDiff(selectWfdsOn)), 10)
 hold on
-polarhistogram(deg2rad(spatialToTextureDiff(~cellTypeSelect('ON WFDS'))), 10)
+polarhistogram(deg2rad(spatialToTextureDiff(~selectWfdsOn)), 10)
 title('difference between tex angle and offset angle')
 
-spatialToImageDiff = mod(autocenterOffsetDirections(cellTypeSelect('ON WFDS')) - dtab.imageAngle(cellTypeSelect('ON WFDS')), 360);
+spatialToImageDiff = mod(autocenterOffsetDirections(selectWfdsOn) - dtab.imageAngle(selectWfdsOn), 360);
 axes(handles(7));
 polarhistogram(deg2rad(spatialToImageDiff), 10)
 title('difference between image angle and offset angle')
 
 
-axes(handles(8));
-plot(autocenterOffsetDistanceNormalized(cellTypeSelect('ON WFDS')), dtab{cellTypeSelect('ON WFDS'),'best_DSI_sp'}, 'o')
-hold on
-plot(autocenterOffsetDistanceNormalized(~cellTypeSelect('ON WFDS')), dtab{~cellTypeSelect('ON WFDS'),'best_DSI_sp'}, 'o')
-hold off
-title('Offset vs DSI')
-xlabel('offset distance normalized')
-ylabel('DSI')
-line([0,1],[0,0])
-line([0,0],[0,.6])
+% axes(handles(8));
+% plot(autocenterOffsetDistanceNormalized(selectWfdsOn), dtab{selectWfdsOn,'best_DSI_sp'}, 'o')
+% hold on
+% plot(autocenterOffsetDistanceNormalized(~selectWfdsOn), dtab{~selectWfdsOn,'best_DSI_sp'}, 'o')
+% hold off
+% title('Offset vs DSI')
+% xlabel('offset distance normalized')
+% ylabel('DSI')
+% line([0,1],[0,0])
+% line([0,0],[0,.6])
 %% Cell location analysis
 
 figure(141);clf
 ha = tight_subplot(2,3);
 
 axes(ha(1))
-plot(dtab{cellTypeSelect('ON WFDS'),'location_x'}, dtab{cellTypeSelect('ON WFDS'),'location_y'},'o')
+plot(dtab{selectWfdsOn,'location_x'}, dtab{selectWfdsOn,'location_y'},'o')
 line([-100,100],[0,0])
 line([0,0],[-100,100])
 axis(1.2*[-2000,2000, -2000,2000])
 axis square
 title('all wfds locations')
 
-map_data = dtab{cellTypeSelect('ON WFDS'), {'location_x','location_y','best_DSang_sp','best_DSI_sp','eye','imageAngle'}};
+select = selectWfdsOn;
+
+map_data = dtab{select, {'location_x','location_y','best_DSang_sp','best_DSI_sp','eye','imageAngle'}};
+outstruct = struct();
+outstruct.location_x = dtab{select, {'location_x'}};
+outstruct.location_y = dtab{select, {'location_y'}};
+outstruct.best_DSang_sp = dtab{select, {'best_DSang_sp'}};
+outstruct.best_DSI_sp = dtab{select, {'best_DSI_sp'}};
+outstruct.eye = dtab{select, {'eye'}};
+outstruct.imageAngle = dtab{select, {'imageAngle'}};
 
 % map_data: X, Y, angle, DSI, right=1
 map_data(map_data(:,1) == 0 & map_data(:,2) == 0, :) = [];
@@ -303,7 +320,7 @@ left = map_data(:,5) == -1;
 right = map_data(:,5) == 1;
 u = mag .* cosd(ang);
 v = mag .* sind(ang);
-cellTypeSelect('ON WFDS')
+
 % Together
 axes(ha(2));
 x_eyesTogether = x;
@@ -357,9 +374,9 @@ axis(1.2*[-2000,2000, -2000,2000])
 axis square
 
 % Autocenter offset angle
-ang = rad2deg(autocenterOffsetDirections(cellTypeSelect('ON WFDS')));
-u = autocenterOffsetDistance(cellTypeSelect('ON WFDS')) .* cosd(ang);
-v = autocenterOffsetDistance(cellTypeSelect('ON WFDS')) .* sind(ang);
+ang = rad2deg(autocenterOffsetDirections(select));
+u = autocenterOffsetDistance(select) .* cosd(ang);
+v = autocenterOffsetDistance(select) .* sind(ang);
 axes(ha(6));
 quiver(x,y,u,v,2)
 title('autocenter offset angles')
@@ -385,16 +402,21 @@ tailSpikes = [];
 spikesOverBaselineByVar = {};
 outstruct = struct();
 
-varsToMean = {'SMS_onSpikes','SMS_offSpikes','SMS_charge_ex','SMS_peak_ex','SMS_charge_in','SMS_peak_in'};
-ylabels = {'ON spikes','OFF spikes','Ex Charge','Ex Peak','In Charge','In Peak'};
-baselinesToMean = {'SMS_spotSize_sp','SMS_spotSize_sp','SMS_spotSize_ex','SMS_spotSize_ex','SMS_spotSize_in','SMS_spotSize_in'};
-cellTypeSelects = {cellTypeSelect('UltraLowDefinition')};
+% varsToMean = {'SMS_charge_ex','SMS_peak_ex','SMS_charge_in','SMS_peak_in'};
+% ylabels = {'Ex Charge','Ex Peak','In Charge','In Peak'};
+% baselinesToMean = {'SMS_spotSize_ex','SMS_spotSize_ex','SMS_spotSize_in','SMS_spotSize_in'};
+
+varsToMean = {'SMS_mean0_onSpikes','SMS_mean0_offSpikes', 'SMS_meanHigh_onSpikes','SMS_meanHigh_offSpikes'};
+ylabels = {'ON spikes','OFF spikes','OFF spikes','ON spikes'};
+baselinesToMean = {'SMS_mean0_spotSize_sp','SMS_mean0_spotSize_sp', 'SMS_meanHigh_spotSize_sp','SMS_meanHigh_spotSize_sp'};
+
+cellTypeSelects = {selectWfdsOff};
 cellTypeNames = {'WFDS ON','WFDS OFF'};
 
 handles = tight_subplot(length(varsToMean), length(cellTypeSelects), [0.01, .1], 0.1, .1);
 % tight_subplot(Nh, Nw, gap, marg_h, marg_w)
 
-mean_spotSize = linspace(0,1199);
+mean_spotSize = linspace(0,1199, 100);
 
 for vari = 1:length(varsToMean)
     cellCount = 0;
@@ -587,7 +609,7 @@ end
 
 clf
 h = tight_subplot(1,2, .1, .1, .05);
-selectWfdsOn = cellTypeSelect('ON WFDS');
+selectWfdsOn = selectWfdsOn;
 
 for ci = 1:size(dtab,1)
    
@@ -644,7 +666,7 @@ for vari = 1:length(varsToMean)
     for cellTypeIndex = 1:2
         spikesOverSpotSize = [];
         
-        cellTypeSelects = {cellTypeSelect('ON WFDS'), selectControl};
+        cellTypeSelects = {selectWfdsOn, selectControl};
         
         for ci = 1:numCells
             sel = cellTypeSelects{cellTypeIndex};
@@ -722,7 +744,7 @@ for i = 1:numCells
     if selectControl(i)
         continue
     end
-    selectWfdsOn = cellTypeSelect('ON WFDS');
+    selectWfdsOn = selectWfdsOn;
     if selectWfdsOn(i)
         c = colo;
         x = 0;
@@ -739,7 +761,7 @@ ylim([0,.7])
 xlabel('Movement speed (µm/sec)')
 ylabel('DSI')
 
-plot([250, 500, 1000], nanmean(dtab{cellTypeSelect('ON WFDS'),{'MB_250_DSI_sp', 'MB_500_DSI_sp', 'MB_1000_DSI_sp'}}),'.-r','LineWidth',2,'MarkerSize',40);
+plot([250, 500, 1000], nanmean(dtab{selectWfdsOn,{'MB_250_DSI_sp', 'MB_500_DSI_sp', 'MB_1000_DSI_sp'}}),'.-r','LineWidth',2,'MarkerSize',40);
 
 % DS cells controls:
 plot([250, 500, 1000], nanmean(dtab{selectOtherDS,{'MB_250_DSI_sp', 'MB_500_DSI_sp', 'MB_1000_DSI_sp'}}),'.-g','LineWidth',2,'MarkerSize',40);
@@ -749,7 +771,7 @@ plot([250, 500, 1000], nanmean(dtab{selectOtherDS,{'MB_250_DSI_sp', 'MB_500_DSI_
 % title('Moving Bar DSI Speed Dependence')
 
 axes(handles(2))
-d1 = dtab{cellTypeSelect('ON WFDS'), 'DrifTex_DSI_sp'};
+d1 = dtab{selectWfdsOn, 'DrifTex_DSI_sp'};
 x = 0*ones(length(d1), 1);
 plot(x,d1, '+', 'Color', colo, 'MarkerSize',10)
 hold on
@@ -759,7 +781,7 @@ hold on
 ylim([0,.7])
 yticks([])
 
-d3 = dtab{cellTypeSelect('ON WFDS'), 'DrifGrat_DSI_sp'};
+d3 = dtab{selectWfdsOn, 'DrifGrat_DSI_sp'};
 x = 1*ones(length(d3), 1);
 plot(x,d3, '+', 'Color', colo, 'MarkerSize',10)
 
@@ -818,7 +840,7 @@ for i = 1:numCells
     if selectControl(i)
         continue
     end
-    selectWfdsOn = cellTypeSelect('ON WFDS');
+    selectWfdsOn = selectWfdsOn;
     if selectWfdsOn(i)
         c = colo;
         x = 0;
@@ -835,13 +857,13 @@ ylim([0,1])
 xlabel('Movement speed (µm/sec)')
 ylabel('DVar')
 
-plot([250, 500, 1000], nanmean(dtab{cellTypeSelect('ON WFDS'),{'MB_250_DVar_sp', 'MB_500_DVar_sp', 'MB_1000_DVar_sp'}}),'o-r','LineWidth',2);
+plot([250, 500, 1000], nanmean(dtab{selectWfdsOn,{'MB_250_DVar_sp', 'MB_500_DVar_sp', 'MB_1000_DVar_sp'}}),'o-r','LineWidth',2);
 plot([250, 500, 1000]+50, nanmean(dtab{selectWfdsOff,{'MB_250_DVar_sp', 'MB_500_DVar_sp', 'MB_1000_DVar_sp'}}),'o-r','LineWidth',2);
 
 % title('Moving Bar DVar Speed Dependence')
 
 axes(handles(2))
-d1 = dtab{cellTypeSelect('ON WFDS'), 'DrifTex_DVar_sp'};
+d1 = dtab{selectWfdsOn, 'DrifTex_DVar_sp'};
 x = 0*ones(length(d1), 1);
 plot(x,d1, '+', 'Color', colo, 'MarkerSize',10)
 hold on
@@ -851,7 +873,7 @@ plot(x,d2, '+', 'Color', colo2, 'MarkerSize',10)
 ylim([0,.7])
 yticks([])
 
-d3 = dtab{cellTypeSelect('ON WFDS'), 'DrifGrat_DVar_sp'};
+d3 = dtab{selectWfdsOn, 'DrifGrat_DVar_sp'};
 x = 1*ones(length(d3), 1);
 plot(x,d3, '+', 'Color', colo, 'MarkerSize',10)
 
@@ -1008,8 +1030,8 @@ ha = tight_subplot(1,3, .05, .05, .05);
 
 
 
-map_data = dtab{cellTypeSelect('ON WFDS'), {'location_x','location_y','best_DSang_sp','best_DSI_sp','eye','imageAngle'}};
-% map_data = dtab{cellTypeSelect('ON WFDS'), {'location_x','location_y','DrifTex_DSang_sp','DrifTex_DSI_sp','eye','imageAngle'}};
+map_data = dtab{selectWfdsOn, {'location_x','location_y','best_DSang_sp','best_DSI_sp','eye','imageAngle'}};
+% map_data = dtab{selectWfdsOn, {'location_x','location_y','DrifTex_DSang_sp','DrifTex_DSI_sp','eye','imageAngle'}};
 
 
 % map_data: X, Y, angle, DSI, right=1
@@ -1126,7 +1148,7 @@ autocenterOffsetDirections = angle(diffX + sqrt(-1) * diffY);
 dtab.spatial_exin_offset = autocenterOffsetDistance .* exp(sqrt(-1) * autocenterOffsetDirections);
 
 axes(handles(1));
-plot(autocenterOffsetDistance(cellTypeSelect('ON WFDS')) .* exp(sqrt(-1) * autocenterOffsetDirections(cellTypeSelect('ON WFDS'))), '+b')
+plot(autocenterOffsetDistance(selectWfdsOn) .* exp(sqrt(-1) * autocenterOffsetDirections(selectWfdsOn)), '+b')
 hold on
 plot(autocenterOffsetDistance(selectControl) .* exp(sqrt(-1) * autocenterOffsetDirections(selectControl)), 'or')
 hold off
@@ -1140,7 +1162,7 @@ title('spatial offset In from Ex')
 legend('FminiON','Other')
 
 axes(handles(2));
-plot(autocenterOffsetDistanceNormalized(cellTypeSelect('ON WFDS')) .* exp(sqrt(-1) * autocenterOffsetDirections(cellTypeSelect('ON WFDS'))), '+b')
+plot(autocenterOffsetDistanceNormalized(selectWfdsOn) .* exp(sqrt(-1) * autocenterOffsetDirections(selectWfdsOn)), '+b')
 hold on
 plot(autocenterOffsetDistanceNormalized(selectControl) .* exp(sqrt(-1) * autocenterOffsetDirections(selectControl)), 'or')
 hold off
@@ -1157,7 +1179,7 @@ legend('FminiON','Other')
 
 axes(handles(3));
 % boxplot(autocenterOffsetDistance, selectWfds, 'Labels',{'Control','FminiON'})
-distributionPlot(autocenterOffsetDistance, 'groups', cellTypeSelect('ON WFDS'))
+distributionPlot(autocenterOffsetDistance, 'groups', selectWfdsOn)
 % hold on
 % histogram(autocenterOffsetDistance(~selectWfds), 10)
 % hold off
@@ -1167,7 +1189,7 @@ title('magnitude of spatial offset')
 % legend('WFDS','Other')
 
 axes(handles(4));
-distributionPlot(autocenterOffsetDistanceNormalized, 'groups',cellTypeSelect('ON WFDS'))
+distributionPlot(autocenterOffsetDistanceNormalized, 'groups',selectWfdsOn)
 title('magnitude of spatial offset (norm)')
 %% 
 % 
@@ -1175,7 +1197,7 @@ title('magnitude of spatial offset (norm)')
 figure(135);clf;
 
 % axes(handles(5));
-polarhistogram(autocenterOffsetDirections(cellTypeSelect('ON WFDS')), linspace(0, 2*pi, 13), 'Normalization','pdf')
+polarhistogram(autocenterOffsetDirections(selectWfdsOn), linspace(0, 2*pi, 13), 'Normalization','pdf')
 thetaticklabels([])
 % hold on
 % polarhistogram(autocenterOffsetDirections(~selectWfds), 10)
@@ -1192,7 +1214,7 @@ outputstruct.angleBins = angleBins;
 outputstruct.binCenters = angleBins(1:12) + pi/24;
 
 goodDSI = dtab.DrifGrat_DSI_sp > 0.1;
-sel = cellTypeSelect('ON WFDS') & goodDSI;
+sel = selectWfdsOn & goodDSI;
 
 axes(handles(1));
 spatialToTextureDiff = dtab.DrifGrat_DSang_sp - rad2deg(autocenterOffsetDirections);
@@ -1275,7 +1297,7 @@ for exin = 1:2
     for parami = 1:size(paramMatrix, 2)
         
         axes(h(parami));
-        histogram(paramMatrix(cellTypeSelect('ON WFDS'),exin,parami),8)
+        histogram(paramMatrix(selectWfdsOn,exin,parami),8)
         hold on
         histogram(paramMatrix(selectControl,exin,parami),8)
         title(paramNames{parami})
@@ -1288,18 +1310,18 @@ end
 figure;
 delayToPeak = paramMatrix(:,:,2) + paramMatrix(:,:,3);
 delayDifference = diff(delayToPeak')';
-histogram(delayToPeak(cellTypeSelect('ON WFDS'),1)-delayToPeak(cellTypeSelect('ON WFDS'),2), 10)
+histogram(delayToPeak(selectWfdsOn,1)-delayToPeak(selectWfdsOn,2), 10)
 hold on
 histogram(delayToPeak(selectControl,1)-delayToPeak(selectControl,2), 20)
 
 figure
-histogram(delayDifference(cellTypeSelect('ON WFDS')),10)
+histogram(delayDifference(selectWfdsOn),10)
 hold on
 histogram(delayDifference(selectControl),20)
 
 figure
 hold on
-plot(delayDifference(cellTypeSelect('ON WFDS')), dtab{cellTypeSelect('ON WFDS'),'DrifTex_DSI_sp'}, 'o')
+plot(delayDifference(selectWfdsOn), dtab{selectWfdsOn,'DrifTex_DSI_sp'}, 'o')
 plot(delayDifference(selectControl), dtab{selectControl,'DrifTex_DSI_sp'}, 'o')
 xlabel('delay Ex to In (sec)')
 ylabel('Texture DSI')
@@ -1312,7 +1334,7 @@ h = tight_subplot(length(movingDataSets),1,.1, .1, .2);
 
 for mi = 1:length(movingDataSets)
     axes(h(mi))
-    scatter(abs(dtab{cellTypeSelect('ON WFDS'),'spatial_exin_offset'}), delayDifference(cellTypeSelect('ON WFDS')), 3000*dtab{cellTypeSelect('ON WFDS'),movingDataSets{mi}}.^2)
+    scatter(abs(dtab{selectWfdsOn,'spatial_exin_offset'}), delayDifference(selectWfdsOn), 3000*dtab{selectWfdsOn,movingDataSets{mi}}.^2)
     hold on
     scatter(abs(dtab{selectControl,'spatial_exin_offset'}), delayDifference(selectControl), 3000*dtab{selectControl,movingDataSets{mi}}.^2)
     
@@ -1333,7 +1355,7 @@ names = cellNames(sel)
 
 %% Plot RF offset ovals with angle arrows
 figure(200);clf;
-sel = ~isnan(dtab.spatial_ex_amplitude) & cellTypeSelect('ON WFDS');
+sel = ~isnan(dtab.spatial_ex_amplitude) & selectWfdsOn;
 h = tight_subplot(4,4);
 
 cis = find(sel);
@@ -1374,7 +1396,7 @@ disp('Ovals: ex blue, in red, Arrows: image red, MB500 blue, MB1000 green, textu
 
 %%
 figure(201)
-boxplot(autocenterOffsetDistanceNormalized, cellTypeSelect('ON WFDS'), 'Labels',{'control','F-mini ON'})
+boxplot(autocenterOffsetDistanceNormalized, selectWfdsOn, 'Labels',{'control','F-mini ON'})
 ylabel('Distance (norm)')
 % title('magnitude of spatial offset (norm)')
 
@@ -1385,8 +1407,8 @@ clf;
 yvar = 'best_DSI_sp';
 xvar = 'SMS_onSpikes_peakSpikes';
 
-x = dtab{cellTypeSelect('ON WFDS'),xvar};
-y = dtab{cellTypeSelect('ON WFDS'),yvar};
+x = dtab{selectWfdsOn,xvar};
+y = dtab{selectWfdsOn,yvar};
 valid = ~(isnan(x)|isnan(y));
 x = x(valid);
 y = y(valid);
@@ -1412,11 +1434,11 @@ ylabel(yvar, 'Interpreter', 'none')
 var = dtab{:, 'best_DSI_sp'};
 
 figure(205)
-histogram(var(cellTypeSelect('ON WFDS')), 10)
-% threshold = prctile(var(cellTypeSelect('ON WFDS')), 90)
+histogram(var(selectWfdsOn), 10)
+% threshold = prctile(var(selectWfdsOn), 90)
 threshold = .6
 
-cellNames(var >= threshold & cellTypeSelect('ON WFDS')) % | var > prctile(var, 90)
+cellNames(var >= threshold & selectWfdsOn) % | var > prctile(var, 90)
 
 %% Is DSI related to position relative to OTZ?
 

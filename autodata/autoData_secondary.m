@@ -3,10 +3,10 @@
 
 %% SMS peak and tail
 for ci = 1:size(dtab,1)
-    spotSize = dtab{ci, 'SMS_spotSize_sp'}{1};
+    spotSize = dtab{ci, 'SMS_mean0_spotSize_sp'}{1};
     if ~isempty(spotSize)
-        onspikes = dtab{ci, 'SMS_onSpikes'}{1};
-        offspikes = dtab{ci, 'SMS_offSpikes'}{1};
+        onspikes = dtab{ci, 'SMS_mean0_onSpikes'}{1};
+        offspikes = dtab{ci, 'SMS_mean0_offSpikes'}{1};
         [m, mi] = max(onspikes);
         peakValueOn(ci) = m;
         peakSizeOn(ci) = spotSize(mi);
@@ -41,8 +41,10 @@ dtabColumns{'SMS_offSpikes_tailSpikes', 'type'} = {'single'};
 
 %% Best DS
 
-src = {'DrifTex_DSI_sp','DrifGrat_DSI_sp','MB_1000_DSI_sp','MB_500_DSI_sp','MB_250_DSI_sp'};
-ang = {'DrifTex_DSang_sp','DrifGrat_DSang_sp','MB_1000_DSang_sp','MB_500_DSang_sp','MB_250_DSang_sp'};
+% src = {'DrifTex_DSI_sp','DrifGrat_DSI_sp','MB_1000_DSI_sp','MB_500_DSI_sp','MB_250_DSI_sp'};
+% ang = {'DrifTex_DSang_sp','DrifGrat_DSang_sp','MB_1000_DSang_sp','MB_500_DSang_sp','MB_250_DSang_sp'};
+src = {'MB_2000_DSI_sp','MB_1000_DSI_sp','MB_500_DSI_sp','MB_250_DSI_sp'};
+ang = {'MB_2000_DSang_sp','MB_1000_DSang_sp','MB_500_DSang_sp','MB_250_DSang_sp'};
 for ci = 1:numCells
     dsis = dtab{ci, src};
     angs = dtab{ci, ang};
