@@ -189,7 +189,7 @@ classdef MovingBarAnalysis < AnalysisTree
             xvals = rootData.barAngle;
             yField = rootData.charge_movingBarLeadingEdge;
 
-            yvals = yField.mean_c
+            yvals = yField.mean_c;
             polarerror(xvals*pi/180, yvals, zeros(1,length(xvals)));
             
             hold on;
@@ -206,7 +206,7 @@ classdef MovingBarAnalysis < AnalysisTree
             xvals = rootData.barAngle;
             yField = rootData.charge_movingBarTrailingEdge;
 
-            yvals = yField.mean_c
+            yvals = yField.mean_c;
             polarerror(xvals*pi/180, yvals, zeros(1,length(xvals)));
             
             hold on;
@@ -222,7 +222,7 @@ classdef MovingBarAnalysis < AnalysisTree
             xvals = rootData.barAngle;
             yField = rootData.peak_movingBarLeadingEdge;
 
-            yvals = yField.mean_c
+            yvals = yField.mean_c;
             polarerror(xvals*pi/180, yvals, zeros(1,length(xvals)));
             
             hold on;
@@ -238,7 +238,7 @@ classdef MovingBarAnalysis < AnalysisTree
             xvals = rootData.barAngle;
             yField = rootData.peak_movingBarTrailingEdge;
 
-            yvals = yField.mean_c
+            yvals = yField.mean_c;
             polarerror(xvals*pi/180, yvals, zeros(1,length(xvals)));
             
             hold on;
