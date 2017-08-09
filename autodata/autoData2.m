@@ -64,9 +64,16 @@ for ci = 1:numTableCells
                 g = '';
             end
             trow{1, 'Genotype'} = {g};
+
+            % modify cell data if needed
+%             if strcmp(typ, 'F-mini OFF')
+%                 cellData.tags('Genotype') = 'PV';
+%                 cellData.tags.values
+%                 saveAndSyncCellData(cellData);
+%             end
         end
 
-    
+        
         % loop through filters
         
         for ai = analysisIndices
@@ -231,6 +238,9 @@ for i = 1:length(cellTypes)
 end
 numCells = size(dtab, 1);
 cellNames = dtab.Properties.RowNames;
+
+disp('Running secondary analysis')
+autoData_secondary
 
 if ~isempty(outputSaveFilename)
     save(outputSaveFilename, 'dtab','dtabColumns','cellNames','numCells','cellTypeSelect');
