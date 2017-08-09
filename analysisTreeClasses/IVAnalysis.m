@@ -73,7 +73,7 @@ classdef IVAnalysis < AnalysisTree
             rootData = node.get(1);
             chInd = node.getchildren(1);
             L = length(chInd);
-            ax = axes;
+            ax = gca;
             for i=1:L
                 hold(ax, 'on');
                 epochInd = node.get(chInd(i)).epochID;
