@@ -3,14 +3,14 @@
 filtParams = cell(2);
 
 % ON EX
-% filtParams{1,1} = [-1, .065, .016, 0, .03]; % 060216Ac2
-filtParams{1,1} = [-1, .175, .05, 0, .08, 0];% 010716Ac1
+filtParams{1,1} = [-1, .065, .016, 0, .03, 0]; % 060216Ac2
+% filtParams{1,1} = [-1, .175, .05, 0, .08, 0];% 010716Ac1
 
 % paramValues(paramSetIndex,col_filterDelay)
 
 % ON IN
-% filtParams{2,1} = [1, .057, .08, .13, .1, .4]; % 060216Ac2
-filtParams{2,1} = [1, .14, .08, .08, .3, 0]; % 010716Ac1
+filtParams{2,1} = [1, .057, .08, .13, .1, .4]; % 060216Ac2
+% filtParams{2,1} = [1, .14, .08, .08, .3, 0]; % 010716Ac1
 
 
 % OFF EX
@@ -19,6 +19,8 @@ filtParams{1,2} = [-1, .065, .016, 0, .03, 0];
 % OFF IN
 filtParams{2,2} = [1, .057, .03, .051, .055, 0];
 
+
+decayLength = 0.5;
 
 filters = cell(2);
 
@@ -41,7 +43,7 @@ for vi = 1:2
         delay = zeros(1, round(p(2) / sim_timeStep));
         rise = linspace(0, 1, round(p(3) / sim_timeStep));
         holds = ones(1, round(p(4) / sim_timeStep));
-        decay = (1-p(6))*exp(-1 * (sim_timeStep:sim_timeStep:2) / p(5)) + p(6);
+        decay = (1-p(6))*exp(-1 * (sim_timeStep:sim_timeStep:decayLength) / p(5)) + p(6);
         
         sig = horzcat(delay, rise, holds, decay) * p(1);
 %         sig(end+1) = 0;

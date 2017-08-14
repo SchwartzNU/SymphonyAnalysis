@@ -249,6 +249,23 @@ classdef MovingBarAnalysis < AnalysisTree
             hold off;
         end             
         
+
+        function plot_barAngleVsONSETlatency(node, cellData)
+            rootData = node.get(1);
+            xvals = rootData.barAngle;
+            yField = rootData.ONSETlatency;
+
+            yvals = yField.mean_c;
+            polarerror(xvals*pi/180, yvals, zeros(1,length(xvals)));
+            
+            hold on;
+            polar([0 rootData.ONSETlatency_DSang*pi/180], [0 (100*rootData.ONSETlatency_DSI)], 'r-');
+            polar([0 rootData.ONSETlatency_OSang*pi/180], [0 (100*rootData.ONSETlatency_OSI)], 'g-');
+            ylabel(['ONSETlatency (' yField.units ')']);
+            addDsiOsiVarTitle(rootData, 'ONSETlatency')
+            hold off;
+        end
+        
         
         function plotMeanTraces(node, cellData)
             rootData = node.get(1);
