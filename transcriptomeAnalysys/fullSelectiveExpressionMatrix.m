@@ -1,4 +1,5 @@
-function [D_full, uniqueTypes_sorted, NofEach_sorted, allGeneNames, targetInd_all] = fullSelectiveExpressionMatrix(D, cellTypes, geneNames, Ngenes, method, directionPref)
+function [D_topGenes, uniqueTypes_sorted, NofEach_sorted, allGeneNames, targetInd_all] = fullSelectiveExpressionMatrix(D, cellTypes, geneNames, Ngenes, method, directionPref)
+
 if ~isempty(directionPref)
     for i=1:length(cellTypes)
         if ~strcmp(directionPref{i}, '-')
@@ -29,7 +30,7 @@ D_sorted = D(:,ind);
 cellTypes = cellTypes(ind);
 targetInd_all = ind;
 %make full matrix
-D_full = zeros(Ngenes*Ntestable,length(cellTypes));
+D_topGenes = zeros(Ngenes*Ntestable,length(cellTypes));
 allGeneNames = [];
 
 curInd = 1;
@@ -37,7 +38,7 @@ for i=1:Ntypes
     if NofEach_sorted(i) > 2
         [~, ~, ~, curD, ~, geneNames_sorted] = ...
             selectiveExpressionMatrix(D_sorted, cellTypes, geneNames, uniqueTypes_sorted{i}, Ngenes, method);
-        D_full(curInd:curInd+Ngenes-1,:) = curD;
+        D_topGenes(curInd:curInd+Ngenes-1,:) = curD;
         allGeneNames = [allGeneNames; geneNames_sorted]; 
         curInd = curInd+Ngenes;
     end    

@@ -12,6 +12,7 @@ end
 
 N = length(geneNames);
 indexVals = zeros(N,1);
+
 switch method
     case 'log-ratio'
         D=D*1000; %make the minimum about 14
