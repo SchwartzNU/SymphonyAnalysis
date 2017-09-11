@@ -27,12 +27,14 @@ classdef AutoCenterAnalysis < AnalysisTree
         end
         
         function obj = doAnalysis(obj, cellData)
+            rootData = obj.get(1);
             leafIDs = obj.getchildren(1);
             L = length(leafIDs);
             for leaf_index = 1:L
                 curNode = obj.get(leafIDs(leaf_index));
+                
 
-                outputStruct = getAutoCenterRF(cellData, curNode.epochID);
+                outputStruct = getAutoCenterRF(cellData, curNode.epochID, rootData.deviceName);
                 curNode = mergeIntoNode(curNode, outputStruct);
                 
                 obj = obj.set(leafIDs(leaf_index), curNode);

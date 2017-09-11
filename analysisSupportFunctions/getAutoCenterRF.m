@@ -1,9 +1,12 @@
-function outputStruct = getAutoCenterRF(cellData, epochInd)
+function outputStruct = getAutoCenterRF(cellData, epochInd, channel)
 
 %% create epoch cell array
+if nargin < 3
+    channel = 'Amplifier_Ch1';
+end
 shapeData = {};
 for p = 1:length(epochInd)
-    shapeData{p} = ShapeData(cellData.epochs(epochInd(p)), 'offline');
+    shapeData{p} = ShapeData(cellData.epochs(epochInd(p)), 'offline', channel);
 end
 
 

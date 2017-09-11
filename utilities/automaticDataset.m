@@ -10,10 +10,12 @@ oi = 0;
 
 % displayName = 'Moving Bar';
 % datasetNameHeader = 'MovingBar';
-displayName = 'Pulse';
-datasetNameHeader = 'Pulse';
-% displayName = 'Spots Multi Size';
-% datasetNameHeader = 'SpotsMultiSize';
+% displayName = 'Pulse';
+% datasetNameHeader = 'Pulse';
+displayName = 'Spots Multi Size';
+datasetNameHeader = 'SpotsMultiSize';
+% displayName = 'Contrast Response';
+% datasetNameHeader = 'ContrastResponse';
 
 paramNamesList = {'barSpeed','barWidth','intensity','meanLevel','outputAmpSelection','NDF','ampHoldSignal'};
 shortNamesList = {'speed','width','int','mean','outputAmp','NDF','v'};
@@ -116,7 +118,7 @@ elseif length(usefulParametersIndices) == 5
         end
     end
 else
-    warning('Too many varying parameters')
+    warning('Too many or few varying parameters')
 end
 
 % pull out the valid data sets

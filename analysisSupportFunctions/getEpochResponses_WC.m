@@ -24,6 +24,12 @@ else
     return
 end
 
+if strcmp(recordingMode, 'Off')
+    fprintf('Recording mode off (may not be data for %s)\n', ip.Results.DeviceName)
+    outputStruct = struct;
+    return
+end
+
 intervalStart = ip.Results.StartTime * 1E-3; %s
 if ip.Results.EndTime == 0 %default to end at stimEnd
     intervalEnd = (sampleEpoch.get('stimTime') + ip.Results.EndOffset) * 1E-3; %s

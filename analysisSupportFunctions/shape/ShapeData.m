@@ -21,6 +21,7 @@ classdef ShapeData < handle
         signalNormalizationParameters
         signalLightOn
         signalLightOff
+        channel % like 'Amplifier_Ch1'
 
         spotTotalTime
         spotOnTime
@@ -36,7 +37,15 @@ classdef ShapeData < handle
     end
     
     methods
-        function obj = ShapeData(epoch, runmode)
+        function obj = ShapeData(epoch, runmode, channel)
+            
+            if nargin < 3
+                obj.channel = 'Amplifier_Ch1';
+            else
+                obj.channel = channel;
+            end
+            
+            fprintf('Starting ShapeData with channel %s\n', obj.channel)
             
             obj.sampleRate = 1000; %desired rate
             obj.preTime = .250; % fixed always anyway
@@ -192,12 +201,12 @@ classdef ShapeData < handle
             % process actual response or spikes from epoch
             if strcmp(runmode, 'offline')
                 if strcmp(obj.ampMode, 'Cell attached')
-                    obj.setSpikes(epoch.getSpikes());
+                    obj.setSpikes(epoch.getSpikes(obj.channel));
                 elseif strcmp(obj.ampMode, 'emulated')
                     obj.spikes = [];
                 else % whole cell
                     obj.spikes = [];
-                    obj.setResponse(epoch.getData('Amplifier_Ch1')); %get whole cell response
+                    obj.setResponse(epoch.getData(obj.channel)); %get whole cell response
                     obj.processWholeCell()
                 end
             else
