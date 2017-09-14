@@ -27,8 +27,12 @@ for i=1:length(cellNames)
         else
             if exist([CELL_DATA_MASTER cellData_fname], 'file')
                 disp(['Copying ' cellData_fname]);
-                st = ['!cp -p ' [CELL_DATA_MASTER cellData_fname] ' ' CELL_DATA_FOLDER];
-                eval(st);
+                if ismac
+                    st = ['!cp -p ' [CELL_DATA_MASTER cellData_fname] ' ' CELL_DATA_FOLDER];
+                    eval(st);
+                elseif ispc
+                    copyfile([CELL_DATA_MASTER cellData_fname], CELL_DATA_FOLDER);
+                end
             else
                 disp([CELL_DATA_MASTER cellData_fname ' not found']);
             end

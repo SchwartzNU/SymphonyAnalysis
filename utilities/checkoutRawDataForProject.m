@@ -33,11 +33,18 @@ for i=1:length(cellNames)
         else
             if exist([RAW_DATA_MASTER rawData_fname], 'file')
                 disp(['Copying ' rawData_fname]);
-                eval(['!cp -r ' [RAW_DATA_MASTER rawData_fname] ' ' RAW_DATA_FOLDER]);
-                
+                if ismac
+                    eval(['!cp -r ' [RAW_DATA_MASTER rawData_fname] ' ' RAW_DATA_FOLDER]);
+                elseif ispc
+                    copyfile([RAW_DATA_MASTER rawData_fname], RAW_DATA_FOLDER);
+                end
             elseif exist([RAW_DATA_MASTER rawData_fname_symphony2], 'file')
                 disp(['Copying ' rawData_fname_symphony2]);
-                eval(['!cp -r ' [RAW_DATA_MASTER rawData_fname_symphony2] ' ' RAW_DATA_FOLDER]);
+                if ismac
+                    eval(['!cp -r ' [RAW_DATA_MASTER rawData_fname_symphony2] ' ' RAW_DATA_FOLDER]);
+                elseif ispc
+                    copyfile([RAW_DATA_MASTER rawData_fname_symphony2], RAW_DATA_FOLDER);
+                end
             else
                 disp(['in ' RAW_DATA_MASTER ', ' rawData_fname ' or ' rawData_fname_symphony2 ' not found']);
             end
