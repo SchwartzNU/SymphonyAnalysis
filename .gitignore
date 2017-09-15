@@ -3,14 +3,7 @@
 *.bak
 *.DS_Store
 *.asv
-shapeModel/shapeModel_v0.zip
-
 *.png
-
 *.pdf
-
 *.h5
 lib/*
-autodata/autoData2_setup.m
-GUIs/CellDataCurator.m
-GUIs/LabDataGUI.m
