@@ -872,7 +872,11 @@ classdef TreeBrowserGUI < handle
             obj.populateEpochTagsTable(curNodeIndex, curNodeData);
             obj.populateCellTagsTable(curCellName);
             obj.populateNodePropertiesTable(curNodeData, allFields);
-            obj.updatePlot();
+            try 
+                obj.updatePlot();
+            catch
+                warning('There is no data for these cells. Check raw data exists, cell data exists, or if the cell has been curated.')
+            end
         end
         
         function populateNodePropertiesTable(obj, curNodeData, allFields)
