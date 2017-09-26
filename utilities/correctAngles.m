@@ -1,6 +1,6 @@
 function cd = correctAngles(cd, cellName)
 
-    if isKey(cd.attributes, 'anglesCorrected')
+    if isKey(cd.attributes, 'anglesCorrected_2.0')
         fprintf('%s angles already corrected\n', cellName);
         cd = 1;
         return
@@ -41,7 +41,7 @@ function cd = correctAngles(cd, cellName)
                     angleOffsetForStimulus = 0; % fixed in version 3
                 end
                 
-            case 'Flashed Bars'
+            case 'Flashed Bar'
                 sourceAngleName = 'barAngle';
                 angleOffsetForStimulus = 0;
                 
@@ -100,6 +100,6 @@ function cd = correctAngles(cd, cellName)
     end
     
     fprintf('%s angles corrected\n', cellName);
-    cd.attributes('anglesCorrected') = 1;
+    cd.attributes('anglesCorrected_2.0') = 1;
     
 end
