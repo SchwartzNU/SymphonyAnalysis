@@ -62,8 +62,8 @@ Location(:,1) = Location(:,1).*Location(:,3);
  
 %% Plot Left Eye
 figure
-LocData = LeftEye
-LocCells = LeftCells
+LocData = LeftEye;
+LocCells = LeftCells;
 
 subplot(1,2,1)
 OSIPlotter(OSICells, LocData, LocCells, OSI, OSAng)
