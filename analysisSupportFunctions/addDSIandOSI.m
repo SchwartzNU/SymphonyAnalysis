@@ -48,7 +48,7 @@ for i=1:length(fnames)
         rootData.([curField '_MaxMinRatio']) = compare(max(abs(responseMagnitudes)), min(abs(responseMagnitudes)));
         
         % Highest of (respose vs opposite response)
-        oppositeIndices = circshift(1:length(anglesRad), length(anglesRad)/2);
+        oppositeIndices = circshift(1:length(anglesRad), round(length(anglesRad)/2));
         [ratio, bestAngleIndex] = max(compare(responseMagnitudes, responseMagnitudes(oppositeIndices)));
         rootData.([curField '_HighestRatio']) = ratio;
         rootData.([curField '_HighestRatioAng']) = anglesDeg(bestAngleIndex);
