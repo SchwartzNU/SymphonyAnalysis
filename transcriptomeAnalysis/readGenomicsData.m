@@ -4,8 +4,7 @@ cellIDs = A{2,2:end};
 % eyeVec = A{2,2:end};
 % xPos = A{3,2:end};
 % yPos = A{4,2:end};
-% cellTypes = A{5,2:end};
-% 
+% cellTypes = A{5,2:end}; 
 
 subtype = A{5,2:end};
 directionPref = A{4,2:end};

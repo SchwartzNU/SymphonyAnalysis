@@ -1,18 +1,19 @@
-function [xtickByCellType] = makeHeatmap(D_full, cellType, uniqueTypes_sorted, NofEach_sorted, allGeneNames, Ngenes, targetInd_all)
+function [xtickByCellType] = makeHeatmap(D_topGenes, cellType, uniqueTypes_sorted, NofEach_sorted, allGeneNames, Ngenes, targetInd_all)
 
 %Variables
 xtickByCellType = cumsum(NofEach_sorted) - (NofEach_sorted/2) + .5
 cumsum_NofEach_sorted = cumsum(NofEach_sorted)
 
-%figure
-imagesc(log(D_full))
+figure
+imagesc(log(D_topGenes))
 
 %Axis Setup
 ax=gca;
 set(ax, 'TickDir','out',...
     'yTickLabel',allGeneNames,...
-    'ytick',(1:size(D_full,1)),...
+    'ytick',(1:size(D_topGenes,1)),...
     'xTickLabel',uniqueTypes_sorted,...
+    'TickLabelInterpreter', 'none',...
     'xtick',xtickByCellType,...
     'xTickLabelRotation',45);
 
