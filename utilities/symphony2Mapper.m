@@ -31,13 +31,16 @@ function cells = symphony2Mapper(fname)
         h5epochs =  epochsByCellMap(labels{i});
         cells(i) = getCellData(fname, labels{i}, h5epochs);
         cells(i).attributes = getSourceAttributes(sourceTree, labels{i}, cells(i).attributes);
-        
-        if strcmpi(cells(i).attributes('eye'), 'left')
-            eyeIndex = -1;
-        elseif strcmpi(cells(i).attributes('eye'), 'right')
-            eyeIndex = 1;
+        try
+            if strcmpi(cells(i).attributes('eye'), 'left')
+                eyeIndex = -1;
+            elseif strcmpi(cells(i).attributes('eye'), 'right')
+                eyeIndex = 1;
+            end
+            cells(i).location = [cells(i).attributes('location'), eyeIndex];
+        catch e
+            disp(e.message);
         end
-        cells(i).location = [cells(i).attributes('location'), eyeIndex];
     end
 end
 
