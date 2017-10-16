@@ -59,8 +59,9 @@ dtabColumns{'best_source', 'type'} = {'string'};
 
 %% Autocenter offset
 
-diffX = dtab.spatial_ex_centerX - dtab.spatial_in_centerX;
+diffX = dtab.spatial_ex_centerX - dtab.spatial_in_centerX; % vector inhibition to excitation (soma to dendrites)
 diffY = dtab.spatial_ex_centerY - dtab.spatial_in_centerY;
+
 avgSigma = mean(dtab{:,{'spatial_in_sigma2X','spatial_ex_sigma2X','spatial_in_sigma2Y','spatial_ex_sigma2Y'}}, 2);
 autocenterOffsetDistance = sqrt(diffX.^2 + diffY.^2);
 autocenterOffsetDistanceNormalized = autocenterOffsetDistance ./ avgSigma;
