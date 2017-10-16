@@ -1093,7 +1093,11 @@ classdef TreeBrowserGUI < handle
             selectedNodes = get(obj.guiTree, 'selectedNodes');
             curNodeIndex = get(selectedNodes(1), 'Value');
             nodeData = obj.analysisTree.get(curNodeIndex);
-            assignin('base', 'nodeData', nodeData);
+            if isfield(nodeData, 'splitValue')
+                assignin('base', strcat('nodeData_', nodeData.splitValue), nodeData);
+            else
+                assignin('base', 'default', nodeData);
+            end
             disp('Set variable: nodeData');
         end
         
