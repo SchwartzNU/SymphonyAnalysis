@@ -20,7 +20,7 @@ classdef SpotsMultiSizeAnalysis < AnalysisTree
             dataSet = cellData.savedDataSets(dataSetName);
             obj = obj.copyAnalysisParams(params);
             obj = obj.copyParamsFromSampleEpoch(cellData, dataSet, ...
-                {'RstarMean', 'RstarIntensity', params.ampModeParam, 'offsetX', 'offsetY'});
+                {'RstarMean', 'RstarIntensity', params.ampModeParam, 'offsetX', 'offsetY', 'ampHoldSignal'});
             obj = obj.buildCellTree(1, cellData, dataSet, {'curSpotSize'});
         end
         
@@ -715,8 +715,84 @@ classdef SpotsMultiSizeAnalysis < AnalysisTree
             errorbar(xvals, yvals, errs);
             xlabel('spotSize');
             ylabel(['ONSET_charge400ms (' yField.units ')']);
-        end          
-         
+        end
+        
+        
+        function plot_spotSizeVsONSETrespDuration(node, cellData)
+            rootData = node.get(1);
+            xvals = rootData.spotSize;
+            yField = rootData.ONSETrespDuration;
+            if strcmp(yField.units, 's')
+                yvals = yField.median_c;
+            else
+                yvals = yField.mean_c;
+            end
+            errs = yField.SEM;
+            M = max(abs(yvals));
+            yvals = yvals./M;
+            errs = errs./M;
+            errorbar(xvals, yvals, errs);
+            xlabel('spotSize');
+            ylabel(['ONSETrespDuration (' yField.units ')']);
+        end        
+        
+      
+        
+        function plot_spotSizeVsONSETlatency(node, cellData)
+            rootData = node.get(1);
+            xvals = rootData.spotSize;
+            yField = rootData.ONSETlatency;
+            if strcmp(yField.units, 's')
+                yvals = yField.median_c;
+            else
+                yvals = yField.mean_c;
+            end
+            errs = yField.SEM;
+            M = max(abs(yvals));
+            yvals = yvals./M;
+            errs = errs./M;
+            errorbar(xvals, yvals, errs);
+            xlabel('spotSize');
+            ylabel(['ONSETlatency (' yField.units ')']);
+        end    
+        
+        function plot_spotSizeVsOFFSETrespDuration(node, cellData)
+            rootData = node.get(1);
+            xvals = rootData.spotSize;
+            yField = rootData.OFFSETrespDuration;
+            if strcmp(yField.units, 's')
+                yvals = yField.median_c;
+            else
+                yvals = yField.mean_c;
+            end
+            errs = yField.SEM;
+            M = max(abs(yvals));
+            yvals = yvals./M;
+            errs = errs./M;
+            errorbar(xvals, yvals, errs);
+            xlabel('spotSize');
+            ylabel(['OFFSETrespDuration (' yField.units ')']);
+        end        
+        
+      
+        
+        function plot_spotSizeVsOFFSETlatency(node, cellData)
+            rootData = node.get(1);
+            xvals = rootData.spotSize;
+            yField = rootData.OFFSETlatency;
+            if strcmp(yField.units, 's')
+                yvals = yField.median_c;
+            else
+                yvals = yField.mean_c;
+            end
+            errs = yField.SEM;
+            M = max(abs(yvals));
+            yvals = yvals./M;
+            errs = errs./M;
+            errorbar(xvals, yvals, errs);
+            xlabel('spotSize');
+            ylabel(['OFFSETlatency (' yField.units ')']);
+        end         
     end
     
 end
