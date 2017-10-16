@@ -89,13 +89,9 @@ function cell = getCellData(fname, cellLabel, h5Epochs)
     
     
     % Find where the cell number is listed in the name of the cell source, then reformat it for the filename
-    numPositionInLabel = regexp(cellLabel, '[0-9]+');
-    if numPositionInLabel == 1
-        savedFileName = [file 'c' cellLabel];
-    elseif numPositionInLabel == 2
-        savedFileName = [file cellLabel(2:end)];
-    elseif numPositionInLabel == 3
-        savedFileName = [file 'c' cellLabel(3:end)];
+    [match, ~] = regexp(cellLabel, '[0-9]+' ,'match','split')
+    if ~ isempty(match)
+        savedFileName = [file 'c' match{:}];
     else 
         savedFileName = file;
     end
