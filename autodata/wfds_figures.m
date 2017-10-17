@@ -10,7 +10,7 @@ colo2 = [.68, .1, .2];
 col_exc = [0 0 1];
 col_inh = [1 0 0];
 
-selectWfdsOn = cellTypeSelect('ON WFDS') | cellTypeSelect('F-mini ON');
+selectWfdsOn = cellTypeSelect('ON WFDS');% | cellTypeSelect('F-mini ON');
 selectWfdsOff = cellTypeSelect('OFF WFDS') | cellTypeSelect('F-mini OFF');
 % selectFminiOff = cellTypeSelect('F-mini OFF');
 % selectULD = cellTypeSelect('UltraLowDefinition');
