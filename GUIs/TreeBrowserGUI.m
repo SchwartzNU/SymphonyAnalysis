@@ -1027,6 +1027,13 @@ classdef TreeBrowserGUI < handle
         function popFig(obj)
             h = figure;
             copyobj(obj.handles.plotAxes,h);
+            set(h, 'Color', 'w');
+            ax = gca;
+            set(ax,'Units','normalized','Position',[0.2 0.2 0.6 0.6])
+            set(ax,'Box', 'off');
+            set(ax, 'FontSize', 16);
+            set(ax, 'LineWidth', 2);
+            
         end
         
         function figToIgor(obj)
