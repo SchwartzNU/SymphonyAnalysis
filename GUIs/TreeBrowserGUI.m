@@ -874,7 +874,8 @@ classdef TreeBrowserGUI < handle
             obj.populateNodePropertiesTable(curNodeData, allFields);
             try 
                 obj.updatePlot();
-            catch
+            catch e
+                disp(getReport(e,  'extended', 'hyperlinks', 'on'))
                 warning('There is no data for these cells. Check raw data exists, cell data exists, or if the cell has been curated.')
             end
         end
