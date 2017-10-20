@@ -9,7 +9,6 @@ function cd = correctAngles(cd, cellName)
     else
         FlashedBarErrorFlag = 0;
     end
-FlashedBarErrorFlag = 1;
 
     % calculate rig angle offset
     if strfind(cellName,'A')
