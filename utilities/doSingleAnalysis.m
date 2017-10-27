@@ -8,6 +8,8 @@ if nargin < 4
     epochFilter = [];
 end
 % cell data is loaded below
+usedDataSet = [];
+
 
 if nargin < 6 || isempty(analysisTable)
 %Open DataSetsAnalyses.txt file that defines the mapping between data set
@@ -31,7 +33,7 @@ for dsi=1:Nanalyses
     end
 end
 if isempty(analysisIndices)
-    disp(['Error: analysis ' analysisClassName ' not found in DataSetAnalyses.txt']);
+    fprintf('Error: analysis %s not found in DataSetAnalyses.txt\n', analysisClassName{1});
     resultTree = [];
     return;
 end
@@ -72,7 +74,6 @@ if ~isempty(cellFilter)
     end
 end
 
-usedDataSet = [];
 hasValidDataSet = false;
 for dsi=1:length(dataSetKeys)
     T = [];
