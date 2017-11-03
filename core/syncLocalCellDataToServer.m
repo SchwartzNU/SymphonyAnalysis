@@ -12,7 +12,11 @@ disp('Sync all local cell data to server')
 
 %get all cellData names in local cellData folder
 cellDataNames = ls([ANALYSIS_FOLDER filesep 'cellData' filesep '*.mat']);
-cellDataNames = strsplit(cellDataNames); %this will be different on windows - see doc ls
+if ismac
+    cellDataNames = strsplit(cellDataNames); %this will be different on windows - see doc ls
+elseif ispc
+    cellDataNames = cellstr(cellDataNames)
+end
 cellDataNames = sort(cellDataNames);
 
 % cellDataBaseNames = cell(length(cellDataNames), 1);
