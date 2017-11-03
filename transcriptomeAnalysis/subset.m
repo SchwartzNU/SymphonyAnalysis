@@ -13,7 +13,7 @@ function [cellInd_ofSubset, geneInd_ofSubset, D_ofSubset] = subset(D, cellTypes,
 %   geneCounts: the expression matrix of the above genes in the above cells
 
 
-if ischar(selection) % If a string, return all cells containing that string
+if ischar(selection) % If a string, return all cells whose type contains that string
     selectedType = selection;
     cellInd_ofSubset = find(contains(cellTypes, selectedType));
     disp([num2str(length(cellInd_ofSubset)) ' cells of type ' selectedType ', including:']);
@@ -39,14 +39,17 @@ D_ofSubset = D(geneInd_ofSubset,cellInd_ofSubset);
 
 if makeGraph == 1;
     figure;
-    imagesc(log(D_ofSubset));
+    
+    %%% Is the data already log transformed?
+    %imagesc(log(D_ofSubset));
+    imagesc(D_ofSubset);
 
     %Axis Setup
     ax=gca;
     set(ax, 'TickDir','out',...
         'yTickLabel',geneNames(geneInd_ofSubset),...
         'ytick',(1:size(D_ofSubset,1)),...
-        'xTickLabel',cellInd_ofSubset,...
+        'xTickLabel',(cellTypes(cellInd_ofSubset)),...
         'xtick',[1:length(cellInd_ofSubset)],...
         'xTickLabelRotation',45);
 else

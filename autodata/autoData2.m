@@ -34,6 +34,11 @@ for ci = 1:numTableCells
     cellNamesInThisCell = cellFileNames{ci};
     cellNamesInThisCell = strsplit(cellNamesInThisCell, ',');
     
+    % ignore multichannel cells for the moment, since they are complicated
+    if ~isempty(strfind(cellNamesInThisCell{1}, 'Ch'))
+        continue
+    end
+    
     for sci = 1:length(cellNamesInThisCell)
         
         c = load([CELL_DATA_FOLDER cellNamesInThisCell{sci} '.mat']); %load cellData

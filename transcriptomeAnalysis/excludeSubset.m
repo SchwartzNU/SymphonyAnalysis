@@ -1,4 +1,4 @@
-function [D_withExclusions, cellInd_withExclusions] = excludeSubset(D, cellTypes, selection)
+function [D_withExclusions, cellInd_withExclusions, cellTypes_withExclusions, directionPref_withExclusions] = excludeSubset(D, cellTypes, selection, directionPref)
 
 % Accepts:
 %   selection: either a string or a vector of strings (note, vector of
@@ -12,5 +12,7 @@ function [D_withExclusions, cellInd_withExclusions] = excludeSubset(D, cellTypes
 
 cellInd_withExclusions = find(not(contains(cellTypes, selection)));
 D_withExclusions = D(1:end,cellInd_withExclusions);
+cellTypes_withExclusions = cellTypes(cellInd_withExclusions);
+directionPref_withExclusions = directionPref(cellInd_withExclusions);
 
 end

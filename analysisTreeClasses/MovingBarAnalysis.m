@@ -22,7 +22,7 @@ classdef MovingBarAnalysis < AnalysisTree
             dataSet = cellData.savedDataSets(dataSetName);
             obj = obj.copyAnalysisParams(params);
             obj = obj.copyParamsFromSampleEpoch(cellData, dataSet, ...
-                {'RstarMean', 'RstarIntensity', params.ampModeParam, params.holdSignalParam, 'barLength', 'barWidth', 'distance', 'barSpeed', 'offsetX', 'offsetY'});
+                {'RstarMean', 'RstarIntensity', params.ampModeParam, params.holdSignalParam, 'intensity', 'barLength', 'barWidth', 'distance', 'barSpeed', 'offsetX', 'offsetY'});
             obj = obj.buildCellTree(1, cellData, dataSet, {'barAngle'});
         end
         
