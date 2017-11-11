@@ -3,24 +3,34 @@
 % use save(['cellData/' cellData.savedFileName], 'cellData')
 
 
+% undo code:
+% k = cellData.savedDataSets.keys();
+% for i = 1:50
+%     if strfind(k{i}, 'MovingBar')
+%         remove(cellData.savedDataSets, k{i})
+%     end
+% end
+
+
 %#ok<*SAGROW>
 
-indices = [];
-oi = 0;
-
-% displayName = 'Moving Bar';
-% datasetNameHeader = 'MovingBar';
+displayName = 'Moving Bar';
+datasetNameHeader = 'MovingBar';
+% displayName = 'Split Field';
+% datasetNameHeader = 'SplitField';
 % displayName = 'Pulse';
 % datasetNameHeader = 'Pulse';
-displayName = 'Spots Multi Size';
-datasetNameHeader = 'SpotsMultiSize';
+% displayName = 'Spots Multi Size';
+% datasetNameHeader = 'SpotsMultiSize';
 % displayName = 'Contrast Response';
 % datasetNameHeader = 'ContrastResponse';
 
-paramNamesList = {'barSpeed','barWidth','intensity','meanLevel','outputAmpSelection','NDF','ampHoldSignal'};
-shortNamesList = {'speed','width','int','mean','outputAmp','NDF','v'};
+paramNamesList = {'barSpeed','barWidth','intensity','meanLevel','outputAmpSelection','NDF','ampHoldSignal','barSeparation','contrastSide1','ContrastSide2','ampMode'};
+shortNamesList = {'speed','width','int','mean','outputAmp','NDF','v','sep','c1','c2',''};
 paramValuesByEpoch = [];
 
+indices = [];
+oi = 0;
 
 for ei=1:length(cellData.epochs)
     epoch = cellData.epochs(ei);
@@ -41,7 +51,17 @@ for ei=1:length(cellData.epochs)
     indices(oi,1) = ei;
 
     for pi = 1:length(paramNamesList)
-        paramValuesByEpoch(oi,pi) = epoch.get(paramNamesList{pi});
+        if ~strcmp(paramNamesList{pi}, 'ampMode')
+            paramValuesByEpoch(oi,pi) = epoch.get(paramNamesList{pi});
+        else
+            switch epoch.get(paramNamesList{pi})
+                case 'Whole cell'
+                    paramValuesByEpoch(oi,pi) = 1;
+                case 'Cell attached'
+                    paramValuesByEpoch(oi,pi) = 0;
+            end
+        end
+                   
     end
 
 end
@@ -133,7 +153,18 @@ for di = 1:size(epochIndicesByValueset,1)
     datasetName = datasetNameHeader;
     for pi = 1:length(usefulParametersIndices)
         paramIndex = usefulParametersIndices(pi);
-        datasetName = [datasetName, sprintf(' %s:%g',shortNamesList{paramIndex}, datasetValuesByValueset(di,pi))];
+        
+        %handle CA vs WC differently, not a generalized bit of code like it should be
+        if ~strcmp(paramNamesList{paramIndex}, 'ampMode')
+            datasetName = [datasetName, sprintf(' %s:%g', shortNamesList{paramIndex}, datasetValuesByValueset(di,pi))];
+        else
+            if datasetValuesByValueset(di,pi) == 1
+                valueText = 'wc';
+            else
+                valueText = 'ca';
+            end
+            datasetName = [datasetName, sprintf(' %s', valueText)];
+        end
         
     end
     datasetValuesValid(end+1,:) = datasetValuesByValueset(di,:);
