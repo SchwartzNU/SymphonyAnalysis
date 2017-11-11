@@ -3,7 +3,7 @@ v = false;
 if strcmp(streamName, 'Amplifier_Ch1')
     if strcmp(epoch.get('ampMode'), 'Cell attached')
         v = true;
-    elseif strcmp(epoch.get('amplifierMode'), 'IClamp') %current clamp recording might have spikes
+    elseif strcmp(epoch.get('ampMode'), 'Whole cell') && (epoch.get('ampHoldSignal') == 0) %current clamp recording might have spikes
         v = true;
     end
 elseif strcmp(obj.streamName, 'Amplifier_Ch2')

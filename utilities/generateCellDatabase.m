@@ -67,7 +67,11 @@ fprintf('Loaded %g filters\n', numFilters)
 %%  Get Cells
 
 cellDataNames = ls([CELL_DATA_MASTER '*.mat']);
-cellDataNames = strsplit(cellDataNames); %this will be different on windows - see doc ls
+if ismac
+    cellDataNames = strsplit(cellDataNames); %this will be different on windows - see doc ls
+elseif ispc
+    cellDataNames = cellstr(cellDataNames);
+end
 cellDataNames = cellDataNames(1:(end-1));
 cellDataNames = sort(cellDataNames);
 

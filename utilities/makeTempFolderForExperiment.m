@@ -2,8 +2,15 @@ function projectFolder = makeTempFolderForExperiment(expName)
 global ANALYSIS_FOLDER;
 global CELL_DATA_FOLDER;
 projectFolder = [ANALYSIS_FOLDER 'Projects' filesep expName '_temp'];
-eval(['!rm -rf ' projectFolder]);
-eval(['!mkdir ' projectFolder]);
+if ismac
+    eval(['!rm -rf ' projectFolder]);
+    eval(['!mkdir ' projectFolder]);
+elseif ispc
+    if exist(projectFolder, 'dir')
+        rmdir(projectFolder) % won't remove if the directory already exists
+    end
+    mkdir(projectFolder)
+end
 cellNames = ls([CELL_DATA_FOLDER expName '*.mat']);
 if ispc
     cellNames = cellstr(cellNames);
