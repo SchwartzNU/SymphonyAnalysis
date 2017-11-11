@@ -112,19 +112,34 @@ elseif strcmp(mode, 'subunit')
     %     figure(12);
 
 
-%         distance_to_center = zeros(num_positions, 1);
-%         for p = 1:num_positions
-%             gfp = ad.gaussianFitParams_ooi{3};
-%             distance_to_center(p,1) = sqrt(sum((ad.positions(p,:) - [gfp('centerX'),gfp('centerY')]).^2));
-%         end
-%         sorted_positions = sortrows([distance_to_center, (1:num_positions)'], 1);
-
-
-        num_positions = size(ad.positions,1);
+        % only use positions with observations (ignore 0,0)
+        positions = [];
+        i = 1;
+        for pp = 1:size(ad.positions,1)
+            pos = ad.positions(pp,1:2);
+            if any(ismember(obs(:,1:2), pos, 'rows'))
+                positions(i,1:2) = pos;
+                i = i + 1;
+            end
+        end
+        num_positions = size(positions,1);
         dim1 = floor(sqrt(num_positions));
         dim2 = ceil(num_positions / dim1);
         
-        ha = tight_subplot(dim1,dim2);
+        % nice way of displaying plots with an aligned-to-grid location using percentiles
+        pos_sorted = flipud(sortrows(positions, 2));
+        for i = 1:dim1 % chunk positions by display rows
+            l = ((i-1) * dim2) + (1:dim2);
+            l(l > num_positions) = [];
+            pos_sorted(l,:) = sortrows(pos_sorted(l,:), 1);
+        end
+        positions = pos_sorted;
+        
+%         num_positions = size(ad.positions,1);
+%         dim1 = floor(sqrt(num_positions));
+%         dim2 = ceil(num_positions / dim1);
+        
+        ha = tight_subplot(dim1,dim2, .02);
         
         obs = ad.observations;
         if isempty(obs)
@@ -142,14 +157,14 @@ elseif strcmp(mode, 'subunit')
             axes(ha(p)) %#ok<*LAXES>
             hold on
             
-            pos = ad.positions(p,:);
+            pos = positions(p,:);
             obs_sel = ismember(obs(:,1:2), pos, 'rows');
             
             for vi = 1:num_voltages
                 voltage = voltages(vi);
                 obs_sel_v = obs_sel & obs(:,4) == voltage;
             
-                responses = obs(obs_sel_v, 5); % peak: 6, mean: 5
+                responses = obs(obs_sel_v, 6); % peak: 6, mean: 5
                 intensities = obs(obs_sel_v, 3);
 
                 plot(intensities, responses, 'o')
@@ -160,21 +175,25 @@ elseif strcmp(mode, 'subunit')
                     
                     goodPosIndex = goodPosIndex + 1;
                     goodPositions(goodPosIndex, :) = pos;
+%                     goodSlopes(goodPosIndex, 1) = mean(responses(intensities == 1)) - mean(responses(intensities == 0))
                     goodSlopes(goodPosIndex, 1) = pfit(1);
                 end
-%                 title(pfit)
-    %             ylim([0,max(rate)+.1])
+%                 title(pos)
+%                 ylim([0,6])
+%                 yticks([])
+                xticks([])
             end
             grid on
             hold off
             
-            set(gca, 'XTickMode', 'auto', 'XTickLabelMode', 'auto')
+%             set(gca, 'XTickMode', 'auto', 'XTickLabelMode', 'auto')
             set(gca, 'YTickMode', 'auto', 'YTickLabelMode', 'auto')
 
         end
         
         if ~isempty(goodPositions)
-            figure(99)
+            figure(99);clf;
+%             goodSlopes(abs(goodSlopes) < 2) = 0;
             plotSpatial(goodPositions, goodSlopes, 'intensity response slope', 1, 0)
         end
         
@@ -325,11 +344,22 @@ elseif strcmp(mode, 'temporalComponents')
     
     % start with finding the times with highest variance, by voltage
     obs = ad.observations;
-    voltages = sort(unique(obs(:,4)));
+    paramColumn = 4; % intensity 3, voltage 4
+    voltages = sort(unique(obs(:,paramColumn)));
 
     ha = tight_subplot(length(voltages), 1, .03, .03);
+
+    positions = [];
+    i = 1;
+    for pp = 1:size(ad.positions,1)
+        pos = ad.positions(pp,1:2);
+        if any(ismember(obs(:,1:2), pos, 'rows'))
+            positions(i,1:2) = pos;
+            i = i + 1;
+        end
+    end    
     
-    num_positions = size(ad.positions,1);
+    num_positions = size(positions,1);
     signalsByVoltageByPosition = {};
     peakIndicesByVoltage = {};
     basisByVoltageComp = {};
@@ -340,10 +370,10 @@ elseif strcmp(mode, 'temporalComponents')
 
         signalsByPosition = cell(num_positions,1);
         for poi = 1:num_positions
-            pos = ad.positions(poi,:);
+            pos = positions(poi,:);
 
             obs_sel = ismember(obs(:,1:2), pos, 'rows');
-            obs_sel = obs_sel & obs(:,4) == v;
+            obs_sel = obs_sel & obs(:,paramColumn) == v;
             indices = find(obs_sel);
                         
             signalsThisPos = {};
@@ -387,12 +417,13 @@ elseif strcmp(mode, 'temporalComponents')
         % how about some magic numbers? you want some magic numbers? yeah, yes you do.
         % nice, arbitrary, need to be changed, overfitted magic numbers, right here for you
         % ah, now that's nice, you like magic numbers, so good, have some more, here they are
-        [~, peakIndices] = findpeaks(smooth(varByV,30), 'MinPeakProminence',.05,'Annotate','extents','MinPeakDistance',0.08);
+%         [~, peakIndices] = findpeaks(smooth(varByV,30), 'MinPeakProminence',.05,'Annotate','extents','MinPeakDistance',0.08);
+        peakIndices = [100, 380]; % in ms
         maxComponents = max([maxComponents, length(peakIndices)]);
         peakIndicesByVoltage{vi,1} = peakIndices;
         plot(t(peakIndices), varByV(peakIndices), 'ro')
         
-        componentWidth = 0.05; % hey, have another one!       
+        componentWidth = 0.03; % hey, have another one!       
         
         for ci = 1:length(peakIndices)
             basisCenterTime = t(peakIndices(ci));
@@ -406,14 +437,16 @@ elseif strcmp(mode, 'temporalComponents')
     
     figure(21);clf;
     hb = tight_subplot(length(voltages), maxComponents, .03, .03);
-
+    disp('Temporal component fits');
     for vi = 1:length(voltages)
         
-        %% now, with the peak locations in hand, we can pull out the components
+        % now, with the peak locations in hand, we can pull out the components
         peakIndices = peakIndicesByVoltage{vi,1};
         num_components = length(peakIndices);
         valuesByComponent = nan * zeros(num_positions, num_components);
         signalsByPosition = signalsByVoltageByPosition{vi,1};
+        fitX = [];
+        fitY = [];
         for ci = 1:num_components
             basis = basisByVoltageComp{vi,ci};
             for poi = 1:num_positions
@@ -429,8 +462,15 @@ elseif strcmp(mode, 'temporalComponents')
 
             p = maxComponents * (vi-1) + ci;
             axes(hb(p));
-            plotSpatial(ad.positions, valuesByComponent(:,ci), sprintf('v %d component %d', v, ci), 1, 0);
+            gfit = plotSpatial(positions, valuesByComponent(:,ci), sprintf('v %d component %d', voltages(vi), ci), 1, sign(voltages(vi)));
+            
+            if isa(gfit, 'containers.Map')
+                fitX(ci) = gfit('centerX');
+                fitY(ci) = gfit('centerY');
+            end
         end
+        
+        fprintf('Voltage %g, Off is ( %g, %g) from On\n', voltages(vi), diff(fitX), diff(fitY));
         
     end
     
@@ -514,6 +554,9 @@ elseif strcmp(mode, 'responsesByPosition')
                         if ii > 1
                             set(get(get(h,'Annotation'),'LegendInformation'),'IconDisplayStyle','off');
                         end
+                        
+%                         responseValue = entry(6); % 6 for peak
+%                         line([min(t), max(t)], [responseValue, responseValue], 'Parent', ha(poi), 'Color',squeeze(colorsets(vi, ai, inti,1:3)));
 
                         max_value = max(max_value, max(signal));
                         min_value = min(min_value, min(signal));
@@ -541,7 +584,7 @@ elseif strcmp(mode, 'responsesByPosition')
 %     for i = 1:length(ha)
 %         i
 %         min_value
-    ylim(ha(1), [min_value, max_value]);
+    ylim(ha(1), [min_value, max_value*2]);
     xlim(ha(1), [0, max(t)])
 %     end
     

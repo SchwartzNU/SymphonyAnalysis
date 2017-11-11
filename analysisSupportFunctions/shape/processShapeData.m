@@ -183,8 +183,13 @@ for p = 1:num_epochs
     
     e.timeOffset = t_offset; % store it in the epoch for display
 
+    % change which data is considered the response (from On time to total time)
     sampleCount_total = round(e.spotTotalTime * e.sampleRate);
-    sampleSet = (0:(sampleCount_total-1))'; % total
+    sampleCount_on    = round(e.spotOnTime * e.sampleRate);
+
+%     sampleSet = (0:(sampleCount_total-1))'; % total
+    sampleSet = (0:(sampleCount_on-1))'; % just on
+%     sampleSet = (sampleCount_on:(sampleCount_total-1))'; % just off
     
     if skipResponses == 1
         continue
@@ -227,6 +232,9 @@ for p = 1:num_epochs
     %         end
             mn = mean(resp);
             pk = max(resp);
+            if e.ampVoltage < 0
+                pk = min(resp);
+            end
             if pk > 0
                 del = find(resp > pk / 2.0, 1, 'first') / e.sampleRate;
             else
