@@ -94,6 +94,93 @@ classdef SplitFieldAnalysis < AnalysisTree
             ylabel(['ONSETspikes (' yField.units ')']);
         end
         
-    end
+        function plot_positionVsSpikeCount_stimInterval(node, cellData)
+            rootData = node.get(1);
+            xvals = rootData.position;
+            yField = rootData.spikeCount_stimInterval;
+            if strcmp(yField.units, 's')
+                yvals = yField.median_c;
+            else
+                yvals = yField.mean_c;
+            end
+            errs = yField.SEM;
+            errorbar(xvals, yvals, errs);
+            xlabel('position');
+            ylabel(['spikeCount_stimInterval (' yField.units ')']);
+        end          
+
+        function plot_positionVsSpikeCount_stimTo200ms(node, cellData)
+            rootData = node.get(1);
+            xvals = rootData.position;
+            yField = rootData.spikeCount_stimTo200ms;
+            if strcmp(yField.units, 's')
+                yvals = yField.median_c;
+            else
+                yvals = yField.mean_c;
+            end
+            errs = yField.SEM;
+            errorbar(xvals, yvals, errs);
+            xlabel('position');
+            ylabel(['spikeCount_stimTo200ms (' yField.units ')']);
+        end        
+        
+        function plot0_twoSided_positionVsSpikeCount_stimInterval(node, cellData)
+            childNodes = node.getchildren(1);
+            for ni = 1:2
+                rootData = node.get(childNodes(ni));
+                xvals = rootData.position;
+                yField = rootData.spikeCount_stimInterval;
+                if strcmp(yField.units, 's')
+                    yvals = yField.median_c;
+                else
+                    yvals = yField.mean_c;
+                end
+                errs = yField.SEM;
+                errorbar(xvals, yvals, errs);
+                hold on
+            end
+            xlabel('position');
+            ylabel(['spikeCount_stimInterval (' yField.units ')']);
+        end  
+        
+        function plot1_twoSided_positionVsSpikeCount_stimTo200ms(node, cellData)
+            childNodes = node.getchildren(1);
+            for ni = 1:2
+                rootData = node.get(childNodes(ni));
+                xvals = rootData.position;
+                yField = rootData.spikeCount_stimTo200ms;
+                if strcmp(yField.units, 's')
+                    yvals = yField.median_c;
+                else
+                    yvals = yField.mean_c;
+                end
+                errs = yField.SEM;
+                errorbar(xvals, yvals, errs);
+                hold on
+            end
+            xlabel('position');
+            ylabel(['spikeCount_stimTo200ms (' yField.units ')']);
+        end  
+        
     
+    
+        function plot2_twoSided_positionVsONSET_charge400ms(node, cellData)
+            childNodes = node.getchildren(1);
+            for ni = 1:2
+                rootData = node.get(childNodes(ni));
+                xvals = rootData.position;
+                yField = rootData.ONSET_charge400ms;
+                if strcmp(yField.units, 's')
+                    yvals = yField.median_c;
+                else
+                    yvals = yField.mean_c;
+                end
+                errs = yField.SEM;
+                errorbar(xvals, yvals, errs);
+                hold on
+            end
+            xlabel('position');
+            ylabel(['ONSET_charge400ms (' yField.units ')']);
+        end      
+    end
 end

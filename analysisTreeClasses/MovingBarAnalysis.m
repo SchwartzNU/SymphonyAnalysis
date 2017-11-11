@@ -217,6 +217,22 @@ classdef MovingBarAnalysis < AnalysisTree
             hold off;
         end     
         
+        function plot_barAngleVscharge_stimInterval(node, cellData)
+            rootData = node.get(1);
+            xvals = rootData.barAngle;
+            yField = rootData.stimInterval_charge;
+
+            yvals = yField.mean_c;
+            polarerror(xvals*pi/180, yvals, zeros(1,length(xvals)));
+            
+            hold on;
+            polar([0 rootData.stimInterval_charge_DSang*pi/180], [0 (100*rootData.stimInterval_charge_DSI)], 'r-');
+            polar([0 rootData.stimInterval_charge_OSang*pi/180], [0 (100*rootData.stimInterval_charge_OSI)], 'g-');
+            ylabel(['stimInterval_charge (' yField.units ')']);
+            addDsiOsiVarTitle(rootData, 'stimInterval_charge')
+            hold off;
+        end  
+        
         function plot_barAngleVspeak_movingBarLeadingEdge(node, cellData)
             rootData = node.get(1);
             xvals = rootData.barAngle;
