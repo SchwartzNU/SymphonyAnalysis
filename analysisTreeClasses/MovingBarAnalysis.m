@@ -152,68 +152,68 @@ classdef MovingBarAnalysis < AnalysisTree
             hold off;            
         end
         
-        function plot_barAngleVsspikeCount_movingBarLeadingEdge(node, cellData)
+        function plot_barAngleVsspikeCount_mbLeading(node, cellData)
             rootData = node.get(1);
             xvals = rootData.barAngle;
-            yField = rootData.spikeCount_movingBarLeadingEdge;
+            yField = rootData.spikeCount_mbLeading;
             yvals = yField.mean_c;
             errs = yField.SEM;
             polarerror(xvals*pi/180, yvals, errs);            
             hold on;
-            polar([0 rootData.spikeCount_stimToEnd_DSang*pi/180], [0 (100*rootData.spikeCount_stimToEnd_DSI)], 'r-');
-            polar([0 rootData.spikeCount_stimToEnd_OSang*pi/180], [0 (100*rootData.spikeCount_stimToEnd_OSI)], 'g-');
+            polar([0 rootData.spikeCount_mbLeading_DSang*pi/180], [0 (100*rootData.spikeCount_mbLeading_DSI)], 'r-');
+            polar([0 rootData.spikeCount_mbLeading_OSang*pi/180], [0 (100*rootData.spikeCount_mbLeading_OSI)], 'g-');
             xlabel('barAngle');
-            ylabel(['spikeCount_movingBarLeadingEdge (' yField.units ')']);
-            addDsiOsiVarTitle(rootData, 'spikeCount_movingBarLeadingEdge')
+            ylabel(['spikeCount mbLeading (' yField.units ')']);
+            addDsiOsiVarTitle(rootData, 'spikeCount_mbLeading')
             hold off;            
         end
         
-        function plot_barAngleVsspikeCount_movingBarTrailingEdge(node, cellData)
+        function plot_barAngleVsspikeCount_mbTrailing(node, cellData)
             rootData = node.get(1);
             xvals = rootData.barAngle;
-            yField = rootData.spikeCount_movingBarTrailingEdge;
+            yField = rootData.spikeCount_mbTrailing;
             yvals = yField.mean_c;
             errs = yField.SEM;
             polarerror(xvals*pi/180, yvals, errs);            
             hold on;
-            polar([0 rootData.spikeCount_stimToEnd_DSang*pi/180], [0 (100*rootData.spikeCount_stimToEnd_DSI)], 'r-');
-            polar([0 rootData.spikeCount_stimToEnd_OSang*pi/180], [0 (100*rootData.spikeCount_stimToEnd_OSI)], 'g-');
+            polar([0 rootData.spikeCount_mbTrailing_DSang*pi/180], [0 (100*rootData.spikeCount_mbTrailing_DSI)], 'r-');
+            polar([0 rootData.spikeCount_mbTrailing_OSang*pi/180], [0 (100*rootData.spikeCount_mbTrailing_OSI)], 'g-');
             xlabel('barAngle');
-            ylabel(['spikeCount_movingBarTrailingEdge (' yField.units ')']);
-            addDsiOsiVarTitle(rootData, 'spikeCount_movingBarTrailingEdge')
+            ylabel(['spikeCount mbTrailing (' yField.units ')']);
+            addDsiOsiVarTitle(rootData, 'spikeCount_mbTrailing')
             hold off;
         end
         
-        function plot_barAngleVscharge_movingBarLeadingEdge(node, cellData)
+        function plot_barAngleVscharge_mbLeading(node, cellData)
             rootData = node.get(1);
             xvals = rootData.barAngle;
-            yField = rootData.charge_movingBarLeadingEdge;
+            yField = rootData.charge_mbLeading;
 
             yvals = yField.mean_c;
             polarerror(xvals*pi/180, yvals, zeros(1,length(xvals)));
             
             hold on;
-            polar([0 rootData.charge_movingBarLeadingEdge_DSang*pi/180], [0 (100*rootData.charge_movingBarLeadingEdge_DSI)], 'r-');
-            polar([0 rootData.charge_movingBarLeadingEdge_OSang*pi/180], [0 (100*rootData.charge_movingBarLeadingEdge_OSI)], 'g-');
-            ylabel(['charge_movingBarLeadingEdge (' yField.units ')']);
-            addDsiOsiVarTitle(rootData, 'charge_movingBarLeadingEdge')
+            polar([0 rootData.charge_mbLeading_DSang*pi/180], [0 (100*rootData.charge_mbLeading_DSI)], 'r-');
+            polar([0 rootData.charge_mbLeading_OSang*pi/180], [0 (100*rootData.charge_mbLeading_OSI)], 'g-');
+            ylabel(['charge_mbLeading (' yField.units ')']);
+            addDsiOsiVarTitle(rootData, 'charge_mbLeading')
             hold off;
         end        
         
         
-        function plot_barAngleVscharge_movingBarTrailingEdge(node, cellData)
+        function plot_barAngleVscharge_mbTrailing(node, cellData)
             rootData = node.get(1);
             xvals = rootData.barAngle;
-            yField = rootData.charge_movingBarTrailingEdge;
+            yField = rootData.charge_mbTrailing;
 
             yvals = yField.mean_c;
             polarerror(xvals*pi/180, yvals, zeros(1,length(xvals)));
             
             hold on;
-            polar([0 rootData.charge_movingBarTrailingEdge_DSang*pi/180], [0 (100*rootData.charge_movingBarTrailingEdge_DSI)], 'r-');
-            polar([0 rootData.charge_movingBarTrailingEdge_OSang*pi/180], [0 (100*rootData.charge_movingBarTrailingEdge_OSI)], 'g-');
-            ylabel(['charge_movingBarTrailingEdge (' yField.units ')']);
-            addDsiOsiVarTitle(rootData, 'charge_movingBarTrailingEdge')
+            polar([0 rootData.charge_mbTrailing_DSang*pi/180], [0 (100*rootData.charge_mbTrailing_DSI)], 'r-');
+            polar([0 rootData.charge_mbTrailing_OSang*pi/180], [0 (100*rootData.charge_mbTrailing_OSI)], 'g-');
+            ylabel(['charge_mbTrailing (' yField.units ')']);
+            addDsiOsiVarTitle(rootData, 'charge_mbTrailing')
             hold off;
         end     
         
@@ -228,40 +228,40 @@ classdef MovingBarAnalysis < AnalysisTree
             hold on;
             polar([0 rootData.stimInterval_charge_DSang*pi/180], [0 (100*rootData.stimInterval_charge_DSI)], 'r-');
             polar([0 rootData.stimInterval_charge_OSang*pi/180], [0 (100*rootData.stimInterval_charge_OSI)], 'g-');
-            ylabel(['stimInterval_charge (' yField.units ')']);
+            ylabel(['stimInterval charge (' yField.units ')']);
             addDsiOsiVarTitle(rootData, 'stimInterval_charge')
             hold off;
         end  
         
-        function plot_barAngleVspeak_movingBarLeadingEdge(node, cellData)
+        function plot_barAngleVspeak_mbLeading(node, cellData)
             rootData = node.get(1);
             xvals = rootData.barAngle;
-            yField = rootData.peak_movingBarLeadingEdge;
+            yField = rootData.peak_mbLeading;
 
             yvals = yField.mean_c;
             polarerror(xvals*pi/180, yvals, zeros(1,length(xvals)));
             
             hold on;
-            polar([0 rootData.peak_movingBarLeadingEdge_DSang*pi/180], [0 (100*rootData.peak_movingBarLeadingEdge_DSI)], 'r-');
-            polar([0 rootData.peak_movingBarLeadingEdge_OSang*pi/180], [0 (100*rootData.peak_movingBarLeadingEdge_OSI)], 'g-');
-            ylabel(['peak_movingBarLeadingEdge (' yField.units ')']);
-            addDsiOsiVarTitle(rootData, 'peak_movingBarLeadingEdge')
+            polar([0 rootData.peak_mbLeading_DSang*pi/180], [0 (100*rootData.peak_mbLeading_DSI)], 'r-');
+            polar([0 rootData.peak_mbLeading_OSang*pi/180], [0 (100*rootData.peak_mbLeading_OSI)], 'g-');
+            ylabel(['peak mbLeading (' yField.units ')']);
+            addDsiOsiVarTitle(rootData, 'peak_mbLeading')
             hold off;
         end              
         
-        function plot_barAngleVspeak_movingBarTrailingEdge(node, cellData)
+        function plot_barAngleVspeak_mbTrailing(node, cellData)
             rootData = node.get(1);
             xvals = rootData.barAngle;
-            yField = rootData.peak_movingBarTrailingEdge;
+            yField = rootData.peak_mbTrailing;
 
             yvals = yField.mean_c;
             polarerror(xvals*pi/180, yvals, zeros(1,length(xvals)));
             
             hold on;
-            polar([0 rootData.peak_movingBarTrailingEdge_DSang*pi/180], [0 (100*rootData.peak_movingBarTrailingEdge_DSI)], 'r-');
-            polar([0 rootData.peak_movingBarTrailingEdge_OSang*pi/180], [0 (100*rootData.peak_movingBarTrailingEdge_OSI)], 'g-');
-            ylabel(['peak_movingBarTrailingEdge (' yField.units ')']);
-            addDsiOsiVarTitle(rootData, 'peak_movingBarTrailingEdge')
+            polar([0 rootData.peak_mbTrailing_DSang*pi/180], [0 (100*rootData.peak_mbTrailing_DSI)], 'r-');
+            polar([0 rootData.peak_mbTrailing_OSang*pi/180], [0 (100*rootData.peak_mbTrailing_OSI)], 'g-');
+            ylabel(['peak mbTrailing (' yField.units ')']);
+            addDsiOsiVarTitle(rootData, 'peak_mbTrailing')
             hold off;
         end             
         

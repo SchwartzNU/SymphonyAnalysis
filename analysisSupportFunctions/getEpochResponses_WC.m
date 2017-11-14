@@ -275,14 +275,14 @@ for i=1:L
         outputStruct.charge_movingBarTrailingEdge.value = ones(1,L) * NaN;
         
        % Sam 8/1/17
-        outputStruct.peak_movingBarLeadingEdge.units = 'pC';
-        outputStruct.peak_movingBarLeadingEdge.type = 'byEpoch';
-        outputStruct.peak_movingBarLeadingEdge.value = ones(1,L) * NaN;
+        outputStruct.peak_mbLeading.units = 'pC';
+        outputStruct.peak_mbLeading.type = 'byEpoch';
+        outputStruct.peak_mbLeading.value = ones(1,L) * NaN;
         
         % Sam 8/1/17
-        outputStruct.peak_movingBarTrailingEdge.units = 'pC';
-        outputStruct.peak_movingBarTrailingEdge.type = 'byEpoch';
-        outputStruct.peak_movingBarTrailingEdge.value = ones(1,L) * NaN;        
+        outputStruct.peak_mbTrailing.units = 'pC';
+        outputStruct.peak_mbTrailing.type = 'byEpoch';
+        outputStruct.peak_mbTrailing.value = ones(1,L) * NaN;        
     end
     
     %stimToEnd
@@ -385,20 +385,20 @@ for i=1:L
     % moving bar leading and trailing edges  
     if ~isempty(dataBeforeCenter)
         if abs(max(dataBeforeCenter)) > abs(min(dataBeforeCenter)) %outward current larger
-            outputStruct.peak_movingBarLeadingEdge.value(i) = max(dataBeforeCenter);
+            outputStruct.peak_mbLeading.value(i) = max(dataBeforeCenter);
         else %inward current larger
-            outputStruct.peak_movingBarLeadingEdge.value(i) = min(dataBeforeCenter);
+            outputStruct.peak_mbLeading.value(i) = min(dataBeforeCenter);
         end
-        outputStruct.charge_movingBarLeadingEdge.value(i) = sum(dataBeforeCenter) * 1.0 / sampleRate;
+        outputStruct.charge_mbLeading.value(i) = sum(dataBeforeCenter) * 1.0 / sampleRate;
     end    
     
     if ~isempty(dataAfterCenter)
         if abs(max(dataAfterCenter)) > abs(min(dataAfterCenter)) %outward current larger
-            outputStruct.peak_movingBarTrailingEdge.value(i) = max(dataAfterCenter);
+            outputStruct.peak_mbTrailing.value(i) = max(dataAfterCenter);
         else %inward current larger
-            outputStruct.peak_movingBarTrailingEdge.value(i) = min(dataAfterCenter);
+            outputStruct.peak_mbTrailing.value(i) = min(dataAfterCenter);
         end
-        outputStruct.charge_movingBarTrailingEdge.value(i) = sum(dataAfterCenter) * 1.0 / sampleRate;
+        outputStruct.charge_mbTrailing.value(i) = sum(dataAfterCenter) * 1.0 / sampleRate;
     end        
     
 end
