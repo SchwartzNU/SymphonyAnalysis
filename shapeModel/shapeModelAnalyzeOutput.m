@@ -1,8 +1,8 @@
 nonLinearFit = {};
 
 if plotOutputCurrents
-    figure(102);clf;
-    set(gcf, 'Name','Output Currents','NumberTitle','off');
+    figure(102 + paramSetIndex);clf;
+    set(gcf, 'Name',['Output Currents ' num2str(paramSetIndex)],'NumberTitle','off');
     dim1 = ceil(sqrt(stim_numOptions));
     dim2 = ceil(stim_numOptions / dim1);
     outputAxes = tight_subplot(dim1, dim2, .05, .04);
@@ -141,7 +141,7 @@ for optionIndex = 1:stim_numOptions
     
     if plotCellResponses
         % then plot all the signals together
-        plotSelect = logical([1,0,1,0,1,0,0,0,0]);
+        plotSelect = logical([1,1,0,0,0,0,0,0,0]);
         plot(Tsim, outputSignals(plotSelect,:)');
         legend(outputLabels(plotSelect),'Location','Best');
         xlim(plot_timeLims);
@@ -217,7 +217,7 @@ end
 
 % display combined output over stim options
 if plotResultsByOptions
-    figure(110);
+    figure(150);
     
     if paramSetIndex == 1
         clf();

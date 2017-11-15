@@ -12,9 +12,9 @@
 % stim_intensity = 0.5;
 
 stim_mode = 'flashedEdge';
-stim_edgeSpacing = 20;
+% stim_edgeSpacing = 20;
 % stim_positions = [-120, -90, -60, -30, 0, 30, 60, 90, 120];
-stim_positions = linspace(-120, 120, 30);
+stim_positions = linspace(-120, 120, 12);
 % stim_positions = [0];
 
 stim_numOptions = length(stim_positions);
@@ -22,7 +22,7 @@ stim_edgeAngle = 0;
 stim_contrastSide1 = 1;
 stim_contrastSide2 = 0;
 % stim_meanLevel = 1; % assume the mean is constant and equal to 1
-stim_startTime = 0.1;
+stim_startTime = 0.01;
 stim_stimTime = 0.3;
 stim_fullField = 1;
 
@@ -59,7 +59,7 @@ stim_fullField = 1;
 
 stim_lightMatrix_byOption = {};
 
-for (optionIndex = 1:stim_numOptions)
+for optionIndex = 1:stim_numOptions
 
     %% Setup stimulus
     center = [0,0];

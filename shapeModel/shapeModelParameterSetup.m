@@ -1,8 +1,8 @@
 % shapeModelSetup
 
-sim_endTime = .5;
-sim_timeStep = 0.005;
-sim_spaceResolution = 3; % um per point
+sim_endTime = .3;
+sim_timeStep = 0.01;
+sim_spaceResolution = 1; % um per point
 s_sidelength = 300;%max(cell_rfPositions);
 c_extent = 0; % start and make in loop:
 
@@ -16,11 +16,14 @@ c_subunitSurroundRatio = [0.15 0.15; 0.0 0.0];
 % positionOffsetByVoltageDim = [6, 8; 0, 0];
 % positionOffsetByVoltageDim = [paramValues(paramSetIndex,col_rfOffset), 0; 0, 0];
 positionOffsetByVoltageOnoffDim = zeros(2,2,2);
-positionOffsetByVoltageOnoffDim(:,1,2) = -20;
-positionOffsetByVoltageOnoffDim(:,2,2) = 20;
+positionOffsetByVoltageOnoffDim(:,1,2) = -12;
+positionOffsetByVoltageOnoffDim(:,2,2) = 12;
 
 gaussianSigmaByVoltageOnoffDim = 50*ones(2,2,2);
-gaussianSigmaByVoltageOnoffDim(:,:,2) = 30;
+gaussianSigmaByVoltageOnoffDim(1,2,:) = [30, 20]; % off ex
+gaussianSigmaByVoltageOnoffDim(1,1,:) = [40, 20]; % on ex
+
+
 
 % generate RF map for EX and IN
 % import completed maps 
@@ -92,12 +95,13 @@ for vi = 1:e_numVoltages
         %     vals = vertcat(vals, [0,0,0,0]');
             F = scatteredInterpolant(positions(:,1), positions(:,2), vals,...
                 'linear','none');
-            m_rf = F(mapX, mapY) * sign(e_voltages(vi));    
+            m_rf = F(mapX, mapY) * sign(e_voltages(vi));
         else
             % Simple gaussian RF approximation
             d = sqrt((mapY-positionOffsetByVoltageOnoffDim(vi,ooi,2)).^2 / gaussianSigmaByVoltageOnoffDim(vi,ooi,2)^2 + (mapX-positionOffsetByVoltageOnoffDim(vi,ooi,1)).^2 / gaussianSigmaByVoltageOnoffDim(vi,ooi,1)^2);
             m_center = exp(-d.^2);
             
+            s_enableSurroundGaussian = 0;
             if s_enableSurroundGaussian
                 d = sqrt((mapY-positionOffsetByVoltageOnoffDim(vi,ooi,2)).^2 / gaussianSigmaByVoltageOnoffDim(vi,ooi,2)^2 + (mapX-positionOffsetByVoltageOnoffDim(vi,ooi,1)).^2 / gaussianSigmaByVoltageOnoffDim(vi,ooi,1)^2);
                 m_surround = .2 * exp(-d.^2 / 10);

@@ -7,10 +7,6 @@
 cellName = '060216Ac2'; % original good WFDS
 acName = '1032';
 
-useRealRf = 0;
-useRealFilters = 0;
-useSubunits = 0;
-useOffFilters = 1;
 
 % cellName = '033116Ac2'; % nice RF with edges and bars, but missing bars spikes and inhibitory temporal align
 % acName = '263';
@@ -20,26 +16,35 @@ useOffFilters = 1;
 % cellName = '051216Ac9';
 % acName = '933';
 
-% imgDisplay = @(X,Y,d) imagesc(X,Y,flipud(d'));
-% imgDisplay2 = @(mapX, mapY, d) (surface(mapX, mapY, zeros(size(mapY)), d), grid off);
-normg = @(a) ((a+eps) / max(abs(a(:))+eps));
-plotGrid = @(row, col, numcols) ((row - 1) * numcols + col);
-calcDsi = @(angles, values) abs(sum(exp(sqrt(-1) * angles) .* values) / sum(values));
 
+
+useRealRf = 0;
+useRealFilters = 0;
+useStimulusFilter = 1;
+useSubunits = 0;
+useOffFilters = 1;
+useInhibition = 1;
 
 plotSpatialGraphs = 1;
 plotStimulus = 0;
+plotStimulusFramesOverParameterSets = 0;
 plotSubunitCurrents = 0;
 plotOutputCurrents = 0;
-plotCellResponses = 0;
+plotCellResponses = 1;
 plotOutputNonlinearity = 0;
 plotResultsByOptions = 1;
 
 runInParallelPool = 0;
 
-saveOutputSignalsToHDF5 = 0;
+saveOutputSignalsToHDF5 = 1;
 outputHDF5Name = sprintf('shapeModelOutput_%s.h5', cellName);
 outputStruct = struct();
+
+% imgDisplay = @(X,Y,d) imagesc(X,Y,flipud(d'));
+% imgDisplay2 = @(mapX, mapY, d) (surface(mapX, mapY, zeros(size(mapY)), d), grid off);
+normg = @(a) ((a+eps) / max(abs(a(:))+eps));
+plotGrid = @(row, col, numcols) ((row - 1) * numcols + col);
+calcDsi = @(angles, values) abs(sum(exp(sqrt(-1) * angles) .* values) / sum(values));
 
 
 if ~exist('loadedCellName', 'var') || ~strcmp(loadedCellName, cellName) || ~strcmp(loadedAcName, acName)
@@ -123,11 +128,19 @@ for paramSetIndex = 1:numParamSets
     
     if ~useRealFilters
        shapeModelParameterizedFilters 
-    end    
+    end
     
     shapeModelSubunitSetup
     
     shapeModelStimSetup
+    
+    if useStimulusFilter
+        shapeModelStimulusFilter
+    end
+    
+    if plotStimulusFramesOverParameterSets
+        shapeModelPlotStimFrames
+    end
 
     %% Run simulation
     shapeModelSim

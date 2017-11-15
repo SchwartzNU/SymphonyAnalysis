@@ -3,7 +3,7 @@
 filtParams = cell(2);
 
 % ON EX
-filtParams{1,1} = [1, .065, .016, 0, .03, 0]; % 060216Ac2
+filtParams{1,1} = [-1, .065, .016, 0, .03, 0]; % 060216Ac2
 % filtParams{1,1} = [-1, .175, .05, 0, .08, 0];% 010716Ac1
 
 % paramValues(paramSetIndex,col_filterDelay)
@@ -14,7 +14,7 @@ filtParams{2,1} = [-1, .057, .08, .13, .1, .4]; % 060216Ac2
 
 
 % OFF EX
-filtParams{1,2} = [-1, .065, .016, 0, .03, 0];
+filtParams{1,2} = [1, .065, .016, 0, .03, 0];
 
 % OFF IN
 % filtParams{2,2} = [1, .057, .03, .051, .055, 0];
@@ -39,6 +39,10 @@ for vi = 1:2
             continue
         end
         
+        if ~useInhibition && vi == 2
+            filters{vi,oi} = 0;
+            continue
+        end        
         
         p = filtParams{vi,oi};
         delay = zeros(1, round(p(2) / sim_timeStep));
