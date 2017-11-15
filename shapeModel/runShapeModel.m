@@ -10,7 +10,7 @@ acName = '1032';
 useRealRf = 0;
 useRealFilters = 0;
 useSubunits = 0;
-useOffFilters = 0;
+useOffFilters = 1;
 
 % cellName = '033116Ac2'; % nice RF with edges and bars, but missing bars spikes and inhibitory temporal align
 % acName = '263';
@@ -30,12 +30,12 @@ calcDsi = @(angles, values) abs(sum(exp(sqrt(-1) * angles) .* values) / sum(valu
 plotSpatialGraphs = 1;
 plotStimulus = 0;
 plotSubunitCurrents = 0;
-plotOutputCurrents = 1;
-plotCellResponses = 1;
+plotOutputCurrents = 0;
+plotCellResponses = 0;
 plotOutputNonlinearity = 0;
 plotResultsByOptions = 1;
 
-runInParallelPool = 1;
+runInParallelPool = 0;
 
 saveOutputSignalsToHDF5 = 0;
 outputHDF5Name = sprintf('shapeModelOutput_%s.h5', cellName);
@@ -60,10 +60,12 @@ end
 disp('Running full simulation');
 
 
-paramColumnNames = {'spatial offset', 'ex delay', };
-col_rfOffset = 1;
-col_barSpeed = 2;
-col_filterDelay = 1;
+paramColumnNames = {'edge flip'};
+col_edgeFlip = 1;
+%'spatial offset', 'ex delay', };
+% col_rfOffset = 1;
+% col_barSpeed = 2;
+% col_filterDelay = 1;
 
 % paramValues  = {0;
 %                 10;
@@ -77,14 +79,14 @@ col_filterDelay = 1;
 
 % paramValues = [.1, 20];
 
-paramValues = [0;
-               2;
-%                8;
-               16;
-%                24;
-               35;
-               52;
-               75];
+% paramValues = [0;
+%                2;
+% %                8;
+%                16;
+% %                24;
+%                35;
+%                52;
+%                75];
             
 
 % paramValues = [.04; 
@@ -97,7 +99,7 @@ paramValues = [0;
 % p1 = [.04,.07,.1];
 % p2 = [2,12,32];
 % 
-% paramValues = [];
+paramValues = [0;1];
 % 
 % for i1 = 1:length(p1)
 %     for i2 = 1:length(p2)

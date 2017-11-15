@@ -35,16 +35,16 @@ for (optionIndex = 1:stim_numOptions)
         
         %% Calculate illumination for each subunit
         for vi = 1:e_numVoltages
-            for oi = 1:2
-                if oi == 1
+            for ooi = 1:2
+%                 if ooi == 1
                     lightPolarity = 1;
-                else
-                    lightPolarity = -1;
-                end
+%                 else
+%                     lightPolarity = -1;
+%                 end
                 for si = 1:c_numSubunits(vi)
 
-                    lightIntegral = sum(sum(sim_light .* c_subunitRf{vi,oi}(:,:,si))) / area;
-                    s_lightSubunit{vi,oi}(si,ti) = lightIntegral * lightPolarity;
+                    lightIntegral = sum(sum(sim_light .* c_subunitRf{vi,ooi}(:,:,si))) / area;
+                    s_lightSubunit{vi,ooi}(si,ti) = lightIntegral * lightPolarity;
 
                 end
             end
@@ -66,17 +66,17 @@ for (optionIndex = 1:stim_numOptions)
     s_responseSubunitScaledByRf = {};
     sim_responseSubunitsCombined = [];
     for vi = 1:e_numVoltages
-        for oi = 1:2
+        for ooi = 1:2
 
             % loop through subunits
             s_responseSubunit = [];
-            s_responseSubunitScaledByRf{vi,oi} = [];
+            s_responseSubunitScaledByRf{vi,ooi} = [];
 
-            for si = 1:c_numSubunits(vi,oi)
+            for si = 1:c_numSubunits(vi,ooi)
 
                 % linear convolution
-                temporalFiltered = conv(s_lightSubunit{vi,oi}(si,:), c_filtersResampled{vi,oi});
-                temporalFiltered = temporalFiltered(1:length(s_lightSubunit{vi,oi}(si,:)));
+                temporalFiltered = conv(s_lightSubunit{vi,ooi}(si,:), c_filtersResampled{vi,ooi});
+                temporalFiltered = temporalFiltered(1:length(s_lightSubunit{vi,ooi}(si,:)));
 
                 % nonlinear effects
                 %             sel = [];
@@ -115,32 +115,36 @@ for (optionIndex = 1:stim_numOptions)
                 if plotSubunitCurrents
                     % plot individual subunit inputs and outputs
                     figure(103);
+                    subplot(2,2,(vi-1)*2 + ooi)
                     %                 axes(axesSignalsBySubunit(((si - 1) * 2 + vi)))
-                    plot(normg(s_lightSubunit{vi,oi}(si,:)));
+                    plot(normg(s_lightSubunit{vi,ooi}(si,:)));
                     hold on
                     %             plot(normg(lightOnNess))
-                    plot(normg(c_filtersResampled{vi,oi}) - 0.5)
+                    plot(normg(c_filtersResampled{vi,ooi}) - 0.5)
                     %                 plot(normg(filter_subunitTemporalDecay));
                     plot(normg(temporalFiltered));
                     plot(normg(rectified));
                     plot(normg(nonlin));
                     %                 plot(normg(decayed));
-                    title(sprintf('subunit %d light convolved with filter v = %d on/off = %d', si, e_voltages(vi), oi))
+                    a = {'on','off'};
+                    title(sprintf('subunit %d light convolved with filter v = %d %s', si, e_voltages(vi), a{ooi}))
                     hold off
                     legend('light','temporalFilter', 'filtered', 'rectified', 'nonlinear')
                     drawnow
-                    pause
+%                     if ooi + vi == 4
+%                         pause
+%                     end
                 end
 
 
                 % Multiply subunit response by RF strength (connection subunit to RGC)
 
-                strength = s_subunitStrength{vi,oi}(si);
-                s_responseSubunitScaledByRf{vi,oi}(si,:) = strength * s_responseSubunit(si,:);
+                strength = s_subunitStrength{vi,ooi}(si);
+                s_responseSubunitScaledByRf{vi,ooi}(si,:) = strength * s_responseSubunit(si,:);
 
             end
         % combine current across subunits for this voltage and polarity
-        sim_responseSubunitsCombined(vi,oi,:) = sum(s_responseSubunitScaledByRf{vi,oi}, 1);    
+        sim_responseSubunitsCombined(vi,ooi,:) = sum(s_responseSubunitScaledByRf{vi,ooi}, 1);    
         end
     end
     

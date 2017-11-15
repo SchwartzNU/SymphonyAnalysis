@@ -1,9 +1,9 @@
 % shapeModelSetup
 
-sim_endTime = 2.5;
+sim_endTime = .5;
 sim_timeStep = 0.005;
 sim_spaceResolution = 3; % um per point
-s_sidelength = 350;%max(cell_rfPositions);
+s_sidelength = 300;%max(cell_rfPositions);
 c_extent = 0; % start and make in loop:
 
 % subunit locations, to generate positions
@@ -14,7 +14,13 @@ c_subunitSurroundRatio = [0.15 0.15; 0.0 0.0];
 
 % paramValues(paramSetIndex,col_rfOffset)
 % positionOffsetByVoltageDim = [6, 8; 0, 0];
-positionOffsetByVoltageDim = [paramValues(paramSetIndex,col_rfOffset), 0; 0, 0];
+% positionOffsetByVoltageDim = [paramValues(paramSetIndex,col_rfOffset), 0; 0, 0];
+positionOffsetByVoltageOnoffDim = zeros(2,2,2);
+positionOffsetByVoltageOnoffDim(:,1,2) = -20;
+positionOffsetByVoltageOnoffDim(:,2,2) = 20;
+
+gaussianSigmaByVoltageOnoffDim = 50*ones(2,2,2);
+gaussianSigmaByVoltageOnoffDim(:,:,2) = 30;
 
 % generate RF map for EX and IN
 % import completed maps 
@@ -69,8 +75,10 @@ distanceFromCenter = sqrt(mapY.^2 + mapX.^2);
 % shiftsByDim = analysisData.positionOffset;
 % positionOffset = paramValues{paramSetIndex,col_positionOffset};
 
+
+% Set up spatial RFs for voltages and OO
 for vi = 1:e_numVoltages
-    for oi = 1:2
+    for ooi = 1:2
     
     %     c = griddata(e_positions{vi, ii}(:,1), e_positions{vi, ii}(:,2), e_vals{vi,ii,:}, mapX, mapY);
     %     e_map(:,:,vi) = c;
@@ -78,41 +86,50 @@ for vi = 1:e_numVoltages
         % add null corners to ground the spatial map at edges
         if useRealRf
             positions = e_positions{vi, ii};
-            positions = bsxfun(@plus, positions, [positionOffsetByVoltageDim(vi,1),positionOffsetByVoltageDim(vi,2)]);
+            positions = bsxfun(@plus, positions, [positionOffsetByVoltageOnoffDim(vi,ooi,1),positionOffsetByVoltageOnoffDim(vi,ooi,2)]);
             vals = e_vals{vi,ii,:};
         %     positions = vertcat(positions, [X(1),Y(1);X(end),Y(1);X(end),Y(end);X(1),Y(end)]);
         %     vals = vertcat(vals, [0,0,0,0]');
             F = scatteredInterpolant(positions(:,1), positions(:,2), vals,...
                 'linear','none');
-            m = F(mapX, mapY) * sign(e_voltages(vi));    
+            m_rf = F(mapX, mapY) * sign(e_voltages(vi));    
         else
             % Simple gaussian RF approximation
-            d = sqrt((mapY-positionOffsetByVoltageDim(vi,2)).^2 + 2*(mapX-positionOffsetByVoltageDim(vi,1)).^2);
-            m = exp(-d.^2 / 60^2);
+            d = sqrt((mapY-positionOffsetByVoltageOnoffDim(vi,ooi,2)).^2 / gaussianSigmaByVoltageOnoffDim(vi,ooi,2)^2 + (mapX-positionOffsetByVoltageOnoffDim(vi,ooi,1)).^2 / gaussianSigmaByVoltageOnoffDim(vi,ooi,1)^2);
+            m_center = exp(-d.^2);
+            
+            if s_enableSurroundGaussian
+                d = sqrt((mapY-positionOffsetByVoltageOnoffDim(vi,ooi,2)).^2 / gaussianSigmaByVoltageOnoffDim(vi,ooi,2)^2 + (mapX-positionOffsetByVoltageOnoffDim(vi,ooi,1)).^2 / gaussianSigmaByVoltageOnoffDim(vi,ooi,1)^2);
+                m_surround = .2 * exp(-d.^2 / 10);
+                m_rf = m_center - m_surround;
+            else
+                m_rf = m_center;
+            end
+            
         end
 
-        m(isnan(m)) = 0;
-        m(m < 0) = 0;
-        m = m ./ max(m(:));
-        e_map(:,:,vi,oi) = m;
+        m_rf(isnan(m_rf)) = 0;
+%         m(m < 0) = 0;
+        m_rf = m_rf ./ max(m_rf(:));
+        e_map(:,:,vi,ooi) = m_rf;
     %     e_map(:,:,vi) = e_map(:,:,vi) - min(min(e_map(:,:,vi)));
 
-        c_extent = max(c_extent, max(distanceFromCenter(m > 0)));
+        c_extent = max(c_extent, max(distanceFromCenter(m_rf > 0)));
 
-        if plotSpatialGraphs
-            axes(axesSpatialData((vi-1)*3+1))
-    %         imgDisplay(X,Y,e_map(:,:,vi))
-            plotSpatialData(mapX,mapY,e_map(:,:,vi))
-    %         title(s_voltageLegend{vi});
-            colormap parula
-            colorbar
-            axis equal
-            axis tight
-            title('cell RF')
-    %         xlabel('µm')
-    %         ylabel('µm')
-        %     surface(mapX, mapY, zeros(size(mapX)), c)
-        end
+%         if plotSpatialGraphs
+%             axes(axesSpatialData((vi-1)*3+1))
+%     %         imgDisplay(X,Y,e_map(:,:,vi))
+%             plotSpatialData(mapX,mapY,e_map(:,:,vi))
+%             title(s_voltageLegend{vi});
+%             colormap parula
+%             colorbar
+%             axis equal
+%             axis tight
+% %             title('cell RF')
+%     %         xlabel('µm')
+%     %         ylabel('µm')
+%         %     surface(mapX, mapY, zeros(size(mapX)), c)
+%         end
     end
 end
 

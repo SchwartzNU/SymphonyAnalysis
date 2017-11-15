@@ -3,13 +3,13 @@
 filtParams = cell(2);
 
 % ON EX
-filtParams{1,1} = [-1, .065, .016, 0, .03, 0]; % 060216Ac2
+filtParams{1,1} = [1, .065, .016, 0, .03, 0]; % 060216Ac2
 % filtParams{1,1} = [-1, .175, .05, 0, .08, 0];% 010716Ac1
 
 % paramValues(paramSetIndex,col_filterDelay)
 
 % ON IN
-filtParams{2,1} = [1, .057, .08, .13, .1, .4]; % 060216Ac2
+filtParams{2,1} = [-1, .057, .08, .13, .1, .4]; % 060216Ac2
 % filtParams{2,1} = [1, .14, .08, .08, .3, 0]; % 010716Ac1
 
 
@@ -17,7 +17,8 @@ filtParams{2,1} = [1, .057, .08, .13, .1, .4]; % 060216Ac2
 filtParams{1,2} = [-1, .065, .016, 0, .03, 0];
 
 % OFF IN
-filtParams{2,2} = [1, .057, .03, .051, .055, 0];
+% filtParams{2,2} = [1, .057, .03, .051, .055, 0];
+filtParams{2,2} = [1, .057, .08, .13, .1, .4];
 
 
 decayLength = 0.5;

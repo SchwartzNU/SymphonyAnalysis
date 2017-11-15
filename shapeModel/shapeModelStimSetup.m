@@ -1,15 +1,30 @@
 
-stim_mode = 'movingBar';
-numAngles = 12;
-stim_directions = linspace(0,360,numAngles+1);
-stim_directions(end) = [];
-stim_numOptions = length(stim_directions);
+% stim_mode = 'movingBar';
+% numAngles = 8;
+% stim_directions = linspace(0,360,numAngles+1);
+% stim_directions(end) = [];
+% stim_numOptions = length(stim_directions);
+% 
+% stim_barSpeed = 500;%paramValues(paramSetIndex,col_barSpeed);
+% stim_barLength = 500;
+% stim_barWidth = 150;
+% stim_moveTime = sim_endTime + 1.0;
+% stim_intensity = 0.5;
 
-stim_barSpeed = 500;%paramValues(paramSetIndex,col_barSpeed);
-stim_barLength = 500;
-stim_barWidth = 150;
-stim_moveTime = sim_endTime + 1.0;
-stim_intensity = 0.5;
+stim_mode = 'flashedEdge';
+stim_edgeSpacing = 20;
+% stim_positions = [-120, -90, -60, -30, 0, 30, 60, 90, 120];
+stim_positions = linspace(-120, 120, 30);
+% stim_positions = [0];
+
+stim_numOptions = length(stim_positions);
+stim_edgeAngle = 0;
+stim_contrastSide1 = 1;
+stim_contrastSide2 = 0;
+% stim_meanLevel = 1; % assume the mean is constant and equal to 1
+stim_startTime = 0.1;
+stim_stimTime = 0.3;
+stim_fullField = 1;
 
 % SMS
 % stim_mode = 'flashedSpot';
@@ -78,6 +93,34 @@ for (optionIndex = 1:stim_numOptions)
             end
         end
 
+    elseif strcmp(stim_mode, 'flashedEdge')
+        if paramValues(paramSetIndex, col_edgeFlip) == 0
+            c1 = stim_contrastSide1;
+            c2 = stim_contrastSide2;
+        else
+            c1 = stim_contrastSide2;
+            c2 = stim_contrastSide1;
+        end
+        if stim_fullField
+            for ti = 1:sim_dims(1)
+                t = T(ti);
+                if t > stim_startTime && t < stim_startTime + stim_stimTime
+                    
+                    if stim_edgeAngle == 0
+                        for yi = 1:sim_dims(3)
+                            y = Y(yi);
+                            if y > stim_positions(optionIndex)
+                                stim_lightMatrix(ti, :, yi) = c1;
+                            else
+                                stim_lightMatrix(ti, :, yi) = c2;
+                            end
+                        end
+                    end
+                end
+            end        
+        else
+            error('no non full field code yet')
+        end
 
     elseif strcmp(stim_mode, 'movingBar')
 
@@ -172,7 +215,7 @@ if plotStimulus
         sim_light = squeeze(stim_lightMatrix(ti, :, :));
         plotSpatialData(mapX,mapY,sim_light);
         colormap gray
-        caxis([0,1])
+        caxis([-2,2])
         colorbar
         title(sprintf('stimulus at %.3f sec', T(ti)));
         axis tight

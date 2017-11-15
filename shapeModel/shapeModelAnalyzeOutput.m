@@ -5,7 +5,7 @@ if plotOutputCurrents
     set(gcf, 'Name','Output Currents','NumberTitle','off');
     dim1 = ceil(sqrt(stim_numOptions));
     dim2 = ceil(stim_numOptions / dim1);
-    outputAxes = tight_subplot(dim1, dim2, .02, .04);
+    outputAxes = tight_subplot(dim1, dim2, .05, .04);
 end
 
 out_valsByOptions = [];
@@ -17,7 +17,7 @@ ephysScale = .1;
 simScale = [1, .5; 1, .5] * 1000; % scaling the sim relative to ephys
 combineScaleCurrents = [3, 3; 1, 1]; % voltages; ooi
 combineScaleSpikes = .1;
-additiveOffset = .5; % add to overall output current
+additiveOffset = 0; % add to overall output current
 % displayScale = [5,2.2];
 plotYLimsScale = 1;
 fitAnalysisLimits = [.2, 1.5];
@@ -33,7 +33,7 @@ for optionIndex = 1:stim_numOptions
     outputSignals = [];
     outputLabels = {};
     
-    ang = stim_directions(optionIndex);
+%     ang = stim_directions(optionIndex);
     % Output scale
     sim_responseSubunitsCombinedScaled = sim_responseSubunitsCombinedByOption{optionIndex};
     for vi = 1:e_numVoltages
@@ -84,7 +84,7 @@ for optionIndex = 1:stim_numOptions
         simShift = timeOffsetSim / sim_timeStep;
         cell_responses = [];
 
-        for vi = 1:3 %3 %enables spikes
+        for vi = 1:2 %3 %enables spikes
             mn = ephysScale * c_responses{vi, c_angles == ang}.mean;
 
             if vi <= 2
@@ -151,6 +151,8 @@ for optionIndex = 1:stim_numOptions
 %                         round(100*fitnessScoreByOptionCurrent(optionIndex,3))))
                     
         line(plot_timeLims, [0,0]);
+        
+        title(stim_positions(optionIndex))
 
 
         % investigate nonlinearities relative to the ephys data
@@ -182,8 +184,11 @@ for optionIndex = 1:stim_numOptions
     end
 end
 
-linkaxes(outputAxes)
-ylim(outputAxes(1), 1.4*[min(outputSignals(:)), max(outputSignals(:))])
+if plotOutputCurrents
+    linkaxes(outputAxes)
+end
+% ylim(outputAxes(1), 1.4*[min(outputSignals(:)), max(outputSignals(:))])
+% ylim(outputAxes(1), [-300, 300])
 
     
 
@@ -214,6 +219,10 @@ end
 if plotResultsByOptions
     figure(110);
     
+    if paramSetIndex == 1
+        clf();
+    end
+    
     set(gcf, 'Name','Processed outputs over options','NumberTitle','off');
 
     % compare combined current to spikes to get an RGC output nonlinearity
@@ -225,7 +234,7 @@ if plotResultsByOptions
     dataSetToExport = 5; % this is the one for the overall output comparison
     % ordering = 1;
     for ti = ordering
-        angles = deg2rad(stim_directions)';
+%         angles = deg2rad(stim_directions)';
         values = [];
         for oi = 1:stim_numOptions
             signals = outputSignalsByOption{oi};
@@ -235,25 +244,27 @@ if plotResultsByOptions
         
 %         outputStruct.(sprintf('byang_%s',outputLabels{ti})) = values;
         
-        a = [angles; angles(1)];
-        v = [values; values(1)];
-        v = v / mean(v);
-        polarplot(a, v)
+%         a = [angles; angles(1)];
+%         v = [values; values(1)];
+%         v = v / mean(v);
+%         polarplot(a, v)
+%         hold on
+%         
+%         dsi = abs(sum(exp(sqrt(-1) * angles) .* values) / sum(values));
+%         if dataSetToExport == ti
+%             dsiByParamSet(paramSetIndex,1) = dsi;
+%             valuesByParamSet(paramSetIndex,:) = values;
+%             
+%         end
+    	plot(stim_positions, values)
         hold on
-        
-        dsi = abs(sum(exp(sqrt(-1) * angles) .* values) / sum(values));
-        if dataSetToExport == ti
-            dsiByParamSet(paramSetIndex,1) = dsi;
-            valuesByParamSet(paramSetIndex,:) = values;
-            
-        end
-        
     end
-    hold off
+%     hold off
     legs = {'sim currents','ephys currents','ephys spikes','sim curr nonlin'};
     legend(outputLabels(ordering))
     
     % plot(stim_spotDiams, out_valsByOptions)
+    
 end
 
 % output spiking nonlinearity maybe
