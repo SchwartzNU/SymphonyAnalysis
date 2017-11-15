@@ -265,14 +265,14 @@ for i=1:L
         outputStruct.ONSETsusPeak.value = ones(1,L) * NaN;
         
         % Sam 7/31/17
-        outputStruct.charge_movingBarLeadingEdge.units = 'pC';
-        outputStruct.charge_movingBarLeadingEdge.type = 'byEpoch';
-        outputStruct.charge_movingBarLeadingEdge.value = ones(1,L) * NaN;
+        outputStruct.charge_mbLeading.units = 'pC';
+        outputStruct.charge_mbLeading.type = 'byEpoch';
+        outputStruct.charge_mbLeading.value = ones(1,L) * NaN;
         
         % Sam 7/31/17
-        outputStruct.charge_movingBarTrailingEdge.units = 'pC';
-        outputStruct.charge_movingBarTrailingEdge.type = 'byEpoch';
-        outputStruct.charge_movingBarTrailingEdge.value = ones(1,L) * NaN;
+        outputStruct.charge_mbTrailing.units = 'pC';
+        outputStruct.charge_mbTrailing.type = 'byEpoch';
+        outputStruct.charge_mbTrailing.value = ones(1,L) * NaN;
         
        % Sam 8/1/17
         outputStruct.peak_mbLeading.units = 'pC';
