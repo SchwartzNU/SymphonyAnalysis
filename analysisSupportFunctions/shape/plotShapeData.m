@@ -83,7 +83,7 @@ elseif strncmp(mode, 'plotSpatial', 11)
             axes(ha(a));
 
             if posIndex >= 3
-                gfit = plotSpatial(goodPositions, vals, sprintf('%s at V = %d mV, intensity = %f', smode, voltage, intensity), 1, sign(voltage));
+                gfit = plotSpatial(goodPositions, vals, sprintf('%s at V = %d mV, intensity = %f', smode, voltage, intensity), 1, sign(voltage) + .001);
 %                 if ~isnan(gfit)
 %     %             caxis([0, max(vals)]);
 %     %             colormap(flipud(colormap))
@@ -417,13 +417,13 @@ elseif strcmp(mode, 'temporalComponents')
         % how about some magic numbers? you want some magic numbers? yeah, yes you do.
         % nice, arbitrary, need to be changed, overfitted magic numbers, right here for you
         % ah, now that's nice, you like magic numbers, so good, have some more, here they are
-%         [~, peakIndices] = findpeaks(smooth(varByV,30), 'MinPeakProminence',.05,'Annotate','extents','MinPeakDistance',0.08);
-        peakIndices = [100, 380]; % in ms
+        [~, peakIndices] = findpeaks(smooth(varByV,30), 'MinPeakProminence',.05,'Annotate','extents','MinPeakDistance',0.08);
+%         peakIndices = [80, 380]; % in ms
         maxComponents = max([maxComponents, length(peakIndices)]);
         peakIndicesByVoltage{vi,1} = peakIndices;
         plot(t(peakIndices), varByV(peakIndices), 'ro')
         
-        componentWidth = 0.03; % hey, have another one!       
+        componentWidth = 0.05; % hey, have another one!       
         
         for ci = 1:length(peakIndices)
             basisCenterTime = t(peakIndices(ci));
@@ -689,12 +689,12 @@ elseif strcmp(mode, 'spatialOffset')
 
     % EX
     axes(ha(1))
-    g_ex = plotSpatial(goodPositions_ex, -r_ex, sprintf('Exc. current (pA)'), 1, 1);
+    g_ex = plotSpatial(goodPositions_ex, -r_ex, '', 1, 1); % sprintf('Exc. current (pA)')
 %     caxis([min_, max_]);
     
     % IN
     axes(ha(2))
-    g_in = plotSpatial(goodPositions_in, r_in, sprintf('Inh. current (pA)'), 1, 1);
+    g_in = plotSpatial(goodPositions_in, r_in, '', 1, 1); % sprintf('Inh. current (pA)')
 %     caxis([min_, max_]);
         
     offsetDist = sqrt((g_in('centerX') - g_ex('centerX')).^2) + sqrt((g_in('centerY') - g_ex('centerY')).^2);
@@ -705,24 +705,29 @@ elseif strcmp(mode, 'spatialOffset')
     
     axes(ha(3))
     hold on
-    ellipse(g_ex('sigma2X'), g_ex('sigma2Y'), -g_ex('angle'), g_ex('centerX'), g_ex('centerY'), 'magenta');
+    e = ellipse(g_ex('sigma2X'), g_ex('sigma2Y'), -g_ex('angle'), g_ex('centerX'), g_ex('centerY'), 'blue');
+    set(e, 'LineWidth', 1.5);
+    line(g_ex('centerX') + [-l, l]/2, g_ex('centerY') * [1,1], 'LineWidth', 1.5, 'Color', 'blue');
+    line(g_ex('centerX') * [1,1], g_ex('centerY') + [-l, l]/2, 'LineWidth', 1.5, 'Color', 'blue');
     
-    ellipse(g_in('sigma2X'), g_in('sigma2Y'), -g_in('angle'), g_in('centerX'), g_in('centerY'), 'cyan');
+    e = ellipse(g_in('sigma2X'), g_in('sigma2Y'), -g_in('angle'), g_in('centerX'), g_in('centerY'), 'red');
+    set(e, 'LineWidth', 1.5);
+    line(g_in('centerX') + [-l, l]/2, g_in('centerY') * [1,1], 'LineWidth', 1.5, 'Color', 'red');
+    line(g_in('centerX') * [1,1], g_in('centerY') + [-l, l]/2, 'LineWidth', 1.5, 'Color', 'red');
     
-    legend('Exc','Inh')
     
-    plot(g_ex('centerX'), g_ex('centerY'),'red','MarkerSize',20, 'Marker','+')
-    plot(g_in('centerX'), g_in('centerY'),'blue','MarkerSize',20, 'Marker','+')
-    
+    line([-100, 0],[-150, -150], 'Color','k', 'LineWidth', 2)
+%     legend('Exc','Inh')
+
     hold off
     axis equal
     largestDistanceOffset = max(abs(ad.positions(:)));
     axis(largestDistanceOffset * [-1 1 -1 1])
 %     set(gca, 'XTickMode', 'auto', 'XTickLabelMode', 'auto')
 %     set(gca, 'YTickMode', 'auto', 'YTickLabelMode', 'auto')
-        set(gca, 'XTick', [], 'XColor', 'none')
-        set(gca, 'YTick', [], 'YColor', 'none')    
-    title('Gaussian 2\sigma Fits Overlaid')
+    set(gca, 'XTick', [], 'XColor', 'none')
+    set(gca, 'YTick', [], 'YColor', 'none')    
+%     title('Gaussian 2\sigma Fits Overlaid')
     colorbar
     linkaxes(ha)
     
@@ -959,8 +964,14 @@ end
             v = fitValues - min(fitValues);
 %             centerOfMass = mean(bsxfun(@times, positions, v ./ mean(v)), 1);
 %             plot(centerOfMass(1), centerOfMass(2),'green','MarkerSize',20, 'Marker','+')
-            plot(gfit('centerX'), gfit('centerY'),'red','MarkerSize',20, 'Marker','+')
-            ellipse(gfit('sigma2X'), gfit('sigma2Y'), -gfit('angle'), gfit('centerX'), gfit('centerY'), 'red');
+%             plot(gfit('centerX'), gfit('centerY'),'black','MarkerSize', 10, 'Marker','+')
+            l = 20;
+            line(gfit('centerX') + [-l, l]/2, gfit('centerY') * [1,1], 'LineWidth', 1.5, 'Color', 'k');
+            line(gfit('centerX') * [1,1], gfit('centerY') + [-l, l]/2, 'LineWidth', 1.5, 'Color', 'k');
+
+            e = ellipse(gfit('sigma2X'), gfit('sigma2Y'), -gfit('angle'), gfit('centerX'), gfit('centerY'));
+            set(e, 'Color', 'black')
+            e.LineWidth = 1.5;
             hold off
         else
             gfit = nan;
@@ -972,12 +983,16 @@ end
         % set axis limits
         axis(largestDistanceOffset * [-1 1 -1 1])
         
-        set(gca, 'XTickMode', 'auto', 'XTickLabelMode', 'auto')
-        set(gca, 'YTickMode', 'auto', 'YTickLabelMode', 'auto')
+%         set(gca, 'XTickMode', 'auto', 'XTickLabelMode', 'auto')
+%         set(gca, 'YTickMode', 'auto', 'YTickLabelMode', 'auto')
         
 %         % plot with no axis labels
-%         set(gca, 'XTick', [], 'XColor', 'none')
-%         set(gca, 'YTick', [], 'YColor', 'none')
+        set(gca, 'Box', 'off')
+        set(gca, 'XTick', [], 'XColor', 'none')
+        set(gca, 'YTick', [], 'YColor', 'none')
+        
+        set(gcf,'color','w');
+
     end
 
 end

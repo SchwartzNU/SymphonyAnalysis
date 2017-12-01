@@ -177,10 +177,12 @@ handles = tight_subplot(1, 2, .05, .1, .1);
 
 axes(handles(1));
 for i = 1:numCells
-    if sum(~isnan(dtab{i,{'MB_250_mean_sp', 'MB_500_mean_sp', 'MB_1000_mean_sp','MB_2000_mean_sp'}}), 2) < 3
-        continue
-    end
-    plot([250, 500, 1000, 2000],dtab{i,{'MB_250_mean_sp', 'MB_500_mean_sp', 'MB_1000_mean_sp', 'MB_2000_mean_sp'}}, 'o-')
+%     if sum(~isnan(dtab{i,{'MB_250_mean_sp', 'MB_500_mean_sp', 'MB_1000_mean_sp','MB_2000_mean_sp'}}), 2) < 2
+%         continue
+%     end
+%     plot([250, 500, 1000, 2000],dtab{i,{'MB_250_mean_sp', 'MB_500_mean_sp', 'MB_1000_mean_sp', 'MB_2000_mean_sp'}}, 'o-')
+    plot([250, 500, 1000, 2000],dtab{i,{'MB_250_DSI_sp', 'MB_500_DSI_sp', 'MB_1000_DSI_sp', 'MB_2000_DSI_sp'}}, 'o-')
+    
     hold on
 end
 % legend(cellNames(all(~isnan(dtab{:,{'MB_250_mean_sp', 'MB_500_mean_sp', 'MB_1000_mean_sp', 'MB_2000_mean_sp'}}), 2)))
@@ -827,6 +829,31 @@ plot([0, 1], [nanmean(dtab{selectOtherDS,'DrifTex_DSI_sp'}),nanmean(dtab{selectO
 % yticks(y)
 % yticklabels('auto')
 % ylabel('DSI')
+
+
+%% Simple DSI output for igor
+figure(198);clf;
+% select = selectWfdsOn;
+select = selectOtherDS;
+% means = nanmean(dtab{select,{'MB_250_DSI_sp', 'MB_500_DSI_sp', 'MB_1000_DSI_sp', 'MB_2000_DSI_sp'}});
+% ens = sum(~isnan(dtab{select,{'MB_250_DSI_sp', 'MB_500_DSI_sp', 'MB_1000_DSI_sp', 'MB_2000_DSI_sp'}}));
+% stds = nanstd(dtab{select,{'MB_250_DSI_sp', 'MB_500_DSI_sp', 'MB_1000_DSI_sp', 'MB_2000_DSI_sp'}});
+
+means = nanmean(dtab{select,{'MB_250_DSI_sp', 'MB_500_DSI_sp', 'MB_1000_DSI_sp'}});
+ens = sum(~isnan(dtab{select,{'MB_250_DSI_sp', 'MB_500_DSI_sp', 'MB_1000_DSI_sp'}}));
+stds = nanstd(dtab{select,{'MB_250_DSI_sp', 'MB_500_DSI_sp', 'MB_1000_DSI_sp'}});
+
+
+errorbar([250, 500, 1000], means, stds ./ sqrt(ens))
+xlim([200, 2200])
+
+outstruct.speeds = [250, 500, 1000];
+outstruct.mean = means;
+outstruct.N = ens;
+outstruct.std = stds;
+outstruct.sem = stds ./ sqrt(ens);
+
+exportStructToHDF5(outstruct, 'oods dsi over speed population.h5','dsiOverSpeed')
 
 %% SPEED DEPENDENT DS Variance
 

@@ -20,7 +20,7 @@ acName = '1032';
 
 useRealRf = 0;
 useRealFilters = 0;
-useStimulusFilter = 1;
+useStimulusFilter = 0;
 useSubunits = 0;
 useOffFilters = 1;
 useInhibition = 1;
@@ -30,13 +30,13 @@ plotStimulus = 0;
 plotStimulusFramesOverParameterSets = 0;
 plotSubunitCurrents = 0;
 plotOutputCurrents = 0;
-plotCellResponses = 1;
+plotCellResponses = 0;
 plotOutputNonlinearity = 0;
 plotResultsByOptions = 1;
 
 runInParallelPool = 0;
 
-saveOutputSignalsToHDF5 = 1;
+saveOutputSignalsToHDF5 = 0;
 outputHDF5Name = sprintf('shapeModelOutput_%s.h5', cellName);
 outputStruct = struct();
 
@@ -65,8 +65,9 @@ end
 disp('Running full simulation');
 
 
-paramColumnNames = {'edge flip'};
+paramColumnNames = {'edgePolarity', 'angle'};
 col_edgeFlip = 1;
+col_edgeAngle = 2;
 %'spatial offset', 'ex delay', };
 % col_rfOffset = 1;
 % col_barSpeed = 2;
@@ -104,7 +105,13 @@ col_edgeFlip = 1;
 % p1 = [.04,.07,.1];
 % p2 = [2,12,32];
 % 
-paramValues = [0;1];
+% paramValues = [0;1];
+
+paramValues = [0, 0
+               1, 0
+               0, 90
+               1, 90];
+
 % 
 % for i1 = 1:length(p1)
 %     for i2 = 1:length(p2)
@@ -154,7 +161,7 @@ disp('Model run complete')
 toc
 
 %% display DSI over parameters
-if numParamSets >= 3
+if numParamSets >= 3 & false
     figure(901);clf;
     
     if numParams == 1

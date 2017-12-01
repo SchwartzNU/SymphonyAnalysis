@@ -187,8 +187,8 @@ for p = 1:num_epochs
     sampleCount_total = round(e.spotTotalTime * e.sampleRate);
     sampleCount_on    = round(e.spotOnTime * e.sampleRate);
 
-%     sampleSet = (0:(sampleCount_total-1))'; % total
-    sampleSet = (0:(sampleCount_on-1))'; % just on
+    sampleSet = (0:(sampleCount_total-1))'; % total
+%     sampleSet = (0:(sampleCount_on-1))'; % just on
 %     sampleSet = (sampleCount_on:(sampleCount_total-1))'; % just off
     
     if skipResponses == 1

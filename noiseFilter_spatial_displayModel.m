@@ -41,7 +41,7 @@ end
 % legend({'center green','center uv','surround green','surround uv'})
 % linkaxes(handles)
 
-% filters in FFT
+%% filters in FFT
 figure(209);clf;
 handles = tight_subplot(numSubunits, 1, .05);
 
@@ -241,7 +241,7 @@ if numSpatialDimensions == 4
     %     legend('stimulus','response')
         title(locationNames{ci})
     end
-elseif numSpatialDimensions == 2;
+elseif numSpatialDimensions == 2
 
 
     figure(206);clf;
@@ -270,7 +270,9 @@ end
 if numSpatialDimensions > 4
     figure(219);clf;
     % subunit filters
-    handles = tight_subplot(numSpatialDimensions/2, 1, 0);
+    dim1 = ceil(sqrt(numSpatialDimensions));
+    dim2 = ceil(numSpatialDimensions / dim1);
+    handles = tight_subplot(dim1, dim2, 0);
 
     filterTime = (1:nLags)-1;
     filterTime = filterTime * stim_dt;
@@ -280,13 +282,14 @@ if numSpatialDimensions > 4
         h = [];
         filters = reshape(nim.subunits(si).filtK, [], numSpatialDimensions);
         for fi = 1:size(filters,2)
-            axes(handles(floor((fi-1) / 2) + 1));
-            c = colorsByColor(mod(fi-1, 2)+1,:);
+            axes(handles(fi));%handles(floor((fi-1) / 2) + 1));
+%             c = colorsByColor(mod(fi-1, 2)+1,:);
+            c = 'k';
             
             h(fi) = plot(filterTime, filters(:,fi), 'LineWidth',2, 'LineStyle',style, 'Color', c);
 
             hold on
-            line([0,max(filterTime)],[0,0],'Color','k', 'LineStyle',':');
+%             line([0,max(filterTime)],[0,0],'Color','k', 'LineStyle',':');
             set(gca,'Xdir','reverse')
 %             xlabel('time before output')
             if fi == 1
@@ -295,4 +298,5 @@ if numSpatialDimensions > 4
         end
 
     end
+%     linkaxes(handles);
 end
