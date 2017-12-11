@@ -1,9 +1,9 @@
 % shapeModelSetup
 
 sim_endTime = .3;
-sim_timeStep = 0.01;
-sim_spaceResolution = 1; % um per point
-s_sidelength = 200;%max(cell_rfPositions);
+sim_timeStep = 0.03;
+sim_spaceResolution = 3; % um per point
+s_sidelength = 250;%max(cell_rfPositions);
 c_extent = 0; % start and make in loop:
 
 % subunit locations, to generate positions
@@ -16,19 +16,20 @@ c_subunitSurroundRatio = [0.15 0.15; 0.0 0.0];
 % positionOffsetByVoltageDim = [6, 8; 0, 0];
 % positionOffsetByVoltageDim = [paramValues(paramSetIndex,col_rfOffset), 0; 0, 0];
 positionOffsetByVoltageOnoffDim = zeros(2,2,2);
+positionOffsetByVoltageOnoffDim(1, :, 2) = 7;
 
-gaussianSigmaByVoltageOnoffDim = 40*ones(2,2,2);
+% gaussianSigmaByVoltageOnoffDim = 40*ones(2,2,2);
 
 
 
 % good F mini On offsets for edge:
-% positionOffsetByVoltageOnoffDim = zeros(2,2,2);
-% positionOffsetByVoltageOnoffDim(:,1,2) = 0;
-% positionOffsetByVoltageOnoffDim(:,2,2) = 24;
-% 
-% gaussianSigmaByVoltageOnoffDim = 60*ones(2,2,2);
-% gaussianSigmaByVoltageOnoffDim(1,2,:) = [30, 20]; % off ex
-% gaussianSigmaByVoltageOnoffDim(1,1,:) = [30, 20]; % on ex
+positionOffsetByVoltageOnoffDim = zeros(2,2,2);
+positionOffsetByVoltageOnoffDim(:,1,2) = 0;
+positionOffsetByVoltageOnoffDim(:,2,2) = 24;
+
+gaussianSigmaByVoltageOnoffDim = 60*ones(2,2,2);
+gaussianSigmaByVoltageOnoffDim(1,2,:) = [30, 20]; % off ex
+gaussianSigmaByVoltageOnoffDim(1,1,:) = [30, 20]; % on ex
 
 
 % generate RF map for EX and IN

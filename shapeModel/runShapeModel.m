@@ -22,17 +22,17 @@ useRealRf = 0;
 useRealFilters = 0;
 useStimulusFilter = 0;
 useSubunits = 0;
-useOffFilters = 1;
+useOffFilters = 0;
 useInhibition = 1;
 
 plotSpatialGraphs = 1;
 plotStimulus = 0;
 plotStimulusFramesOverParameterSets = 0;
 plotSubunitCurrents = 0;
-plotOutputCurrents = 0;
-plotCellResponses = 0;
+plotOutputCurrents = 1;
+plotCellResponses = 1;
 plotOutputNonlinearity = 0;
-plotResultsByOptions = 1;
+plotResultsByOptions = 0;
 
 runInParallelPool = 0;
 
@@ -65,12 +65,13 @@ end
 disp('Running full simulation');
 
 
-paramColumnNames = {'edgePolarity', 'angle'};
+% paramColumnNames = {'barSpeeds', 'angle'};
+paramColumnsNames = {'edge polarity','angle'};
 col_edgeFlip = 1;
 col_edgeAngle = 2;
 %'spatial offset', 'ex delay', };
 % col_rfOffset = 1;
-% col_barSpeed = 2;
+% col_barSpeed = 1;
 % col_filterDelay = 1;
 
 % paramValues  = {0;
@@ -81,6 +82,8 @@ col_edgeAngle = 2;
 %                 585;
 %                 975;
 %                 1365};
+
+% paramValues = [250; 500; 1000; 2000];
             
 
 % paramValues = [.1, 20];
@@ -105,12 +108,12 @@ col_edgeAngle = 2;
 % p1 = [.04,.07,.1];
 % p2 = [2,12,32];
 % 
-% paramValues = [0;1];
+paramValues = [0, 0]; 
 
-paramValues = [0, 0
-               1, 0
-               0, 90
-               1, 90];
+% paramValues = [0, 0
+%                1, 0
+%                0, 90
+%                1, 90];
 
 % 
 % for i1 = 1:length(p1)
@@ -161,20 +164,22 @@ disp('Model run complete')
 toc
 
 %% display DSI over parameters
-if numParamSets >= 3 & false
+if numParamSets >= 3
     figure(901);clf;
     
     if numParams == 1
-        d1 = linspace(min(paramValues(:,1)), max(paramValues(:,1)), 10);
-        m = interp1(paramValues(:,1), dsiByParamSet, d1);
-        plot(d1, m)
+%         d1 = linspace(min(paramValues(:,1)), max(paramValues(:,1)), 10);
+%         m = interp1(paramValues(:,1), dsiByParamSet, d1);
+%         plot(d1, m)
         
+        plot(paramValues(:, col_barSpeed), dsiByParamSet)
+
         %% Plot WFDS cells
-        hold on
-        plot(abs(dtab{selectWfdsOn,'spatial_exin_offset'}), dtab{selectWfdsOn,'best_DSI_sp'}, '.', 'MarkerSize', 20)
-        plot(abs(dtab{selectWfdsOff,'spatial_exin_offset'}), dtab{selectWfdsOff,'best_DSI_sp'}, '.', 'MarkerSize', 20)
-        plot(abs(dtab{selectControl,'spatial_exin_offset'}), dtab{selectControl,'best_DSI_sp'}, '.', 'MarkerSize', 20)
-        hold off
+%         hold on
+%         plot(abs(dtab{selectWfdsOn,'spatial_exin_offset'}), dtab{selectWfdsOn,'best_DSI_sp'}, '.', 'MarkerSize', 20)
+%         plot(abs(dtab{selectWfdsOff,'spatial_exin_offset'}), dtab{selectWfdsOff,'best_DSI_sp'}, '.', 'MarkerSize', 20)
+%         plot(abs(dtab{selectControl,'spatial_exin_offset'}), dtab{selectControl,'best_DSI_sp'}, '.', 'MarkerSize', 20)
+%         hold off
         legend('Model','WFDS ON','WFDS OFF','Control')
         xlabel(paramColumnNames{1})
         ylabel('DSI')
