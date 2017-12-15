@@ -273,11 +273,13 @@ if numSpatialDimensions > 4
     dim1 = ceil(sqrt(numSpatialDimensions));
     dim2 = ceil(numSpatialDimensions / dim1);
     handles = tight_subplot(dim1, dim2, 0);
+    
+%     extractedParams = [];
 
     filterTime = (1:nLags)-1;
     filterTime = filterTime * stim_dt;
     h = [];
-    for si = 1
+    for si = 1:numAdditiveSubunits
         
         h = [];
         filters = reshape(nim.subunits(si).filtK, [], numSpatialDimensions);
@@ -287,6 +289,9 @@ if numSpatialDimensions > 4
             c = 'k';
             
             h(fi) = plot(filterTime, filters(:,fi), 'LineWidth',2, 'LineStyle',style, 'Color', c);
+            
+%             filt = filters(:,fi);
+%             extractedParams(fi) = filt(2);
 
             hold on
 %             line([0,max(filterTime)],[0,0],'Color','k', 'LineStyle',':');
@@ -298,5 +303,15 @@ if numSpatialDimensions > 4
         end
 
     end
-%     linkaxes(handles);
+    linkaxes(handles);
+end
+
+%% filters in space
+
+for si = 1:2
+    filters = reshape(nim.subunits(si).filtK, [], numSpatialDimensions);
+    
+    figure(230+si)
+    imagesc(reshape(mean(filters(3:7,:)), 15, []))
+    
 end
