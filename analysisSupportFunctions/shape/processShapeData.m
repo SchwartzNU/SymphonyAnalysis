@@ -7,7 +7,7 @@ num_epochs = length(epochData);
 ad.numEpochs = num_epochs;
 alignmentTemporalOffset_by_v = containers.Map('KeyType','int32','ValueType','double');
 
-%% Reorder epochs by presentationId, just in case
+% Reorder epochs by presentationId, just in case
 pId = [];
 for p = 1:num_epochs
     pId(p) = epochData{p}.presentationId;
@@ -20,7 +20,7 @@ ad.positionOffset = epochData{1}.positionOffset;
 observationColumns = {};
 
 
-%% create full positions list
+% create full positions list
 all_positions = [];
 for p = 1:num_epochs
     e = epochData{p};
@@ -60,7 +60,7 @@ for p = 1:num_epochs
     endTime = e.shapeDataMatrix(:,col_endTime);
     flickerFreq = e.shapeDataMatrix(:,col_flickerFrequency);
 
-    %% find the time offset from light to spikes, assuming On semi-transient cell
+    % find the time offset from light to spikes, assuming On semi-transient cell
 %     lightOnValue = 1.0 * (mod(e.t - e.preTime, e.spotTotalTime) < e.spotOnTime * 1.2);
 %     lightOnTime = zeros(size(e.t));
 % 
@@ -187,9 +187,9 @@ for p = 1:num_epochs
     sampleCount_total = round(e.spotTotalTime * e.sampleRate);
     sampleCount_on    = round(e.spotOnTime * e.sampleRate);
 
-%     sampleSet = (0:(sampleCount_total-1))'; % total
-    sampleSet = (0:(sampleCount_on-1))'; % just on
-%     sampleSet = (sampleCount_on:(sampleCount_total-1))'; % just off
+%     sampleSet = (0:(sampleCount_total-1))'; % (1) total
+    sampleSet = (0:(sampleCount_on-1))'; % (2) just during spot
+%     sampleSet = (sampleCount_on:(sampleCount_total-1))'; % (3) just during post-spot
     
     if skipResponses == 1
         continue
@@ -339,13 +339,13 @@ for p = 1:num_epochs
 end
 
 
-%% overall analysis
+% overall analysis
 
 
 validSearchResult = num_positions > 3;
 
 
-%% store data for the next stages of processing/output
+% store data for the next stages of processing/output
 ad.positions = all_positions;
 ad.observations = observations;
 ad.observationColumns = observationColumns;

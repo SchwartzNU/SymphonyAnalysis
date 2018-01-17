@@ -15,7 +15,7 @@ timeOffsetSim = -.01;
 timeOffsetSpikes = -.3;
 ephysScale = .1;
 simScale = [1, .5; 1, .5] * 1000; % scaling the sim relative to ephys
-combineScaleCurrents = [3, 3; 1, 1]; % voltages; ooi
+combineScaleCurrents = [1.9, 1.9; 1, 1]; % voltages; ooi
 combineScaleSpikes = .1;
 additiveOffset = 0; % add to overall output current
 % displayScale = [5,2.2];
@@ -33,7 +33,7 @@ for optionIndex = 1:stim_numOptions
     outputSignals = [];
     outputLabels = {};
     
-%     ang = stim_directions(optionIndex);
+%     ang = stim_edgeAngle(optionIndex);
     % Output scale
     sim_responseSubunitsCombinedScaled = sim_responseSubunitsCombinedByOption{optionIndex};
     for vi = 1:e_numVoltages
@@ -141,7 +141,7 @@ for optionIndex = 1:stim_numOptions
     
     if plotCellResponses
         % then plot all the signals together
-        plotSelect = logical([1,1,0,0,0,0,0,0,0]);
+        plotSelect = logical([1,0,1,0,1,0,0,0,0]);
         plot(Tsim, outputSignals(plotSelect,:)');
         legend(outputLabels(plotSelect),'Location','Best');
         xlim(plot_timeLims);
@@ -152,7 +152,7 @@ for optionIndex = 1:stim_numOptions
                     
         line(plot_timeLims, [0,0]);
         
-        title(stim_positions(optionIndex))
+        title(stim_directions(optionIndex))
 
 
         % investigate nonlinearities relative to the ephys data
@@ -176,7 +176,7 @@ for optionIndex = 1:stim_numOptions
     
     
     if saveOutputSignalsToHDF5
-        outputStruct.angles = stim_barDirections;
+        outputStruct.angles = stim_edgeAngle;% stim_barDirections;
         outputStruct.t = Tsim;
         for i=1:length(outputLabels)
             outputStruct.(sprintf('a%d_%s', ang, outputLabels{i})) = outputSignals(i,:);
@@ -234,7 +234,7 @@ if plotResultsByOptions
     dataSetToExport = 5; % this is the one for the overall output comparison
     % ordering = 1;
     for ti = ordering
-%         angles = deg2rad(stim_directions)';
+        angles = deg2rad(stim_directions)';
         values = [];
         for oi = 1:stim_numOptions
             signals = outputSignalsByOption{oi};
@@ -244,24 +244,36 @@ if plotResultsByOptions
         
 %         outputStruct.(sprintf('byang_%s',outputLabels{ti})) = values;
         
-%         a = [angles; angles(1)];
-%         v = [values; values(1)];
-%         v = v / mean(v);
-%         polarplot(a, v)
-%         hold on
-%         
-%         dsi = abs(sum(exp(sqrt(-1) * angles) .* values) / sum(values));
-%         if dataSetToExport == ti
-%             dsiByParamSet(paramSetIndex,1) = dsi;
-%             valuesByParamSet(paramSetIndex,:) = values;
-%             
-%         end
-    	plot(stim_positions, values)
+        a = [angles; angles(1)];
+        v = [values; values(1)];
+        v = v / mean(v);
+        polarplot(a, v)
         hold on
+        
+        dsi = abs(sum(exp(sqrt(-1) * angles) .* values) / sum(values));
+        if dataSetToExport == ti
+            dsiByParamSet(paramSetIndex,1) = dsi;
+            valuesByParamSet(paramSetIndex,:) = values;
+            
+        end
+
+        if paramValues(paramSetIndex, col_edgeFlip) == 1
+%             values = values;
+        else
+            values = flipud(values);
+        end
+%         subplot(4,1,paramSetIndex);
+%         dataName = sprintf('%s_%g_%s_%g', paramColumnNames{1}, paramValues(paramSetIndex, 1), paramColumnNames{2}, paramValues(paramSetIndex, 2));
+%     	plot(stim_positions, values', 'DisplayName',dataName)
+        hold on
+        
+        outputStruct.(dataName) = values';
+        outputStruct.x = stim_positions;
     end
 %     hold off
-    legs = {'sim currents','ephys currents','ephys spikes','sim curr nonlin'};
-    legend(outputLabels(ordering))
+%     legs = {'sim currents','ephys currents','ephys spikes','sim curr nonlin'};
+%     legend(outputLabels(ordering))
+    legend();
     
     % plot(stim_spotDiams, out_valsByOptions)
     

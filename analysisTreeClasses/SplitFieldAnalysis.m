@@ -126,9 +126,21 @@ classdef SplitFieldAnalysis < AnalysisTree
         
         function plot0_twoSided_positionVsSpikeCount_stimInterval(node, cellData)
             childNodes = node.getchildren(1);
+            
+            centerPoint = 0;
+            flipx = 0;
+            
             for ni = 1:2
                 rootData = node.get(childNodes(ni));
                 xvals = rootData.position;
+                if ni == 1
+                    xvals = xvals - centerPoint;
+                else
+                    xvals = fliplr(xvals + centerPoint);
+                end
+                if flipx
+                    xvals = -xvals;
+                end
                 yField = rootData.spikeCount_stimInterval;
                 if strcmp(yField.units, 's')
                     yvals = yField.median_c;
@@ -138,9 +150,12 @@ classdef SplitFieldAnalysis < AnalysisTree
                 errs = yField.SEM;
                 errorbar(xvals, yvals, errs);
                 hold on
+                peaks(ni) = max(yvals);
             end
             xlabel('position');
             ylabel(['spikeCount_stimInterval (' yField.units ')']);
+            legend('On negative','On positive')
+            title(sprintf('peak1: %g, peak2: %g', peaks(1), peaks(2)));
         end  
         
         function plot1_twoSided_positionVsSpikeCount_stimTo200ms(node, cellData)
@@ -178,9 +193,13 @@ classdef SplitFieldAnalysis < AnalysisTree
                 errs = yField.SEM;
                 errorbar(xvals, yvals, errs);
                 hold on
+                peaks(ni) = max(yvals);
+                
             end
             xlabel('position');
             ylabel(['ONSET_charge400ms (' yField.units ')']);
+            title(sprintf('peak1: %g, peak2: %g', peaks(1), peaks(2)));
+            
         end      
     end
 end

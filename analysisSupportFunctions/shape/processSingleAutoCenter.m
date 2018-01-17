@@ -27,9 +27,11 @@ timeOffset = nan;
 % timeOffset = 0.09;
 % sessionId = 201781515724; % off in
 
-load('/Users/sam/analysis/cellData/101917Ac1.mat')
-sessionId = 20171019132525; % on ex
+% load('/Users/sam/analysis/cellData/101917Ac1.mat')
+% sessionId = '20171019132525';
 
+load('/Users/sam/analysis/cellData/110917Ac8.mat')
+sessionId = 1;
 
 % process
 
@@ -63,8 +65,8 @@ end
 
 
 %% normal plots
-figure(10);clf;
-plotShapeData(analysisData, 'plotSpatial_peak');
+% figure(10);clf;
+% plotShapeData(analysisData, 'plotSpatial_mean');
 % 
 % figure(11);clf;
 % plotShapeData(analysisData, 'temporalResponses');
@@ -72,14 +74,14 @@ plotShapeData(analysisData, 'plotSpatial_peak');
 
 
 %% new plots
-% figure(13);clf;
-% plotShapeData(analysisData, 'temporalComponents');
+figure(13);clf;
+plotShapeData(analysisData, 'spatialOffset_onOff');
 %%
 % figure(15);clf;
 % plotShapeData(analysisData, 'responsesByPosition');
 
-figure(11);clf;
-plotShapeData(analysisData, 'subunit');
+% figure(11);clf;
+% plotShapeData(analysisData, 'subunit');
 
 
 

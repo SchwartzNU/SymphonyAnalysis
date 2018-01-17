@@ -67,6 +67,7 @@ fprintf('Loaded %g filters\n', numFilters)
 %%  Get Cells
 
 cellDataNames = dir([CELL_DATA_MASTER '*.mat']);
+
 if ismac
     cellDataNames = struct2cell(cellDataNames); %this will be different on windows - see doc ls
     cellDataNames = cellDataNames(1,:);
@@ -74,6 +75,7 @@ elseif ispc
     cellDataNames = cellstr(cellDataNames);
 end
 cellDataNames = cellDataNames(1:(end-1));
+
 cellDataNames = sort(cellDataNames);
 
 cellNames = cell(length(cellDataNames), 1);

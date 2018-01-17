@@ -74,7 +74,7 @@ while r2 < r2MinimumThreshold
 nim = NIM(params_stim, [], [], 'spkNL', 'exp');
 
 
-numAdditiveSubunits = 2;
+numAdditiveSubunits = 1;
 useSavedNimSubunitFilters = 0;
 
 for si = 1:numAdditiveSubunits
@@ -124,7 +124,7 @@ end
 % use this later:
 % nim = nim.init_spkhist( 20, 'doubling_time', 5 );
 tic
-numFittingLoops = 10;
+numFittingLoops = 2;
 nim = nim.set_reg_params('d2t', 100);
 nim = nim.set_reg_params('d2x', 0);
 

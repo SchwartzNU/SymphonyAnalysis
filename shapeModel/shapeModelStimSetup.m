@@ -1,11 +1,11 @@
 
 % stim_mode = 'movingBar';
-% numAngles = 8;
+% numAngles = 12;
 % stim_directions = linspace(0,360,numAngles+1);
 % stim_directions(end) = [];
 % stim_numOptions = length(stim_directions);
 % 
-% stim_barSpeed = 500;%paramValues(paramSetIndex,col_barSpeed);
+% stim_barSpeed = paramValues(paramSetIndex,col_barSpeed);
 % stim_barLength = 500;
 % stim_barWidth = 150;
 % stim_moveTime = sim_endTime + 1.0;
@@ -14,11 +14,11 @@
 stim_mode = 'flashedEdge';
 % stim_edgeSpacing = 20;
 % stim_positions = [-120, -90, -60, -30, 0, 30, 60, 90, 120];
-stim_positions = linspace(-120, 120, 12);
-% stim_positions = [0];
+% stim_positions = linspace(-130, 130, 12);
+stim_positions = [140];
 
 stim_numOptions = length(stim_positions);
-stim_edgeAngle = 0;
+stim_edgeAngle = paramValues(paramSetIndex, col_edgeAngle);
 stim_contrastSide1 = 1;
 stim_contrastSide2 = 0;
 % stim_meanLevel = 1; % assume the mean is constant and equal to 1
@@ -113,6 +113,15 @@ for optionIndex = 1:stim_numOptions
                                 stim_lightMatrix(ti, :, yi) = c1;
                             else
                                 stim_lightMatrix(ti, :, yi) = c2;
+                            end
+                        end
+                    elseif stim_edgeAngle == 90
+                        for xi = 1:sim_dims(2)
+                            x = X(xi);
+                            if x > stim_positions(optionIndex)
+                                stim_lightMatrix(ti, xi, :) = c1;
+                            else
+                                stim_lightMatrix(ti, xi, :) = c2;
                             end
                         end
                     end

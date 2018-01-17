@@ -42,11 +42,15 @@
 % epochIndicesNoise = 766:768; % center surround wc -60
 % epochIndicesColor = [];
 
-load cellData/062717Bc2.mat
-epochIndicesNoise = 161:164;%169; % spatial noise vertical color bar
+% load cellData/062717Bc2.mat
+% epochIndicesNoise = 161:164;%169; % spatial noise vertical color bar
+% epochIndicesColor = [];
+
+% f mini On current clamp
+load cellData/110917Ac8.mat
+epochIndicesNoise = cellData.savedDataSets('SpatialNoise x15');% spatial noise big square
+epochIndicesNoise = epochIndicesNoise(1:2);
 epochIndicesColor = [];
-
-
 
 % WC F mini On
 % load cellData/042617Bc3.mat
@@ -345,6 +349,36 @@ for ei=1:numberOfEpochs
             
         end
         
+    % from here, single color:    
+    elseif strcmp(stimulusAreaMode, 'Spatial')
+        mn = epoch.get('meanLevel');
+        contrast = epoch.get('contrast');        
+        noiseStream = RandStream('mt19937ar', 'Seed', seedByEpoch(ei,1));
+        for i=1:max(locations)
+            locationNames{end+1,1} = sprintf('%g', i);
+        end
+        for fi = 1:floor((stimFrames + postFrames + preFrames)/epoch.get('frameDwell'))
+                for location = locations
+                    if fi > preFrames && fi <= preFrames + stimFrames
+                        
+                        stim = mn + contrast * mn * noiseStream.randn();
+                        if stim < 0
+                            stim = 0;
+                        elseif stim > mn * 2
+                            stim = mn * 2; % probably important to be symmetrical to whiten the stimulus
+                        elseif stim > 1
+                            stim = 1;
+                        end
+                    else
+                        stim = mn;
+                    end
+                    
+                    % convert to contrast
+                    stim = (stim ./ mn) - 1;
+                    
+                    stimulus(fi, location) = stim;
+                end            
+        end
         
     elseif strcmp(epoch.get('displayName'), 'Center Surround Noise')
         % old one pattern mode code
@@ -439,7 +473,7 @@ for ei=1:length(allEpochs)
         
         responseRaw = epoch.getData('Amplifier_Ch1');
 %         response = responseRaw * sign(mean(responseRaw));
-        response = responseRaw * sign(epoch.get('ampHoldSignal'));
+        response = responseRaw * sign(epoch.get('ampHoldSignal') + 0.0001);
 %         response = response / max(response);
         response = response - mean(response);
         response = response - median(response);
