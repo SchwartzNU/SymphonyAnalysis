@@ -66,9 +66,10 @@ fprintf('Loaded %g filters\n', numFilters)
 
 %%  Get Cells
 
-cellDataNames = ls([CELL_DATA_MASTER '*.mat']);
+cellDataNames = dir([CELL_DATA_MASTER '*.mat']);
 if ismac
-    cellDataNames = strsplit(cellDataNames); %this will be different on windows - see doc ls
+    cellDataNames = struct2cell(cellDataNames); %this will be different on windows - see doc ls
+    cellDataNames = cellDataNames(1,:);
 elseif ispc
     cellDataNames = cellstr(cellDataNames);
 end

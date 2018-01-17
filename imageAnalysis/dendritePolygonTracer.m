@@ -1,7 +1,7 @@
 function [DSI,OSI,DSang,OSang,Area,COM_length,COM_angle,Maj,Min,Poly] = dendritePolygonTracer(fname)
 
     M = imread(fname);
-    image(M);
+    image(M,'CDataMapping','scaled');
     colormap('gray');
     disp('Double click on the soma.');
     [x_soma, y_soma] = getpts(gcf);

@@ -58,7 +58,8 @@ Location(:,1) = Location(:,1) .* -1 %correct X location
 Location(:,1) = Location(:,1).*Location(:,3);
 
 %% Collect OSI and OSAng information from Analysis Tree
- [OSICells, OSI, OSAng] = CollectOSI;
+ %[OSICells, OSI, OSAng] = CollectOSI;
+ [SupCells, Sup] = CollectSuppression('SpotsMultiSizeAnalysis')
  
 %% Plot Left Eye
 figure
@@ -66,16 +67,18 @@ LocData = LeftEye;
 LocCells = LeftCells;
 
 subplot(1,2,1)
-OSIPlotter(OSICells, LocData, LocCells, OSI, OSAng)
+%OSIPlotter(OSICells, LocData, LocCells, OSI, OSAng)
+SMSPlotter(SupCells, LocData, LocCells, Sup)
 title('Left Eye')
-
 
  %% Plot Right Eye
 LocData = RightEye
 LocCells = RightCells
 
 subplot(1,2,2)
-OSIPlotter(OSICells, LocData, LocCells, OSI, OSAng)
+%OSIPlotter(OSICells, LocData, LocCells, OSI, OSAng)
+SMSPlotter(SupCells, LocData, LocCells, Sup)
+colorbar
 title('Right Eye')
 
  
@@ -84,6 +87,8 @@ figure
 hold on
 LocData = Location
 LocCells = LocatedCells
-OSIPlotter(OSICells, LocData, LocCells, OSI, OSAng)
+%OSIPlotter(OSICells, LocData, LocCells, OSI, OSAng)
+SMSPlotter(SupCells, LocData, LocCells, Sup)
+colorbar
 title('Combined')
 end
