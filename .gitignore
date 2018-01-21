@@ -7,3 +7,5 @@
 *.pdf
 *.h5
 lib/*
+
+GUIs/dendritePolygonDatabase.mat
