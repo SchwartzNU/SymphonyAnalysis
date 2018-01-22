@@ -1,0 +1,22 @@
+function [targetInd, geneInd, geneCounts] = geneExpression(D, cellTypes, geneNames, gene, selection)
+
+if ischar(selection)
+    selectedType = selection;
+    targetInd = find(contains(cellTypes, selectedType));
+    disp([num2str(length(targetInd)) ' cells of type ' selectedType ', including:']);
+    disp([unique(cellTypes(targetInd))]);
+else
+    targetInd = selection;
+    disp([num2str(length(targetInd)) ' cells selected.']);
+end
+
+geneInd = find(contains(geneNames, gene)); 
+
+disp([num2str(length(geneInd)) ' genes containing ' gene ', including:']);
+disp([geneNames(geneInd)]);
+
+for i=1:length(geneN
+    fprintf('%d cells express
+geneCounts = D(geneInd,targetInd);
+
+end

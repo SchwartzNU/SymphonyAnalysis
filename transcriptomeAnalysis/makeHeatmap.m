@@ -1,11 +1,12 @@
-function [xtickByCellType] = makeHeatmap(D_topGenes, cellType, uniqueTypes_sorted, NofEach_sorted, allGeneNames, Ngenes, targetInd_all)
+function [xtickByCellType] = makeHeatmap(D_topGenes, cellType, uniqueTypes_sorted, NofEach_sorted, allGeneNames, Ngenes)
+
 
 %Variables
-xtickByCellType = cumsum(NofEach_sorted) - (NofEach_sorted/2) + .5
-cumsum_NofEach_sorted = cumsum(NofEach_sorted)
+xtickByCellType = cumsum(NofEach_sorted) - (NofEach_sorted/2) + .5;
+cumsum_NofEach_sorted = cumsum(NofEach_sorted);
 
 figure
-imagesc(log(D_topGenes))
+imagesc(D_topGenes)
 
 %Axis Setup
 ax=gca;
