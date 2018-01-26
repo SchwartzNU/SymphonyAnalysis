@@ -13,4 +13,5 @@ D_binary(D > presentMin) = presentMin;
 D_binary(D < presentMin) = absentMax;
 D_binary(D < absentMax) = 0;
 
+D_binary(D_binary > 0) = 1;
 end

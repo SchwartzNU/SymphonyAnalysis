@@ -36,7 +36,7 @@ switch method
             else
                 targetFrac = sum(D_thres(i,targetInd))./length(targetInd);
             end
-            otherFrac = sum(D_thres(i,othersInd))./length(targetInd);
+            otherFrac = sum(D_thres(i,othersInd))./length(othersInd);
       
             %indexVals(i) = targetFrac - otherFrac;
             indexVals(i) = falseNeg_scaling*targetFrac - (1-falseNeg_scaling)*otherFrac;
@@ -78,7 +78,7 @@ switch method
         indexVals =zeros(1,Ngenes);
         for i=1:Ngenes
             targetFrac = sum(D_thres(i,targetInd))./length(targetInd);
-            otherFrac = sum(D_thres(i,othersInd))./length(targetInd);      
+            otherFrac = sum(D_thres(i,othersInd))./length(othersInd);      
             indexVals(i) = falseNeg_scaling*targetFrac - (1-falseNeg_scaling)*otherFrac;
         end
         [indexVals_sorted, ind] = sort(indexVals, 'descend');

@@ -1,38 +1,44 @@
-function [singleCombinationMatrix, singleReferenceMatrix] = generateCombinationMatrix(D)
+function [] = generateCombinationMatrix(D, fileChunk, isBinary)
 
+%fileChunk is number of gene pairs in each file
+numGenes = size(D,1);
 numCells = size(D,2);
 
-for cellInd = 1:numCells
-    
-    numGenes = length(D);
-    expGenes = sum( D(:,cellInd) ~=0 );
-    
-    %%%%%% For integers
-    %%singleCombinationMatrix = int32(zeros(nchoosek(expGenes,2),2));
-    %%singleReferenceMatrix = int16(zeros(nchoosek(expGenes,2),2));
-    
-    singleCombinationMatrix = zeros(nchoosek(expGenes,2),2);
-    singleReferenceMatrix = zeros(nchoosek(expGenes,2),2);
-    currRow = 0;
-    
+nPairs = nchoosek(numGenes,2);
+load('allPairs', 'allPairs');
+
+nFiles = ceil(nPairs / fileChunk);
+disp(['Preparing to write data for ' num2str(nPairs) ' gene pairs into ' num2str(nFiles) ' files...']);
+
+z=1;
+chunkCounter = 1;
+while z<nPairs
     tic;
-    disp(['Generating combinations for cell ' num2str(cellInd) ' of ' num2str(numCells) '...' ]);
-    for geneA = 1:numGenes-1
-        if D(geneA, cellInd) > 0
-            for geneB = (geneA+1):numGenes
-                if D(geneB, cellInd) > 0
-                    currRow = currRow + 1;
-                    singleCombinationMatrix(currRow,:) = [D(geneA, cellInd),D(geneB, cellInd)];
-                    %singleCombinationMatrix(currRow,:) = [int32(D(geneA, cellInd)),int32(D(geneB, cellInd))];
-                    singleReferenceMatrix(currRow,:) = [int16(geneA),int16(geneB)];
-                end
-            end          
+    zInd = z:z+fileChunk-1;
+    if zInd(end) > nPairs
+        zInd = z:nPairs;
+    end
+    disp(['Chunk ' num2str(chunkCounter) ':']);
+    L = length(zInd);
+    if isBinary
+        D_pairs = false(L, numCells);
+    else
+        D_pairs = zeros(L, numCells);
+    end
+    
+    for i=1:L
+        for cellInd = 1:numCells
+            if isBinary
+                D_pairs(i,cellInd) = D(allPairs(zInd(i), 1), cellInd) & D(allPairs(zInd(i), 2), cellInd);
+            else
+                D_pairs(i,cellInd) = sqrt(D(allPairs(zInd(i), 1), cellInd) * D(allPairs(zInd(i), 2), cellInd)); %geometric mean
+            end
         end
     end
-    save(strcat('CombinationMatrix_cellInd',num2str(cellInd)),'singleCombinationMatrix');
-    save(strcat('ReferenceMatrix_cellInd',num2str(cellInd)),'singleReferenceMatrix');
+    save(['genePairDataBinary/genePairs_' num2str(chunkCounter)], 'D_pairs', '-v7.3'); 
     toc;
+    z = z+fileChunk;
+    chunkCounter = chunkCounter+1;
 end
 
-end
 

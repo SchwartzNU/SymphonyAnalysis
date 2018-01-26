@@ -1,7 +1,5 @@
 function [D_topGenes, uniqueTypes_sorted, NofEach_sorted, allGeneNames] = fullSelectiveExpressionMatrixFromBinary(D_tert, D_orig, cellTypes, geneNames, Ngenes, method)
 
-
-
 uniqueTypes = unique(cellTypes);
 
 Ntypes = length(uniqueTypes);

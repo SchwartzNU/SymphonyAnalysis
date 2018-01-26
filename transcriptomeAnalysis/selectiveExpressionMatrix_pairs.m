@@ -1,4 +1,5 @@
-function [D_sorted, D_target, D_others, D_origOrder, indexVals_sorted, geneNames_sorted, targetInd, othersInd] = selectiveExpressionMatrix(D, cellTypes, geneNames, selection, Ngenes, method)
+function [D_sorted, D_target, D_others, D_origOrder, indexVals_sorted, geneNames_sorted, targetInd, othersInd] = ...
+    selectiveExpressionMatrix_pairs(D, cellTypes, geneNames, selection, Ngenes, method)
 if ischar(selection)
     selectedType = selection;
     targetInd = find(strcmp(selectedType, cellTypes));
@@ -31,7 +32,7 @@ switch method
         falseNeg_scaling = .5;
         for i=1:N
             targetFrac = sum(D_thres(i,targetInd))./length(targetInd);
-            otherFrac = sum(D_thres(i,othersInd))./length(othersInd);
+            otherFrac = sum(D_thres(i,othersInd))./length(targetInd);
       
             %indexVals(i) = targetFrac - otherFrac;
             indexVals(i) = falseNeg_scaling*targetFrac - (1-falseNeg_scaling)*otherFrac;
@@ -73,7 +74,7 @@ switch method
         indexVals =zeros(1,Ngenes);
         for i=1:Ngenes
             targetFrac = sum(D_thres(i,targetInd))./length(targetInd);
-            otherFrac = sum(D_thres(i,othersInd))./length(othersInd);      
+            otherFrac = sum(D_thres(i,othersInd))./length(targetInd);      
             indexVals(i) = falseNeg_scaling*targetFrac - (1-falseNeg_scaling)*otherFrac;
         end
         [indexVals_sorted, ind] = sort(indexVals, 'descend');
