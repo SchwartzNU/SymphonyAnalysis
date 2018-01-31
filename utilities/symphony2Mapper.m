@@ -31,13 +31,16 @@ function cells = symphony2Mapper(fname)
         h5epochs =  epochsByCellMap(labels{i});
         cells(i) = getCellData(fname, labels{i}, h5epochs);
         cells(i).attributes = getSourceAttributes(sourceTree, labels{i}, cells(i).attributes);
-        
-        if strcmpi(cells(i).attributes('eye'), 'left')
-            eyeIndex = -1;
-        elseif strcmpi(cells(i).attributes('eye'), 'right')
-            eyeIndex = 1;
+        try
+            if strcmpi(cells(i).attributes('eye'), 'left')
+                eyeIndex = -1;
+            elseif strcmpi(cells(i).attributes('eye'), 'right')
+                eyeIndex = 1;
+            end
+            cells(i).location = [cells(i).attributes('location'), eyeIndex];
+        catch e
+            disp(e.message);
         end
-        cells(i).location = [cells(i).attributes('location'), eyeIndex];
     end
 end
 
@@ -86,13 +89,9 @@ function cell = getCellData(fname, cellLabel, h5Epochs)
     
     
     % Find where the cell number is listed in the name of the cell source, then reformat it for the filename
-    numPositionInLabel = regexp(cellLabel, '[0-9]+');
-    if numPositionInLabel == 1
-        savedFileName = [file 'c' cellLabel];
-    elseif numPositionInLabel == 2
-        savedFileName = [file cellLabel(2:end)];
-    elseif numPositionInLabel == 3
-        savedFileName = [file 'c' cellLabel(3:end)];
+    [match, ~] = regexp(cellLabel, '[0-9]+' ,'match','split')
+    if ~ isempty(match)
+        savedFileName = [file 'c' match{:}];
     else 
         savedFileName = file;
     end

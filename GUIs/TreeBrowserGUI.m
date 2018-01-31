@@ -874,7 +874,8 @@ classdef TreeBrowserGUI < handle
             obj.populateNodePropertiesTable(curNodeData, allFields);
             try 
                 obj.updatePlot();
-            catch
+            catch e
+                disp(getReport(e,  'extended', 'hyperlinks', 'on'))
                 warning('There is no data for these cells. Check raw data exists, cell data exists, or if the cell has been curated.')
             end
         end
@@ -1100,7 +1101,11 @@ classdef TreeBrowserGUI < handle
             selectedNodes = get(obj.guiTree, 'selectedNodes');
             curNodeIndex = get(selectedNodes(1), 'Value');
             nodeData = obj.analysisTree.get(curNodeIndex);
-            assignin('base', 'nodeData', nodeData);
+            if isfield(nodeData, 'splitValue')
+                assignin('base', strcat('nodeData_', nodeData.splitValue), nodeData);
+            else
+                assignin('base', 'default', nodeData);
+            end
             disp('Set variable: nodeData');
         end
         
