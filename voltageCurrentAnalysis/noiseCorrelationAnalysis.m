@@ -1,6 +1,12 @@
 function MaxCorrs = noiseCorrelationAnalysis
 startupSW
 
+% inputs
+%%% CHANGE STUFF HERE
+desiredVoltage = -60;
+AnalysisType = 'CenterSurroundNoise';
+%%%
+
 folder_name = uigetdir([ANALYSIS_FOLDER 'Projects/'],'Choose project folder');
 obj.projFolder = [folder_name filesep];
 
@@ -15,12 +21,17 @@ temp = textscan(fid, '%s', 'delimiter', '\n');
 cellNames = temp{1};
 fclose(fid);
 
-for ii=2:2%length(cellNames)
+sampleRate = 10000;
+f = 1; % Hz
+d = designfilt('highpassiir', 'SampleRate', sampleRate,...
+	'StopbandFrequency', f*0.8,...
+	'PassbandFrequency', f*1.3,...
+	'StopbandAttenuation', 40, ...
+ 	'PassbandRipple', 5)
+
+for ci=2:2%length(cellNames)
     %% load data
-    cellname = char(cellNames(ii))
-    desiredVoltage = -60;
-    sampleRate = 10000;
-    AnalysisType = 'CenterSurroundNoise';
+    cellname = cellNames{ci}
     
     load(['cellData/',cellname,'.mat'])
     SavedDataSets = cellData.savedDataSets.keys;
@@ -32,8 +43,8 @@ for ii=2:2%length(cellNames)
     end
     
     MatchingEpochs = [];
-    for iiii = 1:length(MatchingDataSets)
-        S = SavedDataSets{MatchingDataSets(iiii)};
+    for cici = 1:length(MatchingDataSets)
+        S = SavedDataSets{MatchingDataSets(cici)};
         MatchingEpochs = [MatchingEpochs,cellData.savedDataSets(S)];
     end
     
@@ -85,21 +96,15 @@ for ii=2:2%length(cellNames)
             
             response = response - mean(response);
             
-            %[b,a] = butter(2,.1/5000,'high');
-            [b,a] = butter(8,0.5/(sampleRate/2),'high');
-            f = 1; % Hz
-            d = designfilt('highpassiir', 'SampleRate', sampleRate,...
-                'StopbandFrequency', f*0.8,...
-                'PassbandFrequency', f*1.3,...
-                'StopbandAttenuation', 40, ...
-                'PassbandRipple', 5)
+            %[b,a] = butter(8,0.5/(sampleRate/2),'high');
+            
             response_filt = filtfilt(d,response);
             
-            figure(100)
-            subplot(2, 1, 1)
-            plot(response)
-            subplot(2, 1, 2)
-            plot(response_filt)
+%             figure(100)
+%             subplot(2, 1, 1)
+%             plot(response)
+%             subplot(2, 1, 2)
+%             plot(response_filt)
             
             responses(oi,:,channel) = response_filt;
         end
@@ -143,7 +148,7 @@ for ii=2:2%length(cellNames)
     SEMCorrelation = std(corrVals)/sqrt(length(corrVals(:,1)));
     [M,I] = max(abs(meanCorrelation));
     MaxCorr = mean(meanCorrelation(I-1:I+1));
-    MaxCorrs(ii) = MaxCorr;
+    MaxCorrs(ci) = MaxCorr;
     
     
     numRandomCorrelations = 100;
@@ -161,7 +166,7 @@ for ii=2:2%length(cellNames)
     
     %
             figure(102 + abs(desiredVoltage));
-            subplot(length(cellNames), 1, ii)
+            subplot(length(cellNames), 1, ci)
             shiftValues = lags / sampleRate;
             plot(shiftValues, meanCorrelation, 'b')
             hold on
@@ -172,12 +177,12 @@ for ii=2:2%length(cellNames)
     plot(shiftValues, corrValsShuffledMean+corrValsShuffledSEM, '-.r')
     plot(shiftValues, corrValsShuffledMean-corrValsShuffledSEM, '-.r')
     
-             figure(111+ii);
+             figure(111+ci);
              clf
              h = tight_subplot(5,ceil(length(corrVals(:,1))/5));
-             for ii = 1:length(corrVals(:,1))
-                 %plot(h(ii), shiftValues(48500:51500), corrVals(ii,48500:51500))
-                 plot(h(ii), shiftValues, corrVals(ii,:))
+             for ci = 1:length(corrVals(:,1))
+                 %plot(h(ci), shiftValues(48500:51500), corrVals(ci,48500:51500))
+                 plot(h(ci), shiftValues, corrVals(ci,:))
              end
      
              set(h, 'YLim', [min(corrVals(:)), max(corrVals(:))]);
