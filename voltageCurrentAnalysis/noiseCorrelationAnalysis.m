@@ -1,6 +1,5 @@
 function MaxCorrs = noiseCorrelationAnalysis
-startup
-
+startupSW
 
 folder_name = uigetdir([ANALYSIS_FOLDER 'Projects/'],'Choose project folder');
 obj.projFolder = [folder_name filesep];
@@ -16,9 +15,9 @@ temp = textscan(fid, '%s', 'delimiter', '\n');
 cellNames = temp{1};
 fclose(fid);
 
-for ii=1:length(cellNames)
+for ii=2:2%length(cellNames)
     %% load data
-    cellname = char(cellNames(ii));
+    cellname = char(cellNames(ii))
     desiredVoltage = -60;
     sampleRate = 10000;
     AnalysisType = 'CenterSurroundNoise';
@@ -44,6 +43,7 @@ for ii=1:length(cellNames)
     speeds = [];
     voltages = [];
     responses = [];
+    MeanResponses = [];
     angles = [];
     oi = 0;
     
@@ -77,17 +77,31 @@ for ii=1:length(cellNames)
                 
             end
             
-            noiseTimeSec = [epoch.get('preTime')/1000, (epoch.get('preTime')+epoch.get('stimTime'))/1000];
+            %noiseTimeSec = [0, epoch.get('preTime')/1000]; % pretime
+            noiseTimeSec = [epoch.get('preTime')/1000, (epoch.get('preTime')+epoch.get('stimTime'))/1000]; %stimtime
             
             t = (0:length(response)-1)/10000;
             response = response(t > noiseTimeSec(1) & t <= noiseTimeSec(2));
             
             response = response - mean(response);
             
-            [b,a] = butter(2,.1/5000,'high');
-            response = filtfilt(b,a,response);
+            %[b,a] = butter(2,.1/5000,'high');
+            [b,a] = butter(8,0.5/(sampleRate/2),'high');
+            f = 1; % Hz
+            d = designfilt('highpassiir', 'SampleRate', sampleRate,...
+                'StopbandFrequency', f*0.8,...
+                'PassbandFrequency', f*1.3,...
+                'StopbandAttenuation', 40, ...
+                'PassbandRipple', 5)
+            response_filt = filtfilt(d,response);
             
-            responses(oi,:,channel) = response;
+            figure(100)
+            subplot(2, 1, 1)
+            plot(response)
+            subplot(2, 1, 2)
+            plot(response_filt)
+            
+            responses(oi,:,channel) = response_filt;
         end
     end
     
@@ -146,8 +160,8 @@ for ii=1:length(cellNames)
     corrValsShuffledSEM = std(shuffledCorrelations)/sqrt(numRandomCorrelations);
     
     %
-            figure(99);
-            clf
+            figure(102 + abs(desiredVoltage));
+            subplot(length(cellNames), 1, ii)
             shiftValues = lags / sampleRate;
             plot(shiftValues, meanCorrelation, 'b')
             hold on
@@ -158,14 +172,15 @@ for ii=1:length(cellNames)
     plot(shiftValues, corrValsShuffledMean+corrValsShuffledSEM, '-.r')
     plot(shiftValues, corrValsShuffledMean-corrValsShuffledSEM, '-.r')
     
-            figure(111);
-            clf
-            h = tight_subplot(5,ceil(length(corrVals(:,1))/5));
-            for ii = 1:length(corrVals(:,1))
-                plot(h(ii), shiftValues(48500:51500), corrVals(ii,48500:51500))
-            end
-    
-            set(h, 'YLim', [min(corrVals(:)), max(corrVals(:))]);
+             figure(111+ii);
+             clf
+             h = tight_subplot(5,ceil(length(corrVals(:,1))/5));
+             for ii = 1:length(corrVals(:,1))
+                 %plot(h(ii), shiftValues(48500:51500), corrVals(ii,48500:51500))
+                 plot(h(ii), shiftValues, corrVals(ii,:))
+             end
+     
+             set(h, 'YLim', [min(corrVals(:)), max(corrVals(:))]);
     
     
     s = struct();
@@ -181,5 +196,7 @@ for ii=1:length(cellNames)
     s.Ch1_PostSub = Ch1_PostSub;
     s.Ch2_PostSub = Ch2_PostSub;
     
-    exportStructToHDF5(s,[num2str(desiredVoltage), '_', cellname],'/')
+    try
+        exportStructToHDF5(s,[num2str(desiredVoltage), '_', cellname],'/')
+    end
 end
