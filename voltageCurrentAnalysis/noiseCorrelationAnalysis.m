@@ -1,5 +1,5 @@
 function MaxCorrs = noiseCorrelationAnalysis
-startupSW
+global ANALYSIS_FOLDER
 
 % inputs
 %%% CHANGE STUFF HERE
@@ -29,9 +29,9 @@ d = designfilt('highpassiir', 'SampleRate', sampleRate,...
 	'StopbandAttenuation', 40, ...
  	'PassbandRipple', 5)
 
-for ci=2:2%length(cellNames)
+for ci=1:length(cellNames)%length(cellNames)
     %% load data
-    cellname = cellNames{ci}
+    cellname = char(cellNames(ci));
     
     load(['cellData/',cellname,'.mat'])
     SavedDataSets = cellData.savedDataSets.keys;
@@ -144,6 +144,8 @@ for ci=2:2%length(cellNames)
         [corrVals(ei, :), lags] = xcorr(responses(ei,:,1), responses(ei,:,2), 'coeff');
     end
     
+    MaxCorrPerTrial = max(corrVals,[],2);
+    
     meanCorrelation = mean(corrVals, 1);
     SEMCorrelation = std(corrVals)/sqrt(length(corrVals(:,1)));
     [M,I] = max(abs(meanCorrelation));
@@ -178,7 +180,6 @@ for ci=2:2%length(cellNames)
     plot(shiftValues, corrValsShuffledMean-corrValsShuffledSEM, '-.r')
     
              figure(111+ci);
-             clf
              h = tight_subplot(5,ceil(length(corrVals(:,1))/5));
              for ci = 1:length(corrVals(:,1))
                  %plot(h(ci), shiftValues(48500:51500), corrVals(ci,48500:51500))
@@ -194,6 +195,7 @@ for ci=2:2%length(cellNames)
     s.SEMCorrelation = SEMCorrelation;
     s.meanCorrelationShuffled = corrValsShuffledMean;
     s.SEMCorrelationShuffled = corrValsShuffledSEM;
+    s.MaxCorrPerTrial = MaxCorrPerTrial;
     s.Ch1_PreSub = Ch1_PreSub;
     s.Ch2_PreSub = Ch2_PreSub;
     s.Ch1_Mean = Ch1_Mean;
@@ -203,5 +205,8 @@ for ci=2:2%length(cellNames)
     
     try
         exportStructToHDF5(s,[num2str(desiredVoltage), '_', cellname],'/')
+    catch
+        display(['Could not save data for' cellname])
     end
+    display(['completed' cellname])
 end
