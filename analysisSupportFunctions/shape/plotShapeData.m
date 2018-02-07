@@ -569,6 +569,14 @@ elseif strcmp(mode, 'responsesByPosition')
 %         set(gca,'XTickLabelMode','manual')
         set(ha(poi),'XTickLabels',[])
         
+        startSampleTime = ad.sampleSet(1) / ad.sampleRate;
+        endSampleTime = ad.sampleSet(end) / ad.sampleRate;
+        y = [-10,100];
+        startLine = line([1,1]*startSampleTime, y, 'Parent', ha(poi), 'color', 'k');
+        endLine = line([1,1]*endSampleTime, y, 'Parent', ha(poi), 'color', 'k');
+        set(get(get(startLine,'Annotation'),'LegendInformation'),'IconDisplayStyle','off')
+        set(get(get(endLine,'Annotation'),'LegendInformation'),'IconDisplayStyle','off');
+        
         grid(ha(poi), 'on')
         zline = line([0,max(t)],[0,0], 'Parent', ha(poi), 'color', 'k');
         set(get(get(zline,'Annotation'),'LegendInformation'),'IconDisplayStyle','off'); % only display one legend per type
@@ -584,7 +592,7 @@ elseif strcmp(mode, 'responsesByPosition')
 %     for i = 1:length(ha)
 %         i
 %         min_value
-    ylim(ha(1), [min_value, max_value*2]);
+    ylim(ha(1), [min_value, max_value*1.3]);
     xlim(ha(1), [0, max(t)])
 %     end
     
@@ -666,6 +674,7 @@ elseif strcmp(mode, 'spatialOffset_onOff')
         obs_sel_high = obs_sel & obs(:,3) == i_high;
         if any(obs_sel_high)
             posIndex = posIndex + 1;
+%             r_high(posIndex,1) = min(obs(obs_sel_high,5));
             r_high(posIndex,1) = mean(obs(obs_sel_high,5),1);
             goodPositions_high(posIndex,:) = pos;
         end
@@ -680,6 +689,7 @@ elseif strcmp(mode, 'spatialOffset_onOff')
         obs_sel_low = obs_sel & obs(:,3) == i_low;
         if any(obs_sel_low)
             posIndex = posIndex + 1;
+%             r_low(posIndex,1) = min(obs(obs_sel_low,5));
             r_low(posIndex,1) = mean(obs(obs_sel_low,5),1);
             goodPositions_low(posIndex,:) = pos;
         end
@@ -718,7 +728,7 @@ elseif strcmp(mode, 'spatialOffset_onOff')
     line(g_low('centerX') * [1,1], g_low('centerY') + [-l, l]/2, 'LineWidth', 1.5, 'Color', color_low);
     
     
-    line([-100, 0],[-130, -130], 'Color','k', 'LineWidth', 2) % 50 µm scale bar
+    line([-100, 0],[-130, -130], 'Color','k', 'LineWidth', 2) % 100 µm scale bar
 %     legend('Exc','Inh')
 
     hold off
@@ -735,7 +745,7 @@ elseif strcmp(mode, 'spatialOffset_onOff')
     
     disp(g_high.keys)
     disp(cell2mat(g_high.values))
-    disp(cell2mat(g_high.values))
+    disp(cell2mat(g_low.values))
     
 elseif strcmp(mode, 'spatialOffset')
     

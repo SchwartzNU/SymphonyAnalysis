@@ -135,9 +135,11 @@ for p = 1:num_epochs
 %         e.signalLightOn(tRegion) = intensities(si); % square wave for plotting
     end
     
-    
-    
-    if isKey(alignmentTemporalOffset_by_v, e.ampVoltage)
+    if ~isnan(e.timeOffset) && abs(e.timeOffset) > 0
+        % just use the builtin one if it's stored in the epoch
+        t_offset = e.timeOffset;
+        
+    elseif isKey(alignmentTemporalOffset_by_v, e.ampVoltage)
         
         t_offset = alignmentTemporalOffset_by_v(e.ampVoltage);
 %         fprintf('using premade alignment %1.3f for v = %d\n',t_offset,e.ampVoltage)
@@ -188,7 +190,11 @@ for p = 1:num_epochs
     sampleCount_on    = round(e.spotOnTime * e.sampleRate);
 
 %     sampleSet = (0:(sampleCount_total-1))'; % (1) total
-    sampleSet = (0:(sampleCount_on-1))'; % (2) just during spot
+%     sampleSet = (0:(sampleCount_on-1))'; % (2) just during spot
+    
+    buffer = round(sampleCount_on * .1);
+    sampleSet = ((0+buffer):(sampleCount_on - 1 - buffer))'; % (2) just during spot
+    
 %     sampleSet = (sampleCount_on:(sampleCount_total-1))'; % (3) just during post-spot
     
     if skipResponses == 1
@@ -351,5 +357,6 @@ ad.observations = observations;
 ad.observationColumns = observationColumns;
 ad.timeOffset = t_offset;
 ad.validSearchResult = validSearchResult;
+ad.sampleSet = sampleSet;
 
 end
