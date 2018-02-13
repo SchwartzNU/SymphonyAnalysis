@@ -57,7 +57,7 @@ dtabColumns{'best_DSI_sp', 'type'} = {'single'};
 dtabColumns{'best_DSang_sp', 'type'} = {'single'};
 dtabColumns{'best_source', 'type'} = {'string'};
 
-%% Autocenter offset
+%% Autocenter Ex In offset
 
 diffX = dtab.spatial_ex_centerX - dtab.spatial_in_centerX; % vector inhibition to excitation (like soma to dendrites)
 diffY = dtab.spatial_ex_centerY - dtab.spatial_in_centerY;
@@ -67,9 +67,29 @@ autocenterOffsetDistance = sqrt(diffX.^2 + diffY.^2);
 autocenterOffsetDistanceNormalized = autocenterOffsetDistance ./ avgSigma;
 autocenterOffsetDirections = rad2deg(angle(diffX + sqrt(-1) * diffY));
 dtab.spatial_exin_offset = diffX + sqrt(-1) * diffY;
+dtab.spatial_exin_offset_normalized = autocenterOffsetDistanceNormalized;
 dtab.spatial_exin_offset_magnitude = autocenterOffsetDistance;
 dtab.spatial_exin_offset_angle = autocenterOffsetDirections;
 dtabColumns{'spatial_exin_offset', 'type'} = {'single'};
+dtabColumns{'spatial_exin_offset_normalized', 'type'} = {'single'};
 dtabColumns{'spatial_exin_offset_magnitude', 'type'} = {'single'};
 dtabColumns{'spatial_exin_offset_angle', 'type'} = {'single'};
 
+
+%% Autocenter On Off offset
+
+diffX = dtab.spatial_on_centerX - dtab.spatial_off_centerX; % vector off to on
+diffY = dtab.spatial_on_centerY - dtab.spatial_off_centerY;
+
+avgSigma = mean(dtab{:,{'spatial_off_sigma2X','spatial_on_sigma2X','spatial_off_sigma2Y','spatial_on_sigma2Y'}}, 2);
+autocenterOffsetDistance = sqrt(diffX.^2 + diffY.^2);
+autocenterOffsetDistanceNormalized = autocenterOffsetDistance ./ avgSigma;
+autocenterOffsetDirections = rad2deg(angle(diffX + sqrt(-1) * diffY));
+dtab.spatial_onoff_offset = diffX + sqrt(-1) * diffY;
+dtab.spatial_onoff_offset_normalized = autocenterOffsetDistanceNormalized;
+dtab.spatial_onoff_offset_magnitude = autocenterOffsetDistance;
+dtab.spatial_onoff_offset_angle = autocenterOffsetDirections;
+dtabColumns{'spatial_onoff_offset', 'type'} = {'single'};
+dtabColumns{'spatial_onoff_offset_normalized', 'type'} = {'single'};
+dtabColumns{'spatial_onoff_offset_magnitude', 'type'} = {'single'};
+dtabColumns{'spatial_onoff_offset_angle', 'type'} = {'single'};

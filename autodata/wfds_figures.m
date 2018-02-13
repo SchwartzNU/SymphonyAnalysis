@@ -10,8 +10,8 @@ colo2 = [.68, .1, .2];
 col_exc = [0 0 1];
 col_inh = [1 0 0];
 
-selectWfdsOn = cellTypeSelect('ON WFDS');% | cellTypeSelect('F-mini ON');
-selectWfdsOff = cellTypeSelect('OFF WFDS') | cellTypeSelect('F-mini OFF');
+selectWfdsOn = cellTypeSelect('ON WFDS') | cellTypeSelect('F-mini ON');
+% selectWfdsOff = cellTypeSelect('OFF WFDS') | cellTypeSelect('F-mini OFF');
 % selectFminiOff = cellTypeSelect('F-mini OFF');
 % selectULD = cellTypeSelect('UltraLowDefinition');
 % selectDS = cellTypeSelect('ON-OFF DS transient') | cellTypeSelect('ON DS sustained');
@@ -205,7 +205,7 @@ axis equal
 %% spatial RF offset
 
 figure(131);clf;
-handles = tight_subplot(3,3, .05, .1);
+handles = tight_subplot(3,3, .1, .1);
 % angleOffset = zeros(length(cellNames),1);
 % for i = 1:length(cellNames)
 %     if ~isempty(strfind(cellNames{i}, 'B'))
@@ -216,8 +216,12 @@ handles = tight_subplot(3,3, .05, .1);
 % end
 % angleOffset = deg2rad(angleOffset);
 
-autocenterOffsetDirections = angle(dtab.spatial_exin_offset);
-autocenterOffsetDistance = abs(dtab.spatial_exin_offset);
+% autocenterOffsetDirections = angle(dtab.spatial_exin_offset);
+% autocenterOffsetDistance = abs(dtab.spatial_exin_offset);
+
+autocenterOffsetDirections = angle(dtab.spatial_onoff_offset);
+autocenterOffsetDistance = abs(dtab.spatial_onoff_offset);
+autocenterOffsetDistanceNormalized = dtab.spatial_onoff_offset_normalized;
 
 axes(handles(1));
 plot(autocenterOffsetDistance(selectWfdsOn) .* exp(sqrt(-1) * autocenterOffsetDirections(selectWfdsOn)), 'ob')
@@ -227,8 +231,8 @@ hold off
 line([-10,10],[0,0])
 line([0,0],[-10,10])
 axis square
-title('spatial offset Ex from In')
-legend('WFDS','Other')
+title('spatial offset Off to On')
+legend('FmON','Other')
 
 axes(handles(2));
 plot(autocenterOffsetDistanceNormalized(selectWfdsOn) .* exp(sqrt(-1) * autocenterOffsetDirections(selectWfdsOn)), 'ob')
@@ -238,12 +242,12 @@ hold off
 line([-1,1],[0,0])
 line([0,0],[-1,1])
 axis square
-title('spatial offset Ex from In (norm)')
-legend('WFDS','Other')
+title('spatial offset Off to On (norm)')
+legend('FmON','Other')
 
 
 axes(handles(3));
-boxplot(autocenterOffsetDistance, selectWfdsOn, 'Labels',{'other','wfds'})
+boxplot(autocenterOffsetDistance, selectWfdsOn, 'Labels',{'other','FmON'})
 % histogram(autocenterOffsetDistance(selectWfds), 10)
 % hold on
 % histogram(autocenterOffsetDistance(~selectWfds), 10)
@@ -253,27 +257,31 @@ title('magnitude of spatial offset')
 % legend('WFDS','Other')
 
 axes(handles(4));
-boxplot(autocenterOffsetDistanceNormalized, selectWfdsOn, 'Labels',{'other','wfds'})
+boxplot(autocenterOffsetDistanceNormalized, selectWfdsOn, 'Labels',{'other','FmON'})
 title('magnitude of spatial offset (norm)')
 
 
 axes(handles(5));
 polarhistogram(autocenterOffsetDirections(selectWfdsOn), 10)
 hold on
-% polarhistogram(autocenterOffsetDirections(~selectWfdsOn), 10)
+polarhistogram(autocenterOffsetDirections(~selectWfdsOn), 10)
 hold off
 title('angle of spatial offset')
 
-axes(handles(6));
-spatialToTextureDiff = dtab.best_DSang_sp - rad2deg(autocenterOffsetDirections);
-polarhistogram(deg2rad(spatialToTextureDiff(selectWfdsOn)), 10)
-hold on
-polarhistogram(deg2rad(spatialToTextureDiff(~selectWfdsOn)), 10)
-title('difference between tex angle and offset angle')
+% axes(handles(6));
+% spatialToTextureDiff = dtab.best_DSang_sp - rad2deg(autocenterOffsetDirections);
+% polarhistogram(deg2rad(spatialToTextureDiff(selectWfdsOn)), 10)
+% hold on
+% polarhistogram(deg2rad(spatialToTextureDiff(~selectWfdsOn)), 10)
+% title('difference between tex angle and offset angle')
 
-spatialToImageDiff = mod(autocenterOffsetDirections(selectWfdsOn) - dtab.imageAngle(selectWfdsOn), 360);
+spatialToImageDiff = deg2rad(mod(autocenterOffsetDirections - dtab.angle_somaToCenterOfMass, 360));
 axes(handles(7));
-polarhistogram(deg2rad(spatialToImageDiff), 10)
+
+polarhistogram(spatialToImageDiff(selectWfdsOn), 10)
+hold on
+polarhistogram(spatialToImageDiff(~selectWfdsOn), 10)
+hold off
 title('difference between image angle and offset angle')
 
 
@@ -412,7 +420,7 @@ varsToMean = {'SMS_mean0_onSpikes','SMS_mean0_offSpikes', 'SMS_meanHigh_onSpikes
 ylabels = {'ON spikes','OFF spikes','OFF spikes','ON spikes'};
 baselinesToMean = {'SMS_mean0_spotSize_sp','SMS_mean0_spotSize_sp', 'SMS_meanHigh_spotSize_sp','SMS_meanHigh_spotSize_sp'};
 
-cellTypeSelects = {selectWfdsOff};
+cellTypeSelects = {selectWfdsOn};
 cellTypeNames = {'WFDS ON','WFDS OFF'};
 
 handles = tight_subplot(length(varsToMean), length(cellTypeSelects), [0.01, .1], 0.1, .1);
@@ -458,6 +466,7 @@ for vari = 1:length(varsToMean)
     
         i = (vari-1) * length(cellTypeSelects) + cellTypeIndex;
         axes(handles(i));
+        cellCount
         m = nanmean(spikesOverBaselineByVar{cellTypeIndex, vari});
         s = nanstd(spikesOverBaselineByVar{cellTypeIndex, vari}) / sqrt(cellCount);
         plot(mean_spotSize, m, 'r', 'LineWidth',3, 'Color', colo)

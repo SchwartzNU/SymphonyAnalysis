@@ -169,18 +169,27 @@ if ~isempty(externalTableFilenames)
         origTableVars = dtab_add.Properties.VariableNames;
         externalRow = [];
         warning('off','MATLAB:table:RowsAddedNewVars')
+        
+        
+        % loop through all cells in current table and check if they are in the external table
         for rowIndex = 1:size(dtab_add,1)
             cellName = dtab_add.Properties.RowNames{rowIndex};
 
-            % find if the external cell is not already present in the table so we can fill in nans
-            % have to put in nan for the missing values because otherwise it'll get filled with 0
+            
             if ismember(cellName, externalTable.Properties.RowNames)
 %                 fprintf('%s cell in external table\n', cellName)
                 externalRow = externalTable(cellName,:);
+                
+                % if this column from external table adds a column to the table, first init the row with nans
+                for vi = 1:length(externalRow.Properties.VariableNames)
+                    externalVarName = externalRow.Properties.VariableNames{vi};
+                    if ~ismember(externalVarName, dtab_add.Properties.VariableNames)
+                        dtab_add(:, externalVarName) = num2cell(nan*zeros(1,size(dtab_add, 1)));
+                    end
+                end
+                
+                
                 dtab_add(cellName, externalRow.Properties.VariableNames) = externalRow(1,:);
-            else
-                a = size(externalTable(1,:), 2);
-                dtab_add(cellName, externalTable.Properties.VariableNames) = num2cell(nan(1,a));
             end
 
     %         if ~ismember(cellName, externalTable.Properties.RowNames)
@@ -197,14 +206,14 @@ if ~isempty(externalTableFilenames)
 
         end
 
-        % clear empties
-    %     numericalVarColumns = externalTable.Properties.VariableNames;
-    %     for tableRow = 1:size(dtab_add,1)
-    %         d = dtab_add{tableRow, numericalVarColumns};
-    %         if all(d == 0)
-    %             dtab_add(tableRow, numericalVarColumns) = num2cell(nan*zeros(1,length(numericalVarColumns)));
-    %         end
-    %     end
+%         % clear empties
+%         numericalVarColumns = externalTable.Properties.VariableNames;
+%         for tableRow = 1:size(dtab_add,1)
+%             d = dtab_add{tableRow, numericalVarColumns};
+%             if all(d == 0)
+%                 dtab_add(tableRow, numericalVarColumns) = num2cell(nan*zeros(1,length(numericalVarColumns)));
+%             end
+%         end
 
         %
         
