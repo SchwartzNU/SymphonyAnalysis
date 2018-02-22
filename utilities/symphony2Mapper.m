@@ -69,14 +69,14 @@ function cell = getCellData(fname, cellLabel, h5Epochs)
         end
         lastProtocolId = protocolId;       
 
-        parameterMap = buildAttributes(h5Epochs(index).Groups(2), fname, parameterMap);
+        parameterMap = buildAttributes(h5Epochs(index).Groups(end-2), fname, parameterMap);
         parameterMap('epochNum') = i;
         parameterMap('epochStartTime') = sortedEpochTime(i);
 
         e = EpochData;
         e.parentCell = cell;
         e.attributes = containers.Map(parameterMap.keys, parameterMap.values);
-        e.dataLinks = getResponses(h5Epochs(index).Groups(3).Groups);
+        e.dataLinks = getResponses(h5Epochs(index).Groups(end-1).Groups);
         epochData(i)= e;
     end
 
