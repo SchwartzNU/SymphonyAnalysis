@@ -96,9 +96,9 @@ function [DSI,OSI,DSang,OSang,Area,COM_length,COM_angle,Maj,Min,Poly] = dendrite
     %shift soma coordinates according to the new origin
     x_soma = x_soma - center(1);
     y_soma = y_soma + center(2);
-    COM_length = sqrt((x_soma - COM(2))^2 + (y_soma - COM(1))^2);
-    COM_angle = (atan((y_soma - COM(1))/(x_soma - COM(2))))*180/pi;
-    line([x_soma COM(2)], [-y_soma COM(1)], 'Color', 'k')
+    COM_length = sqrt((x_soma - COM(1))^2 + (y_soma - COM(2))^2);
+    COM_angle = (atan((y_soma - COM(2))/(x_soma - COM(1))))*180/pi;
+    line([x_soma COM(1)], [-y_soma COM(2)], 'Color', 'k')
     
     %Eccentricity
     %Ecc = sqrt(1 - (Min^2/Maj^2));
