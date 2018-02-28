@@ -1,4 +1,4 @@
-function [] = plotShapeData(ad, mode)
+function [] = plotShapeData(ad, mode, options)
 
 if ~isfield(ad,'observations')
     disp('no observations');
@@ -6,6 +6,9 @@ if ~isfield(ad,'observations')
 end
 obs = ad.observations;
 
+if nargin < 3
+    options = struct();
+end
 
 if strcmp(mode, 'printParameters')
     firstEpoch = ad.epochData{1};
@@ -23,27 +26,38 @@ if strcmp(mode, 'printParameters')
     disp(ad.epochData{end})
    
     
-    
 elseif strncmp(mode, 'plotSpatial', 11)
-% elseif strcmp(mode, 'plotSpatial_tHalfMax')
 
     if isempty(obs)
         disp('empty observations')
         return
     end
 
-    if strfind(mode, 'mean')
+    combinationMode = 'mean';
+    if contains(mode, 'mean')
         mode_col = 5;
-        smode = 'mean';
-    elseif strfind(mode, 'peak')
+        modeLabel = 'mean';
+    elseif contains(mode, 'peak')
         mode_col = 6;
-        smode = 'peak';
-    elseif strfind(mode, 'tHalfMax')
-        mode_col = 7;
-        smode = 't half max';
-    elseif strfind(mode, 'saveMaps')
+        modeLabel = 'peak';
+    elseif contains(mode, 'median')
         mode_col = 5;
-        smode = 'saveMaps';        
+        modeLabel = 'median of means';
+        combinationMode = 'median';
+    elseif contains(mode, 'first')
+        mode_col = 5;
+        modeLabel = 'first';
+        combinationMode = 'first';        
+    elseif contains(mode, 'last')
+        mode_col = 5;
+        modeLabel = 'last';
+        combinationMode = 'last';            
+    elseif contains(mode, 'tHalfMax')
+        mode_col = 7;
+        modeLabel = 't half max';
+    elseif contains(mode, 'saveMaps')
+        mode_col = 5;
+        modeLabel = 'saveMaps';        
     end
    
     
@@ -54,8 +68,9 @@ elseif strncmp(mode, 'plotSpatial', 11)
     num_intensities = length(intensities);
     
     data = cell(num_voltages, num_intensities, 2);
+    gfits = {};
     
-    ha = tight_subplot(num_intensities, num_voltages);
+    ha = tight_subplot(num_intensities, num_voltages+1);
     for vi = 1:num_voltages
         for ii = 1:num_intensities
             intensity = intensities(ii);
@@ -70,7 +85,23 @@ elseif strncmp(mode, 'plotSpatial', 11)
                 obs_sel = ismember(obs(:,1:2), pos, 'rows');
                 obs_sel = obs_sel & obs(:,3) == intensity;
                 obs_sel = obs_sel & obs(:,4) == voltage;
-                val = nanmean(obs(obs_sel, mode_col),1);
+                if strcmp(combinationMode, 'mean')
+                    val = nanmean(obs(obs_sel, mode_col),1);
+                elseif strcmp(combinationMode, 'median')
+                    val = nanmedian(obs(obs_sel, mode_col),1);
+                elseif strcmp(combinationMode, 'first')
+                    val = obs(obs_sel, mode_col);
+                    try
+                        val = val(1);
+                    catch
+                    end
+                elseif strcmp(combinationMode, 'last')
+                    val = obs(obs_sel, mode_col);
+                    try
+                        val = val(end);
+                    catch
+                    end
+                end
                 if any(obs_sel) && ~isnan(val)
                     posIndex = posIndex + 1;
                     vals(posIndex,1) = val;
@@ -78,12 +109,13 @@ elseif strncmp(mode, 'plotSpatial', 11)
                 end
             end
             
-            a = vi + (ii-1) * num_voltages;
+            a = vi + (ii-1) * (num_voltages+1);
             
             axes(ha(a));
 
             if posIndex >= 3
-                gfit = plotSpatial(goodPositions, vals, sprintf('%s at V = %d mV, intensity = %f', smode, voltage, intensity), 1, sign(voltage) + .001);
+                gfits{a,1} = plotSpatial(goodPositions, vals, sprintf('%s at V = %d mV, intensity = %f', modeLabel, voltage, intensity), 1, sign(voltage) + .001);
+                gfits(a, 2:3) = {voltage, intensity};
 %                 if ~isnan(gfit)
 %     %             caxis([0, max(vals)]);
 %     %             colormap(flipud(colormap))
@@ -98,13 +130,168 @@ elseif strncmp(mode, 'plotSpatial', 11)
         end
     end
     
-    if strcmp(smode, 'saveMaps')
+    % plot all the pathway gaussian fits on one graph
+    axes(ha(num_voltages+1))
+    for a = 1:size(gfits,1)
+        gfit = gfits{a,1};
+        if isempty(gfit)
+            continue
+        end
+        
+        voltage = gfits{a,2};
+        intensity = gfits{a,3};
+        if voltage < 0
+            % excitation
+            if intensity > 0.5
+                % ON (blue)
+                c = [0,0,1];
+            else
+                % OFF (green)
+                c = [0,1,0];
+            end
+        else
+            % inhibition
+            if intensity > 0.5
+                % ON (red)
+                c = [1 0 0];
+            else
+                % OFF (yellow)
+                c = [.6 .6 0];
+            end
+        end
+        
+        e = ellipse(gfit('sigma2X'), gfit('sigma2Y'), -gfit('angle'), gfit('centerX'), gfit('centerY'), c);
+        set(e, 'LineWidth', 2);
+        line(gfit('centerX') + [-l, l]/2, gfit('centerY') * [1,1], 'LineWidth', 1.5, 'Color', c);
+        line(gfit('centerX') * [1,1], gfit('centerY') + [-l, l]/2, 'LineWidth', 1.5, 'Color', c);
+        
+    end
+%     axis square
+    axis equal
+    
+    if strcmp(modeLabel, 'saveMaps')
         save('savedMaps.mat', 'data','voltages','intensities');
         disp('saved maps to savedMaps.mat');
     end
     
     
-elseif strcmp(mode, 'subunit')
+elseif strcmp(mode, 'overlap')
+% elseif strcmp(mode, 'plotSpatial_tHalfMax')
+
+    if isempty(obs)
+        disp('empty observations')
+        return
+    end
+    
+    mode_col = 5; % mean
+    
+    voltages = sort(unique(obs(:,4)));
+    voltages = [voltages(1), voltages(end)];
+    num_voltages = length(voltages);
+        
+    intensities = sort(unique(obs(:,3)));
+    num_intensities = length(intensities);
+        
+    paramsByPlot = {[1 1; 0 0], [0 0; 1 1], [0 1; 0 1], [1 0; 1 0]};
+    titlesByPlot = {'Excitation','Inhibition','On','Off'};
+    
+    hh = {};
+    for i = 1:4
+        hh{i} = tight_subplot(num_intensities, num_voltages, 0);
+    end
+    
+    for pp = 1:length(paramsByPlot)
+        for vi = 1:num_voltages
+            for ii = 1:num_intensities
+                a = vi + (ii-1) * num_voltages;
+                ax = hh{a};
+                axes(ax(pp))
+                axis(ax(pp), 'off');
+                
+                if ~paramsByPlot{pp}(vi, ii)
+                    continue
+                end
+                
+                intensity = intensities(ii);
+                voltage = voltages(vi);
+
+    %             vals = zeros(length(ad.positions),1);
+                vals = [];
+                posIndex = 0;
+                goodPositions = [];
+                for poi = 1:length(ad.positions)
+                    pos = ad.positions(poi,:);
+                    obs_sel = ismember(obs(:,1:2), pos, 'rows');
+                    obs_sel = obs_sel & obs(:,3) == intensity;
+                    obs_sel = obs_sel & obs(:,4) == voltage;
+                    val = nanmean(obs(obs_sel, mode_col),1);
+                    if any(obs_sel) && ~isnan(val)
+                        posIndex = posIndex + 1;
+                        vals(posIndex,1) = val;
+                        goodPositions(posIndex,:) = pos;
+                    end
+                end
+
+                % thresholding
+                vals = sign(voltage) * vals;
+                if isfield(options, 'overlapThresoldPercentile')
+                    percentile = options.overlapThresoldPercentile;
+                else
+                    percentile = 80;
+                end
+                thresholdLevel = prctile(vals, percentile);
+
+                n = 1;
+                % make colormaps for each surface
+                if sign(voltage) < 0
+                    % excitation
+                    if intensity > 0.5
+                        % ON (blue)
+                        cmap = horzcat(zeros(n,2), linspace(.6,1,n)');
+                    else
+                        % OFF (green)
+                        cmap = horzcat(zeros(n,1), linspace(.6,1,n)', zeros(n,1));
+                    end
+                else
+                    % inhibition
+                    if intensity > 0.5
+                        % ON (red)
+                        cmap = horzcat(linspace(.6,1,n)', zeros(n,2));
+                    else
+                        % OFF (yellow)
+                        cmap = horzcat(linspace(.2,.6,n)', linspace(.2,.6,n)', zeros(n,1));
+                    end
+                end
+
+
+                if posIndex >= 3
+                    positions = goodPositions;
+                    values = vals;
+                    largestDistanceOffset = .8*max(abs(positions(:)));
+                    X = linspace(-1*largestDistanceOffset, largestDistanceOffset, 200);
+                    [xq,yq] = meshgrid(X, X);
+                    c = griddata(positions(:,1), positions(:,2), values, xq, yq);
+
+                    c(c < thresholdLevel) = nan;
+
+                    s = surface(xq, yq, zeros(size(xq)), c);
+                    alpha(s, .4);
+                    grid off
+                    axis equal
+                    shading interp
+                    colormap(gca(), cmap);
+                    l = 100;
+                    line([-l, l]/2, [0,0], 'LineWidth', 1, 'Color', 'k');
+                    line([0,0], [-l, l]/2, 'LineWidth', 1, 'Color', 'k');
+                end
+
+            end
+        end
+        
+        title(titlesByPlot{pp})
+    end
+    
+elseif strcmp(mode, 'subunit') % contrast responses for each position
 
 %     if ad.numValues > 1
     
@@ -203,6 +390,120 @@ elseif strcmp(mode, 'subunit')
 %         disp('No multiple value subunits measured');
 %     end
     
+
+
+elseif strcmp(mode, 'currentVoltage')
+
+
+        % only use positions with observations (ignore 0,0)
+        positions = [];
+        i = 1;
+        for pp = 1:size(ad.positions,1)
+            pos = ad.positions(pp,1:2);
+            if any(ismember(obs(:,1:2), pos, 'rows'))
+                positions(i,1:2) = pos;
+                i = i + 1;
+            end
+        end
+        
+        num_positions = size(positions,1);
+        dim1 = floor(sqrt(num_positions));
+        dim2 = ceil(num_positions / dim1);
+        
+        % nice way of displaying plots with an aligned-to-grid location using percentiles
+        pos_sorted = flipud(sortrows(positions, 2));
+        for i = 1:dim1 % chunk positions by display rows
+            l = ((i-1) * dim2) + (1:dim2);
+            l(l > num_positions) = [];
+            pos_sorted(l,:) = sortrows(pos_sorted(l,:), 1);
+        end
+        positions = pos_sorted;
+        
+%         num_positions = size(ad.positions,1);
+%         dim1 = floor(sqrt(num_positions));
+%         dim2 = ceil(num_positions / dim1);
+        
+        ha = tight_subplot(dim1,dim2, .01);
+        
+        obs = ad.observations;
+        if isempty(obs)
+            return
+        end
+              
+        
+%         goodPosIndex = 0;
+%         goodPositions = [];
+%         goodSlopes = [];
+        for p = 1:num_positions
+%             tight_subplot(dim1,dim2,p)
+%             axes() %#ok<*LAXES>
+%             hold on
+            
+            pos = positions(p,:);
+            obs_sel = ismember(obs(:,1:2), pos, 'rows');
+            intensities = unique(obs(obs_sel, 3));
+            
+            for ii = 1:length(intensities)
+                intensity = intensities(ii);
+                obs_sel_i = obs_sel & obs(:,3) == intensity;
+            
+                voltages = unique(obs(obs_sel,4));
+                num_voltages = length(voltages);
+
+                responses = [];
+                for vi = 1:num_voltages
+                    voltage = voltages(vi);
+                    obs_sel_v = obs_sel_i & obs(:,4) == voltage;
+
+                    responses(vi) = mean(obs(obs_sel_v, 5)); % peak: 6, mean: 5
+                end
+                plot(ha(p), voltages, responses)
+                hold(ha(p), 'on');
+            end
+
+
+%                 if length(unique(intensities)) > 1
+%                     pfit = polyfit(intensities, responses, 1);
+%                     plot(intensities, polyval(pfit,intensities))
+%                     
+%                     
+%                     goodPosIndex = goodPosIndex + 1;
+%                     goodPositions(goodPosIndex, :) = pos;
+% %                     goodSlopes(goodPosIndex, 1) = mean(responses(intensities == 1)) - mean(responses(intensities == 0))
+%                     goodSlopes(goodPosIndex, 1) = pfit(1);
+%                 end
+%                 title(pos)
+%                 ylim([0,6])
+%                 yticks([])
+%                 xticks([])
+%             end
+%             grid on
+%             hold off
+            
+%             set(gca, 'XTickMode', 'auto', 'XTickLabelMode', 'auto')
+            set(ha(p), 'YTickMode', 'auto', 'YTickLabelMode', 'auto')
+            xlim(ha(p), [min(voltages),max(voltages)])
+            line(xlim(ha(p)), [0,0], 'Parent',ha(p), 'color','k')
+
+        end
+        
+        linkaxes(ha)
+        
+%         if ~isempty(goodPositions)
+%             figure(99);clf;
+% %             goodSlopes(abs(goodSlopes) < 2) = 0;
+%             plotSpatial(goodPositions, goodSlopes, 'intensity response slope', 1, 0)
+%         end
+        
+%         set(ha(1:end-dim2),'XTickLabel','');
+        set(ha,'YTickLabel','')
+        set(ha,'XTickLabel','')
+        legend(ha(1),{'off','on'},'location','best')
+%     else
+%         disp('No multiple value subunits measured');
+%     end
+
+
 elseif strcmp(mode, 'temporalResponses')
     num_plots = length(ad.epochData);
     ha = tight_subplot(num_plots, 1, .03);
@@ -548,6 +849,11 @@ elseif strcmp(mode, 'responsesByPosition')
 
                         signal = epoch.response(entry(10):entry(11)); % start and end indices into signal vector
 %                         signal = signal - mean(signal(1:10));
+
+                        if v < 0
+                            signal = signal * 4; % make excitation signals more visible
+                        end
+
                         signal = smooth(signal, 20);
                         t = (0:(length(signal)-1)) / ad.sampleRate;
                         h = plot(ha(poi), t, signal,'color',squeeze(colorsets(vi, ai, inti,1:3)));
@@ -599,56 +905,72 @@ elseif strcmp(mode, 'responsesByPosition')
 elseif strcmp(mode, 'wholeCell')
     obs = ad.observations;
    
-    maxIntensity = max(obs(:,3));
-    v_in = max(obs(:,4));
-    v_ex = min(obs(:,4));
+    intensities = unique(obs(:,3));
+    ratios = {};
     
-    r_ex = [];
-    r_in = [];
+    ha = tight_subplot(length(intensities),3);
 
-    posIndex = 0;
-    goodPositions = [];
-    for poi = 1:length(ad.positions)
-        pos = ad.positions(poi,:);
-        obs_sel = ismember(obs(:,1:2), pos, 'rows');
-        obs_sel = obs_sel & obs(:,3) == maxIntensity;
-        obs_sel_ex = obs_sel & obs(:,4) == v_ex;
-        obs_sel_in = obs_sel & obs(:,4) == v_in;
-        
-        if any(obs_sel_ex) && any(obs_sel_in)
-            posIndex = posIndex + 1;
-            r_ex(posIndex,1) = mean(obs(obs_sel_ex,5),1);
-            r_in(posIndex,1) = mean(obs(obs_sel_in,5),1);
-            goodPositions(posIndex,:) = pos;
+    for ii = 1:length(intensities)
+        intensity = intensities(ii);
+        v_in = max(obs(:,4));
+        v_ex = min(obs(:,4));
+
+        r_ex = [];
+        r_in = [];
+
+        posIndex = 0;
+        goodPositions = [];
+        for poi = 1:length(ad.positions)
+            pos = ad.positions(poi,:);
+            obs_sel = ismember(obs(:,1:2), pos, 'rows');
+            obs_sel = obs_sel & obs(:,3) == intensity;
+            obs_sel_ex = obs_sel & obs(:,4) == v_ex;
+            obs_sel_in = obs_sel & obs(:,4) == v_in;
+
+            if any(obs_sel_ex) && any(obs_sel_in)
+                posIndex = posIndex + 1;
+                r_ex(posIndex,1) = mean(obs(obs_sel_ex,5),1);
+                r_in(posIndex,1) = mean(obs(obs_sel_in,5),1);
+                goodPositions(posIndex,:) = pos;
+            end
         end
+%         v_reversal_ex = 0;
+%         v_reversal_in = -60;
+%         r_ex = -r_ex ./ abs(v_ex - v_reversal_ex);
+%         r_in = r_in ./ abs(v_in - v_reversal_in);
+%         r_exinrat = r_ex - r_in;
+        
+        r_ex = -r_ex;
+        r_ex = r_ex./max(abs(r_ex));
+        r_in = r_in./max(abs(r_in));
+        r_exinrat = r_ex - r_in;
+        r_exinrat = r_exinrat ./ max(abs(r_exinrat));
+    %     r_exinrat = sign(r_exinrat) .* log10(abs(r_exinrat));
+
+    %     max_ = max(vertcat(r_ex, r_in));
+    %     min_ = min(vertcat(r_ex, r_in));
+
+        ratios{ii} = r_exinrat;
+        max(r_ex)
+        % EX
+        axes(ha(1+(ii-1)*3))
+        plotSpatial(goodPositions, r_ex, sprintf('Exc cond: %d mV, Int: %d', v_ex, intensity), 1, 0);
+    %     caxis([min_, max_]);
+
+        % IN
+        axes(ha(2+(ii-1)*3))
+        plotSpatial(goodPositions, r_in, sprintf('Inh cond: %d mV, Int: %d', v_in, intensity), 1, 0);
+    %     caxis([min_, max_]);
+
+        % Ratio    
+        axes(ha(3+(ii-1)*3))
+        plotSpatial(goodPositions, r_exinrat, 'Ex/In difference', 1, 0)
     end
-    v_reversal_ex = 0;
-    v_reversal_in = -60;
-    r_ex = r_ex ./ abs(v_ex - v_reversal_ex);
-    r_in = r_in ./ abs(v_in - v_reversal_in);
-    r_exinrat = r_ex - r_in;
-%     r_exinrat = sign(r_exinrat) .* log10(abs(r_exinrat));
     
-%     max_ = max(vertcat(r_ex, r_in));
-%     min_ = min(vertcat(r_ex, r_in));
-
-
-    ha = tight_subplot(1,3);
-
-    % EX
-    axes(ha(1))
-    plotSpatial(goodPositions, r_ex, sprintf('Excitatory conductance: %d mV', v_ex), 1, 0);
-%     caxis([min_, max_]);
-    
-    % IN
-    axes(ha(2))
-    plotSpatial(goodPositions, r_in, sprintf('Inhibitory conductance: %d mV', v_in), 1, 0);
-%     caxis([min_, max_]);
-    
-    % Ratio    
-    axes(ha(3))
-    plotSpatial(goodPositions, r_exinrat, 'Ex/In difference', 1, 0)
-    
+    figure(212);clf;
+    rr = ratios{2} - ratios{1};
+    plotSpatial(goodPositions, rr, '', 1, 0);
+    title('On diff - Off diff');
 
 elseif strcmp(mode, 'spatialOffset_onOff')
     obs = ad.observations;
@@ -1034,24 +1356,53 @@ else
     disp('incorrect plot type')
 end
 
-    function gfit = plotSpatial(positions, values, titl, addcolorbar, gaussianfit)
+    function gfit = plotSpatial(positions, values, titl, addColorBar, gaussianfit, thresholdParams)
+        
+        if nargin < 6
+            enableThresholding = false;
+        else
+            enableThresholding = true;
+        end
+        
 %         positions = bsxfun(@plus, positions, positionOffset);
         largestDistanceOffset = max(abs(positions(:)));
-        X = linspace(-1*largestDistanceOffset, largestDistanceOffset, 100);
+        X = linspace(-1*largestDistanceOffset, largestDistanceOffset, 200);
         [xq,yq] = meshgrid(X, X);
         c = griddata(positions(:,1), positions(:,2), values, xq, yq);
-        surface(xq, yq, zeros(size(xq)), c)
-        hold on
-%         plot(positions(:,1), positions(:,2), '.r');
-        hold off
+        
+        if enableThresholding
+            threshold = thresholdParams{1};
+            direction = thresholdParams{2};
+            
+            if direction > 0
+                sel = c > threshold;
+            else
+                sel = c < threshold;
+            end
+%             xq(~sel) = [];
+%             yq(~sel) = [];
+            c(~sel) = nan;
+        end
+        
+        s = surface(xq, yq, zeros(size(xq)), c);
+%         hold on
+% %         plot(positions(:,1), positions(:,2), '.r');
+%         hold off
         title(titl)
         grid off
     %     axis square
         axis equal
         shading interp
-        if addcolorbar
+        
+        if addColorBar == 1
             colorbar
+            
+        elseif length(addColorBar) > 1
+            colormap(gca(), addColorBar);
+%             colorbar
+            alpha(s, .2)
         end
+        
         if gaussianfit ~= 0
             if gaussianfit < 0
                 fitValues = values * -1; % seems to be the only place we need positive deflections is for fitting
@@ -1085,6 +1436,8 @@ end
         
         % draw soma
 %         rectangle('Position',0.05 * largestDistanceOffset * [-.5, -.5, 1, 1],'Curvature',1,'FaceColor',[1 1 1]);
+
+        line([-50, 50],largestDistanceOffset*[-1,-1], 'LineWidth', 1.5, 'Color', 'k');
         
         % set axis limits
         axis(largestDistanceOffset * [-1 1 -1 1])

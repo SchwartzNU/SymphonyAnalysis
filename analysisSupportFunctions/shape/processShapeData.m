@@ -1,5 +1,9 @@
-function ad = processShapeData(epochData)
+function ad = processShapeData(epochData, processOptions)
 % epochData: cell array of ShapeData, one for each epoch
+
+if nargin < 2
+    processOptions = struct();
+end
 
 ad = struct();
 
@@ -192,7 +196,12 @@ for p = 1:num_epochs
 %     sampleSet = (0:(sampleCount_total-1))'; % (1) total
 %     sampleSet = (0:(sampleCount_on-1))'; % (2) just during spot
     
-    buffer = round(sampleCount_on * .1);
+    if isfield(processOptions, 'temporalBufferSize') % the amount of time to leave off the start and end of the Spot On Period
+        temporalBufferSize = processOptions.temporalBufferSize;
+    else
+        temporalBufferSize = .2;
+    end
+    buffer = round(sampleCount_on * temporalBufferSize);
     sampleSet = ((0+buffer):(sampleCount_on - 1 - buffer))'; % (2) just during spot
     
 %     sampleSet = (sampleCount_on:(sampleCount_total-1))'; % (3) just during post-spot
@@ -204,8 +213,6 @@ for p = 1:num_epochs
     if max(e.response) == 0
         continue
     end
-    
-%     figure(12)
     
     if strcmp(e.epochMode, 'flashingSpots')
         
@@ -236,6 +243,7 @@ for p = 1:num_epochs
     %         if abs(e.ampVoltage) > 0 % a nice alignment for the whole cell data
     %             resp = resp - mean(resp(1:10));
     %         end
+    
             mn = mean(resp);
             pk = max(resp);
             if e.ampVoltage < 0
