@@ -159,7 +159,7 @@ classdef SpikeDetectorGUI < handle
                 response = epoch.getData(obj.streamName);
                 response = response - mean(response);
                 response = response';
-
+               
                 % get detection config
                 ind = get(obj.handles.detectorModeMenu, 'value');
                 s = get(obj.handles.detectorModeMenu, 'String');
@@ -426,6 +426,12 @@ classdef SpikeDetectorGUI < handle
         end
         
         function updateUI(obj)
+            if isempty(obj.data)
+                disp('empty response')
+                cla(obj.handles.primaryAxes)
+                drawnow
+                return
+            end
             t = (0:length(obj.data)-1) / obj.sampleRate;
             plot(obj.handles.primaryAxes, t, obj.data, 'k');
             hold(obj.handles.primaryAxes, 'on');
@@ -436,7 +442,7 @@ classdef SpikeDetectorGUI < handle
             end
             title(obj.handles.primaryAxes, 'Raw data');
             hold(obj.handles.primaryAxes, 'off');
-            xlim(obj.handles.primaryAxes, [min(t), max(t)]);
+            xlim(obj.handles.primaryAxes, [min(t), max(t)+eps]);
             
             % advanced filtered plot
             plot(obj.handles.secondaryAxes, t, obj.filteredData / obj.noiseLevel, 'k');
@@ -460,6 +466,10 @@ classdef SpikeDetectorGUI < handle
         end
         
         function [fdata, noise] = filterResponse(obj, fdata)
+            if isempty(fdata)
+                noise = [];
+                return
+            end
             fdata = [fdata(1) + zeros(1,2000), fdata, fdata(end) + zeros(1,2000)];
             fdata = filtfilt(obj.spikeFilter, fdata);
             fdata = fdata(2001:(end-2000));
