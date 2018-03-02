@@ -199,12 +199,16 @@ for p = 1:num_epochs
     if isfield(processOptions, 'temporalBufferSize') % the amount of time to leave off the start and end of the Spot On Period
         temporalBufferSize = processOptions.temporalBufferSize;
     else
-        temporalBufferSize = .2;
+        temporalBufferSize = [.1, .2];
     end
-    buffer = round(sampleCount_on * temporalBufferSize);
-    sampleSet = ((0+buffer):(sampleCount_on - 1 - buffer))'; % (2) just during spot
-    
-%     sampleSet = (sampleCount_on:(sampleCount_total-1))'; % (3) just during post-spot
+    if length(temporalBufferSize) > 1
+        buffer = round(sampleCount_on * temporalBufferSize);
+        sampleSet = ((0+buffer(1)):(sampleCount_on - 1 - buffer(2)))'; % (2) just during spot
+    else
+        buffer = round(sampleCount_on * temporalBufferSize);
+        sampleSet = ((0+buffer):(sampleCount_on - 1 - buffer))'; % (2) just during spot
+    end
+    %     sampleSet = (sampleCount_on:(sampleCount_total-1))'; % (3) just during post-spot
     
     if skipResponses == 1
         continue

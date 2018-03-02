@@ -67,7 +67,7 @@ elseif strncmp(mode, 'plotSpatial', 11)
     intensities = sort(unique(obs(:,3)));
     num_intensities = length(intensities);
     
-    data = cell(num_voltages, num_intensities, 2);
+    dataByVoltageIntensity = cell(num_voltages, num_intensities, 2);
     gfits = {};
     
     ha = tight_subplot(num_intensities, num_voltages+1);
@@ -126,7 +126,7 @@ elseif strncmp(mode, 'plotSpatial', 11)
 %                 end
             end
 
-            data(vi, ii, 1:2) = {goodPositions, vals};
+            dataByVoltageIntensity(vi, ii, 1:2) = {goodPositions, vals};
         end
     end
     
@@ -144,26 +144,26 @@ elseif strncmp(mode, 'plotSpatial', 11)
             % excitation
             if intensity > 0.5
                 % ON (blue)
-                c = [0,0,1];
+                num_columns = [0,0,1];
             else
                 % OFF (green)
-                c = [0,1,0];
+                num_columns = [0,1,0];
             end
         else
             % inhibition
             if intensity > 0.5
                 % ON (red)
-                c = [1 0 0];
+                num_columns = [1 0 0];
             else
                 % OFF (yellow)
-                c = [.6 .6 0];
+                num_columns = [.6 .6 0];
             end
         end
         
-        e = ellipse(gfit('sigma2X'), gfit('sigma2Y'), -gfit('angle'), gfit('centerX'), gfit('centerY'), c);
+        e = ellipse(gfit('sigma2X'), gfit('sigma2Y'), -gfit('angle'), gfit('centerX'), gfit('centerY'), num_columns);
         set(e, 'LineWidth', 2);
-        line(gfit('centerX') + [-l, l]/2, gfit('centerY') * [1,1], 'LineWidth', 1.5, 'Color', c);
-        line(gfit('centerX') * [1,1], gfit('centerY') + [-l, l]/2, 'LineWidth', 1.5, 'Color', c);
+        line(gfit('centerX') + [-l, l]/2, gfit('centerY') * [1,1], 'LineWidth', 1.5, 'Color', num_columns);
+        line(gfit('centerX') * [1,1], gfit('centerY') + [-l, l]/2, 'LineWidth', 1.5, 'Color', num_columns);
         
     end
 %     axis square
@@ -270,11 +270,11 @@ elseif strcmp(mode, 'overlap')
                     largestDistanceOffset = .8*max(abs(positions(:)));
                     X = linspace(-1*largestDistanceOffset, largestDistanceOffset, 200);
                     [xq,yq] = meshgrid(X, X);
-                    c = griddata(positions(:,1), positions(:,2), values, xq, yq);
+                    num_columns = griddata(positions(:,1), positions(:,2), values, xq, yq);
 
-                    c(c < thresholdLevel) = nan;
+                    num_columns(num_columns < thresholdLevel) = nan;
 
-                    s = surface(xq, yq, zeros(size(xq)), c);
+                    s = surface(xq, yq, zeros(size(xq)), num_columns);
                     alpha(s, .4);
                     grid off
                     axis equal
@@ -901,11 +901,185 @@ elseif strcmp(mode, 'responsesByPosition')
     ylim(ha(1), [min_value, max_value*1.3]);
     xlim(ha(1), [0, max(t)])
 %     end
+
+elseif strcmp(mode, 'wholeCell_comparisons')
+
+    combinationMode = 'median';
+    mode_col = 5; % mean
+    modeLabel = 'mean';
+    excitatory_multiplier = 6;
     
+    voltages = sort(unique(obs(:,4)));
+    num_voltages = length(voltages);
+        
+    intensities = sort(unique(obs(:,3)));
+    num_intensities = length(intensities);
+    
+    dataByVoltageIntensity = cell(num_voltages, num_intensities, 2);
+    
+    largestDistanceOffset = max(abs(ad.positions(:)));
+    X = linspace(-1*largestDistanceOffset, largestDistanceOffset, 200);
+    [xq,yq] = meshgrid(X, X);
+    
+    num_rows = num_intensities;
+    if num_intensities > 1
+        num_rows = num_rows + 1;
+    end
+    num_columns = num_voltages;
+    if num_voltages > 1
+        num_columns = num_columns + 1;
+    end
+    ha = tight_subplot(num_rows, num_columns);
+    for vi = 1:num_voltages
+        for ii = 1:num_intensities
+            intensity = intensities(ii);
+            voltage = voltages(vi);
+            
+%             vals = zeros(length(ad.positions),1);
+            vals = [];
+            posIndex = 0;
+            goodPositions = [];
+            for poi = 1:length(ad.positions)
+                pos = ad.positions(poi,:);
+                obs_sel = ismember(obs(:,1:2), pos, 'rows');
+                obs_sel = obs_sel & obs(:,3) == intensity;
+                obs_sel = obs_sel & obs(:,4) == voltage;
+                if strcmp(combinationMode, 'mean')
+                    val = nanmean(obs(obs_sel, mode_col),1);
+                elseif strcmp(combinationMode, 'median')
+                    val = nanmedian(obs(obs_sel, mode_col),1);
+                elseif strcmp(combinationMode, 'min')
+                    val = nanmin(obs(obs_sel, mode_col));                    
+                elseif strcmp(combinationMode, 'first')
+                    val = obs(obs_sel, mode_col);
+                    try
+                        val = val(1);
+                    catch
+                    end
+                elseif strcmp(combinationMode, 'last')
+                    val = obs(obs_sel, mode_col);
+                    try
+                        val = val(end);
+                    catch
+                    end
+                end
+                if any(obs_sel) && ~isnan(val)
+                    posIndex = posIndex + 1;
+                    vals(posIndex,1) = val;
+                    goodPositions(posIndex,:) = pos;
+                end
+            end
+            
+            a = vi + (ii-1) * num_columns;
+            
+            axes(ha(a));
+            vals = vals * sign(voltage + 1);
+%             vals = vals ./ max(abs(vals));
+            
+            if posIndex >= 3
+               
+                c = griddata(goodPositions(:,1), goodPositions(:,2), vals, xq, yq);
+                s = surface(xq, yq, zeros(size(xq)), c);
+                                
+                line([-50, 50],largestDistanceOffset*[-1,-1]*.9, 'LineWidth', 1.5, 'Color', 'k');
+                colorbar
+                grid off
+                axis equal
+                shading interp
+                % set axis limits
+                axis(largestDistanceOffset * [-1 1 -1 1])
+                set(gca, 'Box', 'off')
+                set(gca, 'XTick', [], 'XColor', 'none')
+                set(gca, 'YTick', [], 'YColor', 'none')
+                set(gcf,'color','w');
+                title(sprintf('%d mV, %.1f', voltage, intensity))
+%                 caxis([-1,1]);
+                
+                dataByVoltageIntensity{vi, ii} = c;
+            end
+
+            
+        end
+    end
+    
+    % comparisons:
+    if num_intensities > 1
+        for vi = 1:num_voltages
+            a = vi + num_columns * (num_rows-1);
+            axes(ha(a));
+            d = dataByVoltageIntensity{vi, 2} - dataByVoltageIntensity{vi, 1};
+                s = surface(xq, yq, zeros(size(xq)), d);
+                                
+                line([-50, 50],largestDistanceOffset*[-1,-1]*.9, 'LineWidth', 1.5, 'Color', 'k');
+                colorbar
+                grid off
+                axis equal
+                shading interp
+                % set axis limits
+                axis(largestDistanceOffset * [-1 1 -1 1])
+                set(gca, 'Box', 'off')
+                set(gca, 'XTick', [], 'XColor', 'none')
+                set(gca, 'YTick', [], 'YColor', 'none')
+                set(gcf,'color','w');
+                title(sprintf('comparison %d mV', voltages(vi)))
+%                 caxis([-.7,.7]);
+                
+        end
+    end
+    
+    if num_voltages > 1
+        for ii = 1:num_intensities
+            a = (ii - 1) * num_columns + 1 + num_intensities;
+            axes(ha(a));
+            d = dataByVoltageIntensity{1, ii} * excitatory_multiplier - dataByVoltageIntensity{2, ii};
+                s = surface(xq, yq, zeros(size(xq)), d);
+                                
+                line([-50, 50],largestDistanceOffset*[-1,-1]*.9, 'LineWidth', 1.5, 'Color', 'k');
+                colorbar
+                grid off
+                axis equal
+                shading interp
+                % set axis limits
+                axis(largestDistanceOffset * [-1 1 -1 1])
+                set(gca, 'Box', 'off')
+                set(gca, 'XTick', [], 'XColor', 'none')
+                set(gca, 'YTick', [], 'YColor', 'none')
+                set(gcf,'color','w');
+                title(sprintf('comparison int %d', intensities(ii)))
+%                 caxis([-.7,.7]);
+        end
+    end
+    
+    if num_voltages > 1 && num_intensities > 1
+        a = num_columns * num_rows;
+        axes(ha(a));
+        d = - dataByVoltageIntensity{1, 1} * excitatory_multiplier + dataByVoltageIntensity{2, 1} ...
+            + dataByVoltageIntensity{1, 2} * excitatory_multiplier - dataByVoltageIntensity{2, 2};
+
+            s = surface(xq, yq, zeros(size(xq)), d);
+
+            line([-50, 50],largestDistanceOffset*[-1,-1]*.9, 'LineWidth', 1.5, 'Color', 'k');
+            colorbar
+            grid off
+            axis equal
+            shading interp
+            % set axis limits
+            axis(largestDistanceOffset * [-1 1 -1 1])
+            set(gca, 'Box', 'off')
+            set(gca, 'XTick', [], 'XColor', 'none')
+            set(gca, 'YTick', [], 'YColor', 'none')
+            set(gcf,'color','w');
+            title('comparison overall')
+%             caxis([-.7,.7]);
+    end
+   
+
 elseif strcmp(mode, 'wholeCell')
     obs = ad.observations;
    
     intensities = unique(obs(:,3));
+    voltages = unique(obs(:,4));
+    mapByVoltageIntensity = {};
     ratios = {};
     
     ha = tight_subplot(length(intensities),3);
@@ -934,6 +1108,8 @@ elseif strcmp(mode, 'wholeCell')
                 goodPositions(posIndex,:) = pos;
             end
         end
+        
+        
 %         v_reversal_ex = 0;
 %         v_reversal_in = -60;
 %         r_ex = -r_ex ./ abs(v_ex - v_reversal_ex);
@@ -949,6 +1125,10 @@ elseif strcmp(mode, 'wholeCell')
 
     %     max_ = max(vertcat(r_ex, r_in));
     %     min_ = min(vertcat(r_ex, r_in));
+    
+    
+        mapByVoltageIntensity{1, ii} = r_ex;
+        mapByVoltageIntensity{2, ii} = r_in;
 
         ratios{ii} = r_exinrat;
         max(r_ex)
@@ -967,6 +1147,12 @@ elseif strcmp(mode, 'wholeCell')
         plotSpatial(goodPositions, r_exinrat, 'Ex/In difference', 1, 0)
     end
     
+    % intensity difference maps:
+    axes(ha(2+(ii-1)*3))
+    plotSpatial(goodPositions, r_in, sprintf('Inh cond: %d mV, Int: %d', v_in, intensity), 1, 0);    
+    
+    
+    % combining differences at each intensity
     figure(212);clf;
     rr = ratios{2} - ratios{1};
     plotSpatial(goodPositions, rr, '', 1, 0);
