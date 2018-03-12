@@ -1,4 +1,5 @@
 function [] = plotShapeData(ad, mode, options)
+% display the shape data in ad (analysisData), using the string mode, with struct options
 
 if ~isfield(ad,'observations')
     disp('no observations');
@@ -11,6 +12,7 @@ if nargin < 3
 end
 
 if strcmp(mode, 'printParameters')
+    % display of epoch parameters
     firstEpoch = ad.epochData{1};
     fprintf('num positions: %d\n', length(ad.positions));
     fprintf('num values: %d\n', firstEpoch.numValues);
@@ -27,6 +29,8 @@ if strcmp(mode, 'printParameters')
    
     
 elseif strncmp(mode, 'plotSpatial', 11)
+    
+    % general purpose spatial display function, shows all observations by voltage and intensity
 
     if isempty(obs)
         disp('empty observations')
@@ -176,7 +180,8 @@ elseif strncmp(mode, 'plotSpatial', 11)
     
     
 elseif strcmp(mode, 'overlap')
-% elseif strcmp(mode, 'plotSpatial_tHalfMax')
+    % pretty print of thresholded spatial RFs, overlaid by On Off and Ex In pathways.
+    % default: options.overlapThresoldPercentile = 80
 
     if isempty(obs)
         disp('empty observations')
@@ -393,8 +398,8 @@ elseif strcmp(mode, 'subunit') % contrast responses for each position
 
 
 elseif strcmp(mode, 'currentVoltage')
-
-
+        % IV plots by position
+    
         % only use positions with observations (ignore 0,0)
         positions = [];
         i = 1;
@@ -505,6 +510,9 @@ elseif strcmp(mode, 'currentVoltage')
 
 
 elseif strcmp(mode, 'temporalResponses')
+    % simple display of temporal responses, which are the raw input to the system
+    % displays spot intensity using the same signal used for cross correlation
+    
     num_plots = length(ad.epochData);
     ha = tight_subplot(num_plots, 1, .03);
     
@@ -550,96 +558,8 @@ elseif strcmp(mode, 'temporalResponses')
     end
     
     
-%     old alignment display is deprecated for now. Use temporal responses
-% elseif strcmp(mode, 'temporalAlignment')
-%     
-%     ha = tight_subplot(2, 1, .1);
-%     
-%     ei = ad.alignmentEpochIndex;
-%     axes(ha(1));
-%     if ~isnan(ei)
-%         t = ad.epochData{ei}.t;
-%         hold on
-%         plot(t, -1 * ad.alignmentRate ./ max(abs(ad.alignmentRate)),'r');
-%         plot(t, ad.alignmentLightOn,'b')
-%         plot(t + ad.timeOffset(1), ad.alignmentLightOn * .8,'g')
-%         legend('rate','light','shifted')
-%         title(ad.timeOffset(1))
-%         hold off
-%     end
-%     
-%     % new format
-% %     obs = ad.observations;
-% %     voltages = sort(unique(obs(:,4)));
-% %     for vi = 1:length(voltages)
-% %         obs_sel = obs(:,4) == voltages(vi);
-% %         indices = find(obs_sel);
-% % 
-% %         for ii = 1:length(indices)
-% %             entry = obs(indices(ii),:)';
-% %             epoch = ad.epochData{entry(9)};
-% % 
-% %             signal = epoch.response(entry(10):entry(11));    
-% %         end
-% %         plot(mean(signal));
-% %     end
-% 
-%     
-%     %% plot time graph
-%     axes(ha(2));
-%     spotOnTime = ad.spotOnTime;
-%     spotTotalTime = ad.spotTotalTime;
-% 
-%     %                 spikeBins = nodeData.spikeBins.value;
-%     
-%     
-%     % get average of all responses
-%     obs = ad.observations;
-%     if isempty(obs)
-%         return;
-%     end
-%     sm = [];
-%     for oi = 1:size(obs, 1)
-%         
-%         entry = obs(oi,:)';
-%         epoch = ad.epochData{entry(9)};
-% 
-%         sm(oi,:) = epoch.response(entry(10):entry(11));
-%     end
-%     spotBinDisplay = mean(sm,1);
-%     
-% %     spotBinDisplay = mean(ad.spikeRate_by_spot, 1);
-%     timeOffset = ad.timeOffset;
-%     
-%     displayTime = (1:length(spotBinDisplay)) ./ ad.sampleRate + timeOffset(1);
-%     
-%     plot(displayTime, spotBinDisplay)
-%     %                 plot(spikeBins(1:end-1), spikeBinsValues);
-%     %                 xlim([0,spikeBins(end-1)])
-% 
-%     title('Temporal offset calculation')
-% 
-%     top = max(spotBinDisplay)*1.1;
-% 
-%     % two light spot patches
-%     p = patch([0 spotOnTime spotOnTime 0],[0 0 top top],'y');
-%     set(p,'FaceAlpha',0.3);
-%     set(p,'EdgeColor','none');
-%     p = patch(spotTotalTime+[0 spotOnTime spotOnTime 0],[0 0 top top],'y');
-%     set(p,'FaceAlpha',0.3);
-%     set(p,'EdgeColor','none');
-% 
-%     % analysis spot patch
-%     p = patch(ad.timeOffset(1)+[0 spotOnTime spotOnTime 0],[0 0 -.1*top -.1*top],'g');
-%     set(p,'FaceAlpha',0.3);
-%     set(p,'EdgeColor','none');
-%     p = patch(ad.timeOffset(1)+[spotOnTime spotTotalTime spotTotalTime spotOnTime],[0 0 -.1*top -.1*top],'r');
-%     set(p,'FaceAlpha',0.3);
-%     set(p,'EdgeColor','none');    
-% 
-%     title(['temporal offset of collection bins (on, off): ' num2str(timeOffset) ' sec'])
-
 elseif strcmp(mode, 'temporalComponents')
+    % splits spot time period into two components (using a peak finding algorithm) and maps them separately, can find On and Off from a single polarity
     
     warning('off', 'stats:regress:RankDefDesignMat')
     
@@ -777,6 +697,8 @@ elseif strcmp(mode, 'temporalComponents')
     
     
 elseif strcmp(mode, 'responsesByPosition')
+    % display time traces of responses aligned for each location
+    % plots are in a grid roughly similar to the spot spacing
     
     obs = ad.observations;
     voltages = sort(unique(obs(:,4)));
@@ -903,6 +825,7 @@ elseif strcmp(mode, 'responsesByPosition')
 %     end
 
 elseif strcmp(mode, 'wholeCell_comparisons')
+    % compares by subtraction the spatial RF of On and Off, and Ex and In 
 
     combinationMode = 'median';
     mode_col = 5; % mean
@@ -1075,6 +998,8 @@ elseif strcmp(mode, 'wholeCell_comparisons')
    
 
 elseif strcmp(mode, 'wholeCell')
+    % compares Ex and In RF using gaussian fits
+    
     obs = ad.observations;
    
     intensities = unique(obs(:,3));
@@ -1405,6 +1330,7 @@ elseif strcmp(mode, 'positionDifferenceAnalysis')
     
     
 elseif strcmp(mode, 'adaptationRegion')
+    % analyzes and displays experiment with flicker and flashed spots map, to find the spatial properties of adaptation
     obs = ad.observations;
     
 %     % get list of adaptation points
