@@ -261,13 +261,14 @@ classdef TreeBrowserGUI < handle
             
             %plotter area
             L_plot = uiextras.VBox('Parent', L_right);
-            
-            obj.handles.plotAxes = axes('Parent', L_plot);
-            
+                        
             L_plotButtons = uiextras.HButtonBox('Parent', L_plot, ...
                 'HorizontalAlignment', 'left', ...
                 'VerticalAlignment', 'bottom', ...
                 'ButtonSize', [140, 30]);
+            
+            L_plotAxesParent = uipanel(L_plot, 'BorderType','none');
+            obj.handles.plotAxes = axes('Parent', L_plotAxesParent);            
             
             obj.handles.popFigButton = uicontrol('Parent', L_plotButtons, ...
                 'Style', 'pushbutton', ...
@@ -289,7 +290,7 @@ classdef TreeBrowserGUI < handle
                 'String', 'Raw data to command line', ...
                 'Callback', @(uiobj, evt)obj.rawDataToCommandLine);
             
-            set(L_plot, 'Sizes', [-1, 50])
+            set(L_plot, 'Sizes', [50, -1])
             
             set(L_right, 'Sizes', [-2 -3], 'Spacing', 10);
             
@@ -679,7 +680,13 @@ classdef TreeBrowserGUI < handle
             
             %do the plot
             set(obj.handles.fig,'KeyPressFcn',[]); %get rid of callback for non SingleEpoch plots
-            axes(obj.handles.plotAxes);
+            warning('off','MATLAB:handle_graphics:exceptions:SceneNode')
+            try 
+                axes(obj.handles.plotAxes);
+            catch
+                disp('test')
+            end
+                
             %clear previous plot
             reset(obj.handles.plotAxes);
             cla(obj.handles.plotAxes);
