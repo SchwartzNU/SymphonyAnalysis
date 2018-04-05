@@ -36,7 +36,7 @@ for fi = 1:numFiles
     load(fname)
     if any(cellData.location)
         if any(cellData.location(1:2))
-            LocatedCells(Count) = string(cellData.savedFileName);
+            LocatedCells{Count} = char(cellData.savedFileName);
             Location(Count,1:3) = cellData.location;
             Count = Count + 1;
         else
@@ -59,7 +59,7 @@ Location(:,1) = Location(:,1).*Location(:,3);
 
 %% Collect OSI and OSAng information from Analysis Tree
  %[OSICells, OSI, OSAng] = CollectOSI;
- [SupCells, Sup] = CollectSuppression('SpotsMultiSizeAnalysis')
+%  [SupCells, Sup] = CollectSuppression('SpotsMultiSizeAnalysis')
  
 %% Plot Left Eye
 figure
@@ -67,8 +67,10 @@ LocData = LeftEye;
 LocCells = LeftCells;
 
 subplot(1,2,1)
+scatter(LeftEye(:,1), LeftEye(:,2))
 %OSIPlotter(OSICells, LocData, LocCells, OSI, OSAng)
-SMSPlotter(SupCells, LocData, LocCells, Sup)
+%SMSPlotter(SupCells, LocData, LocCells, Sup)
+%keyboard;
 title('Left Eye')
 
  %% Plot Right Eye
@@ -76,9 +78,10 @@ LocData = RightEye
 LocCells = RightCells
 
 subplot(1,2,2)
+scatter(RightEye(:,1), RightEye(:,2))
 %OSIPlotter(OSICells, LocData, LocCells, OSI, OSAng)
-SMSPlotter(SupCells, LocData, LocCells, Sup)
-colorbar
+%SMSPlotter(SupCells, LocData, LocCells, Sup)
+%colorbar
 title('Right Eye')
 
  
@@ -86,9 +89,11 @@ title('Right Eye')
 figure
 hold on
 LocData = Location
-LocCells = LocatedCells
+scatter(Location(:,1), Location(:,2))
+%LocCells = LocatedCells
 %OSIPlotter(OSICells, LocData, LocCells, OSI, OSAng)
-SMSPlotter(SupCells, LocData, LocCells, Sup)
-colorbar
+% SMSPlotter(SupCells, LocData, LocCells, Sup)
+%colorbar
 title('Combined')
+keyboard;
 end

@@ -9,8 +9,8 @@ load('data/allPairs', 'allPairs');
 %loads allPairs, D, geneNames, cellTypes
 
 D_folder = 'genePairDataGMean';
-out_folder = 'selectedGenePairs_medVmax';
-method = 'medVmax';
+out_folder = 'selectedGenePairs_logRatio';
+method = 'logRatio';
 
 uniqueTypes = unique(cellTypes);
 
@@ -55,7 +55,7 @@ parpool('local', 20);
 %parameters
 %falseNeg_scaling = .65;
 %interestThreshold = 0.8*falseNeg_scaling;
-interestThreshold = 1; %log units
+interestThreshold = 2; %log units
 
 parfor c=1:N_chunks
     tic;
@@ -70,6 +70,8 @@ parfor c=1:N_chunks
         logD = log10(D_pairs);
     end
      
+    selectedPairs = [];
+    selectedPairScores = [];
     
     %D_pairs = D_pairs(:, ind); %now sorted by cell types
     for t=1:Ntypes
@@ -103,13 +105,17 @@ parfor c=1:N_chunks
 %                      if max(targetVals) > 0
 %                          keyboard;
 %                      end
+                elseif strcmp(method, 'logRatio')
+                    targetVals = logD(i,targetInd);
+                    otherVals = logD(i,othersInd);
+                    indexVals(i) = median(targetVals) - mean(otherVals);
                 else
                     %%%TBD
                 end
             end
         end
-        selectedPairs = (c-1)*chunkSize+find(indexVals > interestThreshold);
-        selectedPairScores = indexVals(indexVals > interestThreshold);
+        selectedPairs{t} = (c-1)*chunkSize+find(indexVals > interestThreshold);
+        selectedPairScores{t} = indexVals(indexVals > interestThreshold);
         %selectedPairs = (c-1)*chunkSize+find(indexVals < interestThreshold);
         %selectedPairScores = indexVals(indexVals < interestThreshold);
         toc;

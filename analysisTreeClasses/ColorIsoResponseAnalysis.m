@@ -52,17 +52,18 @@ classdef ColorIsoResponseAnalysis < AnalysisTree
                     e.ignore = false;
                
                     
-                    if strcmp(rootData.(rootData.ampModeParam), 'Cell attached')
+                    %if strcmp(rootData.(rootData.ampModeParam), 'Cell attached')
                         outputStruct = getEpochResponses_CA(cellData, curEpochNode.epochID, ...
                             'DeviceName', rootData.deviceName);
                         outputStruct = getEpochResponseStats(outputStruct);
                         curEpochNode = mergeIntoNode(curEpochNode, outputStruct);
-                    else %whole cell
-                        outputStruct = getEpochResponses_WC(cellData, curEpochNode.epochID, ...
-                            'DeviceName', rootData.deviceName);
-                        outputStruct = getEpochResponseStats(outputStruct);
-                        curEpochNode = mergeIntoNode(curEpochNode, outputStruct);
-                    end
+                    %end
+%                     else %whole cell
+%                         outputStruct = getEpochResponses_WC(cellData, curEpochNode.epochID, ...
+%                             'DeviceName', rootData.deviceName);
+%                         outputStruct = getEpochResponseStats(outputStruct);
+%                         curEpochNode = mergeIntoNode(curEpochNode, outputStruct);
+%                     end
 
                     e.signal = epoch.getData('Amplifier_Ch1');
                     e.t = (1:numel(e.signal)) / 10000;
