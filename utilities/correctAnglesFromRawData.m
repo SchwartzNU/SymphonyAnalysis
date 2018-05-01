@@ -40,6 +40,9 @@ function correctAnglesFromRawData(projFolder)
 
         rigMode = '';
         cellName = files{fi};
+        if contains(cellName, '-')
+            cellName = cellName(1:end-4);
+        end
         cellDataFileName = fullfile(CELL_DATA_FOLDER, [cellName, '.mat']);
 
         load(cellDataFileName);
@@ -87,7 +90,12 @@ function correctAnglesFromRawData(projFolder)
 
             % navigate to the location of the data in the h5
             paramLinks = {}; % one for per-run, one for per-epoch params, gotta check both cause of Auto Center
-            dataLink = epoch.dataLinks('Amplifier_Ch1');
+            try
+                dataLink = epoch.dataLinks('Amplifier_Ch1');
+            catch
+                warning('Epoch missing amp Ch1 data link');
+                continue
+            end
             segments = strsplit(dataLink, '/');
             
             if symphonyRawMode == 2
