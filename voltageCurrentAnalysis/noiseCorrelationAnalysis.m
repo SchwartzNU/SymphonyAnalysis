@@ -93,18 +93,9 @@ for ci=1:length(cellNames)
             
             t = (0:length(response)-1)/10000;
             response = response(t > noiseTimeSec(1) & t <= noiseTimeSec(2));
-            
             response = response - mean(response);
-            
             %[b,a] = butter(8,0.5/(sampleRate/2),'high');
-            
             response_filt = filtfilt(d,response);
-            
-%             figure(100)
-%             subplot(2, 1, 1)
-%             plot(response)
-%             subplot(2, 1, 2)
-%             plot(response_filt)
             
             responses(oi,:,channel) = response_filt;
         end
@@ -173,9 +164,9 @@ for ci=1:length(cellNames)
             plot(shiftValues, meanCorrelation+SEMCorrelation,'-.b')
             plot(shiftValues, meanCorrelation-SEMCorrelation,'-.b')
     
-    plot(shiftValues, corrValsShuffledMean, 'r')
-    plot(shiftValues, corrValsShuffledMean+corrValsShuffledSEM, '-.r')
-    plot(shiftValues, corrValsShuffledMean-corrValsShuffledSEM, '-.r')
+            plot(shiftValues, corrValsShuffledMean, 'r')
+            plot(shiftValues, corrValsShuffledMean+corrValsShuffledSEM, '-.r')
+            plot(shiftValues, corrValsShuffledMean-corrValsShuffledSEM, '-.r')
     
              figure(111+ci);
              clf
@@ -201,7 +192,6 @@ for ci=1:length(cellNames)
     s.Ch1_PostSub = Ch1_PostSub;
     s.Ch2_PostSub = Ch2_PostSub;
     
-    try
-        exportStructToHDF5(s,[num2str(desiredVoltage), '_', cellname],'/')
-    end
+    exportStructToHDF5(s,[num2str(abs(desiredVoltage)), '_', cellname], cellname)
+    
 end
