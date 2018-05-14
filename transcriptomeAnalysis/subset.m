@@ -18,7 +18,8 @@ if isempty(selection) % If empty, return everything
     cellTypes_ofSubset = cellTypes(cellInd_ofSubset);
 elseif isnumeric(selection(1)) % If numeric, return those indices
     cellInd_ofSubset = selection;
-    disp([num2str(length(cellInd_ofSubset)) ' cells selected.']);
+    cellTypes_ofSubset = cellTypes(cellInd_ofSubset);
+    %disp([num2str(length(cellInd_ofSubset)) ' cells selected.']);
 else % must be either a string or string vector, so let's search for it!
     selectedType = selection;
     cellInd_ofSubset = find(contains(cellTypes, selectedType, 'IgnoreCase', true));

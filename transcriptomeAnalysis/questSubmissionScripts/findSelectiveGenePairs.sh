@@ -11,5 +11,5 @@ cd $PBS_O_WORKDIR
 
 module load matlab/r2016a
 
-matlab -nosplash -nodesktop -singleCompThread -r fullSelectiveExpressionMatrix_pairs_par > log_findSelectiveGenePairs_pVal.txt
+matlab -nosplash -nodesktop -singleCompThread -r fullSelectiveExpressionMatrix_pairs_par > log_findSelectiveGenePairs_logRatio.txt
 # exit                

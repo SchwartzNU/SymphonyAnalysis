@@ -84,6 +84,15 @@ classdef AnalysisTree < tree
                 end
             else
                 allVals = cellData.getEpochVals(paramList{1}, dataSet);
+                
+                % the above can return cell arrays of mixed strings and numbers, so clean it up here:
+                if iscell(allVals)
+                    for i=1:length(allVals)
+                        if isscalar(allVals{i})
+                            allVals{i} = num2str(allVals{i});
+                        end
+                    end
+                end
             end
             uniqueVals = unique(allVals);
             

@@ -16,6 +16,7 @@ fclose(f);
 %% make full table
 dtab_add = table();
 numTableCells = length(cellFileNames);
+% numTableCells = 10;
 
 %% loop through cells
 analysisIndices = 1:numAnalyses;
@@ -159,53 +160,72 @@ end
 
 %% Load external data table for non-automated analyses
 tic
-if ~isempty(externalTableFilename)
-    load(externalTableFilename);
-    origTableVars = dtab_add.Properties.VariableNames;
-    warning('off','MATLAB:table:RowsAddedNewVars')
-    for rowIndex = 1:size(dtab_add,1)
-        cellName = dtab_add.Properties.RowNames{rowIndex};
+if ~isempty(externalTableFilenames)
+    for ti = 1:length(externalTableFilenames)
+        externalTableFilename = externalTableFilenames{ti, 1};
+        fprintf('Loading external table %s \n', externalTableFilename);
+        S = load(externalTableFilename);
+        externalTable = S.(externalTableFilenames{ti, 2});
+        origTableVars = dtab_add.Properties.VariableNames;
+        externalRow = [];
+        warning('off','MATLAB:table:RowsAddedNewVars')
+        
+        
+        % loop through all cells in current table and check if they are in the external table
+        for rowIndex = 1:size(dtab_add,1)
+            cellName = dtab_add.Properties.RowNames{rowIndex};
 
-        % find if the external cell is not already present in the table so we can fill in nans
-        % have to put in nan for the missing values because otherwise it'll get filled with 0
-        if ismember(cellName, externalCellDataTable.Properties.RowNames)
-            externalRow = externalCellDataTable(cellName,:);
-            dtab_add(cellName, externalRow.Properties.VariableNames) = externalRow(1,:);
-        else
-            a = size(externalCellDataTable(1,:), 2);
-            dtab_add(cellName, externalCellDataTable.Properties.VariableNames) = num2cell(nan(1,a));
+            
+            if ismember(cellName, externalTable.Properties.RowNames)
+%                 fprintf('%s cell in external table\n', cellName)
+                externalRow = externalTable(cellName,:);
+                
+                % if this column from external table adds a column to the table, first init the row with nans
+                for vi = 1:length(externalRow.Properties.VariableNames)
+                    externalVarName = externalRow.Properties.VariableNames{vi};
+                    if ~ismember(externalVarName, dtab_add.Properties.VariableNames)
+                        dtab_add(:, externalVarName) = num2cell(nan*zeros(1,size(dtab_add, 1)));
+                    end
+                end
+                
+                
+                dtab_add(cellName, externalRow.Properties.VariableNames) = externalRow(1,:);
+            end
+
+    %         if ~ismember(cellName, externalTable.Properties.RowNames)
+    %             for vi = 1:length(origTableVars)
+    %                 varName = origTableVars{vi};
+    % 
+    %                 if strcmp(varName, 'cellType')
+    %                     externalRow{cellName, varName} = {''};
+    %                 elseif isempty(strfind(varName, 'SMS')) && isempty(strfind(varName, 'Contrast')) && isempty(strfind(varName, 'params'))
+    %                     externalRow(cellName, varName) = {nan};
+    %                 end
+    %             end
+    %         end
+
         end
 
-%         if ~ismember(cellName, externalCellDataTable.Properties.RowNames)
-%             for vi = 1:length(origTableVars)
-%                 varName = origTableVars{vi};
-% 
-%                 if strcmp(varName, 'cellType')
-%                     externalRow{cellName, varName} = {''};
-%                 elseif isempty(strfind(varName, 'SMS')) && isempty(strfind(varName, 'Contrast')) && isempty(strfind(varName, 'params'))
-%                     externalRow(cellName, varName) = {nan};
-%                 end
+%         % clear empties
+%         numericalVarColumns = externalTable.Properties.VariableNames;
+%         for tableRow = 1:size(dtab_add,1)
+%             d = dtab_add{tableRow, numericalVarColumns};
+%             if all(d == 0)
+%                 dtab_add(tableRow, numericalVarColumns) = num2cell(nan*zeros(1,length(numericalVarColumns)));
 %             end
 %         end
+
+        %
         
+        if ~isempty(externalRow)
+            for vi = 1:length(externalRow.Properties.VariableNames)
+                dtabColumns{externalRow.Properties.VariableNames{vi}, 'type'} = {'single'};
+            end
+        end
+        
+        disp('Loaded external data table')
+        toc
     end
-
-    % clear empties
-%     numericalVarColumns = externalCellDataTable.Properties.VariableNames;
-%     for tableRow = 1:size(dtab_add,1)
-%         d = dtab_add{tableRow, numericalVarColumns};
-%         if all(d == 0)
-%             dtab_add(tableRow, numericalVarColumns) = num2cell(nan*zeros(1,length(numericalVarColumns)));
-%         end
-%     end
-
-    %
-    for vi = 1:length(externalRow.Properties.VariableNames)
-        dtabColumns{externalRow.Properties.VariableNames{vi}, 'type'} = {'single'};
-    end
-
-    disp('Loaded external data table')
-    toc
 end
 
 %% combine Additional rows with current table

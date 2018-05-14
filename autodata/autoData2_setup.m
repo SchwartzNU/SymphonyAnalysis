@@ -1,11 +1,14 @@
 global ANALYSIS_FOLDER;
-cellNamesListLocation = [ANALYSIS_FOLDER 'Projects' filesep 'F mini On and Off/cellNames.txt'];
+% cellNamesListLocation = [ANALYSIS_FOLDER 'Projects' filesep 'F mini On/cellNames.txt'];
+cellNamesListLocation = [ANALYSIS_FOLDER 'Projects' filesep 'currentProject/cellNames.txt'];
 
 % set this to [] if no external table
-externalTableFilename = 'analysisTrees/automaticData/externalCellDataTable';
+externalTableFilenames = {'analysisTrees/automaticData/externalCellDataTable','externalCellDataTable';
+                          'analysisTrees/automaticData/dendritePolygonDatabaseAutodata', 'dendritePolygonDatabaseAutodata';
+                          'analysisTrees/automaticData/spatialOnOffOffsetTable','spatialOnOffOffsetTable'};
 
 % output save location, set to [] to not save
-outputSaveFilename = 'analysisTrees/automaticData/autodata';
+outputSaveFilename = 'analysisTrees/automaticData/autodata_fmonproject';
 
 
 warning('off', 'MATLAB:table:RowsAddedExistingVars')

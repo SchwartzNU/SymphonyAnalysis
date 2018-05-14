@@ -1,4 +1,6 @@
 dbFileName = 'dendritePolygonDatabase.mat';
+outFileName = 'analysisTrees/automaticdata/dendritePolygonDatabaseAutodata.mat';
+
 if isfile(dbFileName)
     load(dbFileName)
     fprintf('Loaded %g cells from db\n', size(dendritePolygonDatabase, 1));
@@ -56,6 +58,18 @@ for ci = 1:size(db,1)
 
     [COM_angle, COM_length] = cart2pol((center(1) - soma(1)), (center(2) - soma(2)));
     COM_angle = mod(COM_angle * 180/pi, 360);
-    db{ci, 'angle_somaToCenterOfMass'} = COM_angle;
+    
+    pseudoRadius = sqrt(Area/pi);
+    
+    db{ci, 'angle_somaToCenterOfMass'} = round(COM_angle);
+    db{ci, 'offset_ratioToPseudoradius'} = COM_length / pseudoRadius;
 %     line([x_soma center(1)], [y_soma center(2)], 'Color', 'blue', 'LineWidth', 3)
 end
+
+dendritePolygonDatabaseAutodata = db;
+dendritePolygonDatabaseAutodata.fname = [];
+dendritePolygonDatabaseAutodata.polygon = [];
+dendritePolygonDatabaseAutodata.soma = [];
+
+
+save(outFileName, 'dendritePolygonDatabaseAutodata');

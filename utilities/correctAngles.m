@@ -11,15 +11,19 @@ function cd = correctAngles(cd, cellName)
     end
 
     % calculate rig angle offset
-    if strfind(cellName,'A')
-%         rig = 'A';
-        rigAngle = 180;
-    elseif strfind(cellName,'B')
-%         rig = 'B';
-        rigAngle = 270;
-    else
-        rigAngle = 0; % 
+    epoch = cd.epochs(1);
+    if isKey(epoch.attributes, 'angleOffsetFromRig')
+        rigAngle = epoch.attributes('angleOffsetFromRig');    
+    else    
+        if strfind(cellName,'A')
+    %         rig = 'A';
+            rigAngle = 180;
+        elseif strfind(cellName,'B')
+    %         rig = 'B';
+            rigAngle = 270;
+        end
     end
+
     
     %% loop through epochs
     for ei = 1:length(cd.epochs)

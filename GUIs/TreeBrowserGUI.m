@@ -23,7 +23,7 @@ classdef TreeBrowserGUI < handle
     end
     
     properties(Constant)
-        leafPlotMethods = {'plotEpochData'; 'plotMeanData'; 'plotSpikeRaster'; 'plotLeaf'}; %plotLeaf can be overwritten in analysis class
+        leafPlotMethods = {'plotEpochData'; 'plotMeanData'; 'plotSpikeRaster'; 'plotLeaf'; 'plotMeanData_psth'; 'plotMeanData_traces'}; %plotLeaf can be overwritten in analysis class
         generalPlotMethods = {'XYplotter_epochParams'; 'XYplotter_singleValParams'};
     end
     
@@ -707,6 +707,16 @@ classdef TreeBrowserGUI < handle
                     else
                         cellData.plotMeanData(epochID, true, [], obj.analysisTree.getDevice(curNodeIndex));
                     end
+                % two below options allow forcing of plot type, since some epochs have important spikes and traces
+                % 3/18 SAC
+                elseif strcmp(plotFunc, 'plotMeanData_psth')
+                    epochID = obj.analysisTree.get(curNodeIndex).epochID;
+                    spCount = cellData.getPSTH(epochID, [], obj.analysisTree.getDevice(curNodeIndex));
+                    cellData.plotPSTH(epochID, [], obj.analysisTree.getDevice(curNodeIndex));
+                elseif strcmp(plotFunc, 'plotMeanData_traces')
+                    epochID = obj.analysisTree.get(curNodeIndex).epochID;
+                    cellData.plotMeanData(epochID, true, [], obj.analysisTree.getDevice(curNodeIndex));
+                    
                 elseif strcmp(plotFunc, 'plotSpikeRaster')
                     epochID = obj.analysisTree.get(curNodeIndex).epochID;
                     if strcmp(obj.analysisTree.getMode(curNodeIndex), 'Cell attached')
@@ -875,7 +885,7 @@ classdef TreeBrowserGUI < handle
             try 
                 obj.updatePlot();
             catch
-                warning('There is no data for these cells. Check raw data exists, cell data exists, or if the cell has been curated.')
+                warning('There is no data for these cells. Check raw data exists, cell data exists, if the cell has been curated, and that the type of parameter (CA vs WC) is correct.')
             end
         end
         

@@ -10,7 +10,12 @@ data = {};
 paramNames_typed = {};
 for paramIndex = 1:length(paramNames)
     curNode = sT.get(leafNodes(1));
-    paramStruct = curNode.(paramNames{paramIndex});
+    try
+        paramStruct = curNode.(paramNames{paramIndex});
+    catch
+        continue
+    end
+        
     paramType = paramStruct.type;
     paramUnits = paramStruct.units;
     if strcmp(paramType, 'byEpoch')
@@ -31,7 +36,11 @@ for paramIndex = 1:length(paramNames)
     for j=1:length(leafNodes)
         curNode = sT.get(leafNodes(j));
         splitValues(j) = curNode.splitValue;
-        dataValues(j) = curNode.(paramNames_typed{paramIndex});
+        try
+            dataValues(j) = curNode.(paramNames_typed{paramIndex});
+        catch
+            dataValues(j) = nan;
+        end
     end
     data(1,1) = {splitValues};
     data(1,1 + paramIndex) = {dataValues};

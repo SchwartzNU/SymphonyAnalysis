@@ -25,6 +25,7 @@ warning('off', 'MATLAB:table:RowsAddedExistingVars')
 for fi = 1:length(filterDirResult)
     filterShortName = filterDirResult(fi).name;
     filterShortName = filterShortName(1:(end-4));
+    fprintf('Loading filter %s \n',filterShortName);
     filterVariableName = regexprep(filterShortName, '[ -]','_');
     load([filterDirectory filterShortName '.mat'], 'filterData','filterPatternString','analysisType');
     filterTable{fi,'filterFileName'} = {filterShortName};
@@ -143,11 +144,20 @@ for ci = 1:numCells
         epochFilter = analysis.epochFilt;
         analysisType = analysis.analysisType;
     
-        [hasCorrectDataSet, ~] = doSingleAnalysis(cellName, analysisType, [], epochFilter, cellData, analysisNameTable, true);
-        if isempty(hasCorrectDataSet)
-            hasCorrectDataSet = false;
+        try
+            [hasCorrectDataSet, ~] = doSingleAnalysis(cellName, analysisType, [], epochFilter, cellData, analysisNameTable, true);
+            if isempty(hasCorrectDataSet)
+                hasCorrectDataSet = false;
+            end
+            trow{1,analysis.filterVariableName} = hasCorrectDataSet;
+        catch
+            warning('analysis failed');
+            analysisType
+            epochFilter
+            filterName
+            cellData
+            continue
         end
-        trow{1,analysis.filterVariableName} = hasCorrectDataSet;
     end
     
     cellDataTable(cellName,:) = trow;

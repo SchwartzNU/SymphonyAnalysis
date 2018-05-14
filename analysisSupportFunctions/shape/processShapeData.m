@@ -1,5 +1,9 @@
-function ad = processShapeData(epochData)
+function ad = processShapeData(epochData, processOptions)
 % epochData: cell array of ShapeData, one for each epoch
+
+if nargin < 2
+    processOptions = struct();
+end
 
 ad = struct();
 
@@ -135,9 +139,11 @@ for p = 1:num_epochs
 %         e.signalLightOn(tRegion) = intensities(si); % square wave for plotting
     end
     
-    
-    
-    if isKey(alignmentTemporalOffset_by_v, e.ampVoltage)
+    if ~isnan(e.timeOffset) && abs(e.timeOffset) > 0
+        % just use the builtin one if it's stored in the epoch
+        t_offset = e.timeOffset;
+        
+    elseif isKey(alignmentTemporalOffset_by_v, e.ampVoltage)
         
         t_offset = alignmentTemporalOffset_by_v(e.ampVoltage);
 %         fprintf('using premade alignment %1.3f for v = %d\n',t_offset,e.ampVoltage)
@@ -188,8 +194,21 @@ for p = 1:num_epochs
     sampleCount_on    = round(e.spotOnTime * e.sampleRate);
 
 %     sampleSet = (0:(sampleCount_total-1))'; % (1) total
-    sampleSet = (0:(sampleCount_on-1))'; % (2) just during spot
-%     sampleSet = (sampleCount_on:(sampleCount_total-1))'; % (3) just during post-spot
+%     sampleSet = (0:(sampleCount_on-1))'; % (2) just during spot
+    
+    if isfield(processOptions, 'temporalBufferSize') % the amount of time to leave off the start and end of the Spot On Period
+        temporalBufferSize = processOptions.temporalBufferSize;
+    else
+        temporalBufferSize = [.1, .2];
+    end
+    if length(temporalBufferSize) > 1
+        buffer = round(sampleCount_on * temporalBufferSize);
+        sampleSet = ((0+buffer(1)):(sampleCount_on - 1 - buffer(2)))'; % (2) just during spot
+    else
+        buffer = round(sampleCount_on * temporalBufferSize);
+        sampleSet = ((0+buffer):(sampleCount_on - 1 - buffer))'; % (2) just during spot
+    end
+    %     sampleSet = (sampleCount_on:(sampleCount_total-1))'; % (3) just during post-spot
     
     if skipResponses == 1
         continue
@@ -198,8 +217,6 @@ for p = 1:num_epochs
     if max(e.response) == 0
         continue
     end
-    
-%     figure(12)
     
     if strcmp(e.epochMode, 'flashingSpots')
         
@@ -230,6 +247,7 @@ for p = 1:num_epochs
     %         if abs(e.ampVoltage) > 0 % a nice alignment for the whole cell data
     %             resp = resp - mean(resp(1:10));
     %         end
+    
             mn = mean(resp);
             pk = max(resp);
             if e.ampVoltage < 0
@@ -351,5 +369,6 @@ ad.observations = observations;
 ad.observationColumns = observationColumns;
 ad.timeOffset = t_offset;
 ad.validSearchResult = validSearchResult;
+ad.sampleSet = sampleSet;
 
 end

@@ -6,10 +6,10 @@ if strcmp(streamName, 'Amplifier_Ch1')
     elseif strcmp(epoch.get('ampMode'), 'Whole cell') && (epoch.get('ampHoldSignal') == 0) %current clamp recording might have spikes
         v = true;
     end
-elseif strcmp(obj.streamName, 'Amplifier_Ch2')
+elseif strcmp(streamName, 'Amplifier_Ch2')
     if strcmp(epoch.get('amp2Mode'), 'Cell attached')
         v = true;
-    elseif strcmp(epoch.get('amplifier2Mode'), 'IClamp') %TODO: Is this recorded correctly in Symphony? I don't think so
+    elseif strcmp(epoch.get('ampMode'), 'Whole cell') && (epoch.get('amp2HoldSignal') == 0) 
         v = true;
     end
 else
