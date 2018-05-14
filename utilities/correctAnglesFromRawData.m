@@ -152,4 +152,7 @@ function correctAnglesFromRawData(projFolder)
         fprintf('\tCorrected %g epochs: %s\n',fixCount, strjoin(unique(fixedDisplayNames), ', '));
         save(cellDataFileName, 'cellData');
     end
+    disp('Done correcting angles')
+    
 end
+
