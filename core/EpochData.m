@@ -69,11 +69,13 @@ classdef EpochData < handle
         end
         
         function val = get(obj, paramName)
-            if ~obj.attributes.isKey(paramName)
+            attr = obj.attributes;
+            k = attr.isKey(paramName);
+            if ~k
                 %disp(['Error: ' paramName ' not found']);
                 val = nan;
             else
-                val = obj.attributes(paramName);
+                val = attr(paramName);
             end
         end
         
@@ -141,22 +143,36 @@ classdef EpochData < handle
             if nargin < 2
                 streamName = 'Amplifier_Ch1';
             end
-            if ~obj.dataLinks.isKey(streamName)
-                %disp(['Error: no data found for ' streamName]);
-                data = [];
-                xvals = [];
-                units = '';
-            else
-                if isKey(obj.parentCell.attributes, 'symphonyVersion')
-                    temp = h5read(fullfile(RAW_DATA_FOLDER, [obj.parentCell.get('fname') '.h5']), obj.dataLinks(streamName));
+            
+            data = [];
+            xvals = [];
+            units = '';            
+            
+            dataLinks = obj.dataLinks; % this line is required because MATLAB is inconsistent
+            dataCheck = dataLinks.isKey(streamName);
+                       
+            if dataCheck
+                
+                try % more MATLAB weirdness
+                    pc = obj.parentCell;
+                catch
+                    [pc, pc2] = obj.parentCell;
+                end
+                
+                if isKey(pc.attributes, 'symphonyVersion')
+                    temp = h5read(fullfile(RAW_DATA_FOLDER, [pc.get('fname') '.h5']), dataLinks(streamName));
                     data = temp.quantity;
                     units = deblank(temp.units(:,1)');
                 else
-                    temp = h5read(fullfile(RAW_DATA_FOLDER, [obj.parentCell.savedFileName '.h5']),obj.dataLinks(streamName));
+                    temp = h5read(fullfile(RAW_DATA_FOLDER, [pc.savedFileName '.h5']),dataLinks(streamName));
                     data = temp.quantity;
                     units = deblank(temp.unit(:,1)');
                 end
-
+                
+                if isempty(data)
+                    return
+                end
+                
                 sampleRate = obj.get('sampleRate');
                 %temp hack
                 if ischar(obj.get('preTime'))

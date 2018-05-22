@@ -36,7 +36,7 @@ classdef SpikeDetectorGUI < handle
             obj.cellData = cellData;
 %             obj.epochIndicesList = epochIndicesList; % don't even use it if we're just overwriting it
             obj.mode = params.spikeDetectorMode;
-            obj.threshold = params.spikeThreshold;            
+            obj.threshold = params.spikeThreshold;
             obj.curEpochListIndex = 1;
             obj.initializeEpochsInDataSetsList();
             obj.epochIndicesList = sort(unique(obj.epochsInDataSets));
@@ -461,7 +461,7 @@ classdef SpikeDetectorGUI < handle
             xlim(obj.handles.secondaryAxes, [min(t), max(t)]);
             
             displayName = obj.cellData.epochs(obj.epochIndicesList(obj.curEpochListIndex)).get('displayName');
-            set(obj.fig, 'Name',['Spike Detector: Epoch ' num2str(obj.epochIndicesList(obj.curEpochListIndex)) ' (' displayName '): ' num2str(length(obj.spikeTimes)) ' spikes']);
+            set(obj.fig, 'Name',['Spike Detector: Epoch ' num2str(obj.epochIndicesList(obj.curEpochListIndex)) ' (' displayName '): ' num2str(length(obj.spikeTimes)) ' spikes, ' obj.streamName]);
             drawnow
         end
         

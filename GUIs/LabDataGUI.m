@@ -642,7 +642,17 @@ classdef LabDataGUI < handle
         function runDetectSpikes(obj)
             if ~isempty(obj.curCellData)
                 disp('Launching spike detector GUI');
-                obj.curCellData.detectSpikes();
+                
+                if contains(obj.curCellName, '-Ch2')
+                    streamName = 'Amplifier_Ch2';
+                else
+                    streamName = 'Amplifier_Ch1';
+                end
+                params = struct();
+                params.spikeDetectorMode = 'advanced';
+                params.spikeThreshold = -6;
+                SpikeDetectorGUI(obj.curCellData, [], params, streamName);
+%                 obj.curCellData.detectSpikes();
             end
         end
         

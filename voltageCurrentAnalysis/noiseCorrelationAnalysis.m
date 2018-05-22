@@ -1,5 +1,5 @@
 function MaxCorrs = noiseCorrelationAnalysis
-global ANALYSIS_FOLDER
+startupSW
 
 % inputs
 %%% CHANGE STUFF HERE
@@ -27,11 +27,11 @@ d = designfilt('highpassiir', 'SampleRate', sampleRate,...
 	'StopbandFrequency', f*0.8,...
 	'PassbandFrequency', f*1.3,...
 	'StopbandAttenuation', 40, ...
- 	'PassbandRipple', 5)
+ 	'PassbandRipple', 5);
 
-for ci=1:length(cellNames)%length(cellNames)
+for ci=1:length(cellNames)
     %% load data
-    cellname = char(cellNames(ci));
+    cellname = cellNames{ci}
     
     load(['cellData/',cellname,'.mat'])
     SavedDataSets = cellData.savedDataSets.keys;
@@ -93,18 +93,9 @@ for ci=1:length(cellNames)%length(cellNames)
             
             t = (0:length(response)-1)/10000;
             response = response(t > noiseTimeSec(1) & t <= noiseTimeSec(2));
-            
             response = response - mean(response);
-            
             %[b,a] = butter(8,0.5/(sampleRate/2),'high');
-            
             response_filt = filtfilt(d,response);
-            
-%             figure(100)
-%             subplot(2, 1, 1)
-%             plot(response)
-%             subplot(2, 1, 2)
-%             plot(response_filt)
             
             responses(oi,:,channel) = response_filt;
         end
@@ -144,8 +135,6 @@ for ci=1:length(cellNames)%length(cellNames)
         [corrVals(ei, :), lags] = xcorr(responses(ei,:,1), responses(ei,:,2), 'coeff');
     end
     
-    MaxCorrPerTrial = max(corrVals,[],2);
-    
     meanCorrelation = mean(corrVals, 1);
     SEMCorrelation = std(corrVals)/sqrt(length(corrVals(:,1)));
     [M,I] = max(abs(meanCorrelation));
@@ -175,11 +164,12 @@ for ci=1:length(cellNames)%length(cellNames)
             plot(shiftValues, meanCorrelation+SEMCorrelation,'-.b')
             plot(shiftValues, meanCorrelation-SEMCorrelation,'-.b')
     
-    plot(shiftValues, corrValsShuffledMean, 'r')
-    plot(shiftValues, corrValsShuffledMean+corrValsShuffledSEM, '-.r')
-    plot(shiftValues, corrValsShuffledMean-corrValsShuffledSEM, '-.r')
+            plot(shiftValues, corrValsShuffledMean, 'r')
+            plot(shiftValues, corrValsShuffledMean+corrValsShuffledSEM, '-.r')
+            plot(shiftValues, corrValsShuffledMean-corrValsShuffledSEM, '-.r')
     
              figure(111+ci);
+             clf
              h = tight_subplot(5,ceil(length(corrVals(:,1))/5));
              for ci = 1:length(corrVals(:,1))
                  %plot(h(ci), shiftValues(48500:51500), corrVals(ci,48500:51500))
@@ -195,7 +185,6 @@ for ci=1:length(cellNames)%length(cellNames)
     s.SEMCorrelation = SEMCorrelation;
     s.meanCorrelationShuffled = corrValsShuffledMean;
     s.SEMCorrelationShuffled = corrValsShuffledSEM;
-    s.MaxCorrPerTrial = MaxCorrPerTrial;
     s.Ch1_PreSub = Ch1_PreSub;
     s.Ch2_PreSub = Ch2_PreSub;
     s.Ch1_Mean = Ch1_Mean;
@@ -203,10 +192,6 @@ for ci=1:length(cellNames)%length(cellNames)
     s.Ch1_PostSub = Ch1_PostSub;
     s.Ch2_PostSub = Ch2_PostSub;
     
-    try
-        exportStructToHDF5(s,[num2str(desiredVoltage), '_', cellname],'/')
-    catch
-        display(['Could not save data for' cellname])
-    end
-    display(['completed' cellname])
+    exportStructToHDF5(s,[num2str(abs(desiredVoltage)), '_', cellname], cellname)
+    
 end

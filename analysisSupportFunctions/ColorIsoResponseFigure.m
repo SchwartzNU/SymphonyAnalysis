@@ -303,16 +303,16 @@ classdef ColorIsoResponseFigure < handle
             
             
             % draw some nice on/off divider lines, and contrast boundary lines
-            line(obj.handles.isoAxes, [0,0], obj.plotRange2, 'LineStyle', ':', 'Color', 'k', 'PickableParts', 'none');
-            line(obj.handles.isoAxes, obj.plotRange1, [0,0], 'LineStyle', ':', 'Color', 'k', 'PickableParts', 'none');
-            rectangle(obj.handles.isoAxes, 'Position', [-1, -1, diff(obj.contrastRange1), diff(obj.contrastRange2)], 'EdgeColor', 'k', 'LineWidth', 1, 'PickableParts', 'none');
-            
-            xlabel(obj.handles.isoAxes, obj.colorNames{1});
-            ylabel(obj.handles.isoAxes, obj.colorNames{2});
-            xlim(obj.handles.isoAxes, obj.plotRange1 + [-.1, .1]);
-            ylim(obj.handles.isoAxes, obj.plotRange2 + [-.1, .1]);
-            set(obj.handles.isoAxes,'LooseInset',get(obj.handles.isoAxes,'TightInset'))
-            hold(obj.handles.isoAxes, 'off');
+%             line(obj.handles.isoAxes, [0,0], obj.plotRange2, 'LineStyle', ':', 'Color', 'k', 'PickableParts', 'none');
+%             line(obj.handles.isoAxes, obj.plotRange1, [0,0], 'LineStyle', ':', 'Color', 'k', 'PickableParts', 'none');
+%             rectangle(obj.handles.isoAxes, 'Position', [-1, -1, diff(obj.contrastRange1), diff(obj.contrastRange2)], 'EdgeColor', 'k', 'LineWidth', 1, 'PickableParts', 'none');
+%             
+%             xlabel(obj.handles.isoAxes, obj.colorNames{1});
+%             ylabel(obj.handles.isoAxes, obj.colorNames{2});
+%             xlim(obj.handles.isoAxes, obj.plotRange1 + [-.1, .1]);
+%             ylim(obj.handles.isoAxes, obj.plotRange2 + [-.1, .1]);
+%             set(obj.handles.isoAxes,'LooseInset',get(obj.handles.isoAxes,'TightInset'))
+%             hold(obj.handles.isoAxes, 'off');
             
             % Update selected epoch in epoch signal display and table
             if ~isempty(obj.selectedPoint)
@@ -359,6 +359,7 @@ classdef ColorIsoResponseFigure < handle
 
             % display model output
             if ~isempty(obj.modelCoefs)
+                fprintf('LM fit coefs (P-val log10): UV: %.2g (%.1g) Green: %.2g (%.1g)', obj.modelCoefs(3,1), log10(obj.modelCoefs(3,2)), obj.modelCoefs(2,1), log10(obj.modelCoefs(2,2)));
                 obj.handles.dataDisplayText.String = sprintf('LM fit coefs (P-val log10): UV: %.2g (%.1g) Green: %.2g (%.1g)', obj.modelCoefs(3,1), log10(obj.modelCoefs(3,2)), obj.modelCoefs(2,1), log10(obj.modelCoefs(2,2)));
             end
         end

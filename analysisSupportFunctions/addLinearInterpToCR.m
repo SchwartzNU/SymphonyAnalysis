@@ -1,6 +1,13 @@
 function rootData = addLinearInterpToCR(rootData)
 
-if strcmp(rootData.ampMode, 'Cell attached')
+AM = '';
+try 
+    AM = rootData.ampMode;
+catch
+    AM = rootData.amp2Mode;
+end
+
+if strcmp(AM, 'Cell attached')
     xvals = rootData.contrast;
     yvals = rootData.spikeCount_stimInterval_grndBlSubt.mean_c;
     

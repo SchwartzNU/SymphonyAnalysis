@@ -6,7 +6,8 @@ function initializeExperiment(expname, myname)
     projFolder = makeTempFolderForExperiment(expname);
 
     addRecordedByToProject(projFolder, myname);
-    correctAnglesForProject(projFolder);
+%     correctAnglesForProject(projFolder);
+    correctAnglesFromRawData(projFolder);
     
     LabDataGUI(projFolder);
 end
