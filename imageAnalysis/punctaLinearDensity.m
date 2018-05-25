@@ -1,7 +1,7 @@
-image_fname = 'FusedBinaryPSDMask.tif';
+image_fname = 'Cell2_NB_Mask.tif';
 punctaPoints_fname = 'punctaPoints.mat';
-micronsPerPixelXY = 0.1132913;
-micronsPerPixelZ = 0.15;
+micronsPerPixelXY = 0.2497912;
+micronsPerPixelZ = 0.25;
 
 info = imfinfo(image_fname);
 for i=1:numel(info)

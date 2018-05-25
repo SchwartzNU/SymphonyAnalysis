@@ -1,8 +1,8 @@
 %punctaMaskFinder(f_name, thres, pixels, baselineFrames)
-f_name_puncta = 'TouchingPSDPuncta_sizeFiltered.tif';
-f_name_NB = 'FusedBinaryPSDMask.tif';
-fname_stats = 'PunctaTableTouching.txt';
-overlapThreshold = 0.1;
+f_name_puncta = 'Objects map of Result of All connected regions.tif';
+f_name_NB = 'Cell2_NB_Mask.tif';
+fname_stats = 'Statistics for Result of All connected regions.txt';
+overlapThreshold = 0.5;
 
 info = imfinfo(f_name_puncta);
 Nframes = numel(info);
@@ -28,7 +28,7 @@ closestPunctaInd = zeros(1, Nobj);
 
 
 %load punta COM locations
-A = dlmread(fname_stats, '\t', 1, 0);
+A = dlmread(fname_stats, ',', 1, 0);
 allX = A(:,12);
 allY = A(:,13);
 allZ = A(:,14);
@@ -62,5 +62,5 @@ Xpos = allX(countedPunctaInd);
 Ypos = allY(countedPunctaInd);
 
 
-save('punctaPoints.mat')
+save('punctaPoints.mat','-v7.3')
 
