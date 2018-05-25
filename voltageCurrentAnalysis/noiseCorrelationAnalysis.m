@@ -1,5 +1,5 @@
 function MaxCorrs = noiseCorrelationAnalysis
-startupSW
+global ANALYSIS_FOLDER
 
 % inputs
 %%% CHANGE STUFF HERE
