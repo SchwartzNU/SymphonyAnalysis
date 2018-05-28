@@ -32,6 +32,7 @@ classdef DynamicClampAnalysis < AnalysisTree
             L = length(leafIDs);
             
             for i=1:L %for each leaf node
+                % this is all correct
                 curNode = obj.get(leafIDs(i));
                 outputStruct = getEpochResponses_CA(cellData, curNode.epochID, ...
                     'DeviceName', rootData.deviceName,'StartTime', obj.StartTime, 'EndTime', obj.EndTime, ...
@@ -43,10 +44,9 @@ classdef DynamicClampAnalysis < AnalysisTree
                 %'ZeroCrossingPeaks', crossingParam);
                 outputStruct = getEpochResponseStats(outputStruct);
                 curNode = mergeIntoNode(curNode, outputStruct);
-                    
+                
                 obj = obj.set(leafIDs(i), curNode);
             end
-            
             obj = obj.percolateUp(leafIDs, ...
                 'splitValue', 'conductanceMatrixRowIndex');
             
@@ -57,7 +57,7 @@ classdef DynamicClampAnalysis < AnalysisTree
             obj = obj.percolateUp(leafIDs, singleValParamList, singleValParamList);
             obj = obj.percolateUp(leafIDs, collectedParamList, collectedParamList);
             
-            
+            rootData = obj.get(1); % necessary
             rootData.byEpochParamList = byEpochParamList;
             rootData.singleValParamList = singleValParamList;
             rootData.collectedParamList = collectedParamList;
@@ -134,10 +134,10 @@ classdef DynamicClampAnalysis < AnalysisTree
         end
         
         function plot_conductanceIndexVspikeCount_stimInter(node, cellData)
-            node
             rootData = node.get(1);
-            rootData
-            xvals = rootData.conductanceMatrixRowIndex;
+            % puts a number in front of the list of indices and I don't
+            % know why
+            xvals = unique(rootData.conductanceMatrixRowIndex);
             yField = rootData.spikeCount_stimInterval;
             if strcmp(yField.units, 's')
                 yvals = yField.median_c;
