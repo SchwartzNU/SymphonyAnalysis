@@ -1,4 +1,5 @@
 classdef DynamicClampAnalysis < AnalysisTree
+    % FIX how data attaches to the tree
     properties
         StartTime = 0;
         EndTime = 1000;
@@ -20,7 +21,8 @@ classdef DynamicClampAnalysis < AnalysisTree
             dataSet = cellData.savedDataSets(dataSetName);
             obj = obj.copyAnalysisParams(params);
             obj = obj.copyParamsFromSampleEpoch(cellData, dataSet, ...
-                {params.ampModeParam, 'ampHoldSignal', 'gExcMultiplier', 'gInhMultiplier'});
+                {params.ampModeParam, 'ampHoldSignal', 'gExcMultiplier', 'gInhMultiplier',...
+                'conductanceMatrixRowIndex'});
             obj = obj.buildCellTree(1, cellData, dataSet, {'conductanceMatrixRowIndex'});
         end
         
@@ -28,51 +30,26 @@ classdef DynamicClampAnalysis < AnalysisTree
             rootData = obj.get(1);
             leafIDs = obj.findleaves();
             L = length(leafIDs);
-            baseline = zeros(1,L);  %for grandBaseline subt. Adam 2/17/13
-            
             
             for i=1:L %for each leaf node
                 curNode = obj.get(leafIDs(i));
-                if strcmp(rootData.(rootData.ampModeParam), 'Cell attached')
-                    outputStruct = getEpochResponses_CA(cellData, curNode.epochID, ...
-                        'DeviceName', rootData.deviceName,'StartTime', obj.StartTime, 'EndTime', obj.EndTime, ...
-                        'FitPSTH', 0);
-                    outputStruct = getEpochResponseStats(outputStruct);
-                    curNode = mergeIntoNode(curNode, outputStruct);
-                    baseline(i) = outputStruct.baselineRate.mean_c; %for grandBaseline subt. Adam 2/17/13
-                else %whole cell
-                    outputStruct = getEpochResponses_WC(cellData, curNode.epochID, ...
-                        'DeviceName', rootData.deviceName);
-                    %'ZeroCrossingPeaks', crossingParam);
-                    outputStruct = getEpochResponseStats(outputStruct);
-                    curNode = mergeIntoNode(curNode, outputStruct);
-                end
-                
+                outputStruct = getEpochResponses_CA(cellData, curNode.epochID, ...
+                    'DeviceName', rootData.deviceName,'StartTime', obj.StartTime, 'EndTime', obj.EndTime, ...
+                    'FitPSTH', 0);
+                outputStruct = getEpochResponseStats(outputStruct);
+                curNode = mergeIntoNode(curNode, outputStruct);
+                outputStruct = getEpochResponses_WC(cellData, curNode.epochID, ...
+                    'DeviceName', rootData.deviceName);
+                %'ZeroCrossingPeaks', crossingParam);
+                outputStruct = getEpochResponseStats(outputStruct);
+                curNode = mergeIntoNode(curNode, outputStruct);
+                    
                 obj = obj.set(leafIDs(i), curNode);
             end
             
             obj = obj.percolateUp(leafIDs, ...
                 'splitValue', 'conductanceMatrixRowIndex');
             
-            %grand baseline subtraction Adam 2/17/13
-            if strcmp(rootData.(rootData.ampModeParam), 'Cell attached')
- 
-                
-                grandBaselineMean = mean(baseline);
-                for i=1:L %for each leaf node
-                    curNode = obj.get(leafIDs(i));
-                    
-                    
-                    tempStruct.spikeCount_ONSET_after200ms_grndBlSubt = curNode.spikeCount_ONSET_after200ms;
-                    tempStruct.spikeCount_ONSET_after200ms_grndBlSubt.value = curNode.spikeCount_ONSET_after200ms.value - grandBaselineMean.*0.8; %assumes 1 sec stim interval
-                    tempStruct.spikeCount_stimInterval_grndBlSubt = curNode.spikeCount_stimInterval;
-                    tempStruct.spikeCount_stimInterval_grndBlSubt.value = curNode.spikeCount_stimInterval.value - grandBaselineMean; %assumes 1 sec stim interval
-                    tempStruct = getEpochResponseStats(tempStruct);
-                    
-                    curNode = mergeIntoNode(curNode, tempStruct);
-                    obj = obj.set(leafIDs(i), curNode);
-                end
-            end
             
             [byEpochParamList, singleValParamList, collectedParamList] = getParameterListsByType(curNode);
             %fnames = fnames{1};
@@ -86,7 +63,6 @@ classdef DynamicClampAnalysis < AnalysisTree
             rootData.collectedParamList = collectedParamList;
             rootData.stimParameterList = {'conductanceMatrixRowIndex'};
             obj = obj.set(1, rootData);
-            % % %
             
         end
         
@@ -148,7 +124,7 @@ classdef DynamicClampAnalysis < AnalysisTree
             rootData = node.get(1);
             chInd = node.getchildren(1);
             L = length(chInd);
-            ax = axes;
+            ax = gca();
             for i=1:L
                 hold(ax, 'on');
                 epochInd = node.get(chInd(i)).epochID;
@@ -157,20 +133,22 @@ classdef DynamicClampAnalysis < AnalysisTree
             hold(ax, 'off');
         end
         
-%         function plot_conductanceIndexVspikeCount_stimInter_baseSubtracted(node, cellData)
-%             rootData = node.get(1);
-%             xvals = rootData.conductanceMatrixRowIndex;
-%             yField = rootData.spikeCount_stimInterval_baselineSubtracted;
-%             if strcmp(yField.units, 's')
-%                 yvals = yField.median_c;
-%             else
-%                 yvals = yField.mean_c;
-%             end
-%             errs = yField.SEM;
-%             errorbar(xvals, yvals, errs);
-%             xlabel('rowIndex');
-%             ylabel(['spikeCount_stimInterval_baselineSubtracted (' yField.units ')']);
-%         end
+        function plot_conductanceIndexVspikeCount_stimInter(node, cellData)
+            node
+            rootData = node.get(1);
+            rootData
+            xvals = rootData.conductanceMatrixRowIndex;
+            yField = rootData.spikeCount_stimInterval;
+            if strcmp(yField.units, 's')
+                yvals = yField.median_c;
+            else
+                yvals = yField.mean_c;
+            end
+            errs = yField.SEM;
+            errorbar(xvals, yvals, errs);
+            xlabel('rowIndex');
+            ylabel(['spikeCount_stimInterval (' yField.units ')']);
+        end
                  
     end
     
