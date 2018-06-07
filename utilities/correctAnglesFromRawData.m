@@ -70,13 +70,16 @@ function correctAnglesFromRawData(projFolder)
         for epochIndex = 1:length(cellData.epochs)
             epoch = cellData.epochs(epochIndex);
 
-            displayName = epoch.get('displayName');
+%             try
+                displayName = epoch.get('displayName');
+%             catch
+%                 continue
+%             end
 
             if ~any(strcmp(displayName, displayNames))
                 continue
             end
-
-            
+                        
             if isKey(cellData.attributes, 'symphonyVersion')
                 h5fileName = fullfile(RAW_DATA_FOLDER, [cellData.get('fname') '.h5']);
                 symphonyRawMode = 2;
@@ -110,6 +113,7 @@ function correctAnglesFromRawData(projFolder)
             end
             
             originalAngle = nan;
+            paramNameToUse = '';
             for ii = 1:length(paramLinks)
                 paramStruct = h5info(h5fileName, paramLinks{ii});
                 for i = 1:length(paramStruct.Attributes)
@@ -117,10 +121,11 @@ function correctAnglesFromRawData(projFolder)
                     nameMatch = strcmp(paramName, angleParamNames);
                     if any(nameMatch)
                         originalAngle = paramStruct.Attributes(i).Value;
+                        paramNameToUse = paramName;
                     end
                 end
             end
-
+            
             if ~isnan(originalAngle)
 
                 epoch.attributes('originalAngleFromRawData') = originalAngle;
@@ -142,7 +147,7 @@ function correctAnglesFromRawData(projFolder)
                 end
 
                 trueAngle = mod(trueAngle, 360);
-                epoch.attributes(paramName) = trueAngle;
+                epoch.attributes(paramNameToUse) = trueAngle;
                 fixCount = fixCount + 1;
                 fixedDisplayNames = horzcat(fixedDisplayNames, displayName);
 
