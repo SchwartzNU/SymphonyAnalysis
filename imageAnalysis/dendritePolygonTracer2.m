@@ -1,6 +1,6 @@
 
 dbFileName = 'dendritePolygonDatabase.mat';
-if isfile(dbFileName)
+if exist(dbFileName, 'file')
     load(dbFileName)
     fprintf('Loaded %g cells from db\n', size(dendritePolygonDatabase, 1));
 else

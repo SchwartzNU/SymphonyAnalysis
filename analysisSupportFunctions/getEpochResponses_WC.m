@@ -36,6 +36,9 @@ if ip.Results.EndTime == 0 %default to end at stimEnd
 else
     intervalEnd = ip.Results.EndTime * 1E-3; %s
 end
+if isnan(intervalEnd)
+    intervalEnd = (sampleEpoch.get('stim1Time') + sampleEpoch.get('stim2Time') + ip.Results.EndOffset) * 1E-3; %s
+end
 
 sampleRate = sampleEpoch.get('sampleRate');
 [data, xvals] = sampleEpoch.getData(ip.Results.DeviceName);

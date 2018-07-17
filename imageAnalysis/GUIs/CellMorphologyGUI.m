@@ -28,7 +28,6 @@ classdef CellMorphologyGUI < handle
                 'NumberTitle',  'off', ...
                 'ToolBar',      'none',...
                 'Menubar',      'none', ... %revisit this
-                'Position', [0 0.85*bounds(4), 0.75*bounds(3), 0.6*bounds(4)], ...
                 'ResizeFcn', @(uiobj,evt)obj.resizeWindow);
             
             %main grid layout
@@ -285,20 +284,22 @@ classdef CellMorphologyGUI < handle
             %add new stats
             if L==1 %single selection
                 curName = tableData{obj.selectedRows(1), 1};
-                curDir = [imageRoot_confocal filesep curName filesep];
-                morphology_fname = [curName '_morphologyData.mat'];
-                %load data
-                load([curDir morphology_fname], 'outputStruct');
-                fnames = fieldnames(outputStruct);
-                Nfields = length(fnames);
-                z=1;
-                
-                for j=1:Nfields
-                    curVal = outputStruct.(fnames{j});
-                    if isscalar(curVal)
-                        statsData{z,1} = fnames{j};
-                        statsData{z,2} = curVal;
-                        z=z+1;
+                if  tableData{obj.selectedRows(1), 6}
+                    curDir = [imageRoot_confocal filesep curName filesep];
+                    morphology_fname = [curName '_morphologyData.mat'];
+                    %load data
+                    load([curDir morphology_fname], 'outputStruct');
+                    fnames = fieldnames(outputStruct);
+                    Nfields = length(fnames);
+                    z=1;
+
+                    for j=1:Nfields
+                        curVal = outputStruct.(fnames{j});
+                        if isscalar(curVal)
+                            statsData{z,1} = fnames{j};
+                            statsData{z,2} = curVal;
+                            z=z+1;
+                        end
                     end
                 end
                 set(obj.handles.statsTable, 'Data', statsData);                
@@ -453,7 +454,7 @@ classdef CellMorphologyGUI < handle
                     trace_fname = [curName '.swc'];
                     image_fname = [curName '.nd2'];
                     morphology_fname = [curName '_morphologyData.mat'];
-                    curDir = [imageRoot_confocal filesep curName filesep];
+                    curDir = [imageRoot_confocal '/' curName '/'];
                     %try
                         outputStruct = rgcAnalyzer([curDir trace_fname] ,[curDir image_fname]);
                         save([curDir morphology_fname], 'outputStruct');
