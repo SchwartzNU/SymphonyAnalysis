@@ -1,4 +1,3 @@
-<<<<<<< Updated upstream
 function [DAFfluor, bg_fluor, dendDist, dist_binned, f_binned, f_err] = DAFImagingAnalysis(f_name_traced, f_name_DAF, f_name_swc)
 
 %Read SWC file
@@ -219,4 +218,3 @@ end
 %calculate minimum distance
 %dist_start = euclideandist(dend_coor,startpt);
 %dist_end = euclideandist(dend_coor,endpt);
->>>>>>> Stashed changes
