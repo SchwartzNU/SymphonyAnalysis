@@ -16,6 +16,7 @@ try
     disp([cellDataName ': Local copy loaded']);
 catch
     disp([cellDataName ': Local copy not found']);
+    localModDate = 0;
 end
 
 % Check to see if the file is recently changed
