@@ -1,4 +1,4 @@
-function geneInd = featureSelector(D, minThres, coeff)
+function geneInd = featureSelector(D, minThres, coeff, doPlot)
 [Ngenes, Ncells] = size(D);
 temp = (D<minThres & D>0);
 numLows = sum(temp(:));
@@ -8,7 +8,7 @@ D(temp) = 0;
 
 isPresent = D>0;
 fracPresent = mean(isPresent,2);
-D_log = log2(D+1);
+D_log = log10(D+1);
 D_log_zeroToNan = D_log;
 D_log_zeroToNan(D_log==0) = nan;
 
@@ -19,8 +19,16 @@ tooFewPresent = fracPresent < 3 / Ncells;
 fracPresent(tooFewPresent) = nan;
 meanLogNonZeroExpression(tooFewPresent) = nan;
 
-%figure(1);
-%scatter(meanLogNonZeroExpression, 1-fracPresent);
 
-geneInd = genesAboveEquation(meanLogNonZeroExpression, 1-fracPresent, .65, coeff);
+%[geneInd, x, y] = genesAboveEquation(meanLogNonZeroExpression, 1-fracPresent, .65, coeff);
+
+if doPlot
+    figure(1);
+    scatter(meanLogNonZeroExpression, 1-fracPresent, 'bx');
+    %hold on;
+    %plot(x, y, 'r');
+    %set(gca,'ylim',[0, 1]);
+    %hold off;
+end
+
 %5.5 default, try 6 or 6.5 for fewer genes

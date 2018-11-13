@@ -1,10 +1,10 @@
-%% Sanes data conversion
-sanesE = load('TPMe.txt');
-sanesE_sparse = spconvert(sanesE(2:end,:));
+%% load txt file
+[cellIDs, eyeVec, xPos, yPos, cellTypes, geneNames, geneCounts, D] = readGenomicsData('RNASeq_ExprMatrix_181111', 1000);
+save('dataSet_11_2018_thres1000gene_225cells');
 
 %% load data
 
-load('dataSet_10_2018_thres1000gene_243cells');
+load('dataSet_11_2018_thres1000gene_225cells');
 %variables:
 % D
 % geneNames
@@ -14,26 +14,6 @@ load('dataSet_10_2018_thres1000gene_243cells');
 % xPos
 % yPos
 % geneCounts
-
-%% feature selection
-
-geneInd = featureSelector(D, 0.5, 6.0);
-N_GOI = length(geneInd);
-disp([num2str(N_GOI) ' genes selected.']);
-
-%% cut matrix to genes of interest
-
-D_GOI = D(geneInd, :);
-
-geneNames_GOI = geneNames(geneInd);
-
-%% PCA
-
-[coeff,score,latent] = pca(D_GOI');
-fractionVar = latent./sum(latent);
-cutoff = 6; %inspected graph
-disp(['First ' num2str(cutoff) ' components explain ' num2str(100*sum(fractionVar(1:cutoff))) '% of the variance.']);
-score = score(:,1:cutoff);
 
 %% Sort by cell type
 uniqueTypes = unique(cellTypes);
@@ -55,52 +35,125 @@ for i=1:Ntypes
 end
 cellSortIndex = ind;
 
-%% apply sorting to each variable
+%% apply cell sorting to each variable
 D_s = D(:, cellSortIndex);
-D_GOI = D_GOI(:, cellSortIndex);
+if exist('D_GOI', 'var'), disp('GOI found'); D_GOI = D_GOI(:, cellSortIndex); end
 eyeVec = eyeVec(cellSortIndex);
 cellTypes = cellTypes(cellSortIndex);
 xPos = xPos(cellSortIndex);
 yPos = yPos(cellSortIndex);
 geneCounts = geneCounts(cellSortIndex);
 
-%score = score(cellSortIndex, :);
+if exist('score', 'var'), score = score(cellSortIndex, :); end
 
-%% get log mean expression pattern for each cell type
+%% optimization loop for geneN_target
 
-D_GOI_log = log10(D_GOI+1);
-typeLogMeans = zeros(N_GOI, Ntestable);
-
-z=1;
-for i=1:Ntypes
-    if NofEach_sorted(i) > 2
+geneN_target_vec = [6];
+C_within_mean = [];
+C_between_mean = [];
+for g=1:length(geneN_target_vec)
+    
+    geneN_target = geneN_target_vec(g);
+    %%% feature selection by cell type
+    z=1;
+    x = cell(1, Ntestable);
+    y = cell(1, Ntestable);
+    
+    %geneN_target = 50;
+    
+    fullGeneInd = [];
+    
+    for j=1:Ntestable
+        j
+        curType = uniqueTypes_sorted{j};
+        curInd = z:z + NofEach_sorted(j)-1;
+        z = z + NofEach_sorted(j);
+        
+        disp(curType);
+        [~, x{j}, y{j}] = featureSelector_byCellType(D_s, curInd, 10, 6.5);
+        b = 2.5;
+        Ngenes = 0;
+        while Ngenes < geneN_target
+            geneInd = genesAboveEquation(x{j}, y{j}, 0.65, b);
+            Ngenes = length(geneInd);
+            b=b-.01;
+        end
+        %disp(['b = ' num2str(b)]);
+        fullGeneInd = [fullGeneInd; geneInd];
+    end
+    
+    fullGeneInd_un = unique(fullGeneInd);
+    
+    %cut matrix to genes of interest
+    
+    D_GOI = D_s(fullGeneInd_un, :);
+    geneNames_GOI = geneNames(fullGeneInd_un);
+    N_GOI = length(fullGeneInd_un);
+    %disp([num2str(N_GOI) ' genes selected']);
+    
+    %get log mean expression pattern for each cell type
+    
+    D_GOI_log = log10(D_GOI+1);
+    typeLogMeans = zeros(N_GOI, Ntestable);
+    
+    z=1;
+    for i=1:Ntypes
+        if NofEach_sorted(i) > 2
+            curType = uniqueTypes_sorted{i};
+            curInd = z:z + NofEach_sorted(i)-1;
+            L = length(curInd);
+            z = z + NofEach_sorted(i);
+            
+            typeLogMeans(:,i) = mean(D_GOI_log(:, curInd),2);
+            
+        end
+    end
+    
+    %correlation matrices
+    %need to add cross validation to this.
+    
+    C_allCells = corrcoef(D_GOI_log);
+    C_typeMeans = corrcoef(typeLogMeans);
+    
+    Ncells = size(D,2);
+    
+    C_cellsToTypes = zeros(Ntestable, Ncells);
+    
+    for i=1:Ncells
+        
+        tempM = [typeLogMeans, D_GOI_log(:,i)];
+        tempC = corrcoef(tempM);
+        C_cellsToTypes(:,i) = tempC(1:end-1,end);
+    end
+    
+    %compute corr for each type
+    z=1;
+    Cmean_byType = zeros(Ntestable,Ntestable);
+    
+    typeInd = cell(1,Ntestable);
+    for i=1:Ntestable
         curType = uniqueTypes_sorted{i};
         curInd = z:z + NofEach_sorted(i)-1;
-        L = length(curInd);
+        typeInd{i} = curInd;
         z = z + NofEach_sorted(i);
-        
-        typeLogMeans(:,i) = mean(D_GOI_log(:, curInd),2);
-        
     end
-end
-
-%% correlation matrices
-
-C_allCells = corrcoef(D_GOI_log);
-C_typeMeans = corrcoef(typeLogMeans);
-
-Ncells = size(D,2);
-
-C_cellsToTypes = zeros(Ntestable, Ncells);
-
-for i=1:Ncells
-    tempM = [typeLogMeans, D_GOI_log(:,i)];
-    tempC = corrcoef(tempM);
-    C_cellsToTypes(:,i) = tempC(1:end-1,end);
+    
+    for i=1:Ntestable
+        for j=1:Ntestable
+            pairwiseInd = allIndicesPairwise(typeInd{i}, typeInd{j});
+            Cmean_byType(i,j) = mean(mean(C_allCells(pairwiseInd(:,1), pairwiseInd(:,2))));
+        end
+    end
+    
+    C_within = Cmean_byType(logical(eye(Ntestable)));
+    C_between = Cmean_byType(logical(~eye(Ntestable)));
+    C_within_mean(g) = mean(C_within);
+    C_between_mean(g) = mean(C_between);
 end
 
 %% plot correlation matrices
 figure(1);
+C_allCells(C_allCells==1) = nan;
 imagesc(C_allCells);
 addCellTypeLabels(uniqueTypes_sorted, NofEach_sorted, 'x');
 addCellTypeLabels(uniqueTypes_sorted, NofEach_sorted, 'y');
@@ -110,7 +163,13 @@ imagesc(C_cellsToTypes);
 addCellTypeLabels(uniqueTypes_sorted, NofEach_sorted, 'x');
 addCellTypeLabels(uniqueTypes_sorted, NofEach_sorted, 'y');
 
+figure(3);
+imagesc(Cmean_byType);
+addCellTypeLabels(uniqueTypes_sorted, NofEach_sorted, 'x');
+addCellTypeLabels(uniqueTypes_sorted, NofEach_sorted, 'y');
+
 %% correlation for each Sanes cell with means
+CV_thres = 0; %0 for use all genes
 
 %%%% load sanes data
 load('SanesData/sanesGeneNames');
@@ -118,15 +177,16 @@ dataSets = 'ABCDE';
 L = length(dataSets);
 maxCorr = {};
 maxInd = {};
-for z=1:L
-    z
-    curSetName = ['sanes' dataSets(z)];
+for dset=1:L
+    dset
+    curSetName = ['sanes' dataSets(dset)];
     load(['SanesData/' curSetName]);
-    eval(['sanesData = sanes' dataSets(z) '_sparse;']);
+    eval(['sanesData = sanes' dataSets(dset) '_sparse;']);
     %%% transform sanes data
     [Ngenes_sanes, Ncells_sanes] = size(sanesData);
-    D_sanes_log = log10(sanesData+1);
-    matchingInd = index2SanesIndex(geneNames, sanesGeneNames, geneInd);
+    %D_sanes_log = log10(sanesData+1);
+    D_sanes_log = sanesData;
+    matchingInd = index2SanesIndex(geneNames, sanesGeneNames, fullGeneInd_un);
     matched = matchingInd > 0;
     L = sum(matched);
     disp([num2str(L) ' of ' num2str(N_GOI) ' genes matched: (' num2str(100*L./N_GOI) '%)']);
@@ -135,17 +195,55 @@ for z=1:L
     D_sanes_log_GOI = D_sanes_log(matchingInd(matched),:);
     D_GOI_log_matched = D_GOI_log(matched, :);
     typeLogMeans_matched = typeLogMeans(matched, :);
-    
+
     %%%% get corrcoeff of each cell with all the types
     
     C_sanesCellsToTypes = zeros(Ntestable, Ncells_sanes);
-    for i=1:Ncells_sanes
-        tempM = [typeLogMeans_matched, D_sanes_log_GOI(:,i)];
-        tempC = corrcoef(tempM);
-        C_sanesCellsToTypes(:,i) = tempC(1:end-1,end);
-    end
+    C_sanesCellsToTypes_norm = zeros(Ntestable, Ncells_sanes);
     
-    [maxCorr{z}, maxInd{z}] = max(C_sanesCellsToTypes);
+    z=1;
+    for j=1:Ntestable
+        
+        %%get genes ordered by CV (of log) for each cell type
+        allCV_matched = zeros(L, Ntestable);
+        allGeneOrder_matched = zeros(L, Ntestable);
+        
+        curType = uniqueTypes_sorted{j};
+        curInd = z:z + NofEach_sorted(j)-1;
+        z = z + NofEach_sorted(j);
+        
+        tempCV = std(D_GOI_log_matched(:, curInd), [], 2) ./ mean(D_GOI_log_matched(:, curInd),2);
+        %keyboard;
+        [allCV_matched(:,j), allGeneOrder_matched(:,j)] = sort(tempCV, 'MissingPlacement', 'first');
+        
+        if CV_thres > 0
+            breakVal = find(allCV_matched(:,j)>CV_thres, 1);
+            if ~isempty(breakVal)
+                geneUseInd = allGeneOrder_matched(1:breakVal-1, j);
+            else
+                geneUseInd = 1:L;
+            end
+        else
+            geneUseInd = 1:L;
+        end
+        Nused = length(geneUseInd);
+        disp([uniqueTypes_sorted{j} ': ' num2str(Nused) ' genes selected.']);
+        for i=1:Ncells_sanes
+            tempC = corrcoef(D_sanes_log_GOI(geneUseInd,i),typeLogMeans_matched(geneUseInd, j));
+            C_sanesCellsToTypes(j,i) = tempC(1,2);
+        end
+    end
+    %
+    %     for i=1:Ncells_sanes
+    %
+    %
+    % %         tempM = [typeLogMeans_matched, D_sanes_log_GOI(:,i)];
+    % %         tempC = corrcoef(tempM);
+    % %         C_sanesCellsToTypes(:,i) = tempC(1:end-1,end);
+    %     end
+    
+    [maxCorr{dset}, maxInd{dset}] = max(C_sanesCellsToTypes, [], 1);
+%    [maxCorr_norm{dset}, maxInd_norm{dset}] = max(C_sanesCellsToTypes_norm);
 end
 
 %% plot match histograms
@@ -153,6 +251,10 @@ allMaxCorr = cell2mat(maxCorr);
 allMaxCorr = reshape(allMaxCorr, [1, numel(allMaxCorr)]);
 allMaxInd = cell2mat(maxInd);
 allMaxInd = reshape(allMaxInd, [1, numel(allMaxInd)]);
+
+bestMatchCutoff = 1; %s.d.
+bestMatchCorr = allMaxCorr(allMaxCorr>mean(allMaxCorr) + bestMatchCutoff * std(allMaxCorr));
+bestMatchInd = allMaxInd(allMaxCorr>mean(allMaxCorr) + bestMatchCutoff * std(allMaxCorr));
 
 Nmatches = histcounts(allMaxInd,1:Ntypes+1);
 bar(1:Ntypes, Nmatches);
