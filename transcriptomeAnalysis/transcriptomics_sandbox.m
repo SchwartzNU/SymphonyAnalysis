@@ -1,10 +1,10 @@
 %% load txt file
-[cellIDs, eyeVec, xPos, yPos, cellTypes, geneNames, geneCounts, D] = readGenomicsData('RNASeq_ExprMatrix_181111', 1000);
-save('dataSet_11_2018_thres1000gene_225cells');
+[cellIDs, eyeVec, xPos, yPos, cellTypes, geneNames, geneCounts, D] = readGenomicsData('RNASeq_ExprMatrix_181113', 1000);
+save('dataSet_11_2018_thres1000gene_209cells');
 
 %% load data
 
-load('dataSet_11_2018_thres1000gene_225cells');
+load('dataSet_11_2018_thres1000gene_209cells');
 %variables:
 % D
 % geneNames
@@ -48,7 +48,7 @@ if exist('score', 'var'), score = score(cellSortIndex, :); end
 
 %% optimization loop for geneN_target
 
-geneN_target_vec = [6];
+geneN_target_vec = [10];
 C_within_mean = [];
 C_between_mean = [];
 for g=1:length(geneN_target_vec)
@@ -78,6 +78,8 @@ for g=1:length(geneN_target_vec)
             Ngenes = length(geneInd);
             b=b-.01;
         end
+        geneNames(geneInd)
+        pause;
         %disp(['b = ' num2str(b)]);
         fullGeneInd = [fullGeneInd; geneInd];
     end
@@ -148,7 +150,7 @@ for g=1:length(geneN_target_vec)
     C_within = Cmean_byType(logical(eye(Ntestable)));
     C_between = Cmean_byType(logical(~eye(Ntestable)));
     C_within_mean(g) = mean(C_within);
-    C_between_mean(g) = mean(C_between);
+    C_between_mean(g) = mean(C_between);    
 end
 
 %% plot correlation matrices
@@ -177,6 +179,7 @@ dataSets = 'ABCDE';
 L = length(dataSets);
 maxCorr = {};
 maxInd = {};
+allC_flat = [];
 for dset=1:L
     dset
     curSetName = ['sanes' dataSets(dset)];
@@ -186,6 +189,7 @@ for dset=1:L
     [Ngenes_sanes, Ncells_sanes] = size(sanesData);
     %D_sanes_log = log10(sanesData+1);
     D_sanes_log = sanesData;
+    D_sanes_log(D_sanes_log<1) = 0; %threshold 10 (before log transform) to 0
     matchingInd = index2SanesIndex(geneNames, sanesGeneNames, fullGeneInd_un);
     matched = matchingInd > 0;
     L = sum(matched);
@@ -242,6 +246,7 @@ for dset=1:L
     % %         C_sanesCellsToTypes(:,i) = tempC(1:end-1,end);
     %     end
     
+    allC_flat = [allC_flat; C_sanesCellsToTypes(:)];
     [maxCorr{dset}, maxInd{dset}] = max(C_sanesCellsToTypes, [], 1);
 %    [maxCorr_norm{dset}, maxInd_norm{dset}] = max(C_sanesCellsToTypes_norm);
 end
@@ -252,11 +257,17 @@ allMaxCorr = reshape(allMaxCorr, [1, numel(allMaxCorr)]);
 allMaxInd = cell2mat(maxInd);
 allMaxInd = reshape(allMaxInd, [1, numel(allMaxInd)]);
 
-bestMatchCutoff = 1; %s.d.
-bestMatchCorr = allMaxCorr(allMaxCorr>mean(allMaxCorr) + bestMatchCutoff * std(allMaxCorr));
-bestMatchInd = allMaxInd(allMaxCorr>mean(allMaxCorr) + bestMatchCutoff * std(allMaxCorr));
+mean_allCorr_m = mean(allC_flat);
 
-Nmatches = histcounts(allMaxInd,1:Ntypes+1);
+bestMatchCutoff = 1; %s.d.
+ind = allMaxCorr>mean_allCorr_m + bestMatchCutoff * std(allC_flat);
+disp([num2str(sum(ind)) ' of ' num2str(length(allMaxCorr)) ' (' ...
+    num2str(100*sum(ind)/length(allMaxCorr)) '%) matched exceeded threshold: ' ...
+    num2str(bestMatchCutoff) ' s.d.']);
+bestMatchCorr = allMaxCorr(ind);
+bestMatchInd = allMaxInd(ind);
+
+Nmatches = histcounts(bestMatchInd,1:Ntypes+1);
 bar(1:Ntypes, Nmatches);
 ax = gca;
 set(ax, 'xtick', 1:Ntypes);
@@ -264,42 +275,6 @@ set(ax, 'xticklabels', uniqueTypes_sorted);
 set(ax, 'xTickLabelRotation', 90);
 ylabel('Number of matches');
 
-%% look at PCs for each cell type
-
-z = 1;
-for i=1:Ntypes
-    if NofEach_sorted(i) > 2
-        curType = uniqueTypes_sorted{i};
-        curInd = z:z + NofEach_sorted(i)-1;
-        L = length(curInd);
-        z = z + NofEach_sorted(i);
-        %find(strcmp(curType, cellTypes))
-        
-        scoreMeans = mean(score(curInd,:), 1);
-        scoreSEM = std(score(curInd,:), [], 1)./sqrt(L);
-        
-        figure(i);
-        errorbar(1:cutoff, scoreMeans, scoreSEM, 'bx');
-        title([curType ': N = ' num2str(L)]);
-        
-        pause;
-        %         figure(i);
-        %
-        %
-        %         [~, ~, ~, curD, ~, geneNames_sorted] = ...
-        %             selectiveExpressionMatrix(D_sorted, cellTypes, geneNames, uniqueTypes_sorted{i}, Ngenes, method);
-        %         D_topGenes(curInd:curInd+Ngenes-1,:) = curD;
-        %         allGeneNames = [allGeneNames; geneNames_sorted];
-        %         curInd = curInd+Ngenes;
-    end
-end
-
-%% clustering
-meanDist = zeros(1,59);
-for i=2:60
-    [idx,centroids,sumd,distMatrix] = kmeans(score, i);
-    meanDist(i-1) = mean(sumd);
-end
 
 
 
