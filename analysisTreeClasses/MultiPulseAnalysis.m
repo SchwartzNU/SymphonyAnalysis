@@ -33,19 +33,29 @@ classdef MultiPulseAnalysis < AnalysisTree
             for i=1:L
                 % this is all correct
                 curNode = obj.get(leafIDs(i));
+                % get CA data
                 outputStruct = getEpochResponses_CA(cellData, curNode.epochID, ...
                     'DeviceName', rootData.deviceName,'StartTime', obj.StartTime, 'EndTime', obj.EndTime, ...
                     'FitPSTH', 0);
                 outputStruct = getEpochResponseStats(outputStruct);
                 curNode = mergeIntoNode(curNode, outputStruct);
+                % get WC data
                 outputStruct = getEpochResponses_WC(cellData, curNode.epochID, ...
                     'DeviceName', rootData.deviceName);
                 outputStruct = getEpochResponseStats(outputStruct);
                 curNode = mergeIntoNode(curNode, outputStruct);
+                % get WC action current data
+                if rootData.(rootData.holdSignalParam) == -60 % is voltage clamp?
+                    outputStruct = getEpochResponses_actionCurrents_WC(cellData, curNode.epochID, ...
+                        'DeviceName', rootData.deviceName);
+                    outputStruct = getEpochResponseStats(outputStruct);
+                    curNode = mergeIntoNode(curNode, outputStruct);
+                end
                 
                 obj = obj.set(leafIDs(i), curNode);
             end
-            
+            obj = obj.percolateUp(leafIDs, ...
+                'splitValue', 'pulse2Curr');
             obj = obj.percolateUp(leafIDs, ...
                 'splitValue', 'pulse1Curr');
    
@@ -102,6 +112,102 @@ classdef MultiPulseAnalysis < AnalysisTree
                 hold(ax, 'on');               
             end
             hold(ax, 'off');
+        end
+        
+        function plot_ampHoldSignalvStim1SpikeCount(node, cellData)
+            rootData = node.get(1);            
+            chInd = node.getchildren(1);
+            L = length(chInd);
+            ax = gca;
+            
+            xvals = ones(1, L)*NaN;
+            yvals = ones(1, L)*NaN;
+            errs = ones(1, L)*NaN;
+            for i=1:L
+                chData = node.get(chInd(i));
+                if strcmp(rootData.stepByStim, 'Stim 1')
+                    xvals(i) = chData.stepsStim1.value;
+                elseif strcmp(rootData.stepByStim, 'Stim 2')
+                    xvals(i) = chData.stepsStim2.value;
+                end
+                yvals(i) = chData.stim1_spikeCount.mean;
+                errs(i) = chData.stim1_spikeCount.SEM;              
+            end
+            errorbar(xvals, yvals, errs);
+            xlabel(['Step By Stim:' rootData.stepByStim])
+            ylabel('Spike Count')
+        end
+        
+        function plot_ampHoldSignalvStim2SpikeCount(node, cellData)
+            rootData = node.get(1);            
+            chInd = node.getchildren(1);
+            L = length(chInd);
+            ax = gca;
+            
+            xvals = ones(1, L)*NaN;
+            yvals = ones(1, L)*NaN;
+            errs = ones(1, L)*NaN;
+            for i=1:L
+                chData = node.get(chInd(i));
+                if strcmp(rootData.stepByStim, 'Stim 1')
+                    xvals(i) = chData.stepsStim1.value;
+                elseif strcmp(rootData.stepByStim, 'Stim 2')
+                    xvals(i) = chData.stepsStim2.value;
+                end
+                yvals(i) = chData.stim2_spikeCount.mean;
+                errs(i) = chData.stim2_spikeCount.SEM;              
+            end
+            errorbar(xvals, yvals, errs);
+            xlabel(['Step By Stim:' rootData.stepByStim])
+            ylabel('Spike Count')
+        end
+        
+        function plot_ampHoldSignalvStim1FirstSpikeAmp(node, cellData)
+            rootData = node.get(1);            
+            chInd = node.getchildren(1);
+            L = length(chInd);
+            ax = gca;
+            
+            xvals = ones(1, L)*NaN;
+            yvals = ones(1, L)*NaN;
+            errs = ones(1, L)*NaN;
+            for i=1:L
+                chData = node.get(chInd(i));
+                if strcmp(rootData.stepByStim, 'Stim 1')
+                    xvals(i) = chData.stepsStim1.value;
+                elseif strcmp(rootData.stepByStim, 'Stim 2')
+                    xvals(i) = chData.stepsStim2.value;
+                end
+                yvals(i) = chData.stim1_firstSpikeHeight.mean;
+                errs(i) = chData.stim1_firstSpikeHeight.SEM;              
+            end
+            errorbar(xvals, yvals, errs);
+            xlabel(['Step By Stim:' rootData.stepByStim])
+            ylabel('Spike Count')
+        end
+        
+        function plot_ampHoldSignalvStim2FirstSpikeAmp(node, cellData)
+            rootData = node.get(1);            
+            chInd = node.getchildren(1);
+            L = length(chInd);
+            ax = gca;
+            
+            xvals = ones(1, L)*NaN;
+            yvals = ones(1, L)*NaN;
+            errs = ones(1, L)*NaN;
+            for i=1:L
+                chData = node.get(chInd(i));
+                if strcmp(rootData.stepByStim, 'Stim 1')
+                    xvals(i) = chData.stepsStim1.value;
+                elseif strcmp(rootData.stepByStim, 'Stim 2')
+                    xvals(i) = chData.stepsStim2.value;
+                end
+                yvals(i) = chData.stim2_firstSpikeHeight.mean;
+                errs(i) = chData.stim2_firstSpikeHeight.SEM;              
+            end
+            errorbar(xvals, yvals, errs);
+            xlabel(['Step By Stim:' rootData.stepByStim])
+            ylabel('Spike Count')
         end
         
         
