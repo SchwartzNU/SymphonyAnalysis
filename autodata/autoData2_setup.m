@@ -1,6 +1,6 @@
 global ANALYSIS_FOLDER;
-% cellNamesListLocation = [ANALYSIS_FOLDER 'Projects' filesep 'F mini On/cellNames.txt'];
-cellNamesListLocation = [ANALYSIS_FOLDER 'Projects' filesep 'currentProject/cellNames.txt'];
+cellNamesListLocation = [ANALYSIS_FOLDER 'Projects' filesep 'F mini On/cellNames.txt'];
+% cellNamesListLocation = [ANALYSIS_FOLDER 'Projects' filesep 'currentProject/cellNames.txt'];
 
 % set this to [] if no external table
 externalTableFilenames = {'analysisTrees/automaticData/externalCellDataTable','externalCellDataTable';

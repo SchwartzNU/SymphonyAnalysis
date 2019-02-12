@@ -36,7 +36,7 @@ function correctAnglesFromRawData(projFolder)
 
     % loop through cellData
     % angles are relative to moving bar towards direction
-    for fi = numFiles:-1:1
+    for fi = 1:numFiles
 
         rigMode = '';
         cellName = files{fi};
@@ -125,7 +125,7 @@ function correctAnglesFromRawData(projFolder)
                     end
                 end
             end
-            
+                       
             if ~isnan(originalAngle)
 
                 epoch.attributes('originalAngleFromRawData') = originalAngle;

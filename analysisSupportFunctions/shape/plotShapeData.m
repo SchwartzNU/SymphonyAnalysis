@@ -73,6 +73,7 @@ elseif strncmp(mode, 'plotSpatial', 11)
     
     dataByVoltageIntensity = cell(num_voltages, num_intensities, 2);
     gfits = {};
+    contourObjects = {};
     
     ha = tight_subplot(num_intensities, num_voltages+1);
     for vi = 1:num_voltages
@@ -116,9 +117,17 @@ elseif strncmp(mode, 'plotSpatial', 11)
             a = vi + (ii-1) * (num_voltages+1);
             
             axes(ha(a));
+            
+            if isfield(options, 'overlapThresholdPercentile')
+                thresholdLevel = prctile(vals, options.overlapThresholdPercentile);
+            else
+                thresholdLevel = nan;
+            end
 
             if posIndex >= 3
-                gfits{a,1} = plotSpatial(goodPositions, vals, sprintf('%s at V = %d mV, intensity = %f', modeLabel, voltage, intensity), 1, sign(voltage) + .001);
+                gaussianEnable = 0;
+%                 gaussianEnable = sign(voltage) + .001;
+                [gfits{a,1}, contourObjects{a,1}] = plotSpatial(goodPositions, vals, sprintf('%s at V = %d mV, intensity = %f', modeLabel, voltage, intensity), 1, gaussianEnable, {thresholdLevel, 1});
                 gfits(a, 2:3) = {voltage, intensity};
 %                 if ~isnan(gfit)
 %     %             caxis([0, max(vals)]);
@@ -148,33 +157,67 @@ elseif strncmp(mode, 'plotSpatial', 11)
             % excitation
             if intensity > 0.5
                 % ON (blue)
-                num_columns = [0,0,1];
+                c = [0,0,1];
             else
                 % OFF (green)
-                num_columns = [0,1,0];
+                c = [0,1,0];
             end
         else
             % inhibition
             if intensity > 0.5
                 % ON (red)
-                num_columns = [1 0 0];
+                c = [1 0 0];
             else
                 % OFF (yellow)
-                num_columns = [.6 .6 0];
+                c = [.6 .6 0];
             end
         end
+
+        if ~isnan(thresholdLevel)
+            cont = contourObjects{a,1};
+            
+            curCont = [];
+            len = nan;
+            for i = 1:size(cont, 2)
+                if isnan(len)
+                    len = cont(2, i);
+                    continue
+                end
+                len = len - 1;
+                curCont = horzcat(curCont, cont(:,i));
+                if len == 0
+                    line(curCont(1,:), curCont(2,:), 'LineWidth', 2, 'Color', c);
+                    curCont = [];
+                    len = nan;
+                end
+            end
+                
+            
+%             firstContourLen = cont(2,1);
+%             line(cont(1,2:firstContourLen+1), cont(2,2:firstContourLen+1), 'LineWidth', 2, 'Color', c)
+% 
+%             if firstContourLen + 1 < size(cont, 2)
+%                 line(cont(1,firstContourLen+3:end), cont(2,firstContourLen+3:end), 'LineWidth', 2, 'Color', c)
+%             end
+        end
         
-        e = ellipse(gfit('sigma2X'), gfit('sigma2Y'), -gfit('angle'), gfit('centerX'), gfit('centerY'), num_columns);
-        set(e, 'LineWidth', 2);
-        line(gfit('centerX') + [-l, l]/2, gfit('centerY') * [1,1], 'LineWidth', 1.5, 'Color', num_columns);
-        line(gfit('centerX') * [1,1], gfit('centerY') + [-l, l]/2, 'LineWidth', 1.5, 'Color', num_columns);
+        line([-50, 50],largestDistanceOffset*[-1,-1], 'LineWidth', 2.0, 'Color', 'k');
+        
+        axis off
+        ax = gca;
+        ax.Visible = 'off';
+        
+%         e = ellipse(gfit('sigma2X'), gfit('sigma2Y'), -gfit('angle'), gfit('centerX'), gfit('centerY'), num_columns);
+%         set(e, 'LineWidth', 2);
+%         line(gfit('centerX') + [-l, l]/2, gfit('centerY') * [1,1], 'LineWidth', 1.5, 'Color', num_columns);
+%         line(gfit('centerX') * [1,1], gfit('centerY') + [-l, l]/2, 'LineWidth', 1.5, 'Color', num_columns);
         
     end
 %     axis square
     axis equal
     
     if strcmp(modeLabel, 'saveMaps')
-        save('savedMaps.mat', 'data','voltages','intensities');
+        save('savedMaps.mat', 'dataByVoltageIntensity','voltages','intensities');
         disp('saved maps to savedMaps.mat');
     end
     
@@ -187,11 +230,15 @@ elseif strcmp(mode, 'overlap')
         disp('empty observations')
         return
     end
+    disp('custom output for inter-cell comparison');
+    % changed voltages array, largestDistanceOffset
+    output = struct();
+    
     
     mode_col = 5; % mean
     
     voltages = sort(unique(obs(:,4)));
-    voltages = [voltages(1), voltages(end)];
+%     voltages = [voltages(1), voltages(end)];
     num_voltages = length(voltages);
         
     intensities = sort(unique(obs(:,3)));
@@ -200,25 +247,27 @@ elseif strcmp(mode, 'overlap')
     paramsByPlot = {[1 1; 0 0], [0 0; 1 1], [0 1; 0 1], [1 0; 1 0]};
     titlesByPlot = {'Excitation','Inhibition','On','Off'};
     
+    output.griddata = {};
+    
     hh = {};
     for i = 1:4
         hh{i} = tight_subplot(num_intensities, num_voltages, 0);
     end
     
-    for pp = 1:length(paramsByPlot)
+%     for pp = 1:length(paramsByPlot)
         for vi = 1:num_voltages
             for ii = 1:num_intensities
-                a = vi + (ii-1) * num_voltages;
-                ax = hh{a};
-                axes(ax(pp))
-                axis(ax(pp), 'off');
+%                 a = vi + (ii-1) * num_voltages;
+%                 ax = hh{a};
+%                 axes(ax(pp))
+%                 axis(ax(pp), 'off');
                 
-                if ~paramsByPlot{pp}(vi, ii)
-                    continue
-                end
+%                 if ~paramsByPlot{pp}(vi, ii)
+%                     continue
+%                 end
                 
-                intensity = intensities(ii);
-                voltage = voltages(vi);
+                intensity = intensities(ii)
+                voltage = voltages(vi)
 
     %             vals = zeros(length(ad.positions),1);
                 vals = [];
@@ -238,8 +287,8 @@ elseif strcmp(mode, 'overlap')
                 end
 
                 % thresholding
-                vals = sign(voltage) * vals;
-                if isfield(options, 'overlapThresoldPercentile')
+                vals = sign(voltage+1) * vals;
+                if isfield(options, 'overlapThresholdPercentile')
                     percentile = options.overlapThresoldPercentile;
                 else
                     percentile = 80;
@@ -272,29 +321,43 @@ elseif strcmp(mode, 'overlap')
                 if posIndex >= 3
                     positions = goodPositions;
                     values = vals;
-                    largestDistanceOffset = .8*max(abs(positions(:)));
-                    X = linspace(-1*largestDistanceOffset, largestDistanceOffset, 200);
+                    largestDistanceOffset = 250; %.8*max(abs(positions(:)))
+                    X = linspace(-1*largestDistanceOffset, largestDistanceOffset, largestDistanceOffset*2);
                     [xq,yq] = meshgrid(X, X);
-                    num_columns = griddata(positions(:,1), positions(:,2), values, xq, yq);
+                    gd = griddata(positions(:,1), positions(:,2), values, xq, yq);
 
-                    num_columns(num_columns < thresholdLevel) = nan;
+                    output.griddata{vi, ii} = gd;
+                    output.thresholdLevel(vi, ii) = thresholdLevel;
+                    
+                    
+%                     gd(gd < thresholdLevel) = nan;
 
-                    s = surface(xq, yq, zeros(size(xq)), num_columns);
-                    alpha(s, .4);
-                    grid off
-                    axis equal
-                    shading interp
-                    colormap(gca(), cmap);
-                    l = 100;
-                    line([-l, l]/2, [0,0], 'LineWidth', 1, 'Color', 'k');
-                    line([0,0], [-l, l]/2, 'LineWidth', 1, 'Color', 'k');
+%                     s = surface(xq, yq, zeros(size(xq)), gd);
+%                     alpha(s, .4);
+%                     grid off
+%                     axis equal
+%                     shading interp
+%                     colormap(gca(), cmap);
+%                     l = 100;
+%                     line([-l, l]/2, [0,0], 'LineWidth', 1, 'Color', 'k');
+%                     line([0,0], [-l, l]/2, 'LineWidth', 1, 'Color', 'k');
+                    
+                    
+
                 end
 
             end
         end
         
-        title(titlesByPlot{pp})
-    end
+%         title(titlesByPlot{pp})
+
+%     end
+    
+    output.voltages = voltages;
+    output.intensities = intensities;
+    output.percentile = percentile;
+    fprintf('saved to %s\n', options.saveFileName)
+    save(options.saveFileName, 'output');
     
 elseif strcmp(mode, 'subunit') % contrast responses for each position
 
@@ -800,10 +863,12 @@ elseif strcmp(mode, 'responsesByPosition')
         startSampleTime = ad.sampleSet(1) / ad.sampleRate;
         endSampleTime = ad.sampleSet(end) / ad.sampleRate;
         y = [-10,100];
-        startLine = line([1,1]*startSampleTime, y, 'Parent', ha(poi), 'color', 'k');
-        endLine = line([1,1]*endSampleTime, y, 'Parent', ha(poi), 'color', 'k');
+        startLine = line([1,1]*startSampleTime, y, 'Parent', ha(poi), 'color', 'k', 'LineStyle', ':');
+        endLine = line([1,1]*endSampleTime, y, 'Parent', ha(poi), 'color', 'k', 'LineStyle', ':');
+        lightLine = line([1,1]*(ad.spotOnTime), y, 'Parent', ha(poi), 'color', [.6 .6 0], 'LineStyle', '-');
         set(get(get(startLine,'Annotation'),'LegendInformation'),'IconDisplayStyle','off')
         set(get(get(endLine,'Annotation'),'LegendInformation'),'IconDisplayStyle','off');
+        set(get(get(lightLine,'Annotation'),'LegendInformation'),'IconDisplayStyle','off');
         
         grid(ha(poi), 'on')
         zline = line([0,max(t)],[0,0], 'Parent', ha(poi), 'color', 'k');
@@ -1270,6 +1335,7 @@ elseif strcmp(mode, 'spatialOffset')
     colorbar
     linkaxes(ha)
     
+    % print out data to add to table
     disp(g_ex.keys)
     disp(cell2mat(g_ex.values))
     disp(cell2mat(g_in.values))
@@ -1468,12 +1534,14 @@ else
     disp('incorrect plot type')
 end
 
-    function gfit = plotSpatial(positions, values, titl, addColorBar, gaussianfit, thresholdParams)
+    function [gfit, contourObject] = plotSpatial(positions, values, titl, addColorBar, gaussianfit, thresholdParams)
         
-        if nargin < 6
-            enableThresholding = false;
-        else
-            enableThresholding = true;
+        enableThresholding = false;
+        contourObject = [];
+        if nargin >= 6
+            if ~isnan(thresholdParams{1})
+                enableThresholding = true;
+            end
         end
         
 %         positions = bsxfun(@plus, positions, positionOffset);
@@ -1486,18 +1554,18 @@ end
             threshold = thresholdParams{1};
             direction = thresholdParams{2};
             
-            if direction > 0
-                sel = c > threshold;
-            else
-                sel = c < threshold;
-            end
-%             xq(~sel) = [];
-%             yq(~sel) = [];
-            c(~sel) = nan;
+%             if direction > 0
+%                 sel = c > threshold;
+%             else
+%                 sel = c < threshold;
+%             end
+% %             xq(~sel) = [];
+% %             yq(~sel) = [];
+%             c(~sel) = nan;
         end
         
         s = surface(xq, yq, zeros(size(xq)), c);
-%         hold on
+        hold on
 % %         plot(positions(:,1), positions(:,2), '.r');
 %         hold off
         title(titl)
@@ -1506,8 +1574,15 @@ end
         axis equal
         shading interp
         
+        % add contour at threshold
+        if enableThresholding
+            contourObject = contour(xq, yq, c,'LevelList',threshold,'Color','k', 'LineWidth',2);
+        end        
+        
         if addColorBar == 1
-            colorbar
+            cbar = colorbar;
+            cbar.FontSize = 14;
+            
             
         elseif length(addColorBar) > 1
             colormap(gca(), addColorBar);
@@ -1523,10 +1598,6 @@ end
             end
             hold on
             
-%             values = zeros(size(values));
-%             hi = 20;%round(length(values) / 2);
-%             positions(hi,:)
-%             values(hi) = 1;
             fitValues(fitValues < 0) = 0; % Interesting, maybe an improvement for fitting WC results
             gfit = fit2DGaussian(positions, fitValues);
             fprintf('gaussian fit center: %d um, %d um\n', round(gfit('centerX')), round(gfit('centerY')))
@@ -1535,24 +1606,25 @@ end
 %             plot(centerOfMass(1), centerOfMass(2),'green','MarkerSize',20, 'Marker','+')
 %             plot(gfit('centerX'), gfit('centerY'),'black','MarkerSize', 10, 'Marker','+')
             l = 20;
-            line(gfit('centerX') + [-l, l]/2, gfit('centerY') * [1,1], 'LineWidth', 1.5, 'Color', 'k');
-            line(gfit('centerX') * [1,1], gfit('centerY') + [-l, l]/2, 'LineWidth', 1.5, 'Color', 'k');
+            line(gfit('centerX') + [-l, l]/2, gfit('centerY') * [1,1], 'LineWidth', 1.5, 'Color', [.5 .5 .5]);
+            line(gfit('centerX') * [1,1], gfit('centerY') + [-l, l]/2, 'LineWidth', 1.5, 'Color', [.5 .5 .5]);
 
             e = ellipse(gfit('sigma2X'), gfit('sigma2Y'), -gfit('angle'), gfit('centerX'), gfit('centerY'));
-            set(e, 'Color', 'black')
-            e.LineWidth = 1.5;
+            set(e, 'Color', [.5 .5 .5])
+            e.LineWidth = 0.5;
             hold off
         else
             gfit = nan;
         end
         
+        
         % draw soma
 %         rectangle('Position',0.05 * largestDistanceOffset * [-.5, -.5, 1, 1],'Curvature',1,'FaceColor',[1 1 1]);
 
-        line([-50, 50],largestDistanceOffset*[-1,-1], 'LineWidth', 1.5, 'Color', 'k');
+        line([-50, 50],largestDistanceOffset*[-1,-1]*1.1, 'LineWidth', 2.0, 'Color', 'k');
         
         % set axis limits
-        axis(largestDistanceOffset * [-1 1 -1 1])
+        axis(largestDistanceOffset * [-1 1 -1 1] * 1.1)
         
 %         set(gca, 'XTickMode', 'auto', 'XTickLabelMode', 'auto')
 %         set(gca, 'YTickMode', 'auto', 'YTickLabelMode', 'auto')
@@ -1563,6 +1635,8 @@ end
         set(gca, 'YTick', [], 'YColor', 'none')
         
         set(gcf,'color','w');
+        
+
 
     end
 

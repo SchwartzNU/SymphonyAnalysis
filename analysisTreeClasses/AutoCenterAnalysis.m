@@ -98,6 +98,34 @@ classdef AutoCenterAnalysis < AnalysisTree
             end
         end           
         
+        function plot1Spatial_overlap(node, cellData)
+            
+            nodeData = node.get(1);
+
+            if isfield(nodeData, 'splitParam')
+                if strcmp(nodeData.splitParam, 'sessionId')
+                    if isfield(nodeData.analysisData, 'value')
+                        figure(102);clf;
+                        analysisData = nodeData.analysisData.value;
+                        options = struct();
+                        
+                        
+                        
+                        options.overlapThresoldPercentile = 80;
+                        
+                        
+                        
+                        
+                        d = '/Users/sam/Google Drive/research/retina/spatial offset analysis/thresholdMaps/';
+                        options.saveFileName = sprintf('%s%s %s', d, cellData.savedFileName, cellData.cellType);
+                        plotShapeData(analysisData, 'overlap', options);
+
+                    end
+                end
+            end
+        end  
+        
+        
         function plotSubunit(node, ~)
             
             nodeData = node.get(1);

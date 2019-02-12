@@ -22,7 +22,7 @@ x0 = [1,0,50,0,50,pi/4];
 
 lb = [0,-g_num_positions/2,0,-g_num_positions/2,0,0];
 ub = [realmax('double'),g_num_positions/2,(g_num_positions/2)^2,g_num_positions/2,(g_num_positions/2)^2,pi/2];
-opts = optimset('Display','off');
+opts = optimset('Display','off', 'UseParallel', false);
 
 [gaussianFitParams,~,~,~] = lsqcurvefit(@gauss_2d,x0,g_all_positions,g_responses,lb,ub,opts);
 

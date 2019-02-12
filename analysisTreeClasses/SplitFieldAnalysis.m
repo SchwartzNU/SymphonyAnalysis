@@ -31,16 +31,20 @@ classdef SplitFieldAnalysis < AnalysisTree
 
             for i=1:L %for each leaf node
                 curNode = obj.get(leafIDs(i));
-                if strcmp(rootData.(rootData.ampModeParam), 'Cell attached')
+                channelPresenceCheck = cellData.epochs(curNode.epochID).getData(rootData.deviceName);
+                if isempty(channelPresenceCheck)
+                    continue
+                end                
+%                 if strcmp(rootData.(rootData.ampModeParam), 'Cell attached')
                     outputStruct = getEpochResponses_CA(cellData, curNode.epochID, ...
                         'DeviceName', rootData.deviceName,'StartTime', obj.StartTime, 'EndTime', obj.EndTime);
                     outputStruct = getEpochResponseStats(outputStruct);
                     curNode = mergeIntoNode(curNode, outputStruct);
-                else %whole cell
+%                 else %whole cell
                     outputStruct = getEpochResponses_WC(cellData, curNode.epochID);
                     outputStruct = getEpochResponseStats(outputStruct);
                     curNode = mergeIntoNode(curNode, outputStruct);
-                end
+%                 end
                 
                 obj = obj.set(leafIDs(i), curNode);
             end

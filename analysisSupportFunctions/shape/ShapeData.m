@@ -72,7 +72,7 @@ classdef ShapeData < handle
                 obj.stimTime = epoch.get('stimTime');
                 obj.positionOffset = [epoch.get('offsetX'),epoch.get('offsetY')];
                 obj.timeOffset = epoch.get('timeOffset');
-                obj.rigOffsetAngle = epoch.get('angleOffsetForRigAndStimulus');
+                obj.rigOffsetAngle = epoch.get('angleOffsetFromRig');
                 
             elseif strcmp(runmode, 'online')
                 obj.sessionId = epoch.getParameter('sessionId');
@@ -190,13 +190,22 @@ classdef ShapeData < handle
                 obj.rigOffsetAngle = 180;
                 disp('AutoCenter epoch is missing angle offset, using default 180 for rig A');
             end
-
-            theta = -1 * obj.rigOffsetAngle; % not sure if this should be positive or negative... test to confirm
-            R = [cosd(theta) -sind(theta); sind(theta) cosd(theta)];
-            for p = 1:size(positions, 1)
-                positions(p,:) = (R * positions(p,:)')';
+            if obj.rigOffsetAngle == 180
+                % flip rig A in only X
+                fprintf('Flipping X positions for rig A (not 180)\n');
+                positions(:,1) = -1 * positions(:,1);
+            else
+                fprintf('Rotating positions by %d deg\n', obj.rigOffsetAngle);
+                theta = 1 * obj.rigOffsetAngle;
+                R = [cosd(theta) -sind(theta); sind(theta) cosd(theta)];
+                for p = 1:size(positions, 1)
+                    positions(p,:) = (R * positions(p,:)')';
+                end
             end
+                
             obj.shapeDataMatrix(:, [obj.shapeDataColumns('X'), obj.shapeDataColumns('Y')]) = positions;
+
+
             
             % process actual response or spikes from epoch
             if strcmp(runmode, 'offline')
@@ -206,7 +215,12 @@ classdef ShapeData < handle
                     obj.spikes = [];
                 else % whole cell
                     obj.spikes = [];
-                    obj.setResponse(epoch.getData(obj.channel)); %get whole cell response
+                    data = epoch.getData(obj.channel);
+                    if isempty(data)
+                        warning('No data for this channel');
+                        return
+                    end
+                    obj.setResponse(data); %get whole cell response
                     obj.processWholeCell()
                 end
             else

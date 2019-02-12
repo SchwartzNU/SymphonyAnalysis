@@ -802,6 +802,13 @@ classdef TreeBrowserGUI < handle
                     
                 end
             end
+            
+            ax = obj.handles.plotAxes;
+            set(ax,'Box', 'off');
+            set(ax, 'FontSize', 16);
+            set(ax, 'LineWidth', 2);
+            ax.TickDir = 'out';
+            ax.TickLength = [1,1]*.01;
         end
         
         function printCodeForPlotterFunction_singleVal(~, xName, yName)
@@ -1043,6 +1050,8 @@ classdef TreeBrowserGUI < handle
             set(ax,'Box', 'off');
             set(ax, 'FontSize', 16);
             set(ax, 'LineWidth', 2);
+            ax.TickDir = 'out';
+            ax.TickLength = [1,1]*.02;
             
         end
         

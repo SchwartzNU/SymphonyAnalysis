@@ -1,4 +1,4 @@
-function ha = tight_subplot(Nh, Nw, gap, marg_h, marg_w)
+function [ha, hb] = tight_subplot(Nh, Nw, gap, marg_h, marg_w)
 
 % tight_subplot creates "subplot" axes with adjustable gaps and margins
 %
@@ -45,6 +45,7 @@ axw = (1-sum(marg_w)-(Nw-1)*gap(2))/Nw;
 py = 1-marg_h(2)-axh; 
 
 ha = zeros(Nh*Nw,1);
+hb = zeros(Nh, Nw);
 ii = 0;
 for ih = 1:Nh
     px = marg_w(1);
@@ -55,6 +56,7 @@ for ih = 1:Nh
             'Position',[px py axw axh], ...
             'XTickLabel','', ...
             'YTickLabel','');
+        hb(ih, ix) = ha(ii);
         px = px+axw+gap(2);
     end
     py = py-axh-gap(1);
