@@ -22,7 +22,8 @@ epochData = epochData(epochOrder);
 ad.epochData = epochData;
 ad.positionOffset = epochData{1}.positionOffset;
 observationColumns = {};
-
+t_offset = 0;
+sampleSet = [];
 
 % create full positions list
 all_positions = [];
@@ -139,6 +140,11 @@ for p = 1:num_epochs
 %         e.signalLightOn(tRegion) = intensities(si); % square wave for plotting
     end
     
+    if isempty(e.response)
+        continue
+    end
+
+    
     if ~isnan(e.timeOffset) && abs(e.timeOffset) > 0
         % just use the builtin one if it's stored in the epoch
         t_offset = e.timeOffset;
@@ -192,6 +198,7 @@ for p = 1:num_epochs
     % change which data is considered the response (from On time to total time)
     sampleCount_total = round(e.spotTotalTime * e.sampleRate);
     sampleCount_on    = round(e.spotOnTime * e.sampleRate);
+    sampleCount_off   = sampleCount_total - sampleCount_on;
 
 %     sampleSet = (0:(sampleCount_total-1))'; % (1) total
 %     sampleSet = (0:(sampleCount_on-1))'; % (2) just during spot
@@ -199,8 +206,11 @@ for p = 1:num_epochs
     if isfield(processOptions, 'temporalBufferSize') % the amount of time to leave off the start and end of the Spot On Period
         temporalBufferSize = processOptions.temporalBufferSize;
     else
-        temporalBufferSize = [.1, .2];
+        temporalBufferSize = [.1, .1];
     end
+    
+
+    
     if length(temporalBufferSize) > 1
         buffer = round(sampleCount_on * temporalBufferSize);
         sampleSet = ((0+buffer(1)):(sampleCount_on - 1 - buffer(2)))'; % (2) just during spot
@@ -208,6 +218,12 @@ for p = 1:num_epochs
         buffer = round(sampleCount_on * temporalBufferSize);
         sampleSet = ((0+buffer):(sampleCount_on - 1 - buffer))'; % (2) just during spot
     end
+    
+    if isfield(processOptions, 'temporalUseOffSegment') % second part of each flash, opposite polarity, recovery
+        if processOptions.temporalUseOffSegment
+            sampleSet = sampleSet + sampleCount_on;
+        end
+    end    
     %     sampleSet = (sampleCount_on:(sampleCount_total-1))'; % (3) just during post-spot
     
     if skipResponses == 1

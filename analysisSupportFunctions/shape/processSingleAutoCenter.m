@@ -31,7 +31,7 @@ timeOffset = nan;
 % load('/Users/sam/analysis/cellData/101917Ac1.mat')
 % sessionId = '20171019132525';
 
-% load('/Users/sam/analysis/cellData/110917Ac8.mat')
+% load('/Users/sam/analysis/cellData/110917Ac8.mat') % big ex in
 % sessionId = 1;
 
 % load('/Users/sam/analysis/cellData/011718Ac1.mat')
@@ -49,11 +49,32 @@ timeOffset = nan;
 % timeOffset = .39;
 
 
-load('/Users/sam/analysis/cellData/012418Bc2.mat')
+% load('/Users/sam/analysis/cellData/012418Bc2.mat')
 % sessionId = {'2018124143353','201812414403'};
-sessionId = {'2018124143353'};
+% sessionId = {'2018124143353'};
 % sessionId = {'201812414403'};
 
+
+% load('/Users/sam/analysis/cellData/021318Ac10.mat')
+% % 201821317324 % -60 and 20
+% % 201821317473 % -38 and -5
+% % 201821318150 % -75 and 35
+% % 2018213181637 % -50 and 10
+% sessionId = {'201821317324'};
+% timeOffset = .06;
+
+% load('/Users/sam/analysis/cellData/021618Ac8.mat') % good Fmon vclamp offset
+% sessionId = {'2018216181428'};
+% timeOffset = .06;
+
+
+% load('/Users/sam/analysis/cellData/021618Ac3.mat') % good Fmon vclamp offset
+% sessionId = {'2018216144613'};
+% timeOffset = .06;
+
+load('/Users/sam/analysis/cellData/022118Ac1.mat') % HD1 vclamp offset
+sessionId = {'2018221143242'};
+timeOffset = .03;
 
 % ,'201813117151'
 % process
@@ -90,7 +111,7 @@ for i = 1:length(cellData.epochs)
         sd = ShapeData(epoch, 'offline');
         epochData{ei, 1} = sd;
         ei = 1 + ei;
-        epoch.attributes('timeOffset')
+%         epoch.attributes('timeOffset')
 
     end
 end
@@ -98,6 +119,7 @@ end
 if length(epochData{1}) > 0 %#ok<ISMT>
     % analyze shapedata
     analysisData = processShapeData(epochData);
+    disp('analysis done');
 else
     disp('no epochs found');
     return
@@ -105,24 +127,30 @@ end
 
 
 %% normal plots
-% figure(10);clf;
-% plotShapeData(analysisData, 'plotSpatial_mean');
-% 
+figure(10);clf;
+plotShapeData(analysisData, 'plotSpatial_mean');
+%% 
 figure(11);clf;
 plotShapeData(analysisData, 'temporalResponses');
 
-
+%%
+figure(12);clf;
+plotShapeData(analysisData, 'currentVoltage');
 
 %% new plots
-figure(13);clf;
-plotShapeData(analysisData, 'spatialOffset_onOff');
+% figure(13);clf;
+% plotShapeData(analysisData, 'spatialOffset_onOff');
 %%
 figure(15);clf;
 plotShapeData(analysisData, 'responsesByPosition');
 %%
-figure(11);clf;
-plotShapeData(analysisData, 'temporalComponents');
+% figure(11);clf;
+% plotShapeData(analysisData, 'temporalComponents');
 
+
+%%
+figure(17);clf;
+plotShapeData(analysisData, 'overlap');
 
 %% save maps
 

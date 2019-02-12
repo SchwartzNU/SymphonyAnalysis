@@ -47,10 +47,10 @@
 % epochIndicesColor = [];
 
 % f mini On current clamp
-load cellData/110917Ac8.mat
-epochIndicesNoise = cellData.savedDataSets('SpatialNoise x15');% spatial noise big square
-epochIndicesNoise = epochIndicesNoise(1:2);
-epochIndicesColor = [];
+% load cellData/110917Ac8.mat
+% epochIndicesNoise = cellData.savedDataSets('SpatialNoise x15');% spatial noise big square
+% epochIndicesNoise = epochIndicesNoise(2:2:10);
+% epochIndicesColor = [];
 
 % WC F mini On
 % load cellData/042617Bc3.mat
@@ -83,6 +83,9 @@ epochIndicesColor = [];
 % epochIndicesNoise = 99:102; % center surround
 % epochIndicesNoise = 103:115; % vertical strip, 6 segments
 % epochIndicesColor = [];
+
+% FminiON
+load cellData/
 
 
 responseScaleColor = .3;
@@ -543,4 +546,4 @@ plot(handles(2), responseAllEpochs)
 linkaxes(handles, 'x')
 
 %%
-noiseFilter_spatial
+% noiseFilter_spatial

@@ -14,7 +14,7 @@ modelFitIndices = repeatMarkerFull;
 
 % Set parameters of fits
 numSpatialDimensions = size(stimulus,2);
-tent_basis_spacing = 1; % represent stimulus filters using tent-bases with this spacing (in up-sampled time units)
+tent_basis_spacing = 2; % represent stimulus filters using tent-bases with this spacing (in up-sampled time units)
 timeCutoff = 0.25;
 updateRate = frameRate;
 stim_dt = tent_basis_spacing/frameRate;
@@ -37,7 +37,7 @@ nLags = round(timeCutoff / stim_dt);
 %     filterInits{fi} = filterInits{fi}(:);
 %     filterInits{fi} = filterInits{fi} + randn(size(filterInits{fi}));
 % end
-
+%
 
 % Create structure with parameters using static NIM function
 params_stim = NIM.create_stim_params([nLags numSpatialDimensions 1], 'stim_dt', stim_dt);
@@ -126,7 +126,7 @@ end
 tic
 numFittingLoops = 2;
 nim = nim.set_reg_params('d2t', 100);
-nim = nim.set_reg_params('d2x', 0);
+nim = nim.set_reg_params('d2x', 100);
 
 r2 = 0;
 for fi = 1:numFittingLoops
