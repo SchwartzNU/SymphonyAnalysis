@@ -29,6 +29,10 @@ function cells = symphony2Mapper(fname)
 
     for i = 1 : numberOfCells
         h5epochs =  epochsByCellMap(labels{i});
+        if isempty(h5epochs)
+            fprintf('Cell %s has no epochs, skipping\n', labels{i});
+            continue
+        end
         cells(i) = getCellData(fname, labels{i}, h5epochs);
         cells(i).attributes = getSourceAttributes(sourceTree, labels{i}, cells(i).attributes);
         
@@ -44,8 +48,10 @@ end
 function cell = getCellData(fname, cellLabel, h5Epochs)
 
     cell = CellData();
+
     epochsTime = arrayfun(@(epoch) h5readatt(fname, epoch.Name, 'startTimeDotNetDateTimeOffsetTicks'), h5Epochs);
     [time, indices] = sort(epochsTime);
+
     sortedEpochTime = double(time - time(1)).* 1e-7;
 
     lastProtocolId = [];

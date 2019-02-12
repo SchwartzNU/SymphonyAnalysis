@@ -33,7 +33,7 @@ for dsi=1:Nanalyses
     end
 end
 if isempty(analysisIndices)
-    fprintf('Error: analysis %s not found in DataSetAnalyses.txt\n', analysisClassName{1});
+    fprintf('Error: analysis %s not found in DataSetAnalyses.txt\n', analysisClassName);
     resultTree = [];
     return;
 end

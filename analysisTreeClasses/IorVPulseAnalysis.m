@@ -68,7 +68,7 @@ classdef IorVPulseAnalysis < AnalysisTree
             xvals = rootData.pulseAmp;
             yField = rootData.ONSET_avgTracePeak;
             yvals = yField.value;
-            plot(xvals, yvals, 'bx-');
+            plot(xvals, yvals, 'x-');
             xlabel('pulseAmp');
             ylabel(['ONSET_avgTracePeak (' yField.units ')']);
         end
@@ -78,7 +78,7 @@ classdef IorVPulseAnalysis < AnalysisTree
             xvals = rootData.pulseAmp;
             yField = rootData.ONSETtransPeak;
             yvals = yField.mean;
-            plot(xvals, yvals, 'bx-');
+            plot(xvals, yvals, 'x-');
             xlabel('pulseAmp');
             ylabel(['ONSETtransPeak (' yField.units ')']);
         end
@@ -88,16 +88,30 @@ classdef IorVPulseAnalysis < AnalysisTree
             xvals = rootData.pulseAmp;
             yField = rootData.ONSETsusPeak;
             yvals = yField.mean;
-            plot(xvals, yvals, 'bx-');
+            plot(xvals, yvals, 'x-');
             xlabel('pulseAmp');
             ylabel(['ONSETsusPeak (' yField.units ')']);
         end
+        
+        function plot_pulseAmplitudeVsONSET_last200ms(node, cellData)
+            rootData = node.get(1);
+            xvals = rootData.pulseAmp;
+            yField = rootData.ONSET_last200ms;
+            yvals = yField.mean;
+            errs = yField.SEM;
+            errorbar(xvals, yvals, errs);
+            
+            
+%             plot(xvals, yvals, 'x-');
+            xlabel('pulseAmp');
+            ylabel(['ONSET_last200ms (' yField.units ')']);
+        end        
         
         function plotMeanTraces(node, cellData)
             rootData = node.get(1);
             chInd = node.getchildren(1);
             L = length(chInd);
-            ax = axes;
+            ax = gca();
             for i=1:L
                 hold(ax, 'on');
                 epochInd = node.get(chInd(i)).epochID;

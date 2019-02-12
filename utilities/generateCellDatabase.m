@@ -118,7 +118,7 @@ for ci = 1:numCells
     else
         trow{1, {'location_x', 'location_y', 'eye'}} = [nan, nan, nan];
     end
-    typ = cellData.cellType;
+    typ = cellData.cellType
     trow{1, 'cellType'} = {typ};
 
     tags = cellData.tags;
@@ -151,11 +151,11 @@ for ci = 1:numCells
             end
             trow{1,analysis.filterVariableName} = hasCorrectDataSet;
         catch
-            warning('analysis failed');
-            analysisType
-            epochFilter
-            filterName
-            cellData
+            warning(['analysis failed :' analysisType{1}]);
+%             analysisType
+%             epochFilter
+%             filterName
+%             cellData
             continue
         end
     end
