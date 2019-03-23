@@ -52,8 +52,8 @@ postIntervalLen = xvals(end) - intervalEnd; %s
 for i=1:L
     curEpoch = cellData.epochs(epochInd(i));
     %get data
-    [data, xvals, units] = curEpoch.getData(ip.Results.DeviceName);    
-
+    [data, xvals, units] = curEpoch.getData(ip.Results.DeviceName);
+    
     baselineData = data(baselineInterval);
     baselineVal(i) = mean(baselineData);
     
@@ -61,9 +61,9 @@ for i=1:L
     %baseline subtraction
     data = data - baselineVal(i);
     stimData = data(responseIntverval);
-    postData = data(postInterval);    
- 
-    Mstim(i,:) = stimData;   
+    postData = data(postInterval);
+    
+    Mstim(i,:) = stimData;
     Mstim_baselineSubtracted(i,:) = stimData - baselineVal(i);
     Mpost(i,:) = postData;
     stimToEndData = [stimData postData];
@@ -91,7 +91,7 @@ for i=1:L
         
         outputStruct.stim1_spikeCount.units = units;
         outputStruct.stim1_spikeCount.type = 'byEpoch';
-        outputStruct.stim1_spikeCount.value = ones(1,L) * NaN;    
+        outputStruct.stim1_spikeCount.value = ones(1,L) * NaN;
         
         outputStruct.stim2_spikeCount.units = units;
         outputStruct.stim2_spikeCount.type = 'byEpoch';
@@ -125,25 +125,15 @@ for i=1:L
         % get spike times per section
         stim1SpikeTimes = getThresCross(-stim1Data, mean(-stim1Data)+500, -1);
         stim2SpikeTimes = getThresCross(-stim2Data, mean(-stim2Data)+500, -1);
-
+        
         % get amplitude of first spike
-        if ~isempty(stim1SpikeTimes)
-            [ C, P, T, AHP, FWHM, initSlope ] = doTimeAlign(-stim1Data, intervalStart+stim1SpikeTimes(1), curEpoch.get('sampleRate'), 181, 'VC', '' );
-            if ~isnan(P)
-                outputStruct.stim1_firstSpikeHeight.value(i) = (P-T);
-            else
-                outputStruct.stim1_firstSpikeHeight.value(i) = 0;
-            end
-        end
-        if ~isempty(stim2SpikeTimes)
-            [ C, P, T, AHP, FWHM, initSlope ] = doTimeAlign(-stim2Data, interval1End+stim2SpikeTimes(1), curEpoch.get('sampleRate'), 181, 'VC', '' );
-            if ~isnan(P)
-                outputStruct.stim2_firstSpikeHeight.value(i) = (P-T);
-            else 
-                outputStruct.stim2_firstSpikeHeight.value(i) = 0;
-            end
-        end
-
+        % C, P, T, AHP, FWHM, initSlope ] = doTimeAlign(-stim1Data, intervalStart+stim1SpikeTimes(1), curEpoch.get('sampleRate'), 181, 'VC', '' );
+        outputStruct.stim1_firstSpikeHeight.value(i) = min(stim1Data);
+        
+        %[ C, P, T, AHP, FWHM, initSlope ] = doTimeAlign(-stim2Data, interval1End+stim2SpikeTimes(1), curEpoch.get('sampleRate'), 181, 'VC', '' );
+        outputStruct.stim2_firstSpikeHeight.value(i) = min(stim2Data);
+        
+        
         % save data
         outputStruct.stim1_spikeCount.value(i) = length(stim1SpikeTimes);
         outputStruct.stim2_spikeCount.value(i) = length(stim2SpikeTimes);

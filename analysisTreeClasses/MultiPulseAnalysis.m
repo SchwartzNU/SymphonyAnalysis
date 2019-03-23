@@ -23,7 +23,11 @@ classdef MultiPulseAnalysis < AnalysisTree
             obj = obj.copyAnalysisParams(params);
             obj = obj.copyParamsFromSampleEpoch(cellData, dataSet, ...
                 {'RstarMean', 'RstarIntensity', params.ampModeParam, params.holdSignalParam, 'intensity', 'stepByStim', 'pulse1Curr', 'pulse2Curr', 'offsetX', 'offsetY'});
-            obj = obj.buildCellTree(1, cellData, dataSet, {'pulse1Curr', 'pulse2Curr'});
+            if strcmp(obj.Node{1}.stepByStim, 'Stim 1')
+                obj = obj.buildCellTree(1, cellData, dataSet, {'pulse1Curr'});
+            else
+                obj = obj.buildCellTree(1, cellData, dataSet, {'pulse2Curr'});
+            end            
         end
         
         function obj = doAnalysis(obj, cellData)
@@ -34,23 +38,23 @@ classdef MultiPulseAnalysis < AnalysisTree
                 % this is all correct
                 curNode = obj.get(leafIDs(i));
                 % get CA data
-                outputStruct = getEpochResponses_CA(cellData, curNode.epochID, ...
-                    'DeviceName', rootData.deviceName,'StartTime', obj.StartTime, 'EndTime', obj.EndTime, ...
-                    'FitPSTH', 0);
-                outputStruct = getEpochResponseStats(outputStruct);
-                curNode = mergeIntoNode(curNode, outputStruct);
+%                 outputStruct = getEpochResponses_CA(cellData, curNode.epochID, ...
+%                     'DeviceName', rootData.deviceName,'StartTime', obj.StartTime, 'EndTime', obj.EndTime, ...
+%                     'FitPSTH', 0);
+%                 outputStruct = getEpochResponseStats(outputStruct);
+%                 curNode = mergeIntoNode(curNode, outputStruct);
                 % get WC data
-                outputStruct = getEpochResponses_WC(cellData, curNode.epochID, ...
+                outputStruct = getEpochResponses_actionCurrents_WC(cellData, curNode.epochID, ...
                     'DeviceName', rootData.deviceName);
                 outputStruct = getEpochResponseStats(outputStruct);
                 curNode = mergeIntoNode(curNode, outputStruct);
                 % get WC action current data
-                if rootData.(rootData.holdSignalParam) == -60 % is voltage clamp?
-                    outputStruct = getEpochResponses_actionCurrents_WC(cellData, curNode.epochID, ...
-                        'DeviceName', rootData.deviceName);
-                    outputStruct = getEpochResponseStats(outputStruct);
-                    curNode = mergeIntoNode(curNode, outputStruct);
-                end
+%                 if rootData.(rootData.holdSignalParam) == -60 % is voltage clamp?
+%                     outputStruct = getEpochResponses_actionCurrents_WC(cellData, curNode.epochID, ...
+%                         'DeviceName', rootData.deviceName);
+%                     outputStruct = getEpochResponseStats(outputStruct);
+%                     curNode = mergeIntoNode(curNode, outputStruct);
+%                 end
                 
                 obj = obj.set(leafIDs(i), curNode);
             end
@@ -59,34 +63,7 @@ classdef MultiPulseAnalysis < AnalysisTree
             obj = obj.percolateUp(leafIDs, ...
                 'splitValue', 'pulse1Curr');
    
-        %baseline subtraction and normalization (factor out in the
-            %future?
-            if strcmp(rootData.(rootData.ampModeParam), 'Cell attached')
-                for i=1:L %for each leaf node
-                    curNode = obj.get(leafIDs(i));
-                    %baseline subtraction
-                    grandBaselineMean = outputStruct.baselineRate.mean_c;
-                    tempStruct.ONSETrespRate_grandBaselineSubtracted = curNode.ONSETrespRate;
-                    tempStruct.ONSETrespRate_grandBaselineSubtracted.value = curNode.ONSETrespRate.value - grandBaselineMean;
-                    tempStruct.OFFSETrespRate_grandBaselineSubtracted = curNode.OFFSETrespRate;
-                    tempStruct.OFFSETrespRate_grandBaselineSubtracted.value = curNode.OFFSETrespRate.value - grandBaselineMean;
-                    tempStruct.ONSETspikes_grandBaselineSubtracted = curNode.ONSETspikes;
-                    tempStruct.ONSETspikes_grandBaselineSubtracted.value = curNode.ONSETspikes.value - grandBaselineMean.*curNode.ONSETrespDuration.value; %fix nan and INF here
-                    tempStruct.OFFSETspikes_grandBaselineSubtracted = curNode.OFFSETspikes;
-                    tempStruct.OFFSETspikes_grandBaselineSubtracted.value = curNode.OFFSETspikes.value - grandBaselineMean.*curNode.OFFSETrespDuration.value;
-                    tempStruct.ONSETspikes_400ms_grandBaselineSubtracted = curNode.spikeCount_ONSET_400ms;
-                    tempStruct.ONSETspikes_400ms_grandBaselineSubtracted.value = curNode.spikeCount_ONSET_400ms.value - grandBaselineMean.*0.4; %fix nan and INF here
-                    tempStruct.OFFSETspikes_400ms_grandBaselineSubtracted = curNode.OFFSETspikes;
-                    tempStruct.OFFSETspikes_400ms_grandBaselineSubtracted.value = curNode.OFFSETspikes.value - grandBaselineMean.*0.4;
-                    tempStruct = getEpochResponseStats(tempStruct);
-                    
-                    curNode = mergeIntoNode(curNode, tempStruct);
-                    obj = obj.set(leafIDs(i), curNode);
-                end
-                
-                
-            end
-            
+
             [byEpochParamList, singleValParamList, collectedParamList] = getParameterListsByType(curNode);
             obj = obj.percolateUp(leafIDs, byEpochParamList, byEpochParamList);
             obj = obj.percolateUp(leafIDs, singleValParamList, singleValParamList);
