@@ -183,7 +183,12 @@ classdef TreeBrowserGUI < handle
                 'String', 'Node data to Igor', ...
                 'Callback', @(uiobj, evt)obj.nodeToIgor);
             
-            set(obj.handles.L_plotControls, 'Sizes', [-1, 40, 40, 40]);
+            obj.handles.meanTracesToIgorButton = uicontrol('Parent', obj.handles.L_plotControls, ...
+                'Style', 'pushbutton', ...
+                'String', 'Mean traces to Igor', ...
+                'Callback', @(uiobj, evt)obj.meanTracesToIgor);
+            
+            set(obj.handles.L_plotControls, 'Sizes', [-1, 40, 40, 40, 40]);
             
             L_twoTables = uiextras.VBoxFlex('Parent', L_tables, 'Spacing', 10);
             
@@ -763,8 +768,8 @@ classdef TreeBrowserGUI < handle
                     end
                     errs = yField.SEM;
                     errorbar(xvals, yvals, errs);
-                    xlabel(xName);
-                    ylabel([yName ' (' yField(1).units ')' ]);
+                    xlabel(xName, 'Interpreter', 'none');
+                    ylabel([yName ' (' yField(1).units ')' ], 'Interpreter', 'none');
                     obj.printCodeForPlotterFunction_byEpoch(xName,yName);
                 elseif strcmp(plotFunc, 'XYplotter_singleValParams')
                     if isfield(curNodeData, 'stimParameterList')
@@ -792,8 +797,8 @@ classdef TreeBrowserGUI < handle
                     
                     yvals = yField.value;
                     plot(xvals, yvals, 'bx-');
-                    xlabel(xName);
-                    ylabel([yName ' (' yField(1).units ')' ]);
+                    xlabel(xName, 'Interpreter', 'none');
+                    ylabel([yName ' (' yField(1).units ')' ], 'Interpreter', 'none');
                     obj.printCodeForPlotterFunction_singleVal(xName,yName);
                 else
                     obj.resetPlotControls();
@@ -1040,6 +1045,54 @@ classdef TreeBrowserGUI < handle
                 end
             end
         end
+        
+        function meanTracesToIgor(obj)
+            selectedNodes = get(obj.guiTree, 'selectedNodes');
+            curNodeIndex = get(selectedNodes(1), 'Value');            
+            chInd = obj.analysisTree.getchildren(curNodeIndex);
+            rootData = obj.analysisTree.get(curNodeIndex);
+            
+            L = length(chInd);          
+            s = struct;
+            
+            cellData = obj.curCellData;
+
+            for i=1:L
+                curNode = obj.analysisTree.get(chInd(i));
+                epochInd = curNode.epochID;                
+                waveName = [curNode.splitParam '_' num2str(curNode.splitValue)];
+                waveName = strrep(waveName, '-', 'm');
+                waveName = strrep(waveName, '.', 'p');
+                std_name = [waveName '_std'];
+                
+                if strcmp(rootData.(rootData.ampModeParam), 'Cell attached')
+                   [curData, Xvals] = cellData.getPSTH(epochInd, 10, rootData.deviceName);
+                   units = 'Hz';
+                else
+                   [curData, Xvals, data_std, units] = cellData.getMeanData(epochInd, rootData.deviceName);
+                   s.(eval('std_name')) = data_std; 
+                end
+                
+                if i==1
+                    s.Xvals = Xvals;
+                    s.units = units; 
+                end
+                                
+                s.(eval('waveName')) = curData;
+                
+            end
+            
+            [fname,pathname] = uiputfile('*.h5', 'Specify hdf5 export file for Igor', obj.igorh5Folder);
+            if ~isempty(fname)
+                datasetName = inputdlg('Enter dataset name', 'Dataset name');
+                if ~isempty(datasetName)
+                    datasetName = datasetName{1}; %inputdlg returns a cell array instead of a string
+                    exportStructToHDF5(s, fullfile(pathname, fname), datasetName);
+                end
+            end
+            
+        end
+        
         
         function popFig(obj)
             h = figure;
