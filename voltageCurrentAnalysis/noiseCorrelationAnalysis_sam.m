@@ -3,9 +3,11 @@
 % inputs
 %%% CHANGE STUFF HERE
 desiredVoltage = 0;
-AnalysisType = 'Pulse';
+AnalysisType = 'Random Motion Object';
 %%%
 
+%export:
+exportToHDF5 = 0;
 dataLabel = 'MFA_signal';
 
 % folder_name = uigetdir([ANALYSIS_FOLDER 'Projects/'],'Choose project folder');
@@ -22,10 +24,10 @@ dataLabel = 'MFA_signal';
 % cellNames = temp{1};
 % fclose(fid);
 
-cellNames = {'080318Ac2'};
+% cellNames = {'080318Ac2'};
 % AnalysisType = 'Pulse MFA all';
 % AnalysisType = 'Pulse control all';
-AnalysisType = 'RandomMotionObject MFA late seedvarying';
+% AnalysisType = 'RandomMotionObject MFA late seedvarying';
 % AnalysisType = 'RandomMotionObject MFA late seed20';
 % AnalysisType = 'RandomMotionObject spiking pair set1 seed10';
 % AnalysisType = 'RandomMotionObject spiking pair set1 seedvarying';
@@ -36,7 +38,15 @@ AnalysisType = 'RandomMotionObject MFA late seedvarying';
 % cellNames = {'031518Ac1'};
 % AnalysisType = 'Pulse output fmon';
 
-enableMeanSubtraction = 0;
+cellNames = {'040819Ac4'};
+% AnalysisType = 'RandomMotionObject control';
+% AnalysisType = 'RandomMotionObject MFA';
+% AnalysisType = 'RandomMotionObject varyingSeed control';
+% AnalysisType = 'RandomMotionObject varyingSeed MFA';
+% AnalysisType = 'RandomMotionObject sameSeed control';
+AnalysisType = 'RandomMotionObject varyingSeed MFA';
+
+enableMeanSubtraction = 1;
 
 sampleRate = 10000;
 f = 1; % Hz
@@ -266,9 +276,9 @@ plot(shiftValues, corrValsShuffledMean, 'r')
 plot(shiftValues, corrValsShuffledMean+corrValsShuffledSEM, '-.r')
 plot(shiftValues, corrValsShuffledMean-corrValsShuffledSEM, '-.r')
 xlabel('shift time (s)')
-title('cross correlation')
+title('cross correlation (blue)')
 fprintf('Corr peak: %g\n', max(abs(meanCorrelation)));
-%     xlim([-2,2])
+xlim([-1,1])
 
 figure(111+cellIndex);
 clf
@@ -295,13 +305,17 @@ s.meanCorrelationShuffled_plusSEM = corrValsShuffledMean + corrValsShuffledSEM;
 s.meanCorrelationShuffled_minusSEM = corrValsShuffledMean - corrValsShuffledSEM;
 s.SEMCorrelationShuffled = corrValsShuffledSEM;
 
-s.Ch1_PreSub = Ch1_PreSub;
-s.Ch2_PreSub = Ch2_PreSub;
-s.Ch1_Mean = Ch1_Mean;
-s.Ch2_Mean = Ch2_Mean;
-s.Ch1_PostSub = Ch1_PostSub;
-s.Ch2_PostSub = Ch2_PostSub;
+% s.Ch1_PreSub = Ch1_PreSub;
+% s.Ch2_PreSub = Ch2_PreSub;
+% s.Ch1_Mean = Ch1_Mean;
+% s.Ch2_Mean = Ch2_Mean;
+% s.Ch1_PostSub = Ch1_PostSub;
+% s.Ch2_PostSub = Ch2_PostSub;
 
 fname = sprintf('xcorr %s.h5', cellName);
 % delete(fname)
-exportStructToHDF5(s, fname, dataLabel)
+if exportToHDF5
+    exportStructToHDF5(s, fname, dataLabel)
+end
+
+disp('Done')
