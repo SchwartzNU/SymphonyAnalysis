@@ -33,7 +33,7 @@ FWHM = nan(N, 1); % full width at half max in ms
 initSlope = nan(N, 1); % slope between the threshold and halfMax (mV/ms)
 preSlope = nan(N, 1); % slope before the threshold (mV/ms)
 threshSlope = nan(N, 1); % slope at the threshold (mV/ms)
-for i = 1:1%N
+for i = 1:N
     st = spikeTimes(i);
     if st <= 15 || st >= L-75 % can't calculate threshold
         continue
@@ -64,10 +64,9 @@ for i = 1:1%N
     c = [];
     if length(voltages) == len
         c = voltages;
-    elseif st - half <= 0
-        c = padarray(voltages(1:st+half), [len - length(voltages(1:st+half)), 0], NaN, 'pre');
-    elseif st + half > L
-        c = padarray(voltages(st-half:L), [len - length(voltages(st-half:L)), 0], NaN, 'post');
+    elseif (st - half <= 0) | (st + half > L)
+        % to close to edge
+        continue
     else
         c = voltages(st-half:st+half);
     end
@@ -104,7 +103,7 @@ for i = 1:1%N
     else
         continue
     end    
-    thresholdInd
+%     thresholdInd
     
     smallSize = 20;
     smallLenVec = lenVec(floor(len/2)-smallSize:floor(len/2)+smallSize);
@@ -160,14 +159,11 @@ for i = 1:1%N
     
     % assign things
     if ~isempty(endHalf) || ~isempty(startHalf)
-        size(C);
-        size(c);
-        c;
         C(i, :) = c;
         P(i, 1) = peak;
         T(i, 1) = thresholdV;
         AHP(i, 1) = ahp;
-        FWHM(i, 1) = (endHalf-startHalf)/factor; % in ms?
+        FWHM(i, 1) = (endHalf-startHalf)/factor; % in ms
         initSlope(i, 1) = (halfMax - thresholdV)/(startHalf/factor - thresholdInd/factor);
         preSlope(i, 1) = (thresholdV - c(1))/(thresholdInd/factor - 0);
         try
@@ -176,7 +172,6 @@ for i = 1:1%N
             preSlope(i, 1) = NaN;
             threshSlope(i, 1) = NaN;
         end
-        'here';
     end
     
 end

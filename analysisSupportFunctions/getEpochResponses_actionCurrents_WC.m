@@ -1,5 +1,6 @@
 function outputStruct = getEpochResponses_actionCurrents_WC(cellData, epochInd, varargin)
 % written by Sophia for MultiPulse analyses 10/22/2018
+% discontinued 4/12/19
 ip = inputParser;
 ip.KeepUnmatched = true;
 ip.addParamValue('DeviceName', 'Amplifier_Ch1', @(x)ischar(x));
