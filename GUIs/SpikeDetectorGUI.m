@@ -57,13 +57,15 @@ classdef SpikeDetectorGUI < handle
                 'Name',         ['Spike Detector: Epoch ' num2str(obj.epochIndicesList(obj.curEpochListIndex))], ...
                 'NumberTitle',  'off', ...
                 'Menubar',      'none', ...                         
-                'ToolBar',      'figure',...
-                'Position', [0 0.4*bounds(4), 1000, 500], ...
+                'ToolBar',      'none',...
                 'KeyPressFcn',@(uiobj,evt)obj.keyHandler(evt));
             
-            L_main = uiextras.VBox('Parent', obj.fig);
+%                 'Position', [0 0.4*bounds(4), 1000, 500], ...
             
-            L_info = uiextras.HBox('Parent', L_main, ...
+            
+            L_main = uix.VBox('Parent', obj.fig);
+            
+            L_info = uix.HBox('Parent', L_main, ...
                 'Spacing', 2);
             
             obj.handles.autoSaveCheckbox = uicontrol('Parent', L_info, ...
@@ -118,13 +120,13 @@ classdef SpikeDetectorGUI < handle
                 'KeyPressFcn',@(uiobj,evt)obj.keyHandler(evt));
             
             
-            L_plotBox = uiextras.VBoxFlex('Parent', L_main);
+            L_plotBox = uix.VBoxFlex('Parent', L_main);
             obj.handles.primaryAxes = axes('Parent', L_plotBox, ...
                 'ButtonDownFcn', @axisZoomCallback);
             obj.handles.secondaryAxes = axes('Parent', L_plotBox);
             L_plotBox.Heights = [-1, -1];
             
-            bottomButtonBlock = uiextras.HBox('Parent', L_main);
+            bottomButtonBlock = uix.HBox('Parent', L_main);
             obj.handles.applyToAllButton = uicontrol('Parent', bottomButtonBlock, ...
                 'Style', 'pushbutton', ...
                 'String', 'Apply to all', ...
@@ -146,15 +148,14 @@ classdef SpikeDetectorGUI < handle
                 'Callback', @(uiobj, evt)obj.skipForward10(), ...
                 'KeyPressFcn',@(uiobj,evt)obj.keyHandler(evt));
             
-            set(L_main, 'Sizes', [50, -1, 50]);
-            set(L_info, 'Sizes', [-.8, -.8, -.8, -1.5, -.8, -.6, -2, -1, -1, -1]);
+            set(L_main, 'Heights', [50, -1, 50]);
+            set(L_info, 'Widths', [-.8, -.8, -.8, -1.5, -.8, -.6, -2, -1, -1, -1]);
         end
         
         function detectSpikes(obj, index)
             epoch = obj.cellData.epochs(obj.epochIndicesList(index));
             
             if isSpikeEpoch(epoch, obj.streamName)
-                
                 % get response for this epoch
                 response = epoch.getData(obj.streamName);
                 response = response - mean(response);

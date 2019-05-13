@@ -896,8 +896,9 @@ classdef TreeBrowserGUI < handle
             obj.populateNodePropertiesTable(curNodeData, allFields);
             try 
                 obj.updatePlot();
-            catch
+            catch merror
                 warning('There is no data for these cells. Check raw data exists, cell data exists, if the cell has been curated, and that the type of parameter (CA vs WC) is correct.')
+               merror 
             end
         end
         

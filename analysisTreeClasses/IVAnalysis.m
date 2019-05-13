@@ -31,7 +31,13 @@ classdef IVAnalysis < AnalysisTree
                 outputStruct = getEpochResponseStats(outputStruct);
                 curNode = mergeIntoNode(curNode, outputStruct);
                 obj = obj.set(leafIDs(i), curNode);
+                
+                disp('ivanalysis');
+                disp(outputStruct.ONSET_peak.value)
             end
+            
+            
+
             
             obj = obj.percolateUp(leafIDs, ...
                 'splitValue', 'holdSignal');
@@ -59,15 +65,78 @@ classdef IVAnalysis < AnalysisTree
         %             ylabel('Peak current (pA)');
         %         end
         
-        function plot_holdSignalVsONSET_avgTracePeak(node, cellData)
+%         function plot_holdSignalVsONSET_avgTracePeak(node, cellData)
+%             rootData = node.get(1);
+%             xvals = rootData.holdSignal;
+%             yField = rootData.ONSET_avgTracePeak;
+%             yvals = yField.value;
+%             plot(xvals, yvals, 'bx-');
+%             xlabel('holdSignal');
+%             ylabel(['ONSET_avgTracePeak (' yField.units ')']);
+%         end
+        
+
+        function plot_holdSignalVsONSET_peak(node, cellData)
             rootData = node.get(1);
             xvals = rootData.holdSignal;
-            yField = rootData.ONSET_avgTracePeak;
-            yvals = yField.value;
-            plot(xvals, yvals, 'bx-');
+            yField = rootData.ONSET_peak;
+            if strcmp(yField.units, 's')
+                yvals = yField.median_c;
+            else
+                yvals = yField.mean_c;
+            end
+            errs = yField.SEM;
+            errorbar(xvals, yvals, errs);
             xlabel('holdSignal');
-            ylabel(['ONSET_avgTracePeak (' yField.units ')']);
+            ylabel(['ONSET_peak (' yField.units ')']);
         end
+        
+        function plot_holdSignalVsOFFSET_peak(node, cellData)
+            rootData = node.get(1);
+            xvals = rootData.holdSignal;
+            yField = rootData.OFFSET_peak;
+            if strcmp(yField.units, 's')
+                yvals = yField.median_c;
+            else
+                yvals = yField.mean_c;
+            end
+            errs = yField.SEM;
+            errorbar(xvals, yvals, errs);
+            xlabel('holdSignal');
+            ylabel(['OFFSET_peak (' yField.units ')']);
+        end
+        
+        
+        function plot_holdSignalVsONSET100_peak(node, cellData)
+            rootData = node.get(1);
+            xvals = rootData.holdSignal;
+            yField = rootData.ONSET_peak100ms;
+            if strcmp(yField.units, 's')
+                yvals = yField.median_c;
+            else
+                yvals = yField.mean_c;
+            end
+            errs = yField.SEM;
+            errorbar(xvals, yvals, errs);
+            xlabel('holdSignal');
+            ylabel(['ONSET_peak100ms (' yField.units ')']);
+        end
+        
+        function plot_holdSignalVsOFFSET200_peak(node, cellData)
+            rootData = node.get(1);
+            xvals = rootData.holdSignal;
+            yField = rootData.OFFSET_peak200ms;
+            if strcmp(yField.units, 's')
+                yvals = yField.median_c;
+            else
+                yvals = yField.mean_c;
+            end
+            errs = yField.SEM;
+            errorbar(xvals, yvals, errs);
+            xlabel('holdSignal');
+            ylabel(['OFFSET_peak100ms (' yField.units ')']);
+        end        
+        
         
         function plotMeanTraces(node, cellData)
             rootData = node.get(1);
@@ -81,11 +150,12 @@ classdef IVAnalysis < AnalysisTree
             end
             hold(ax, 'off');
         end
+             
         
         function plot_holdSignalVsshortIntCurrent(node, cellData)
             rootData = node.get(1);
             xvals = rootData.holdSignal(2:end);
-            yField = rootData.shortInt200_peak;
+            yField = rootData.shortInt100_peak;
             yvals = yField.mean_c(2:end);
             errs = yField.SEM(2:end);
             errorbar(xvals, yvals, errs,'DisplayName','current at 0.2s');
@@ -96,7 +166,7 @@ classdef IVAnalysis < AnalysisTree
             errorbar(xvals, yvals, errs,'DisplayName','current at 0.8s');
             xlabel('holdSignal');
             ylabel(['Current (' yField.units ')']);
-            title('I-V at 200ms (blue); at 800ms (red)');
+            title('I-V at 100ms (blue); at 800ms (red)');
             hold off
         end
         
