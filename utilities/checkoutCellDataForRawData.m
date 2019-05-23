@@ -13,6 +13,10 @@ DataName = erase(DataName,'.h5');
 disp('Looking for matching cellData in CellDataMaster')
 CellData_Master = dir([CELL_DATA_MASTER,DataName,'*']);
 
+if length(CellData_Master) < 1
+    disp('No matching cell data found on server')
+end
+
 CellData_Local = dir([CELL_DATA_FOLDER,DataName,'*']);
 CellData_LocalNames = struct2cell(CellData_Local);
 CellData_LocalNames = CellData_LocalNames(1,:);
