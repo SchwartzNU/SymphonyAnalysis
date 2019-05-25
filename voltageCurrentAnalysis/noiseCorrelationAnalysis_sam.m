@@ -3,12 +3,12 @@
 % inputs
 %%% CHANGE STUFF HERE
 desiredVoltage = 0;
-AnalysisType = 'Random Motion Object';
+AnalysisType = 'Pulse';
 %%%
 
 %export:
-exportToHDF5 = 0;
-dataLabel = 'MFA_signal';
+
+dataLabel = 'MFA';
 
 % folder_name = uigetdir([ANALYSIS_FOLDER 'Projects/'],'Choose project folder');
 % obj.projFolder = [folder_name filesep];
@@ -24,29 +24,46 @@ dataLabel = 'MFA_signal';
 % cellNames = temp{1};
 % fclose(fid);
 
-% cellNames = {'080318Ac2'};
-% AnalysisType = 'Pulse MFA all';
+cellNames = {'080318Ac2'};
+AnalysisType = 'Pulse MFA all';
 % AnalysisType = 'Pulse control all';
 % AnalysisType = 'RandomMotionObject MFA late seedvarying';
 % AnalysisType = 'RandomMotionObject MFA late seed20';
 % AnalysisType = 'RandomMotionObject spiking pair set1 seed10';
 % AnalysisType = 'RandomMotionObject spiking pair set1 seedvarying';
 
-% cellNames = {'100318Ac6'}; % no flip
+% cellNames = {'100318Ac6'}; % no flip with MFA, obviously still strongly connected
 % AnalysisType = 'Pulse output1 control';
+% AnalysisType = 'Pulse output1 MFA';
 
 % cellNames = {'031518Ac1'};
 % AnalysisType = 'Pulse output fmon';
 
-cellNames = {'040819Ac4'};
+% cellNames = {'040819Ac4'};
 % AnalysisType = 'RandomMotionObject control';
 % AnalysisType = 'RandomMotionObject MFA';
 % AnalysisType = 'RandomMotionObject varyingSeed control';
 % AnalysisType = 'RandomMotionObject varyingSeed MFA';
 % AnalysisType = 'RandomMotionObject sameSeed control';
-AnalysisType = 'RandomMotionObject varyingSeed MFA';
+% AnalysisType = 'RandomMotionObject sameSeed MFA';
 
-enableMeanSubtraction = 1;
+
+% cellNames = {'040819Ac4'};
+% cellNames = {'031419Ac2'};
+
+
+% cellNames = {'060118Ac2'};
+% cellNames = {'050918Ac4'};
+% cellNames = {'040618Ac2'};
+% cellNames = {'042618Ac9'};
+cellNames = {'080818Ac3'};
+AnalysisType = 'Pulse MFA late';
+
+enableMeanSubtraction = 0;
+
+drawPlotsByEpoch = 0;
+
+exportToHDF5 = 0;
 
 sampleRate = 10000;
 f = 1; % Hz
@@ -99,8 +116,13 @@ responseMeanOverTrials = [];
 angles = [];
 oi = 0;
 
+maxPlotsToDraw = 10;
+numPlotsToDraw = min([maxPlotsToDraw, length(MatchingEpochs)]);
 
-[~,hgrid] = tight_subplot(length(MatchingEpochs)+1, 2);
+if drawPlotsByEpoch
+    [~,hgrid] = tight_subplot(length(MatchingEpochs)+1, 2);
+end
+
 
 for ei=1:length(MatchingEpochs)
     epoch = cellData.epochs(MatchingEpochs(ei));
@@ -108,7 +130,7 @@ for ei=1:length(MatchingEpochs)
 %         if epoch.get('ampHoldSignal') ~= desiredVoltage
 %             continue
 %         end
-    oi = oi + 1;
+    oi = oi + 1
 
     for channel = 1:2
         if channel == 1
@@ -136,24 +158,24 @@ for ei=1:length(MatchingEpochs)
         t = (0:length(response)-1)/10000;
 
          % pretime
-%             noiseTimeSec = [0, epoch.get('preTime')/1000];
-%             tSelect = t > noiseTimeSec(1) & t <= noiseTimeSec(2);
+            noiseTimeSec = [0, epoch.get('preTime')/1000];
+            tSelect = t > noiseTimeSec(1) & t <= noiseTimeSec(2);
 
         % stim start to epoch end
 %             noiseTimeSec = [(epoch.get('preTime')+epoch.get('stimTime'))+500, inf]/1000;
 %             tSelect = t > noiseTimeSec(1) & t <= noiseTimeSec(2);
 
         % during stim
-        noiseTimeSec = [epoch.get('preTime')/1000, (epoch.get('preTime')+epoch.get('stimTime'))/1000];
-        tSelect = t > noiseTimeSec(1) & t <= noiseTimeSec(2);
+%         noiseTimeSec = [epoch.get('preTime')/1000, (epoch.get('preTime')+epoch.get('stimTime'))/1000];
+%         tSelect = t > noiseTimeSec(1) & t <= noiseTimeSec(2);
 
         % last 300ms of each epoch
 %             noiseTimeSec = [(epoch.get('preTime')+epoch.get('stimTime'))/1000, (epoch.get('preTime')+epoch.get('stimTime'))/1000] - [.3, 0];
 %             tSelect = t > noiseTimeSec(1) & t <= noiseTimeSec(2);
 
 %             post stim
-%             noiseTimeSec = [(epoch.get('preTime')+epoch.get('stimTime'))/1000 + .3, inf];
-%             tSelect = t > noiseTimeSec(1) & t <= noiseTimeSec(2);
+%         noiseTimeSec = [(epoch.get('preTime')+epoch.get('stimTime'))/1000 + .3, inf];
+%         tSelect = t > noiseTimeSec(1) & t <= noiseTimeSec(2);
 
         % pre and post stim
 %             noiseTimeSec = [0, epoch.get('preTime')/1000, (epoch.get('preTime')+epoch.get('stimTime'))/1000 + .3, inf];
@@ -173,17 +195,24 @@ for ei=1:length(MatchingEpochs)
 %         response_filt = response_filt([10001:end-10000]);
 % 
 % 
+
+%         if channel == 2
+%           warning('experiment shift enabled')
+%             response_filt = circshift(response_filt, 0.1 * 10000);
+%         end
         responses(oi,channel,:) = response_filt;
 
 
 
 %             figure(29)
 %             subplot(length(MatchingEpochs), 1, oi);
-        axes(hgrid(ei, channel));
-        plot(t(tSelect), response)
-%         hold on
-%         plot(response_filt)
-        title(sprintf('epoch responses seed %g', motionSeed))
+        if drawPlotsByEpoch
+            axes(hgrid(ei, channel));
+            plot(t(tSelect), response)
+    %         hold on
+    %         plot(response_filt)
+            title(sprintf('epoch responses seed %g', motionSeed))
+        end
 
     end
     hold off
@@ -249,9 +278,10 @@ MaxCorr = mean(meanCorrelation(I-1:I+1));
 MaxCorrs(cellIndex) = MaxCorr;
 
 
-numRandomCorrelations = 100;
+numRandomCorrelations = 30;
 shuffledCorrelations = [];
 for si = 1:numRandomCorrelations
+    si
     shuffledOrder = randperm(numEpochs);
     corrValsShuffledMean = [];
     for ei = 1:numEpochs
@@ -277,21 +307,25 @@ plot(shiftValues, corrValsShuffledMean+corrValsShuffledSEM, '-.r')
 plot(shiftValues, corrValsShuffledMean-corrValsShuffledSEM, '-.r')
 xlabel('shift time (s)')
 title('cross correlation (blue)')
-fprintf('Corr peak: %g\n', max(abs(meanCorrelation)));
+[ma, mi] = max(abs(meanCorrelation));
+fprintf('Corr peak: %g at %g sec\n', ma, shiftValues(mi));
+
 xlim([-1,1])
+fprintf('FWHM (sec): %g\n', fwhm(shiftValues, meanCorrelation));
 
-figure(111+cellIndex);
-clf
-% h = tight_subplot(5,ceil(length(corrVals(:,1))/5));
-h = tight_subplot(length(MatchingEpochs),1);
-for cc = 1:length(corrVals(:,1))
- %plot(h(ci), shiftValues(48500:51500), corrVals(ci,48500:51500))
-    plot(h(cc), shiftValues, corrVals(cc,:))
-    title(h(cc), sprintf('%g:%g', cc, MatchingEpochs(cc)))
+if drawPlotsByEpoch
+    figure(111+cellIndex);
+    clf
+    % h = tight_subplot(5,ceil(length(corrVals(:,1))/5));
+    h = tight_subplot(length(MatchingEpochs),1);
+    for cc = 1:length(corrVals(:,1))
+     %plot(h(ci), shiftValues(48500:51500), corrVals(ci,48500:51500))
+        plot(h(cc), shiftValues, corrVals(cc,:))
+        title(h(cc), sprintf('%g:%g', cc, MatchingEpochs(cc)))
+    end
+
+    set(h, 'YLim', [min(corrVals(:)), max(corrVals(:))]);
 end
-
-set(h, 'YLim', [min(corrVals(:)), max(corrVals(:))]);
-
 
 s = struct();
 s.shiftValues = shiftValues;
@@ -312,7 +346,7 @@ s.SEMCorrelationShuffled = corrValsShuffledSEM;
 % s.Ch1_PostSub = Ch1_PostSub;
 % s.Ch2_PostSub = Ch2_PostSub;
 
-fname = sprintf('xcorr %s.h5', cellName);
+fname = sprintf('igorExport/xcorr %s.h5', cellName);
 % delete(fname)
 if exportToHDF5
     exportStructToHDF5(s, fname, dataLabel)
