@@ -57,6 +57,7 @@ baselineVal = zeros(1,L); %baseline in prepoints
 stim1baselineVal = zeros(1,L); %steady state at the end of stim1
 stim2baselineVal = zeros(1,L); %steady state at the end of stim2
 
+R = ones(1, L)*NaN;
 for i=1:L %loops over epochs
     curEpoch = cellData.epochs(epochInd(i));
     %get data
@@ -87,6 +88,14 @@ for i=1:L %loops over epochs
         outputStruct.baseline.type = 'singleValue';
         %outputStruct.baseline.value = %already set;
         
+        outputStruct.resistance.units = 'Mohms';
+        outputStruct.resistance.type = 'singleValue';
+        outputStruct.resistance.value = NaN;
+        
+        outputStruct.resistanceSD.units = 'Mohms';
+        outputStruct.resistanceSD.type = 'singleValue';
+        outputStruct.resistanceSD.value = NaN;
+        
         outputStruct.s1baselineData.units = units;
         outputStruct.s1baselineData.type = 'singleValue';
         %outputStruct.baseline.value = %already set;
@@ -110,21 +119,32 @@ for i=1:L %loops over epochs
     end
     
     % added from Sophia MP getEpochResponsese
-    outputStruct.s1_steps.value(i) = curEpoch.get('pulse1Curr');
-    outputStruct.s2_steps.value(i) = curEpoch.get('pulse2Curr');
+    step1 = curEpoch.get('pulse1Curr'); step2 = curEpoch.get('pulse2Curr');
+    outputStruct.s1_steps.value(i) = step1;
+    outputStruct.s2_steps.value(i) = step2;
     spikeTimes = curEpoch.getSpikes(ip.Results.DeviceName); % copied from the gER_CA
     spikeTimes = (spikeTimes / sampleRate) - (curEpoch.get('preTime')/1000);
     stim1Spikes = spikeTimes > stim1Start & spikeTimes < stim2Start;
     stim2Spikes = spikeTimes > stim2Start & spikeTimes < stim2End;
-    sum(stim1Spikes);
     outputStruct.s1_spikeCount.value(i) = sum(stim1Spikes);
     outputStruct.s2_spikeCount.value(i) = sum(stim2Spikes);
+    
+    % calculate resistance 
+    d_filt = movmedian(data, 101*sampleRate/10000);
+    preBase = mean(d_filt(baselineInterval));
+    stimBase = mean(d_filt(xvals > stim1Start+0.1 & xvals < stim2Start));
+    if step1 ~= 0
+        R(i) = ((stimBase - preBase)/step1)*(1E3);
+    end
     
 end %end of epoch loop. The stuff after this is computed on the averages instead
 
 %baseline
 outputStruct.baseline.value = mean(baselineVal);
 outputStruct.s1baselineData.value = mean(s1baselineData);
+
+outputStruct.resistance.value = nanmean(R);
+outputStruct.resistanceSD.value = nanstd(R);
 
 % collect all of the steps
 outputStruct.s1_steps.value = unique(outputStruct.s1_steps.value);
