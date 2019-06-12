@@ -1,13 +1,18 @@
-function [] = checkoutCellDataForRawData(expname)
+function [status] = checkoutCellDataForRawData(expname)
 global CELL_DATA_FOLDER;
 global CELL_DATA_MASTER;
 global RAW_DATA_FOLDER;
 
+% Status indicates if no cellData is found on server (0), No connection
+% could be made to server (-1), or if cellData was found on server (1)
+disp('Checking for any matching cell data files already on the server')
+
+
 %% Check connection to Server
 if ~exist(CELL_DATA_MASTER,'dir')
-    error('Could not connect to CellDataMaster')
-else
-    disp('Connected to server verified')
+    disp('Error - Could not connect to CellDataMaster')
+    status = -1;
+    return
 end
 
 %% Choose a raw data file if no experiment day is given
@@ -22,8 +27,10 @@ CellData_Master = dir([CELL_DATA_MASTER,expname,'*']);
 
 if length(CellData_Master) < 1
     disp('No matching cell data found on server')
+    status = 0; %%Indicate if cellData was found on Server
 else
     fprintf('%d matching files found on the server \n', length(CellData_Master))
+    status = 1; %%Indicate if cellData was found on Server
 end
 
 %% Check for any local cellData that is already on your computer for this experiment.
@@ -46,4 +53,4 @@ for i = 1:length(CellData_Master)
     end
 end
 
-disp('Done');
+disp('Done checking server for cellData');
