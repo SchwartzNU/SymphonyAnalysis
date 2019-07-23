@@ -451,10 +451,18 @@ classdef CellMorphologyGUI < handle
                 curName = cellNames{i};
                 disp(['Analyzing cell ' curName]);
                 if tableData{obj.selectedRows(i), 4} %if traced
-                    trace_fname = [curName '.swc'];
-                    image_fname = [curName '.nd2'];
-                    morphology_fname = [curName '_morphologyData.mat'];
                     curDir = [imageRoot_confocal '/' curName '/'];
+                    trace_fname = [curName '.swc'];
+                    
+                    if exist([curDir curName '.tif'], 'file')
+                        image_fname = [curName '.tif'];
+                    elseif exist([curDir curName '.nd2'], 'file')
+                        image_fname = [curName '.nd2'];
+                    else
+                        fprintf('No .tif or .nd2 images found for %s on the server (%s) \n', curName, curDir)
+                    end
+                    morphology_fname = [curName '_morphologyData.mat'];
+                    
                     %try
                         outputStruct = rgcAnalyzer([curDir trace_fname] ,[curDir image_fname]);
                         save([curDir morphology_fname], 'outputStruct');
