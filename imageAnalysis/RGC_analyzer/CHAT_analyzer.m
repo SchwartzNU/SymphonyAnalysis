@@ -11,7 +11,7 @@ voxelsY = round(pixY/resampleFactor);
 CHATsequence = zeros(voxelsX, voxelsY, Nframes);
 CHATsequence_raw_mat = zeros(pixX, pixY, Nframes);
 for i=1:Nframes
-    CHATsequence(:,:,i) = imresize(CHATsequence_raw{i}, 1/resampleFactor);
+    CHATsequence(:,:,i) = imresize(CHATsequence_raw{i}, [voxelsX, voxelsY]);
     CHATsequence_raw_mat(:,:,i) = CHATsequence_raw{i};
 end
 CHAT_proj_full = squeeze(max(CHATsequence_raw_mat, [], 3));
