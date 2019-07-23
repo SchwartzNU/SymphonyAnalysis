@@ -39,21 +39,21 @@ for i=1:voxelsX
             plot(peaksAx, curProj);
             ylabel('ChAT flourescence');
             xlabel('z-position (frame)')
-            [px, ~] = ginput(1);
+            [px1, ~] = ginput(1);
             hold(peaksAx, 'on');
-            pos1 = px;
-            px = round(px);
-            if ~isempty(px)
-                if px>0 && px < length(curProj)
-                    scatter(peaksAx, px, curProj(px), 'rx');
+            pos1 = px1;
+            px1 = round(px1);
+            if ~isempty(px1)
+                if px1>0 && px1 < length(curProj)
+                    scatter(peaksAx, px1, curProj(px1), 'rx');
                 end
             end
-            [px, ~] = ginput(1);
-            pos2 = px;
-            px = round(px);
-            if ~isempty(px)
-                if px>0 && px < length(curProj)
-                    scatter(peaksAx, px, curProj(px), 'rx');
+            [px2, ~] = ginput(1);
+            pos2 = px2;
+            px2 = round(px2);
+            if ~isempty(px2)
+                if px2 > 0 && px2 < length(curProj)
+                    scatter(peaksAx, px2, curProj(px2), 'rx');
                 end
             end
             
@@ -65,12 +65,16 @@ for i=1:voxelsX
                     repeatPeakPick = false;
                     set(r, 'EdgeColor', 'g');
                 otherwise
-                    chatFrames = sort([pos1, pos2]);
-                    CHAT_pos(i,j,1) = chatFrames(1);
-                    CHAT_pos(i,j,2) = chatFrames(2);
-                    repeatPeakPick = false;
-                    text((i-1)*pixStepX+1, (j-1)*pixStepY+pixStepY/2, [num2str(round(chatFrames(1))), ', ' num2str(round(chatFrames(2)))], 'Parent', projImageAx)
-                    set(r, 'EdgeColor', 'k');
+                    if isempty(px1) || isempty(px2)
+                        repeatPeakPick = true;
+                    else
+                        chatFrames = sort([pos1, pos2]);
+                        CHAT_pos(i,j,1) = chatFrames(1);
+                        CHAT_pos(i,j,2) = chatFrames(2);
+                        repeatPeakPick = false;
+                        text((i-1)*pixStepX+1, (j-1)*pixStepY+pixStepY/2, [num2str(round(chatFrames(1))), ', ' num2str(round(chatFrames(2)))], 'Parent', projImageAx)
+                        set(r, 'EdgeColor', 'k');
+                    end
             end
         end
         %curProj = curProj' - min(curProj);
