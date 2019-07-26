@@ -1,10 +1,11 @@
-function [X_flat, Y_flat, Z_flat_ON, Z_flat_OFF] = CHAT_analyzer(image_fname, Nchannels, CHAT_channel, resampleSquares, pixelRes_XY)
+function [X_flat, Y_flat, Z_flat_ON, Z_flat_OFF, CHATprogressName] = CHAT_analyzer(image_fname, Nchannels, CHAT_channel, resampleSquares, pixelRes_XY, filepath, basename)
+
 imageData = bfopen(image_fname);
 rawImageSequence = imageData{1,1};
 CHATsequence_raw = rawImageSequence(CHAT_channel:Nchannels:end,1);
 
 Nframes = length(CHATsequence_raw);
-[pixX, pixY] = size(CHATsequence_raw{1})
+[pixX, pixY] = size(CHATsequence_raw{1});
 resampleFactor = pixX / resampleSquares;
 voxelsX = round(pixX/resampleFactor);
 voxelsY = round(pixY/resampleFactor);
@@ -20,7 +21,22 @@ imagesc(CHAT_proj_full);
 projImageAx = gca;
 clear('CHATsequence_raw_mat', 'CHATsequence_raw');
 
+%% Load any previous CHAT marking work
+CHATprogressName = fullfile(filepath, [basename '_CHATprogress.mat']);
 CHAT_pos = ones(voxelsX, voxelsY, 2)*nan;
+if exist(CHATprogressName, 'file')
+   load(CHATprogressName, 'CHAT_pos');
+else
+   save(CHATprogressName, 'CHAT_pos');
+end
+
+loadSaveFlag = false;
+numSavedBoxes = 0;
+if any(~isnan(CHAT_pos(:,:,1)), 'all')
+    numSavedBoxes = find(~isnan(CHAT_pos(:,:,1)), 1, 'last');
+    loadSaveFlag = true;
+end
+%%
 
 figure;
 peaksAx = gca;
@@ -28,7 +44,14 @@ pixStepX = pixX / voxelsX;
 pixStepY = pixY / voxelsY;
 for i=1:voxelsX
     for j=1:voxelsY
-        r = rectangle('Parent', projImageAx, 'Position', [(i-1)*pixStepX, (j-1)*pixStepY, pixStepX, pixStepY], 'EdgeColor', 'r');
+        r = rectangle('Parent', projImageAx, 'Position', [(j-1)*pixStepY, (i-1)*pixStepX, pixStepY, pixStepX], 'EdgeColor', 'r');
+%         if isnan(CHAT_pos(i,j,1))
+%             loadSaveFlag = false;
+%         end
+        if numSavedBoxes < 1
+            loadSaveFlag = false;
+        end
+        numSavedBoxes = numSavedBoxes - 1;
         
         %whichRect = whichRectangle(i, j, x, y, w, h, resampleFactor, pixelRes_XY);
         repeatPeakPick = true;
@@ -39,17 +62,27 @@ for i=1:voxelsX
             plot(peaksAx, curProj);
             ylabel('ChAT flourescence');
             xlabel('z-position (frame)')
-            [px1, ~] = ginput(1);
+            
+            if loadSaveFlag
+                px1 = CHAT_pos(i,j,1);
+            else
+                %[px1, ~] = ginput(1); speed up
+                px1 = 1
+            end
             hold(peaksAx, 'on');
-            pos1 = px1;
             px1 = round(px1);
             if ~isempty(px1)
                 if px1>0 && px1 < length(curProj)
                     scatter(peaksAx, px1, curProj(px1), 'rx');
                 end
             end
-            [px2, ~] = ginput(1);
-            pos2 = px2;
+            
+            if loadSaveFlag
+                px2 = CHAT_pos(i,j,2);
+            else
+                %[px2, ~] = ginput(1); speed up
+                px2 = 1
+            end
             px2 = round(px2);
             if ~isempty(px2)
                 if px2 > 0 && px2 < length(curProj)
@@ -57,7 +90,14 @@ for i=1:voxelsX
                 end
             end
             
-            key = input('ok?: [y=return, skip=s, redo=r]', 's');
+            if loadSaveFlag
+                key = 'otherwise option';
+            else
+                %key = input('ok?: [y=return, skip=s, redo=r]', 's'); speed
+                %up
+                key = 'donkey kong'
+            end
+            
             switch key
                 case 'r'
                     repeatPeakPick = true;
@@ -68,12 +108,13 @@ for i=1:voxelsX
                     if isempty(px1) || isempty(px2)
                         repeatPeakPick = true;
                     else
-                        chatFrames = sort([pos1, pos2]);
+                        chatFrames = sort([px1, px2]);
                         CHAT_pos(i,j,1) = chatFrames(1);
                         CHAT_pos(i,j,2) = chatFrames(2);
                         repeatPeakPick = false;
-                        text((i-1)*pixStepX+1, (j-1)*pixStepY+pixStepY/2, [num2str(round(chatFrames(1))), ', ' num2str(round(chatFrames(2)))], 'Parent', projImageAx)
+                        text((j-1)*pixStepY+1, (i-1)*pixStepX+pixStepX/2, [num2str(round(chatFrames(1))), ', ' num2str(round(chatFrames(2)))], 'Parent', projImageAx)
                         set(r, 'EdgeColor', 'k');
+                        save(CHATprogressName, 'CHAT_pos');
                     end
             end
         end
@@ -108,10 +149,10 @@ end
 
 %format into x,y,z, values
 [Xvals, Yvals] = meshgrid(resampleFactor * [1:voxelsX] * pixelRes_XY, resampleFactor * [1:voxelsY] * pixelRes_XY);
-X_flat = reshape(Xvals, [1, (pixX./resampleFactor)^2]);
-Y_flat = reshape(Yvals, [1, (pixX./resampleFactor)^2]);
-Z_flat_ON = reshape(squeeze(CHAT_pos(:,:,1)), [1, (pixX./resampleFactor)^2]);
-Z_flat_OFF = reshape(squeeze(CHAT_pos(:,:,2)), [1, (pixX./resampleFactor)^2]);
+X_flat = reshape(Xvals, 1, []);
+Y_flat = reshape(Yvals, 1, []);
+Z_flat_ON = reshape(squeeze(CHAT_pos(:,:,1)), 1, []);
+Z_flat_OFF = reshape(squeeze(CHAT_pos(:,:,2)), 1, []);
 
 end
 
