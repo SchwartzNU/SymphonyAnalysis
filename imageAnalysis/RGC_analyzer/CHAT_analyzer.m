@@ -45,9 +45,6 @@ pixStepY = pixY / voxelsY;
 for i=1:voxelsX
     for j=1:voxelsY
         r = rectangle('Parent', projImageAx, 'Position', [(j-1)*pixStepY, (i-1)*pixStepX, pixStepY, pixStepX], 'EdgeColor', 'r');
-%         if isnan(CHAT_pos(i,j,1))
-%             loadSaveFlag = false;
-%         end
         if numSavedBoxes < 1
             loadSaveFlag = false;
         end
@@ -66,8 +63,8 @@ for i=1:voxelsX
             if loadSaveFlag
                 px1 = CHAT_pos(i,j,1);
             else
-                %[px1, ~] = ginput(1); speed up
-                px1 = 1
+                [px1, ~] = ginput(1); speed up
+%                 px1 = 1
             end
             hold(peaksAx, 'on');
             px1 = round(px1);
@@ -80,8 +77,8 @@ for i=1:voxelsX
             if loadSaveFlag
                 px2 = CHAT_pos(i,j,2);
             else
-                %[px2, ~] = ginput(1); speed up
-                px2 = 1
+               [px2, ~] = ginput(1); speed up
+               % px2 = 1
             end
             px2 = round(px2);
             if ~isempty(px2)
@@ -93,9 +90,9 @@ for i=1:voxelsX
             if loadSaveFlag
                 key = 'otherwise option';
             else
-                %key = input('ok?: [y=return, skip=s, redo=r]', 's'); speed
-                %up
-                key = 'donkey kong'
+                key = input('ok?: [y=return, skip=s, redo=r]', 's'); speed
+                up
+                %key = 'donkey kong'
             end
             
             switch key
