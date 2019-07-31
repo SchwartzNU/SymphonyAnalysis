@@ -40,7 +40,7 @@ end
 loadSaveFlag = false;
 numSavedBoxes = 0;
 if any(~isnan(CHAT_pos(:,:,1)), 'all')
-    numSavedBoxes = find(~isnan(CHAT_pos(:,:,1)), 1, 'last');
+    numSavedBoxes = find(~isnan(CHAT_pos(:,:,1))', 1, 'last');
     loadSaveFlag = true;
 end
 %%
