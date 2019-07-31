@@ -6,6 +6,13 @@ CHATsequence_raw = rawImageSequence(CHAT_channel:Nchannels:end,1);
 
 Nframes = length(CHATsequence_raw);
 [pixX, pixY] = size(CHATsequence_raw{1});
+
+if pixX > pixY
+    
+elseif pixY > pixX
+    
+end
+
 resampleFactor = pixX / resampleSquares;
 voxelsX = round(pixX/resampleFactor);
 voxelsY = round(pixY/resampleFactor);
@@ -63,8 +70,7 @@ for i=1:voxelsX
             if loadSaveFlag
                 px1 = CHAT_pos(i,j,1);
             else
-                [px1, ~] = ginput(1); speed up
-%                 px1 = 1
+                [px1, ~] = ginput(1);
             end
             hold(peaksAx, 'on');
             px1 = round(px1);
@@ -77,8 +83,7 @@ for i=1:voxelsX
             if loadSaveFlag
                 px2 = CHAT_pos(i,j,2);
             else
-               [px2, ~] = ginput(1); speed up
-               % px2 = 1
+               [px2, ~] = ginput(1);
             end
             px2 = round(px2);
             if ~isempty(px2)
@@ -90,9 +95,7 @@ for i=1:voxelsX
             if loadSaveFlag
                 key = 'otherwise option';
             else
-                key = input('ok?: [y=return, skip=s, redo=r]', 's'); speed
-                up
-                %key = 'donkey kong'
+                key = input('ok?: [y=return, skip=s, redo=r]', 's');
             end
             
             switch key
@@ -131,21 +134,17 @@ for i=1:voxelsX
     for j=1:voxelsY
         if isnan(CHAT_pos(i,j,1)) || abs(CHAT_pos(i,j,1) - im_med_1(i,j)) > 2*im_std_1(i,j)
             % disp('replacing value')
-            % i
-            % j
             CHAT_pos(i,j,1) = im_med_1(i,j);
         end
         if isnan(CHAT_pos(i,j,2)) || abs(CHAT_pos(i,j,2) - im_med_2(i,j)) > 2*im_std_2(i,j)
             % disp('replacing value')
-            % i
-            % j
             CHAT_pos(i,j,2) = im_med_2(i,j);
         end
     end
 end
 
 %format into x,y,z, values
-[Xvals, Yvals] = meshgrid(resampleFactor * [1:voxelsX] * pixelRes_XY, resampleFactor * [1:voxelsY] * pixelRes_XY);
+[Xvals, Yvals] = meshgrid(resampleFactor * [1:voxelsY] * pixelRes_XY, resampleFactor * [1:voxelsX] * pixelRes_XY);
 X_flat = reshape(Xvals, 1, []);
 Y_flat = reshape(Yvals, 1, []);
 Z_flat_ON = reshape(squeeze(CHAT_pos(:,:,1)), 1, []);
