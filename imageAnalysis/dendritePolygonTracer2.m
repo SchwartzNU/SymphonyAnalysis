@@ -1,5 +1,5 @@
 
-dbFileName = 'dendritePolygonDatabase.mat';
+dbFileName = '~/Google Drive/research/retina/datasets/dendritePolygonDatabase.mat';
 if exist(dbFileName, 'file')
     load(dbFileName)
     fprintf('Loaded %g cells from db\n', size(dendritePolygonDatabase, 1));
@@ -17,6 +17,14 @@ cellName = input(sprintf('cell name: [%s]', cellNameGuess),'s');
 if strcmp(cellName, '')
     cellName = cellNameGuess;
 end
+cellType = input('cell type (FmON 1 FmOFF 2): [2]','s');
+if strcmp(cellType, '')
+    cellType = 2;
+else
+    cellType = str2double(cellType);
+end
+
+cellType
 
 M = imread([pathname, fname]);
 
@@ -40,7 +48,7 @@ dendriticPolygon = cat(2,xpts,ypts); %make polygon of the dendritic tree
 
 drawPolygon(dendriticPolygon(:,1), dendriticPolygon(:,2), 'b', 'LineWidth',2);
 
-dendritePolygonDatabase(cellName,{'soma','polygon','fname'}) = {[x_soma, y_soma], dendriticPolygon, fname};
+dendritePolygonDatabase(cellName,{'soma','polygon','fname','cellType'}) = {[x_soma, y_soma], dendriticPolygon, fname, cellType};
 
 legend('Outline')
 
