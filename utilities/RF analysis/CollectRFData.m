@@ -7,11 +7,8 @@ excel = readtable('C:\Users\david\Google Drive\ReceptiveFieldProject\RFDataMine_
 rowInd = find(~ismissing(excel{:,9}));
 excel = excel(rowInd,[1,7,8,9,10,11]);
 excel = excel(2:end,:);
-excel = excel(find(contains(excel{:,1}, 'A')),:); %restrict to rigA
+%excel = excel(find(contains(excel{:,1}, 'A')),:); %restrict to rigA
 cellNames = excel{:,1};
-
-
-
 
 %% loop through cellData to collect location information
 Locations = [];
@@ -52,7 +49,7 @@ angleMirror = rfData(:,3);
 angleMirror(lInd) = pi - rfData(lInd,3);
 
 %% Save table of data
-varNames = {'cellName','X', 'Y','eye', 'Assymetry_Amplitude','Assymetry_Angle', 'Major_axis', 'Minor_axis', 'X_mirror', 'Angle_mirror'};
-dataTable = table( LocatedCells', Locations(:,1), Locations(:,2), Locations(:,3), amplitude, rfData(:,3), rfData(:,2), rfData(:,1), xMirror, angleMirror, 'VariableNames', varNames);
+varNames = {'cellName', 'cellType', 'X', 'Y', 'eye', 'Assymetry_Amplitude','Assymetry_Angle', 'Major_axis', 'Minor_axis', 'X_mirror', 'Angle_mirror'};
+dataTable = table( LocatedCells', cellTypes', Locations(:,1), Locations(:,2), Locations(:,3), amplitude, rfData(:,3), rfData(:,2), rfData(:,1), xMirror, angleMirror, 'VariableNames', varNames);
 save('RF_dataTable.mat', 'dataTable')
 end

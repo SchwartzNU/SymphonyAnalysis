@@ -1,10 +1,16 @@
-function AnalyzeRF()
+function [cellTypes, avgDeltaAngles] = AnalyzeRF()
 load('RF_dataTable.mat')
+%dataTable = dataTable(find(contains(dataTable.cellType, 'mini on', 'IgnoreCase',true)), :);
 
-plotAngles(dataTable)
-plotEllipses(dataTable)
+
+%plotEllipses(dataTable)
 deltaAngles = calcDeltaAngles(dataTable.X_mirror, dataTable.Y, dataTable.Angle_mirror);
-plotHistogram(dataTable, deltaAngles)
+hiInd = find(dataTable.Assymetry_Amplitude >= 0.5);
+% a = dataTable.cellType(hiInd,:)
+%plotAngles(dataTable(hiInd,:))
+plotAngles(dataTable)
+plotHistogram(dataTable(hiInd,:), deltaAngles(hiInd))
+[cellTypes, avgDeltaAngles, N] = cellTypeAverage(dataTable, deltaAngles);
 end
 
 function plotAngles(dataTable)
@@ -63,8 +69,8 @@ yComponents = dataTable.Assymetry_Amplitude .* sin(dataTable.Assymetry_Angle);
     X(2) = dataTable.X(c) + (xComponents(c)/2 * Gain);
     Y(1) = dataTable.Y(c) - (yComponents(c)/2 * Gain);
     Y(2) = dataTable.Y(c) + (yComponents(c)/2 * Gain);
-%    text(locData(c,1),locData(c,2),locCells(c));
-%    text(locData(c,1),locData(c,2),cellTypes(c));
+%    text(dataTable.X(c),dataTable.Y(c),dataTable.cellName(c));
+%    text(dataTable.X(c),dataTable.Y(c),dataTable.cellType(c));
     h = plot(X,Y,'k');
     set(h , 'LineWidth', 2)
  end 
@@ -121,7 +127,7 @@ plot([0;0],[-2500;2500])
  end 
 end
 function plotHistogram(dataTable, deltaAngles)
-numbins = 9;
+numbins = 6;
 figure(6);
 histogram(deltaAngles, numbins);
 xlabel('|preferred angle - polar angle|')
@@ -138,4 +144,21 @@ end
 figure(7);
 histogram('BinEdges', binEdges, 'BinCounts', weightedBinCounts);
 xlabel('|preferred angle - polar angle| weighted by amplitude')
+
+figure(8)
+scatter(deltaAngles, dataTable.Assymetry_Amplitude)
+xlabel('|preferred angle - polar angle| weighted by amplitude')
+ylabel('Assymetry Index')
+end
+function [cellTypes, avgDeltaAngles, N] = cellTypeAverage(dataTable, deltaAngles)
+cellTypes = unique(dataTable.cellType);
+avgDeltaAngles = zeros(1,length(cellTypes));
+N = zeros(1,length(cellTypes));
+for t = 1:length(cellTypes)
+    typeInd = find(strcmp(dataTable.cellType, cellTypes(t)));
+    avgDeltaAngles(t) = mean(deltaAngles(typeInd));
+    N(t) = length(typeInd);
+end
+typeRF = table(cellTypes, avgDeltaAngles', N','VariableNames', {'CellType', 'deltaAngle', 'n'})
+typeRF = sortrows(typeRF, 3,'descend')
 end
