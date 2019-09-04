@@ -182,9 +182,11 @@ classdef ColorIsoResponseFigure < handle
             obj.plotRange2 = [min([min(obj.pointData(:,2)), obj.contrastRange2(1)]), max([max(obj.pointData(:,2)), obj.contrastRange2(2)])];
         
         
+            disp('before check')
             % fit the pointdata to a simple model
             if size(obj.pointData,1) > 3
-                model = fitlm(obj.pointData(:,1:2), obj.pointData(:,3),'linear','RobustOpts','on');
+                disp('fitting model')
+                model = fitlm(obj.pointData(:,1:2), obj.pointData(:,3),'linear','RobustOpts','off');
                 obj.modelCoefs = horzcat(model.Coefficients.Estimate, model.Coefficients.pValue);
             else
                 obj.modelCoefs = [];
@@ -359,7 +361,7 @@ classdef ColorIsoResponseFigure < handle
 
             % display model output
             if ~isempty(obj.modelCoefs)
-                fprintf('LM fit coefs (P-val log10): UV: %.2g (%.1g) Green: %.2g (%.1g)', obj.modelCoefs(3,1), log10(obj.modelCoefs(3,2)), obj.modelCoefs(2,1), log10(obj.modelCoefs(2,2)));
+                fprintf('LM fit coefs (P-val log10): UV: %.2g (%.1g) Green: %.2g (%.1g)\n', obj.modelCoefs(3,1), log10(obj.modelCoefs(3,2)), obj.modelCoefs(2,1), log10(obj.modelCoefs(2,2)));
                 obj.handles.dataDisplayText.String = sprintf('LM fit coefs (P-val log10): UV: %.2g (%.1g) Green: %.2g (%.1g)', obj.modelCoefs(3,1), log10(obj.modelCoefs(3,2)), obj.modelCoefs(2,1), log10(obj.modelCoefs(2,2)));
             end
         end
