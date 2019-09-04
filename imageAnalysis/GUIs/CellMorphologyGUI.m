@@ -191,7 +191,11 @@ classdef CellMorphologyGUI < handle
         
         function loadCells(obj)
             global SERVER
-            imageRoot_confocal = [SERVER 'Images/Confocal'];
+            if exist([SERVER 'Images/Confocal'], 'file')
+                imageRoot_confocal = [SERVER 'Images/Confocal'];
+            else
+                error('Cannot connect to Images/Confocal folder on Server')
+            end
             
             %loads cells into data table
             D = dir(imageRoot_confocal); %only confocal for now
