@@ -19,7 +19,7 @@ classdef ContrastRespAnalysis < AnalysisTree
             dataSet = cellData.savedDataSets(dataSetName);
             obj = obj.copyAnalysisParams(params);
             obj = obj.copyParamsFromSampleEpoch(cellData, dataSet, ...
-                {'RstarMean', params.ampModeParam, 'spotSize', 'offsetX', 'offsetY'});
+                {'RstarMean', params.ampModeParam, 'spotDiameter', 'spotSize', 'offsetX', 'offsetY'});
             obj = obj.buildCellTree(1, cellData, dataSet, {'contrast'});
         end
         

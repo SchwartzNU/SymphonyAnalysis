@@ -99,9 +99,12 @@ classdef SpotsMultiSizeAnalysis < AnalysisTree
                     tempStruct.spikeCount_ONSET_after200ms_grndBlSubt = curNode.spikeCount_ONSET_after200ms;
                     tempStruct.spikeCount_ONSET_after200ms_grndBlSubt.value = curNode.spikeCount_ONSET_after200ms.value - grandBaselineMean.*0.8; %assumes 1 sec stim interval
                     tempStruct.spikeCount_stimInterval_grndBlSubt = curNode.spikeCount_stimInterval;
-                    tempStruct.spikeCount_stimInterval_grndBlSubt.value = curNode.spikeCount_stimInterval.value - grandBaselineMean; %assumes 1 sec stim interval
-                    tempStruct = getEpochResponseStats(tempStruct);
+                    tempStruct.spikeCount_stimInterval_grndBlSubt.value = curNode.spikeCount_stimInterval.value - grandBaselineMean; %assumes 1 sec stim interval                    
                     
+                    tempStruct.spikeCount_afterStim_grndBlSubt = curNode.spikeCount_afterStim;
+                    tempStruct.spikeCount_afterStim_grndBlSubt.value = curNode.spikeCount_afterStim.value - grandBaselineMean; %assumes 1 sec stim interval                    
+                    
+                    tempStruct = getEpochResponseStats(tempStruct);
                     curNode = mergeIntoNode(curNode, tempStruct);
                     obj = obj.set(leafIDs(i), curNode);
                 end
@@ -142,7 +145,7 @@ classdef SpotsMultiSizeAnalysis < AnalysisTree
             %                     eval(['rootData.',paramName,'_Xmax = Xmax;']);
             %                     eval(['rootData.',paramName,'_YinfOverYmax = YinfOverYmax;']);
             %                     eval(['rootData.',paramName,'_Xwidth = Xwidth;']);
-            %                 end;
+            %                 end;            
             
             %to add more here
             rootData = obj.get(1);
@@ -151,6 +154,11 @@ classdef SpotsMultiSizeAnalysis < AnalysisTree
                 rootData = addWidthScalars(rootData, 'spotSize', {'spikeCount_stimInterval_grndBlSubt'});
                 rootData = addWidthScalars(rootData, 'spotSize',{'spikeCount_stimInterval_grndBlSubt'}, 'fixedVal',1200);
                 rootData = addWidthScalars(rootData, 'spotSize',{'spikeCount_stimInterval_grndBlSubt'}, 'fixedVal',600);
+                
+                rootData = addWidthScalars(rootData, 'spotSize', {'spikeCount_afterStim_grndBlSubt'}, 'maximize', 'spikeCount_afterStim');
+                rootData = addWidthScalars(rootData, 'spotSize',{'spikeCount_afterStim_grndBlSubt'}, 'fixedVal',1200);
+                rootData = addWidthScalars(rootData, 'spotSize',{'spikeCount_afterStim_grndBlSubt'}, 'fixedVal',600);
+                
                 supression1200 = 1-(rootData.spikeCount_stimInterval_grndBlSubt_spotSizeFixed1200/...
                     rootData.spikeCount_stimInterval_grndBlSubt_spotSizeByMax);
                 rootData.spikeCount_stimInterval_grndBlSubt_SMSsupression1200 = supression1200;
@@ -158,9 +166,49 @@ classdef SpotsMultiSizeAnalysis < AnalysisTree
                     rootData.spikeCount_stimInterval_grndBlSubt_spotSizeByMax);
                 rootData.spikeCount_stimInterval_grndBlSubt_SMSsupression600 = supression600;
                 
+                supression1200after = 1-(rootData.spikeCount_afterStim_grndBlSubt_spotSizeFixed1200/...
+                    rootData.spikeCount_afterStim_grndBlSubt_spotSizeByMax);
+                rootData.spikeCount_afterStim_grndBlSubt_SMSsupression1200 = supression1200after;
+                supression600after = 1-(rootData.spikeCount_afterStim_grndBlSubt_spotSizeFixed600/...
+                    rootData.spikeCount_afterStim_grndBlSubt_spotSizeByMax);
+                rootData.spikeCount_afterStim_grndBlSubt_SMSsupression600 = supression600after;
+                      
+                spotSize = rootData.spotSize;
+                ONspikes = rootData.spikeCount_stimInterval.mean_c;
+                OFFspikes = rootData.spikeCount_afterStim.mean_c;
+                [maxON, indON] = max(ONspikes);
+                rootData.maxON = maxON;
+                if indON>0
+                    rootData.maxON_size = spotSize(indON);
+                else
+                    rootData.maxON_size = 0;
+                end
+                [maxOFF, indOFF] = max(OFFspikes);
+                rootData.maxOFF = maxOFF;
+                if indOFF>0
+                    rootData.maxOFF_size = spotSize(indOFF);
+                    rootData.ON_OFF_R_maxOFF = (ONspikes(indOFF) - rootData.maxOFF) / (ONspikes(indOFF) + rootData.maxOFF);
+                else
+                    rootData.maxOFF_size = 0;
+                    rootData.ON_OFF_R_maxOFF = 1;
+                end
+                if indON>0
+                    rootData.ON_OFF_R_maxON = (rootData.maxON - OFFspikes(indON)) / (rootData.maxON + OFFspikes(indON));
+                else
+                    rootData.ON_OFF_R_maxON = -1;
+                end    
+                
+                ON_OFF_ratio_vsSS = (ONspikes - OFFspikes) ./ (ONspikes + OFFspikes);
+                [max_ON_OFF_R, maxON_R_ind] = max(ON_OFF_ratio_vsSS);
+                rootData.maxON_R_size = spotSize(maxON_R_ind);
+                [min_ON_OFF_R, maxOFF_R_ind] = min(ON_OFF_ratio_vsSS);
+                rootData.maxOFF_R_size = spotSize(maxOFF_R_ind);
+                                
+                rootData.max_ON_OFF_R = max_ON_OFF_R;
+                rootData.min_ON_OFF_R = min_ON_OFF_R;
                 %Adam 4/21/17
                 rootData = addSumOfGaussFit(rootData);
-            end;
+            end
             % End Adam 2/25/17
             rootData.byEpochParamList = byEpochParamList;
             rootData.singleValParamList = singleValParamList;

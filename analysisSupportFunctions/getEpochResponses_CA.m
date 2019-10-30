@@ -9,6 +9,8 @@ ip.addParamValue('LowPassFreq', 30, @(x)isnumeric(x)); %Hz
 ip.addParamValue('BinWidth', 10, @(x)isnumeric(x)); %ms
 ip.addParamValue('EndOffset', 0, @(x)isnumeric(x)); %ms
 ip.addParamValue('FitPSTH', 0, @(x)isnumeric(x)); %number of peaks to fit in PSTH
+ip.addParamValue('MB_version', 0, @(x)isnumeric(x)); %version of MB code (for timing of leading and trailing responses)
+
 
 ip.parse(varargin{:});
 
@@ -367,6 +369,14 @@ for i=1:L
         outputStruct.ONSET_FRmax.type = 'singleValue';
         outputStruct.ONSET_FRmax.value = NaN;
         
+        outputStruct.afterStim_FRmax.units = 'Hz';
+        outputStruct.afterStim_FRmax.type = 'singleValue';
+        outputStruct.afterStim_FRmax.value = NaN;
+        
+        outputStruct.afterStim_FRmaxLatency.units = 's';
+        outputStruct.afterStim_FRmaxLatency.type = 'singleValue';
+        outputStruct.afterStim_FRmaxLatency.value = NaN;
+        
         outputStruct.ONSET_FRrange.units = 'Hz';
         outputStruct.ONSET_FRrange.type = 'singleValue';
         outputStruct.ONSET_FRrange.value = NaN;
@@ -557,7 +567,11 @@ for i=1:L
     tailSpikeCount = sum(spikeTimes >= intervalEnd + 0.1 & spikeTimes < intervalEnd+tailTime);
     
     % moving bar leading and trailing edges (approximately at this point)
-    centerTime = (intervalEnd - intervalStart)/2 + .2;
+    if isnan(ip.Results.MB_version)
+        centerTime = (intervalEnd - intervalStart)/2  + .25;
+    else
+        centerTime = (intervalEnd - intervalStart)/2  - .0;
+    end
     outputStruct.spikeCount_mbLeading.value(i) = sum(spikeTimes >= intervalStart & spikeTimes < centerTime);
     outputStruct.spikeCount_mbTrailing.value(i) = sum(spikeTimes >= centerTime & spikeTimes < intervalEnd);
     
@@ -834,6 +848,15 @@ if ONSETresponseEndTime_max > ONSETresponseStartTime_min
     end
     
 end
+
+xvals_after = xvals(xvals > intervalEnd);
+psth_after = psth(xvals > intervalEnd);
+[outputStruct.afterStim_FRmax.value, maxLoc] = max(psth_after);
+if ~isempty(maxLoc)
+   maxLoc = maxLoc(1);
+   outputStruct.afterStim_FRmaxLatency.value = xvals_after(maxLoc) - intervalEnd;
+end
+
 %OFFSET
 if OFFSETresponseEndTime_max > OFFSETresponseStartTime_min
     xvals_offset = xvals(xvals >= OFFSETresponseStartTime_min & xvals < OFFSETresponseEndTime_max);

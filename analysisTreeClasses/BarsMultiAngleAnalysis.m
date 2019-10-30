@@ -105,6 +105,27 @@ classdef BarsMultiAngleAnalysis < AnalysisTree
             rootData.collectedParamList = collectedParamList;
             obj = obj.set(1, rootData);
             
+            if strcmp(rootData.(rootData.ampModeParam), 'Cell attached')                      
+                [prefResp, prefRespInd] = max(rootData.spikeCount_stimInterval.mean);
+                allResp = rootData.spikeCount_stimInterval.mean;
+                numAngles = length(rootData.spikeCount_stimInterval.mean);
+                indToAdd = round(numAngles/2);
+                nullInd = rem(prefRespInd + indToAdd, numAngles) + 1;
+                nullResp = allResp(nullInd);
+                minResp = min(allResp);
+                
+                rootData.prefResp_spikes = prefResp;
+                rootData.nullResp_spikes = nullResp;
+                rootData.minResp_spikes = minResp;
+                
+                if isnan(nullResp)
+                    rootData.dumbOSI = NaN;
+                else
+                    rootData.dumbOSI = (prefResp - nullResp) ./ (prefResp + nullResp);
+                end
+                obj = obj.set(1, rootData);
+            end
+
             % Fitting FB curves to 2 cosine waves - David 3-3-17
             rootData = obj.get(1);
             rootData = AddCosFit(rootData);

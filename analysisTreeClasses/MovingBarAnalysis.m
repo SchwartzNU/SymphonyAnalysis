@@ -22,7 +22,7 @@ classdef MovingBarAnalysis < AnalysisTree
             dataSet = cellData.savedDataSets(dataSetName);
             obj = obj.copyAnalysisParams(params);
             obj = obj.copyParamsFromSampleEpoch(cellData, dataSet, ...
-                {'RstarMean', 'RstarIntensity', params.ampModeParam, params.holdSignalParam, 'intensity', 'barLength', 'barWidth', 'distance', 'barSpeed', 'offsetX', 'offsetY'});
+                {'version','RstarMean', 'RstarIntensity', params.ampModeParam, params.holdSignalParam, 'intensity', 'barLength', 'barWidth', 'distance', 'barSpeed', 'offsetX', 'offsetY'});
             obj = obj.buildCellTree(1, cellData, dataSet, {'barAngle'});
         end
         
@@ -35,7 +35,7 @@ classdef MovingBarAnalysis < AnalysisTree
                 if strcmp(rootData.(rootData.ampModeParam), 'Cell attached')
                     outputStruct = getEpochResponses_CA(cellData, curNode.epochID, ...
                         'DeviceName', rootData.deviceName,'StartTime', obj.StartTime, 'EndTime', obj.EndTime, ...
-                        'BaselineTime', 250);
+                        'BaselineTime', 250, 'MB_version', rootData.version);
                         %'FitPSTH', 2); %fit 2 peaks in PSTH
                     outputStruct = getEpochResponseStats(outputStruct);
                     curNode = mergeIntoNode(curNode, outputStruct);
@@ -86,9 +86,56 @@ classdef MovingBarAnalysis < AnalysisTree
             obj = obj.percolateUp(leafIDs, singleValParamList, singleValParamList);
             obj = obj.percolateUp(leafIDs, collectedParamList, collectedParamList);
             
-            %DSI, OSI, DSang, OSang
+            %DSI, OSI, DSang, OSang, and other stuff
             rootData = obj.get(1);
             rootData = addDSIandOSI(rootData, 'barAngle');
+            
+            if strcmp(rootData.(rootData.ampModeParam), 'Cell attached')
+                leadingTrailingIndex = (rootData.spikeCount_mbLeading.mean_c - rootData.spikeCount_mbTrailing.mean_c) ...
+                    ./ (rootData.spikeCount_mbLeading.mean_c + rootData.spikeCount_mbTrailing.mean_c);
+                
+                rootData.leadingTrailingIndex_range = range(leadingTrailingIndex);
+                rootData.leadingTrailingIndex_mean = nanmean(leadingTrailingIndex);
+                [rootData.leadingTrailingIndex_max, maxInd] = max(leadingTrailingIndex);
+                rootData.leadingTrailingIndex_min = min(leadingTrailingIndex);
+                
+                rootData.spikesAtPrefLeading = rootData.spikeCount_mbLeading.mean_c(maxInd);
+                leadingTrailingAngleDiff = abs(rootData.spikeCount_mbLeading_DSang -  rootData.spikeCount_mbTrailing_DSang);
+                rootData.leadingTrailingAngleDiff = rem(leadingTrailingAngleDiff, 180);
+                
+                [prefResp, prefRespInd] = max(rootData.spikeCount_stimToEnd.mean);
+                numAngles = length(rootData.spikeCount_stimToEnd.mean);
+                
+                %this monstrosity is jillian's fault. There have to be
+                %functions to wrap tables.
+                if floor(numAngles/2) == numAngles/2
+                    if(prefRespInd>(numAngles/2))
+                        nullResp = (rootData.spikeCount_stimToEnd.mean(prefRespInd-(numAngles/2)));
+                    else
+                        nullResp = (rootData.spikeCount_stimToEnd.mean(prefRespInd+(numAngles/2)));
+                    end
+                else
+                    if prefRespInd>ceil(numAngles/2)
+                        nullResp = (rootData.spikeCount_stimToEnd.mean(prefRespInd-floor(numAngles/2))+...
+                            rootData.spikeCount_stimToEnd.mean(prefRespInd-ceil(numAngles/2)))/2;
+                    elseif(prefRespInd<floor(numAngles/2))
+                        nullResp = (rootData.spikeCount_stimToEnd.mean(prefRespInd+floor(numAngles/2))+...
+                            rootData.spikeCount_stimToEnd.mean(prefRespInd+ceil(numAngles/2)))/2;
+                    elseif(numAngles>2) %make sure there are enough angles to calculate
+                        nullResp = (rootData.spikeCount_stimToEnd.mean(1)+...
+                            rootData.spikeCount_stimToEnd.mean(numAngles))/2;
+                    else
+                        nullResp = NaN; %if there aren't enough angles to calculate
+                    end
+                end
+                
+                if isnan(nullResp)
+                    rootData.dumbDSI = NaN;
+                else
+                    rootData.dumbDSI = (prefResp - nullResp) ./ (prefResp + nullResp);
+                end
+            end
+            
             rootData.stimParameterList = {'barAngle'};
             rootData.byEpochParamList = byEpochParamList;
             rootData.singleValParamList = singleValParamList;

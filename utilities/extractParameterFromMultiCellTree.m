@@ -37,7 +37,7 @@ for i=1:L
             curNode = sT.get(leafNodes(j));
             sVal(j) = curNode.splitValue;            
         end
-        diffVals = abs(sVal-splitVal);
+        %diffVals = abs(sVal-splitVal);
         [~, bestMatchInd] = min(diffVals);
         curNode = sT.get(leafNodes(bestMatchInd));
         paramVec(i) = curNode.(paramName);        
