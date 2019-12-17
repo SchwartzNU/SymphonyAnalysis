@@ -90,7 +90,7 @@ classdef CellMorphologyGUI < handle
                 'ColumnName', {'Cell name', 'Type', 'Type doubt' 'Traced', 'ChAT surface', 'Analyzed', 'Notes'}, ...
                 'ColumnFormat', {'char', 'char', 'logical' 'logical', 'logical', 'logical', 'char'}, ...
                 'RowName', {}, ...
-                'ColumnEditable', logical([0 0 0 0 0 0 1]), ...
+                'ColumnEditable', logical([0 0 0 1 1 0 1]), ...
                 'CellSelectionCallback', @(uiobj, evt)obj.cellSelection(evt), ...
                 'CellEditCallback', @(uiobj, evt)obj.cellNotesEdit(evt), ...
                 'Data', cell(50,5)); %will fill this
@@ -203,7 +203,7 @@ classdef CellMorphologyGUI < handle
                 if ~isempty(str2num(curName(1))) %#ok<ST2NM> %numeric so it is a cell name
                     tableData{z, 1} = curName;
                     cellData = loadAndSyncCellData(curName);
-                    if ~isempty(cellData); %has cellData
+                    if ~isempty(cellData) %has cellData
                         tableData{z, 2} = cellData.cellType;
                         if cellData.tags.isKey('CelltypeDoubt')
                             if cellData.tags('CelltypeDoubt') > 0
@@ -444,12 +444,13 @@ classdef CellMorphologyGUI < handle
         function runAnalyzer(obj)
             global SERVER
             imageRoot_confocal = [SERVER 'Images/Confocal'];
+            
             tableData = obj.handles.cellsTable.get('Data');
             cellNames = tableData(obj.selectedRows, 1);
             
             for i=1:length(cellNames)
-                curName = cellNames{i};
-                disp(['Analyzing cell ' curName]);
+                curName = cellNames{i};                
+                disp(['Analyzing cell ' curName]);                
                 if tableData{obj.selectedRows(i), 4} %if traced
                     curDir = [imageRoot_confocal '/' curName '/'];
                     trace_fname = [curName '.swc'];
