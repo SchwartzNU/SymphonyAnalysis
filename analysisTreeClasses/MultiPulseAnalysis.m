@@ -57,6 +57,7 @@ classdef MultiPulseAnalysis < AnalysisTree
                 curNode = obj.get(leafIDs(i)); %get current leaf node
                 
                 if strcmp(obj.Node{1}.wholeCellRecordingMode_Ch1, 'Vclamp')
+                    continue
                     %run your epoch analyses on this leaf node
                     outputStruct = getEpochResponses_WC_ActionCurrents(cellData, curNode.epochID, ...
                         'DeviceName', rootData.deviceName); 
@@ -110,7 +111,8 @@ classdef MultiPulseAnalysis < AnalysisTree
             rootData.byEpochParamList = byEpochParamList;
             rootData.singleValParamList = singleValParamList;
             rootData.collectedParamList = collectedParamList;
-            rootData.stimParameterList = {'pulseAmplitude'};
+            rootData.stimParameterList = {'pulseAmplitude', ...
+                'Vm_preTime', 'Vm_stim1Time', 'Vm_stim2Time'};
             
             %copy your changes back into the analysisTree
             obj = obj.set(1, rootData);
@@ -178,52 +180,34 @@ classdef MultiPulseAnalysis < AnalysisTree
             ylabel('Spike Count')
         end
         
-        function plot_currPulsevStim1FirstSpikeAmp(node, cellData)
-            rootData = node.get(1);            
-            chInd = node.getchildren(1);
-            L = length(chInd);
-            ax = gca;
-            
-            xvals = ones(1, L)*NaN;
-            yvals = ones(1, L)*NaN;
-            errs = ones(1, L)*NaN;
-            for i=1:L
-                chData = node.get(chInd(i));
-                if strcmp(rootData.stepByStim, 'Stim 1')
-                    xvals(i) = chData.s1_steps.value;
-                elseif strcmp(rootData.stepByStim, 'Stim 2')
-                    xvals(i) = chData.s2_steps.value;
-                end
-                yvals(i) = chData.s1_inwardPeak.mean;
-                errs(i) = chData.s1_inwardPeak.SEM;              
+        function plot_Vm_stim1TimeVss1_spikeCount(node, cellData)
+            rootData = node.get(1);
+            xvals = rootData.Vm_stim1Time.value;
+            yField = rootData.s1_spikeCount;
+            if strcmp(yField.units, 's')
+            yvals = yField.median_c;
+            else
+            yvals = yField.mean_c;
             end
+            errs = yField.SEM;
             errorbar(xvals, yvals, errs);
-            xlabel(['Step By Stim:' rootData.stepByStim])
-            ylabel('Spike Amplitude')
+            xlabel('Vm_stim1Time');
+            ylabel(['s1_spikeCount (' yField.units ')']);
         end
         
-        function plot_currPulsevStim2FirstSpikeAmp(node, cellData)
-            rootData = node.get(1);            
-            chInd = node.getchildren(1);
-            L = length(chInd);
-            ax = gca;
-            
-            xvals = ones(1, L)*NaN;
-            yvals = ones(1, L)*NaN;
-            errs = ones(1, L)*NaN;
-            for i=1:L
-                chData = node.get(chInd(i));
-                if strcmp(rootData.stepByStim, 'Stim 1')
-                    xvals(i) = chData.s1_steps.value;
-                elseif strcmp(rootData.stepByStim, 'Stim 2')
-                    xvals(i) = chData.s2_steps.value;
-                end
-                yvals(i) = chData.s2_inwardPeak.mean;
-                errs(i) = chData.s2_inwardPeak.SEM;              
+        function plot_Vm_stim2TimeVss2_spikeCount(node, cellData)
+            rootData = node.get(1);
+            xvals = rootData.Vm_stim2Time.value;
+            yField = rootData.s2_spikeCount;
+            if strcmp(yField.units, 's')
+            yvals = yField.median_c;
+            else
+            yvals = yField.mean_c;
             end
+            errs = yField.SEM;
             errorbar(xvals, yvals, errs);
-            xlabel(['Step By Stim:' rootData.stepByStim])
-            ylabel('Spike Amplitude')
+            xlabel('Vm_stim2Time');
+            ylabel(['s2_spikeCount (' yField.units ')']);
         end
         
         

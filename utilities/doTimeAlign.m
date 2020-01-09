@@ -1,5 +1,4 @@
-%function [ C, P, T, AHP, FWHM, initSlope ] = doTimeAlign( voltages, spikeTimes, sampR, len, clamp, f )
-function [ C, P, T, AHP, FWHM, initSlope, preSlope, threshSlope ] = doTimeAlign( voltages, spikeTimes, sampR, len, clamp, f )
+function [ C, P, T, AHP, FWHM, initSlope, preSlope, threshSlope, maxSlope ] = doTimeAlign( voltages, spikeTimes, sampR, len, clamp, f )
 % This function calculates parameters of a spike
 %   INPUT: voltages from an epoch, approximate spike times, desired length (must be odd),
 %   and if you want figures displayed.
@@ -33,9 +32,10 @@ FWHM = nan(N, 1); % full width at half max in ms
 initSlope = nan(N, 1); % slope between the threshold and halfMax (mV/ms)
 preSlope = nan(N, 1); % slope before the threshold (mV/ms)
 threshSlope = nan(N, 1); % slope at the threshold (mV/ms)
+maxSlope = nan(N, 1); % max slope of dVdt (mV/ms)
 for i = 1:N
     st = spikeTimes(i);
-    if st <= 15 || st >= L-75 % can't calculate threshold
+    if st <= 15 || st >= L-100 % can't calculate threshold
         continue
     end
     if strcmp(clamp, 'CC') || strcmp(clamp, 'IC')
@@ -83,7 +83,8 @@ for i = 1:N
         ddVdt = diff(dVdt(1+third:end-third));
         thresholdInd = max(find((ddVdt > mean(ddVdt)+5*var(ddVdt)), 1) - 3, 1);
         thresholdInd = thresholdInd+third;
-    elseif isempty(thresholdInd) && (strcmp(clamp, 'CC') || strcmp(clamp, 'IC'))
+    end
+    if isempty(thresholdInd) && (strcmp(clamp, 'CC') || strcmp(clamp, 'IC'))
         thresholdInd = max(find((ddVdt > mean(ddVdt)+var(ddVdt)), 1) - 3, 1);
     elseif isempty(thresholdInd) && strcmp(clamp, 'VC')
         thresholdInd = max(find((ddVdt > mean(ddVdt)+std(ddVdt)), 1) - 3, 1);
@@ -172,6 +173,7 @@ for i = 1:N
             preSlope(i, 1) = NaN;
             threshSlope(i, 1) = NaN;
         end
+        maxSlope(i, 1) = max(dVdt)/(1/factor);
     end
     
 end

@@ -58,6 +58,7 @@ stim1baselineVal = zeros(1,L); %steady state at the end of stim1
 stim2baselineVal = zeros(1,L); %steady state at the end of stim2
 
 R = ones(1, L)*NaN;
+Vm = ones(3, L)*NaN;
 for i=1:L %loops over epochs
     curEpoch = cellData.epochs(epochInd(i));
     %get data
@@ -116,6 +117,18 @@ for i=1:L %loops over epochs
         outputStruct.s2_spikeCount.type = 'byEpoch';
         outputStruct.s2_spikeCount.value = ones(1,L) * NaN;
         
+        % Vm stuff added 6/18/2019
+        outputStruct.Vm_preTime.units = units;
+        outputStruct.Vm_preTime.type = 'combinedAcrossEpochs';
+        outputStruct.Vm_preTime.value = NaN;
+        
+        outputStruct.Vm_stim1Time.units = units;
+        outputStruct.Vm_stim1Time.type = 'combinedAcrossEpochs';
+        outputStruct.Vm_stim1Time.value = NaN;
+        
+        outputStruct.Vm_stim2Time.units = units;
+        outputStruct.Vm_stim2Time.type = 'combinedAcrossEpochs';
+        outputStruct.Vm_stim2Time.value = NaN;
     end
     
     % added from Sophia MP getEpochResponsese
@@ -132,10 +145,15 @@ for i=1:L %loops over epochs
     % calculate resistance 
     d_filt = movmedian(data, 101*sampleRate/10000);
     preBase = mean(d_filt(baselineInterval));
-    stimBase = mean(d_filt(xvals > stim1Start+0.1 & xvals < stim2Start));
+    stim1Base = mean(d_filt(xvals > stim1Start+0.1 & xvals < stim2Start));
+    stim2Base = mean(d_filt(xvals > stim2Start+0.1 & xvals < stim2End));
     if step1 ~= 0
-        R(i) = ((stimBase - preBase)/step1)*(1E3);
+        R(i) = ((stim1Base - preBase)/step1)*(1E3);
     end
+    Vm(1, i) = preBase;
+    Vm(2, i) = stim1Base;
+    Vm(3, i) = stim2Base;
+    
     
 end %end of epoch loop. The stuff after this is computed on the averages instead
 
@@ -145,6 +163,11 @@ outputStruct.s1baselineData.value = mean(s1baselineData);
 
 outputStruct.resistance.value = nanmean(R);
 outputStruct.resistanceSD.value = nanstd(R);
+
+% voltage
+outputStruct.Vm_preTime.value = nanmean(Vm(1, :));
+outputStruct.Vm_stim1Time.value = nanmean(Vm(2, :));
+outputStruct.Vm_stim2Time.value = nanmean(Vm(3, :));
 
 % collect all of the steps
 outputStruct.s1_steps.value = unique(outputStruct.s1_steps.value);
