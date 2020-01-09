@@ -106,7 +106,7 @@ classdef LabDataGUI < handle
         function buildUIComponents(obj)
             bounds = screenBounds;
             obj.fig = figure( ...
-                'Name',         ['LabDataGUI: ' obj.projFolder], ...
+                'Name',         ['LabDataGUI: ' obj.projName], ...
                 'NumberTitle',  'off', ...
                 'ToolBar',      'none',...
                 'Menubar',      'none', ...
@@ -665,7 +665,7 @@ classdef LabDataGUI < handle
                 tempTree = obj.labData.collectCells(obj.curCellName);
                 TreeBrowserGUI(tempTree);
             end
-            set(obj.fig, 'Name', ['LabDataGUI: ' obj.cellData_folder]);
+            set(obj.fig, 'Name', ['LabDataGUI: ' obj.projName]);
         end
         
         function analyzeAndBrowseCellType(obj)
@@ -683,7 +683,7 @@ classdef LabDataGUI < handle
                     tempTree = obj.labData.collectCells(obj.labData.getCellsOfType(obj.curCellType));
                     TreeBrowserGUI(tempTree);
                 end
-                set(obj.fig, 'Name', ['LabDataGUI: ' obj.cellData_folder]);
+                set(obj.fig, 'Name', ['LabDataGUI: ' obj.projName]);
             elseif get(node, 'Depth') == 0 %individual cell
                 obj.analyzeAndBrowseCell();
             end

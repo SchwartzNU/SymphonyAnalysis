@@ -27,8 +27,9 @@ if exist(CHATsurfName, 'file')
    load(CHATsurfName);
 else
     resampleSquares = 16;
-    [X_flat, Y_flat, Z_flat_ON, Z_flat_OFF] = CHAT_analyzer(image_fname, Nchannels, CHAT_channel, resampleSquares, voxelRes_XY);
+    [X_flat, Y_flat, Z_flat_ON, Z_flat_OFF, CHATprogressName] = CHAT_analyzer(image_fname, Nchannels, CHAT_channel, resampleSquares, voxelRes_XY, filepath, basename);
     save(CHATsurfName, 'X_flat', 'Y_flat', 'Z_flat_ON', 'Z_flat_OFF');
+    delete(CHATprogressName)
 end
 
 %fix mixed up X-Y dimensions

@@ -90,7 +90,7 @@ classdef CellMorphologyGUI < handle
                 'ColumnName', {'Cell name', 'Type', 'Type doubt' 'Traced', 'ChAT surface', 'Analyzed', 'Notes'}, ...
                 'ColumnFormat', {'char', 'char', 'logical' 'logical', 'logical', 'logical', 'char'}, ...
                 'RowName', {}, ...
-                'ColumnEditable', logical([0 0 0 0 0 0 1]), ...
+                'ColumnEditable', logical([0 0 0 1 1 0 1]), ...
                 'CellSelectionCallback', @(uiobj, evt)obj.cellSelection(evt), ...
                 'CellEditCallback', @(uiobj, evt)obj.cellNotesEdit(evt), ...
                 'Data', cell(50,5)); %will fill this
@@ -191,7 +191,11 @@ classdef CellMorphologyGUI < handle
         
         function loadCells(obj)
             global SERVER
-            imageRoot_confocal = [SERVER 'Images/Confocal'];
+            if exist([SERVER 'Images/Confocal'], 'file')
+                imageRoot_confocal = [SERVER 'Images/Confocal'];
+            else
+                error('Cannot connect to Images/Confocal folder on Server')
+            end
             
             %loads cells into data table
             D = dir(imageRoot_confocal); %only confocal for now
@@ -203,7 +207,7 @@ classdef CellMorphologyGUI < handle
                 if ~isempty(str2num(curName(1))) %#ok<ST2NM> %numeric so it is a cell name
                     tableData{z, 1} = curName;
                     cellData = loadAndSyncCellData(curName);
-                    if ~isempty(cellData); %has cellData
+                    if ~isempty(cellData) %has cellData
                         tableData{z, 2} = cellData.cellType;
                         if cellData.tags.isKey('CelltypeDoubt')
                             if cellData.tags('CelltypeDoubt') > 0
@@ -444,17 +448,26 @@ classdef CellMorphologyGUI < handle
         function runAnalyzer(obj)
             global SERVER
             imageRoot_confocal = [SERVER 'Images/Confocal'];
+            
             tableData = obj.handles.cellsTable.get('Data');
             cellNames = tableData(obj.selectedRows, 1);
             
             for i=1:length(cellNames)
-                curName = cellNames{i};
-                disp(['Analyzing cell ' curName]);
+                curName = cellNames{i};                
+                disp(['Analyzing cell ' curName]);                
                 if tableData{obj.selectedRows(i), 4} %if traced
-                    trace_fname = [curName '.swc'];
-                    image_fname = [curName '.nd2'];
-                    morphology_fname = [curName '_morphologyData.mat'];
                     curDir = [imageRoot_confocal '/' curName '/'];
+                    trace_fname = [curName '.swc'];
+                    
+                    if exist([curDir curName '.tif'], 'file')
+                        image_fname = [curName '.tif'];
+                    elseif exist([curDir curName '.nd2'], 'file')
+                        image_fname = [curName '.nd2'];
+                    else
+                        fprintf('No .tif or .nd2 images found for %s on the server (%s) \n', curName, curDir)
+                    end
+                    morphology_fname = [curName '_morphologyData.mat'];
+                    
                     %try
                         outputStruct = rgcAnalyzer([curDir trace_fname] ,[curDir image_fname]);
                         save([curDir morphology_fname], 'outputStruct');

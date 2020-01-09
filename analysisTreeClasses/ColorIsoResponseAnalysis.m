@@ -19,7 +19,7 @@ classdef ColorIsoResponseAnalysis < AnalysisTree
             dataSet = cellData.savedDataSets(dataSetName);
             obj = obj.copyAnalysisParams(params);
             obj = obj.copyParamsFromSampleEpoch(cellData, dataSet, ...
-                {'RstarMean', params.ampModeParam, 'epochNum'});
+                {'spotDiameter', 'annulusMode', 'NDF', 'RstarMean', params.ampModeParam, 'epochNum'});
             obj = obj.buildCellTree(1, cellData, dataSet, {'sessionId', 'epochNum'});
         end
         
@@ -42,29 +42,36 @@ classdef ColorIsoResponseAnalysis < AnalysisTree
                     
                     epoch = cellData.epochs(curEpochNode.epochID);
                     e.parameters = epoch.attributes;
-%                     e.parameters('baseIntensity1') = epoch.get('baseIntensity1');
-%                     e.parameters('baseIntensity2') = epoch.get('baseIntensity2');
-%                     e.parameters('colorPattern1') = epoch.get('colorPattern1');
-%                     e.parameters('colorPattern2') = epoch.get('colorPattern2');
-%                     e.parameters('contrast1') = epoch.get('contrast1');
-%                     e.parameters('contrast2') = epoch.get('contrast2');
-%                     if is
+                    %                     e.parameters('baseIntensity1') = epoch.get('baseIntensity1');
+                    %                     e.parameters('baseIntensity2') = epoch.get('baseIntensity2');
+                    %                     e.parameters('colorPattern1') = epoch.get('colorPattern1');
+                    %                     e.parameters('colorPattern2') = epoch.get('colorPattern2');
+                    %                     e.parameters('contrast1') = epoch.get('contrast1');
+                    %                     e.parameters('contrast2') = epoch.get('contrast2');
+                    %                     if is
                     e.ignore = false;
-               
+                    
                     
                     %if strcmp(rootData.(rootData.ampModeParam), 'Cell attached')
-                        outputStruct = getEpochResponses_CA(cellData, curEpochNode.epochID, ...
-                            'DeviceName', rootData.deviceName);
-                        outputStruct = getEpochResponseStats(outputStruct);
-                        curEpochNode = mergeIntoNode(curEpochNode, outputStruct);
+                    outputStruct = getEpochResponses_CA(cellData, curEpochNode.epochID, ...
+                        'DeviceName', rootData.deviceName);
+                    outputStruct = getEpochResponseStats(outputStruct);
+                    curEpochNode = mergeIntoNode(curEpochNode, outputStruct);
+                    if strcmp(rootData.(rootData.ampModeParam), 'Whole cell')
+                        outputStruct_WC = getEpochResponses_WC(cellData, curEpochNode.epochID, ...
+                            'DeviceName', rootData.deviceName, 'LowPassFreq', 50);
+                        outputStruct_WC = getEpochResponseStats(outputStruct_WC);
+                        curEpochNode = mergeIntoNode(curEpochNode, outputStruct_WC);
+                    end
+                        
                     %end
-%                     else %whole cell
-%                         outputStruct = getEpochResponses_WC(cellData, curEpochNode.epochID, ...
-%                             'DeviceName', rootData.deviceName);
-%                         outputStruct = getEpochResponseStats(outputStruct);
-%                         curEpochNode = mergeIntoNode(curEpochNode, outputStruct);
-%                     end
-
+                    %                     else %whole cell
+                    %                         outputStruct = getEpochResponses_WC(cellData, curEpochNode.epochID, ...
+                    %                             'DeviceName', rootData.deviceName);
+                    %                         outputStruct = getEpochResponseStats(outputStruct);
+                    %                         curEpochNode = mergeIntoNode(curEpochNode, outputStruct);
+                    %                     end
+                    
                     e.signal = epoch.getData('Amplifier_Ch1');
                     e.t = (1:numel(e.signal)) / 10000;
                     e.spikeFrames = epoch.getSpikes(rootData.deviceName);
@@ -144,7 +151,7 @@ classdef ColorIsoResponseAnalysis < AnalysisTree
             if sampleEpoch.parameters('ampHoldSignal') == 0
                 var = 'spikeCount_stimInterval_mean';
             else
-                var = 'stimInterval_charge_mean';
+                var = 'ONSET_avgTracePeak_value';
             end
             
             gui = ColorIsoResponseFigure('baseIntensity1', baseIntensity1, 'baseIntensity2', baseIntensity2, ...
@@ -170,8 +177,8 @@ classdef ColorIsoResponseAnalysis < AnalysisTree
             colorPattern1 = sampleEpoch.parameters('colorPattern1');
             colorPattern2 = sampleEpoch.parameters('colorPattern2');
             
-%             modelCoefs = sessionNode.modelCoefs;
-%             modelCoefs_pValues = sessionNode.modelCoefs_pValues;
+            %             modelCoefs = sessionNode.modelCoefs;
+            %             modelCoefs_pValues = sessionNode.modelCoefs_pValues;
             
             [pointData, interpolant] = ColorIsoResponseAnalysis.analyzeData(epochData, variable);
             ax = gca();
@@ -219,7 +226,7 @@ classdef ColorIsoResponseAnalysis < AnalysisTree
             xlim(ax, plotRange1 + [-.1, .1]);
             ylim(ax, plotRange2 + [-.1, .1]);
             % %             set(ax,'LooseInset',get(ax,'TightInset'))
-%             title(sprintf('LM fit coefs (P-val log10): UV: %.2g (%.1g) Green: %.2g (%.1g)', modelCoefs(3), log10(modelCoefs_pValues(3)), modelCoefs(2), log10(modelCoefs_pValues(2))), 'FontSize',14);
+            %             title(sprintf('LM fit coefs (P-val log10): UV: %.2g (%.1g) Green: %.2g (%.1g)', modelCoefs(3), log10(modelCoefs_pValues(3)), modelCoefs(2), log10(modelCoefs_pValues(2))), 'FontSize',14);
             hold(ax, 'off');
             
             
@@ -252,7 +259,7 @@ classdef ColorIsoResponseAnalysis < AnalysisTree
             
             ax = gca();
             cla(ax)
-           
+            
             
             % get all contrasts to figure out the fixed value
             allRampEpochs = [];

@@ -4,7 +4,7 @@ L = length(x);
 y = zeros(L,1);
 
 for i=1:L
-   temp = strmatch(sanesGeneNames{x(i)}, geneNames);
+   temp = strmatch(sanesGeneNames{x(i)}, geneNames, 'exact');
    if ~isempty(temp)
        y(i) = temp;
    end

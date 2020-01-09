@@ -1,19 +1,46 @@
 %% load txt file
-[cellIDs, eyeVec, xPos, yPos, cellTypes, geneNames, geneCounts, D] = readGenomicsData('RNASeq_ExprMatrix_181113', 1000);
+[cellIDs, eyeVec, xPos, yPos, cellTypes, geneNames, geneCounts, D] = readGenomicsData('RNASeq_ExprMatrix_190614.txt', 1000);
 save('dataSet_11_2018_thres1000gene_209cells');
 
 %% load data
 
-load('dataSet_11_2018_thres1000gene_209cells');
+load('dataSet_06_2019_thres1000gene_247cells');
+%load('SchwartzSanesConcatenation')
 %variables:
-% D
-% geneNames
-% eyeVec
-% cellTypes
-% cellIDs
-% xPos
-% yPos
-% geneCounts
+%% concatenated data
+D = 10.^int_D;
+D(D<10) = 0;
+geneNames = int_geneNames;
+eyeVec = [G_eyeVec S_eyeVec];
+cellTypes = int_cellTypes;
+cellIDs = [G_cellIDs S_cellIDs];
+xPos = int_xPos;
+yPos = int_yPos;
+geneCounts = int_geneCounts;
+
+%% SmartSeq data
+
+D = 10.^S_D;
+geneNames = S_geneNames;
+eyeVec = S_eyeVec;
+cellTypes = S_cellTypes;
+cellIDs = S_cellIDs;
+xPos = S_xPos;
+yPos = S_yPos;
+geneCounts = S_geneCounts;
+
+%% Jillian method data
+
+D = G_D;
+D_filter = F_D_filter;
+geneNames = G_geneNames;
+eyeVec = G_eyeVec;
+cellTypes = G_cellTypes;
+cellIDs = G_cellIDs;
+xPos = G_xPos;
+yPos = G_yPos;
+geneCounts = G_geneCounts;
+
 
 %% load full Sanes data set 
 load('SanesData/sanesGeneNames');
@@ -106,27 +133,29 @@ cellTypes = cellTypes(cellSortIndex);
 xPos = xPos(cellSortIndex);
 yPos = yPos(cellSortIndex);
 geneCounts = geneCounts(cellSortIndex);
+cellIDS = cellIDs(cellSortIndex);
 
 if exist('score', 'var'), score = score(cellSortIndex, :); end
 
 %% load Sanes label data
 
-fid = fopen('SanesData/adultRGC_CellIDs.txt');
+fid = fopen('SanesData/rgc10x_labels.txt');
 temp = textscan(fid, '%s', 'Delimiter', ' ');
 temp = temp{1};
 [~,labels] = strtok(temp);
+labels = deblank(labels);
 L = length(labels);
 labelIDs = zeros(L,1);
 labelNames = cell(L,1);
 for i=1:length(labels)
     [a, b]  = strtok(labels{i}, '_');
-    if strcmp(a(end), 'N')
-        labelIDs(i) = str2double(a(2:end-1));
-        labelNames{i} = [a(2:end-1) '_' b(2:end)];
-    else
+%     if strcmp(a(end), 'N')
+%         labelIDs(i) = str2double(a(2:end-1));
+%         labelNames{i} = [a(2:end-1) '_' b(2:end)];
+%     else
         labelIDs(i) = str2double(a(2:end));
         labelNames{i} = [a(2:end) '_' b(2:end)];
-    end
+%     end
 end
 
 [unique_labelIDs, ind] = unique(labelIDs);
@@ -144,10 +173,10 @@ unique_names = unique(labelNames, 'rows');
 
 %% optimization loop for geneN_target
 
-doSanesMatch = true;
+doSanesMatch = false;
 
+%geneN_target_vec = [10];
 geneN_target_vec = [10];
-%geneN_target_vec = [8:2:50];
 C_within_mean = [];
 C_between_mean = [];
 meanHighestFracPercent = [];
@@ -199,6 +228,7 @@ for g=1:length(geneN_target_vec)
     
     D_GOI_log = log10(D_GOI+1);
     typeLogMeans = zeros(N_GOI, Ntestable);
+    typeLogMeans_CV = cell(Ntestable); %cross-validated
     
     z=1;
     for i=1:Ntypes
@@ -210,11 +240,15 @@ for g=1:length(geneN_target_vec)
             
             typeLogMeans(:,i) = mean(D_GOI_log(:, curInd),2);
             
+            for j=1:NofEach_sorted(i)   
+                tempInd = setdiff(curInd, curInd(j));
+                typeLogMeans_CV{i}(:, j) = mean(D_GOI_log(:, tempInd),2);
+            end
         end
     end
     
     %correlation matrices
-    %need to add cross validation to this.
+    %in the middel of adding cross validation to this.
     
     C_allCells = corrcoef(D_GOI_log);
     C_typeMeans = corrcoef(typeLogMeans);
@@ -222,12 +256,24 @@ for g=1:length(geneN_target_vec)
     Ncells = size(D,2);
     
     C_cellsToTypes = zeros(Ntestable, Ncells);
-    
+        
     for i=1:Ncells
         
         tempM = [typeLogMeans, D_GOI_log(:,i)];
         tempC = corrcoef(tempM);
         C_cellsToTypes(:,i) = tempC(1:end-1,end);
+    end
+    
+    cum_cellCount = [1 cumsum(NofEach_sorted)+1];    
+    for i=1:Ncells        
+        type_ind = find(cum_cellCount > i, 1)-1;
+        if type_ind<=Ntestable
+            cell_in_type_ind = i-cum_cellCount(type_ind)+1;
+            tempM = [typeLogMeans_CV{type_ind}(:,cell_in_type_ind), D_GOI_log(:,i)];
+            tempC = corrcoef(tempM);
+            %overwrite just this entry with cross-validated data
+            C_cellsToTypes(type_ind,i) = tempC(1:end-1,end);
+        end
     end
     
     %compute corr for each type
@@ -254,7 +300,6 @@ for g=1:length(geneN_target_vec)
     C_within_mean(g) = mean(C_within);
     C_between_mean(g) = mean(C_between);
     
-    
     CV_thres = 0; %0 for use all genes
     
     sanesDataFull = []
@@ -272,7 +317,7 @@ for g=1:length(geneN_target_vec)
             dset
             curSetName = ['sanes' dataSets(dset)];
             load(['SanesData/' curSetName]);
-            eval(['sanesData = sanes' dataSets(dset) '_sparse;']);
+            eval(['sanesData = sanes_' dataSets(dset) '_sparse;']);
             %%% transform sanes data
             [Ngenes_sanes, Ncells_sanes] = size(sanesData);
             %D_sanes_log = log10(sanesData+1);
@@ -387,8 +432,10 @@ end
 
 %% dendrogram
 Z = linkage(typeLogMeans');
-labels = uniqueTypes_sorted(1:28);
-dendrogram(Z, 'labels', labels, 'orientation', 'left')
+labels = uniqueTypes_sorted(1:30);
+dendrogram(Z)
+
+%dendrogram(Z, 'labels', labels, 'orientation', 'left')
 %% plot correlation matrices
 figure(1);
 C_allCells(C_allCells==1) = nan;
@@ -405,7 +452,6 @@ figure(3);
 imagesc(Cmean_byType);
 addCellTypeLabels(uniqueTypes_sorted, NofEach_sorted, 'x');
 addCellTypeLabels(uniqueTypes_sorted, NofEach_sorted, 'y');
-
 
 
 %% correlation for each Sanes cell with means

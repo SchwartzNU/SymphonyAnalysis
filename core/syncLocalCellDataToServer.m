@@ -15,7 +15,7 @@ cellDataNames = ls([ANALYSIS_FOLDER filesep 'cellData' filesep '*.mat']);
 if ismac
     cellDataNames = strsplit(cellDataNames); %this will be different on windows - see doc ls
 elseif ispc
-    cellDataNames = cellstr(cellDataNames)
+    cellDataNames = cellstr(cellDataNames);
 end
 cellDataNames = sort(cellDataNames);
 
