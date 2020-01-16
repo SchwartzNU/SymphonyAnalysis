@@ -931,6 +931,7 @@ classdef CellDataCurator < handle
                         curEpoch.attributes(paramName) = paramVal;
                     end
                 end
+                fprintf('Added param %s value %s\n', paramName, paramVal);
             end
             obj.saveCellData();
             obj.updateParamsList();

@@ -16,11 +16,18 @@ function initializeExperiment(expname, myname)
             parseRawDataFiles(expname);
     end
     
-    projFolder = makeTempFolderForExperiment(expname);
+    try
+        projFolder = makeTempFolderForExperiment(expname);
+    catch err
+        warning('no cells were parsed from the h5 data');
+        rethrow(e)
+    end
 
     addRecordedByToProject(projFolder, myname);
 %     correctAnglesForProject(projFolder);
     correctAnglesFromRawData(projFolder);
     
     LabDataGUI(projFolder);
+    
+    disp('Done with init');
 end
