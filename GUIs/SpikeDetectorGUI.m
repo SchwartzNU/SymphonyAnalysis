@@ -85,10 +85,13 @@ classdef SpikeDetectorGUI < handle
             obj.handles.detectorModeMenu = uicontrol('Parent', L_info, ...
                 'Style', 'popupmenu', ...
                 'String', {'Standard deviations above noise', 'Simple threshold', 'advanced'});
-            if strcmp(obj.mode, 'Stdev')
-                set(obj.handles.detectorModeMenu, 'value', 1);
-            else
-                set(obj.handles.detectorModeMenu, 'value', 2);
+            switch obj.mode
+                case 'Stdev'
+                    set(obj.handles.detectorModeMenu, 'value', 1);
+                case 'threshold'
+                    set(obj.handles.detectorModeMenu, 'value', 2);
+                case 'advanced'
+                    set(obj.handles.detectorModeMenu, 'value', 3);
             end
             uicontrol('Parent', L_info, ...
                 'Style', 'text', ...
