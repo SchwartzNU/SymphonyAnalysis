@@ -210,6 +210,158 @@ classdef MultiPulseAnalysis < AnalysisTree
             ylabel(['s2_spikeCount (' yField.units ')']);
         end
         
+        function plot_StepHoldVsSpikeRaster(node, cellData)
+            % copied from CellData class 011720 SRW   
+            if nargin < 3
+                streamName = 'Amplifier_Ch1';
+            end 
+            
+            rootData = node.get(1);
+            ds = strsplit(rootData.name, ': ');
+            ds = ds{2};
+            epochInd = cellData.savedDataSets(ds);
+            sampleEpoch = cellData.epochs(epochInd(1));
+            
+            %get spikes
+            L = length(epochInd);
+            spikeTimes = cell(L,1);
+            steps = nan(L, 1);
+            for i=1:L
+                [spikeTimes{i}, timeAxis_spikes] = cellData.epochs(epochInd(i)).getSpikes(streamName);
+                if strcmp(sampleEpoch.get('stepByStim'), 'Stim 1')
+                    steps(i) = cellData.epochs(epochInd(i)).get('pulse1Curr');
+                else
+                    steps(i) = cellData.epochs(epochInd(i)).get('pulse2Curr');
+                end
+            end
+            ax = gca;
+            cla(ax);
+            hold(ax, 'on');
+            
+            % sort based on step
+            [sortedSteps, sortedI] = sort(steps);
+            epochOrder = [1:L];
+            sortedEpochOrder = epochOrder(sortedI);
+            
+            % line display
+            for i=1:L
+                ind = sortedEpochOrder(i);
+                if isnan(spikeTimes{ind})
+                    warning('May need to detect spikes')
+                    continue
+                end
+                spikes = timeAxis_spikes(spikeTimes{ind});
+                for st_i = 1:length(spikes)
+                    x = spikes(st_i);
+                    line([x, x], [i-0.4, i+0.4]);
+                end
+            end
+            
+            set(ax, 'Ytick', 1:1:L);
+            yticklabels(ax, compose('%d', sortedSteps))
+            set(ax, 'Xlim', [timeAxis_spikes(1), timeAxis_spikes(end)]);
+            set(ax, 'Ylim', [0, L+1]);
+            %start and end lines
+            stimLen = (sampleEpoch.get('stim1Time') + sampleEpoch.get('stim2Time'))*1E-3; %s
+            if ~isempty(stimLen)
+                startLine = line('Xdata', [0 0], 'Ydata', get(ax, 'ylim'), ...
+                    'Color', 'k', 'LineStyle', '--');
+                endLine = line('Xdata', [stimLen stimLen], 'Ydata', get(ax, 'ylim'), ...
+                    'Color', 'k', 'LineStyle', '--');
+                set(startLine, 'Parent', ax);
+                set(endLine, 'Parent', ax);
+            end
+            xlabel(ax, 'Time (s)');
+            ylabel(ax, 'Steps (pA)');
+        end
+        
+        function plot_VmVsSpikeRaster(node, cellData)
+            % copied from CellData class 011720 SRW   
+            if nargin < 3
+                streamName = 'Amplifier_Ch1';
+            end 
+            
+            rootData = node.get(1);
+            ds = strsplit(rootData.name, ': ');
+            ds = ds{2};
+            epochInd = cellData.savedDataSets(ds);
+            sampleEpoch = cellData.epochs(epochInd(1));
+            preT = sampleEpoch.get('preTime'); sampR = sampleEpoch.get('sampleRate');
+            if strcmp(sampleEpoch.get('stepByStim'), 'Stim 1')
+                stimT = sampleEpoch.get('stim1Time');
+            else
+                stimT = sampleEpoch.get('stim2Time');
+            end
+            
+            % get use input on min number of spikes
+            minNumSpikes = input('Min number of spikes to accept: ');
+            
+            %get spikes and appropriate info for sorting
+            L = length(epochInd);
+            spikeTimes = cell(L,1);
+            steps = nan(L, 1);
+            stimSpikes = nan(L, 1);
+            holds = nan(L, 1);
+            for i=1:L
+                [ST, timeAxis_spikes] = cellData.epochs(epochInd(i)).getSpikes(streamName);
+                spikeTimes{i} = ST;
+                if strcmp(sampleEpoch.get('stepByStim'), 'Stim 1')
+                    steps(i) = cellData.epochs(epochInd(i)).get('pulse1Curr');
+                else
+                    steps(i) = cellData.epochs(epochInd(i)).get('pulse2Curr');
+                end
+                holds(i) = cellData.epochs(epochInd(i)).get('ampHoldSignal');
+                stimSpikes(i) = sum((ST > preT*sampR/1000) & (ST < (preT + stimT)*sampR/1000)) > minNumSpikes-1;
+            end
+            stimSpikes(stimSpikes == 0) = nan;
+            
+            ax = gca;
+            cla(ax);
+            hold(ax, 'on');
+            
+            % sort based on step
+            stepInds = minStepPerVm(holds, steps, stimSpikes);
+            holds = holds(stepInds);
+            steps = steps(stepInds);
+            spikeTimes = spikeTimes(stepInds, :);
+            L2 = length(holds);
+            [sortedHolds, sortedI] = sort(holds);
+            epochOrder = [1:L];
+            sortedEpochOrder = epochOrder(sortedI);
+            sortedSteps = steps(sortedI);
+            
+            % line display
+            for i=1:L2
+                ind = sortedEpochOrder(i);
+                if isnan(spikeTimes{ind})
+                    warning('May need to detect spikes')
+                    continue
+                end
+                spikes = timeAxis_spikes(spikeTimes{ind});
+                for st_i = 1:length(spikes)
+                    x = spikes(st_i);
+                    line([x, x], [i-0.4, i+0.4]);
+                end
+            end
+            
+            tickInds = 1:floor(sampleEpoch.get('numberOfCycles')/2):L2;
+            set(ax, 'Ytick', tickInds);
+            yticklabels(ax, compose('%d, %d', sortedHolds(tickInds), sortedSteps(tickInds)))
+            set(ax, 'Xlim', [timeAxis_spikes(1), timeAxis_spikes(end)]);
+            set(ax, 'Ylim', [0, L2+1]);
+            %start and end lines
+            stimLen = (stimT)*1E-3; %s
+            if ~isempty(stimLen)
+                startLine = line('Xdata', [0 0], 'Ydata', get(ax, 'ylim'), ...
+                    'Color', 'k', 'LineStyle', '--');
+                endLine = line('Xdata', [stimLen stimLen], 'Ydata', get(ax, 'ylim'), ...
+                    'Color', 'k', 'LineStyle', '--');
+                set(startLine, 'Parent', ax);
+                set(endLine, 'Parent', ax);
+            end
+            xlabel(ax, 'Time (s)');
+            ylabel(ax, 'Hold (pA), Step (pA)');
+        end
         
     end
 end
