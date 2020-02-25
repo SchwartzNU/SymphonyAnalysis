@@ -125,7 +125,7 @@ elseif strncmp(mode, 'plotSpatial', 11)
             end
 
             if posIndex >= 3
-                gaussianEnable = 0;
+                gaussianEnable = 1;
 %                 gaussianEnable = sign(voltage) + .001;
                 [gfits{a,1}, contourObjects{a,1}] = plotSpatial(goodPositions, vals, sprintf('%s at V = %d mV, intensity = %f', modeLabel, voltage, intensity), 1, gaussianEnable, {thresholdLevel, 1});
                 gfits(a, 2:3) = {voltage, intensity};
@@ -647,7 +647,7 @@ elseif strcmp(mode, 'temporalComponents')
     signalsByVoltageByPosition = {};
     peakIndicesByVoltage = {};
     basisByVoltageComp = {};
-    maxComponents = 0;
+    maxComponents = 0;o
 
     for vi = 1:length(voltages)
         v = voltages(vi);
@@ -1599,7 +1599,9 @@ end
             hold on
             
             fitValues(fitValues < 0) = 0; % Interesting, maybe an improvement for fitting WC results
-            gfit = fit2DGaussian(positions, fitValues);
+            gfit = fit2DGaussian(positions, fitValues)
+            gfit.keys
+            gfit.values
             fprintf('gaussian fit center: %d um, %d um\n', round(gfit('centerX')), round(gfit('centerY')))
             v = fitValues - min(fitValues);
 %             centerOfMass = mean(bsxfun(@times, positions, v ./ mean(v)), 1);

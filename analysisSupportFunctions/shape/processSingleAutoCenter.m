@@ -72,12 +72,22 @@ timeOffset = nan;
 % sessionId = {'2018216144613'};
 % timeOffset = .06;
 
-load('/Users/sam/analysis/cellData/022118Ac1.mat') % HD1 vclamp offset
-sessionId = {'2018221143242'};
-timeOffset = .03;
+% load('/Users/sam/analysis/cellData/022118Ac1.mat') % HD1 vclamp offset
+% sessionId = {'2018221143242'};
+% timeOffset = .03;
 
-% ,'201813117151'
-% process
+% new set:
+% load('/Users/sam/analysis/cellData/072419Ac1.mat') % OODS
+% sessionId = {'2019724172324'};
+% timeOffset = .05;
+
+
+load('/Users/sam/analysis/cellData/072419Ac1.mat') % OODS
+sessionId = {'2019724172324'};
+timeOffset = .05;
+options.saveFileName = '072419Ac1 OODS';
+
+
 
 epochData = cell(1);
 ei = 1;
@@ -134,8 +144,8 @@ figure(11);clf;
 plotShapeData(analysisData, 'temporalResponses');
 
 %%
-figure(12);clf;
-plotShapeData(analysisData, 'currentVoltage');
+% figure(12);clf;
+% plotShapeData(analysisData, 'currentVoltage');
 
 %% new plots
 % figure(13);clf;
@@ -150,7 +160,9 @@ plotShapeData(analysisData, 'responsesByPosition');
 
 %%
 figure(17);clf;
-plotShapeData(analysisData, 'overlap');
+
+
+plotShapeData(analysisData, 'overlap', options); 
 
 %% save maps
 
