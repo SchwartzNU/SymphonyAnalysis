@@ -2,6 +2,8 @@ global CELL_DATA_MASTER;
 global PREFERENCE_FILES_FOLDER;
 global SERVER_ROOT;
 
+regenerate_flag = true;
+
 fid = fopen([PREFERENCE_FILES_FOLDER 'DataSetAnalyses.txt'], 'r');
 analysisNameTable = textscan(fid, '%s\t%s');
 fclose(fid);
@@ -90,26 +92,28 @@ end
 numCells = length(cellNames);
 fprintf('%g cells found\n', numCells);
 
-
-
 %% Process cells
 
 load(saveFileLocation, 'updateTime', 'cellDataTable');
+if regenerate_flag
+    cellDataTable = table();
+end
 
-%cellDataTable = table();
 tic
 for ci = 1:numCells
-    cellName = cellNames{ci};
+    cellName = cellNames{ci};   
     
-    if modTimes{ci} > datetime(updateTime) %if modified since last update
+    if ~regenerate_flag && (modTimes{ci} < datetime(updateTime))
+        %fprintf('Skipping %g/%g %s\n', ci, numCells, cellName);
+    else %if modified since last update or regenerating
         trow = table();
         fprintf('Processing %g/%g %s\n', ci, numCells, cellName);
-        %     trow{1, 'cellName'} = {cellName};
-        
-        try
-            c = load([CELL_DATA_MASTER cellName '.mat']); %load cellData
-            cellData = c.cellData;
+        %     trow{1, 'cellName'} = {cellName};        
+        try            
+            load([CELL_DATA_MASTER cellName]); %load cellData
+            %cellData = c.cellData;
         catch
+            fprintf('Error loading %s\n', cellName);
             continue
         end
         
@@ -161,7 +165,6 @@ for ci = 1:numCells
                 continue
             end
         end
-        
         cellDataTable(cellName,:) = trow;
     end
 end
