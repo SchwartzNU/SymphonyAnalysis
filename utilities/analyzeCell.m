@@ -23,9 +23,9 @@ params_deviceOnly = params;
 
 load([ANALYSIS_FOLDER 'cellData' filesep cellName]);
 prefsMap = [];
-if ~isempty(cellData.prefsMapName)
-    prefsMap = loadPrefsMap(cellData.prefsMapName);
-end
+%if ~isempty(cellData.prefsMapName)
+%    prefsMap = loadPrefsMap(cellData.prefsMapName);
+%end
 
 dataSetKeys = cellData.savedDataSets.keys;
 cellAnalysisTree = AnalysisTree;

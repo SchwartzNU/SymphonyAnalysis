@@ -1,6 +1,7 @@
-% function [] = extractSMSFromTreeLeaves(T)
-% global CELL_DATA_FOLDER
+function [] = extractSMSFromTreeLeaves(T)
 %T is analysis tree
+
+[fname, fpath] = uiputfile('*.h5','Select HDF5 file');
 
 leafNodes = T.findleaves;
 nLeaves = length(leafNodes);
@@ -44,12 +45,12 @@ for i=1:nLeaves
 
                 all_ON(end+1, :) = y_on;
                 all_OFF(end+1, :) = y_off;
-    %             s = struct;
-    %             s.sms_x = sms_x;
-    %             s.sms_y_on = sms_y_on;
-    %             s.sms_y_off = sms_y_off;
-    %             igorName = [cellName '_' datasetName];
-    %             exportStructToHDF5(s, fname, igorName);
+                s = struct;
+                s.sms_x = sms_x;
+                s.sms_y_on = sms_y_on;
+                s.sms_y_off = sms_y_off;
+                %igorName = [cellName '_' datasetName];
+                exportStructToHDF5(s, [fpath fname], cellName);
         end
         lastNodeID = curNodeID;
 end
