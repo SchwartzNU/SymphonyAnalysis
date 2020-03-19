@@ -55,16 +55,16 @@ classdef ObjectMotionSensitivityAnalysis < AnalysisTree
     end
     
     methods(Static)
-        function plot_movementVsSpikeCountStimInterval(node, cellData)
+        function plot_spikeCount_stimAfter1000ms(node, cellData)
             rootData = node.get(1);
             xvals = rootData.movementCategory;
-            yField = rootData.spikeCount_stimInterval;
+            yField = rootData.spikeCount_stimAfter1000ms;
             yvals = yField.mean_c;
             errs = yField.SEM;
             bar(categorical(xvals), yvals)
             hold on
             errorbar(categorical(xvals), yvals, errs, 'o');
-            ylabel(['Spike Count Stim Interval (' yField.units ')']);
+            ylabel(['Spike Count stimAfter1000ms (' yField.units ')']);
             
             titleString = {};
             
