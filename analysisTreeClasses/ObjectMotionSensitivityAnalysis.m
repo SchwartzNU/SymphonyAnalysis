@@ -57,14 +57,32 @@ classdef ObjectMotionSensitivityAnalysis < AnalysisTree
     methods(Static)
         function plot_movementVsSpikeCountStimInterval(node, cellData)
             rootData = node.get(1);
-            xvals = categorical(rootData.movementCategory);
+            xvals = rootData.movementCategory;
             yField = rootData.spikeCount_stimInterval;
             yvals = yField.mean_c;
             errs = yField.SEM;
-            bar(xvals, yvals)
+            bar(categorical(xvals), yvals)
             hold on
-            errorbar(xvals, yvals, errs, 'o');
-            ylabel(['Spike Count Stim Interval (' yField.units ')']);           
+            errorbar(categorical(xvals), yvals, errs, 'o');
+            ylabel(['Spike Count Stim Interval (' yField.units ')']);
+            
+            titleString = {};
+            
+            if any(strcmp(xvals, 'Center')) && any(strcmp(xvals, 'Global'))
+                centerInd = find(strcmp(xvals, 'Center'));
+                globalInd = find(strcmp(xvals, 'Global'));
+                globalCenterRatio = yvals(globalInd)/yvals(centerInd);
+                titleString = [titleString,'Global/Center = ' + string(globalCenterRatio)];                
+            end
+            
+            if any(strcmp(xvals, 'Differential')) && any(strcmp(xvals, 'Global'))
+                DiffInd = find(strcmp(xvals, 'Differential'));
+                globalInd = find(strcmp(xvals, 'Global'));
+                globalDiffRatio = yvals(globalInd)/yvals(DiffInd);
+                titleString = [titleString,'Global/Differential = ' + string(globalDiffRatio)];                
+            end            
+
+            title(titleString) 
         end
     end
     
