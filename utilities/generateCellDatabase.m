@@ -165,6 +165,7 @@ for ci = 1:numCells
                 continue
             end
         end
+        cellName = strtok(cellName,'.');
         cellDataTable(cellName,:) = trow;
     end
 end
