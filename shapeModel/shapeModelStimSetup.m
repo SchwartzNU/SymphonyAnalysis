@@ -11,34 +11,33 @@
 % stim_moveTime = sim_endTime + 1.0;
 % stim_intensity = 0.5;
 
-stim_mode = 'flashedEdge';
-% stim_edgeSpacing = 20;
-% stim_positions = [-120, -90, -60, -30, 0, 30, 60, 90, 120];
-% stim_positions = linspace(-130, 130, 12);
-stim_positions = [140];
-
-stim_numOptions = length(stim_positions);
-stim_edgeAngle = paramValues(paramSetIndex, col_edgeAngle);
-stim_contrastSide1 = 1;
-stim_contrastSide2 = 0;
-% stim_meanLevel = 1; % assume the mean is constant and equal to 1
-stim_startTime = 0.01;
-stim_stimTime = 0.3;
-stim_fullField = 1;
+% stim_mode = 'flashedEdge';
+% % stim_edgeSpacing = 20;
+% % stim_positions = [-120, -90, -60, -30, 0, 30, 60, 90, 120];
+% stim_positions = linspace(-130, 130, 7);
+% % stim_positions = [140];
+% 
+% stim_numOptions = length(stim_positions);
+% stim_edgeAngle = paramValues(paramSetIndex, col_edgeAngle);
+% stim_contrastSide1 = 1;
+% stim_contrastSide2 = 0;
+% % stim_meanLevel = 1; % assume the mean is constant and equal to 1
+% stim_startTime = 0.01;
+% stim_stimTime = 0.3;
+% stim_fullField = 1;
 
 % SMS
 % stim_mode = 'flashedSpot';
-% numSizes = 8;
-% stim_spotDiams = logspace(log10(30), log10(1000), numSizes);
+% numSizes = 9;
+% stim_spotDiams = logspace(log10(30), log10(400), numSizes);
 % stim_numOptions = length(stim_spotDiams);
 
 
 % stim_mode = 'flashedSpot';
 % stim_numOptions = 1;
-% 
 % stim_spotDiam = 200;
-% stim_spotDuration = 1;
-% stim_spotStart = 0.5;
+% stim_spotDuration = .1;
+% stim_spotStart = 0.1;
 % stim_intensity = 0.5;
 % stim_spotPosition = [0,0];
 
@@ -57,6 +56,18 @@ stim_fullField = 1;
 % stim_textureScale = 30;
 % stim_movementDelay = 0.5;
 
+stim_mode = 'driftingGrating';
+numAngles = 1;
+stim_directions = linspace(0,360,numAngles+1);
+stim_directions(end) = [];
+stim_numOptions = length(stim_directions);
+% 
+stim_texSpeed = 500;
+stim_moveTime = sim_endTime + 1.0;
+stim_meanLevel = 0.5;
+stim_textureScale = 30;
+stim_movementDelay = 0.5;
+
 stim_lightMatrix_byOption = {};
 
 for optionIndex = 1:stim_numOptions
@@ -69,7 +80,7 @@ for optionIndex = 1:stim_numOptions
 
     if strcmp(stim_mode, 'flashedSpot')
         % flashed spot
-        %         stim_spotDiam = stim_spotDiams(optionIndex);
+                stim_spotDiam = stim_spotDiams(optionIndex);
 
 
         pos = stim_spotPosition + center;
@@ -161,6 +172,18 @@ for optionIndex = 1:stim_numOptions
 
         end
 
+    elseif strcmp(stim_mode, 'driftingTexture')        
+        direction = stim_directions(optionIndex);
+        canvasSize = sim_dims(2:3);
+        sigmaPix = 0.5 * (stim_textureScale / sim_spaceResolution);
+        distPix = (stim_texSpeed/sim_spaceResolution) * stim_moveTime; % um / sec
+        moveDistance = distPix;
+        res = [max(canvasSize) * 1.42,...
+            max(canvasSize) * 1.42 + distPix]; % pixels
+        res = round(res);
+        
+%         M = cos();
+        
 
     elseif strcmp(stim_mode, 'driftingTexture')
         direction = stim_directions(optionIndex);
