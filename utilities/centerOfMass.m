@@ -43,7 +43,7 @@ nargoutchk(0,1);
 fname = 'centerOfMass';
 
 % Checked required inputs
-validateattributes(A,{'numeric'},{'real','finite'},fname,'A',1);
+% validateattributes(A,{'numeric'},{'real','finite'},fname,'A',1);
 
 %% INITIALIZE VARIABLES
 A(isnan(A)) = 0;
@@ -68,7 +68,7 @@ else
         rep = sz;
         rep(ii) = 1;
         ind = repmat(reshape(1:sz(ii),shp),rep);
-        C(ii) = sum(ind(:).*A(:))./M;
+        C(ii) = nansum(ind(:).*A(:))./M;
     end
 end
 

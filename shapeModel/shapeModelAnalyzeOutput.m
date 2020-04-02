@@ -152,7 +152,7 @@ for optionIndex = 1:stim_numOptions
                     
         line(plot_timeLims, [0,0]);
         
-        title(stim_directions(optionIndex))
+%         title(stim_directions(optionIndex))
 
 
         % investigate nonlinearities relative to the ephys data
@@ -234,41 +234,43 @@ if plotResultsByOptions
     dataSetToExport = 5; % this is the one for the overall output comparison
     % ordering = 1;
     for ti = ordering
-        angles = deg2rad(stim_directions)';
+%         angles = deg2rad(stim_directions)';
         values = [];
         for oi = 1:stim_numOptions
             signals = outputSignalsByOption{oi};
             values(oi,1) = -sum(signals(ti, signals(ti,:) < 0)) * sim_timeStep;
         end
-        values = values + additiveOffset;
-        
-%         outputStruct.(sprintf('byang_%s',outputLabels{ti})) = values;
-        
-        a = [angles; angles(1)];
-        v = [values; values(1)];
-        v = v / mean(v);
-        polarplot(a, v)
-        hold on
-        
-        dsi = abs(sum(exp(sqrt(-1) * angles) .* values) / sum(values));
-        if dataSetToExport == ti
-            dsiByParamSet(paramSetIndex,1) = dsi;
-            valuesByParamSet(paramSetIndex,:) = values;
-            
-        end
-
-        if paramValues(paramSetIndex, col_edgeFlip) == 1
-%             values = values;
-        else
-            values = flipud(values);
-        end
+%         values = values + additiveOffset;
+%         
+% %         outputStruct.(sprintf('byang_%s',outputLabels{ti})) = values;
+%         
+%         a = [angles; angles(1)];
+%         v = [values; values(1)];
+%         v = v / mean(v);
+%         polarplot(a, v)
+%         hold on
+%         
+%         dsi = abs(sum(exp(sqrt(-1) * angles) .* values) / sum(values));
+%         if dataSetToExport == ti
+%             dsiByParamSet(paramSetIndex,1) = dsi;
+%             valuesByParamSet(paramSetIndex,:) = values;
+%             
+%         end
+% 
+%         if paramValues(paramSetIndex, col_edgeFlip) == 1
+% %             values = values;
+%         else
+%             values = flipud(values);
+%         end
 %         subplot(4,1,paramSetIndex);
+
+
 %         dataName = sprintf('%s_%g_%s_%g', paramColumnNames{1}, paramValues(paramSetIndex, 1), paramColumnNames{2}, paramValues(paramSetIndex, 2));
-%     	plot(stim_positions, values', 'DisplayName',dataName)
+    	plot(stim_spotDiams, values')%, 'DisplayName',dataName)
         hold on
         
-        outputStruct.(dataName) = values';
-        outputStruct.x = stim_positions;
+%         outputStruct.(dataName) = values';
+%         outputStruct.x = stim_positions;
     end
 %     hold off
 %     legs = {'sim currents','ephys currents','ephys spikes','sim curr nonlin'};

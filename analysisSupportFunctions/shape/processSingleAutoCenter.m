@@ -89,6 +89,15 @@ options.saveFileName = '072419Ac1 OODS';
 
 
 
+% on off offset:
+load('cellData/050918Ac4.mat') % FmON OFF pair
+sessionId = {'20185916321'};
+timeOffset = .050;
+
+
+channel = 'Amplifier_Ch2';
+
+
 epochData = cell(1);
 ei = 1;
 for i = 1:length(cellData.epochs)
@@ -118,7 +127,7 @@ for i = 1:length(cellData.epochs)
 %         if epoch.get('presentationId') > 2
 %             continue
 %         end
-        sd = ShapeData(epoch, 'offline');
+        sd = ShapeData(epoch, 'offline', channel);
         epochData{ei, 1} = sd;
         ei = 1 + ei;
 %         epoch.attributes('timeOffset')
@@ -152,7 +161,7 @@ plotShapeData(analysisData, 'temporalResponses');
 % plotShapeData(analysisData, 'spatialOffset_onOff');
 %%
 figure(15);clf;
-plotShapeData(analysisData, 'responsesByPosition');
+plotShapeData(analysisData, 'responsesByPosition_trueLocation');
 %%
 % figure(11);clf;
 % plotShapeData(analysisData, 'temporalComponents');
@@ -166,4 +175,4 @@ plotShapeData(analysisData, 'overlap', options);
 
 %% save maps
 
-% plotShapeData(analysisData, 'plotSpatial_saveMaps');
+plotShapeData(analysisData, 'plotSpatial_saveMaps');

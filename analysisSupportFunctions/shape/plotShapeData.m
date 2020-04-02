@@ -127,6 +127,8 @@ elseif strncmp(mode, 'plotSpatial', 11)
             if posIndex >= 3
                 gaussianEnable = 1;
 %                 gaussianEnable = sign(voltage) + .001;
+% % 
+%                 k = {'OFF','ON'};
                 [gfits{a,1}, contourObjects{a,1}] = plotSpatial(goodPositions, vals, sprintf('%s at V = %d mV, intensity = %f', modeLabel, voltage, intensity), 1, gaussianEnable, {thresholdLevel, 1});
                 gfits(a, 2:3) = {voltage, intensity};
 %                 if ~isnan(gfit)
@@ -217,6 +219,7 @@ elseif strncmp(mode, 'plotSpatial', 11)
     axis equal
     
     if strcmp(modeLabel, 'saveMaps')
+        
         save('savedMaps.mat', 'dataByVoltageIntensity','voltages','intensities');
         disp('saved maps to savedMaps.mat');
     end
@@ -763,6 +766,7 @@ elseif strcmp(mode, 'responsesByPosition')
     % display time traces of responses aligned for each location
     % plots are in a grid roughly similar to the spot spacing
     
+   
     obs = ad.observations;
     voltages = sort(unique(obs(:,4)));
     adaptstates = unique(obs(:,14));
@@ -888,6 +892,162 @@ elseif strcmp(mode, 'responsesByPosition')
     ylim(ha(1), [min_value, max_value*1.3]);
     xlim(ha(1), [0, max(t)])
 %     end
+
+
+elseif strcmp(mode, 'responsesByPosition_trueLocation')
+    % display time traces of responses aligned for each location
+    % plots are aligned to original spot positions!
+    set(gcf,'color','w');
+    
+    outStruct = struct();
+    
+    obs = ad.observations;
+    voltages = sort(unique(obs(:,4)));
+    adaptstates = unique(obs(:,14));
+    intensities = sort(unique(obs(:,3)));
+    
+    num_options = length(voltages) * length(adaptstates) * length(intensities);
+    
+%     colors = hsv(num_options);
+    colors = [0 0 0; .7 .5 .1];
+    
+    % only use positions with observations (ignore 0,0)
+    positions = [];
+    i = 1;
+    for pp = 1:size(ad.positions,1)
+        pos = ad.positions(pp,1:2);
+        if any(ismember(obs(:,1:2), pos, 'rows'))
+            positions(i,1:2) = pos;
+            i = i + 1;
+        end
+    end
+    num_positions = size(positions,1);
+
+    
+    max_value = -inf;
+    min_value = inf;
+    
+    % set up coloring & legend by going through the options:
+    opti = 1;
+    colorsets = [];
+    for vi = 1:length(voltages)
+        for ai = 1:length(adaptstates)
+            for inti = 1:length(intensities)
+                colorsets(vi, ai, inti, 1:3) = colors(opti,:);
+                legends{opti} = sprintf('v: %d inti: %0.1f ai: %d', voltages(vi), intensities(inti), adaptstates(ai));
+                opti = opti + 1;
+            end
+        end
+    end
+    
+    
+    positionScale = .3 ./ max(positions(:));
+    plotSize = 0.065;
+    axisList = [];
+    traceDisplayLengthFrames = 300;
+    scaleOffTraces = 2;
+    
+    outStruct.positions_x = positions(:,1);
+    outStruct.positions_y = positions(:,2);
+
+    for poi = 1:num_positions
+
+        pos = positions(poi,:);
+        
+        % make axes in place
+        plotCenter = [0.5, 0.5] + positionScale * pos;
+        ax = axes('Position',[plotCenter(1), plotCenter(2), plotSize, plotSize],'Box','off','Visible','off');
+        axisList(end+1) = ax;
+        
+        for vi = 1:length(voltages)
+            for ai = 1:length(adaptstates)
+                for inti = 1:length(intensities)
+
+                    v = voltages(vi);
+                    obs_sel = ismember(obs(:,1:2), pos, 'rows');
+                    obs_sel = obs_sel & obs(:,3) == intensities(inti) & obs(:,4) == v & obs(:,14) == adaptstates(ai);
+                    indices = find(obs_sel);
+
+                    hold(ax, 'on');
+
+                    signal = [];
+                    for ii = 1:length(indices)
+                        entry = obs(indices(ii),:)';
+                        epoch = ad.epochData{entry(9)};
+
+                        
+                        signal(ii,:) = epoch.response(entry(10)-50:(entry(10)+traceDisplayLengthFrames)); % start and end indices into signal vector
+%                         signal = signal - mean(signal(1:10));
+                    end
+                    
+                    signal = mean(signal,1);
+                    signal = smooth(signal, 20);
+%                     if inti == 1
+%                         signal = signal * scaleOffTraces;
+%                     end
+                    
+                    k = {'OFF','ON'};
+                    outStruct.(sprintf('trace_%s_%g',k{inti}, poi)) = signal;
+                    
+                    t = (0:(length(signal)-1)) / ad.sampleRate;
+                    outStruct.trace_T = t;
+                    
+                    h = plot(ax, t, signal,'color',squeeze(colorsets(vi, ai, inti,1:3)));
+                    if ii > 1
+                        set(get(get(h,'Annotation'),'LegendInformation'),'IconDisplayStyle','off');
+                    end
+
+%                         responseValue = entry(6); % 6 for peak
+%                         line([min(t), max(t)], [responseValue, responseValue], 'Parent', ha(poi), 'Color',squeeze(colorsets(vi, ai, inti,1:3)));
+
+                    max_value = max(max_value, max(signal));
+                    min_value = min(min_value, min(signal));
+                    
+                end
+            end
+        end
+        
+%         set(gca,'XTickLabelMode','manual')
+        set(ax,'XTickLabels',[])
+        set(ax,'YTickLabels',[])
+        
+        
+%         startSampleTime = ad.sampleSet(1) / ad.sampleRate;
+%         endSampleTime = ad.sampleSet(end) / ad.sampleRate;
+%         y = [-10,30];
+%         startLine = line([1,1]*startSampleTime, y, 'Parent', ax, 'color', 'k', 'LineStyle', ':');
+%         endLine = line([1,1]*endSampleTime, y, 'Parent', ax, 'color', 'k', 'LineStyle', ':');
+%         lightLine = line([1,1]*(ad.spotOnTime), y, 'Parent', ax, 'color', [.6 .6 0], 'LineStyle', '-');
+%         set(get(get(startLine,'Annotation'),'LegendInformation'),'IconDisplayStyle','off')
+%         set(get(get(endLine,'Annotation'),'LegendInformation'),'IconDisplayStyle','off');
+%         set(get(get(lightLine,'Annotation'),'LegendInformation'),'IconDisplayStyle','off');
+        
+%         zline = line([0,max(t)],[0,0], 'Parent', ax, 'color', 'k');
+%         set(get(get(zline,'Annotation'),'LegendInformation'),'IconDisplayStyle','off'); % only display one legend per type
+
+%         title(ha(poi), sprintf('%d,%d', round(pos)));
+        
+    end
+%     set(ha(1),'YTickLabelMode','auto');
+%     set(ha(1),'XTickLabelMode','auto');
+%     legend(ha(1),legends,'location','best')
+
+    linkaxes(axisList);
+%     for i = 1:length(ha)
+%         i
+%         min_value
+    ylim(axisList(1), [min_value, max_value*1.3]);
+    xlim(axisList(1), [0, max(t)])
+    
+    
+%     outStruct
+    
+%     fname = 'igorExport/ac_spatial_traces.h5';
+%     dataLabel = 'ac_spatial_traces_fmon';
+% 
+%     exportStructToHDF5(outStruct, fname, dataLabel)
+% 
+% 
 
 elseif strcmp(mode, 'wholeCell_comparisons')
     % compares by subtraction the spatial RF of On and Off, and Ex and In 
@@ -1536,6 +1696,8 @@ end
 
     function [gfit, contourObject] = plotSpatial(positions, values, titl, addColorBar, gaussianfit, thresholdParams)
         
+        
+        
         enableThresholding = false;
         contourObject = [];
         if nargin >= 6
@@ -1549,6 +1711,15 @@ end
         X = linspace(-1*largestDistanceOffset, largestDistanceOffset, 200);
         [xq,yq] = meshgrid(X, X);
         c = griddata(positions(:,1), positions(:,2), values, xq, yq);
+        
+%         outStruct = struct();
+%         outStruct.X = X;
+%         outStruct.image = c;
+%         
+%         fname = 'igorExport/ac_plot_050918Ac4.h5';
+%         dataLabel = sprintf('ac_plot_%s', titl);
+%     
+%         exportStructToHDF5(outStruct, fname, dataLabel)        
         
         if enableThresholding
             threshold = thresholdParams{1};
