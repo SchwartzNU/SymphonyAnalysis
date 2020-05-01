@@ -20,7 +20,7 @@ function initializeExperiment(expname, myname)
         projFolder = makeTempFolderForExperiment(expname);
     catch err
         warning('no cells were parsed from the h5 data');
-        rethrow(e)
+        rethrow(err)
     end
 
     addRecordedByToProject(projFolder, myname);
