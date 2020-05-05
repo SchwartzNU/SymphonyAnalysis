@@ -21,7 +21,8 @@ classdef ObjectMotionSensitivityAnalysis < AnalysisTree
             obj = obj.copyAnalysisParams(params);
             obj = obj.copyParamsFromSampleEpoch(cellData, dataSet, ...
                 {'RstarMean', 'RstarIntensity', params.ampModeParam, 'offsetX', 'offsetY', 'ampHoldSignal'});
-            obj = obj.buildCellTree(1, cellData, dataSet, {@(epoch)movementCategory(epoch)});
+            %obj = obj.buildCellTree(1, cellData, dataSet, {@(epoch)movementCategory(epoch)});
+            obj = obj.buildCellTree(1, cellData, dataSet, {'motionMode'});
         
         end
         
@@ -57,10 +58,14 @@ classdef ObjectMotionSensitivityAnalysis < AnalysisTree
     methods(Static)
         function plot_spikeCount_stimAfter1000ms(node, cellData)
             rootData = node.get(1);
-            xvals = rootData.movementCategory;
             yField = rootData.spikeCount_stimAfter1000ms;
             yvals = yField.mean_c;
             errs = yField.SEM;
+            
+            movementTypes = {'Center', 'Surround', 'Differential', 'Global', 'No movement'};
+            moveInd = cell2mat(rootData.movementCategory);
+            xvals = movementTypes(moveInd);
+            
             bar(categorical(xvals), yvals)
             hold on
             errorbar(categorical(xvals), yvals, errs, 'o');
@@ -81,9 +86,43 @@ classdef ObjectMotionSensitivityAnalysis < AnalysisTree
                 globalDiffRatio = yvals(globalInd)/yvals(DiffInd);
                 titleString = [titleString,'Global/Differential = ' + string(globalDiffRatio)];                
             end            
-
+            
+            title(titleString) 
+        end
+        
+        function plot_spikeCount_duringMovement(node, cellData)
+            rootData = node.get(1);
+            yField = rootData.spikeCount_stimAfter1000ms;
+            yvals = yField.mean_c;
+            errs = yField.SEM;
+            
+            movementTypes = {'Center', 'Surround', 'Differential', 'Global', 'No movement'};
+            moveInd = cell2mat(rootData.movementCategory);
+            xvals = movementTypes(moveInd);
+            
+            bar(categorical(xvals), yvals)
+            hold on
+            errorbar(categorical(xvals), yvals, errs, 'o');
+            ylabel(['Spike Count stimAfter1000ms (' yField.units ')']);
+            
+            titleString = {};
+            
+            if any(strcmp(xvals, 'Center')) && any(strcmp(xvals, 'Global'))
+                centerInd = find(strcmp(xvals, 'Center'));
+                globalInd = find(strcmp(xvals, 'Global'));
+                globalCenterRatio = yvals(globalInd)/yvals(centerInd);
+                titleString = [titleString,'Global/Center = ' + string(globalCenterRatio)];                
+            end
+            
+            if any(strcmp(xvals, 'Differential')) && any(strcmp(xvals, 'Global'))
+                DiffInd = find(strcmp(xvals, 'Differential'));
+                globalInd = find(strcmp(xvals, 'Global'));
+                globalDiffRatio = yvals(globalInd)/yvals(DiffInd);
+                titleString = [titleString,'Global/Differential = ' + string(globalDiffRatio)];                
+            end            
+            
             title(titleString) 
         end
     end
-    
 end
+    
