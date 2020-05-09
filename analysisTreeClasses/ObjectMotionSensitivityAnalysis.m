@@ -90,9 +90,9 @@ classdef ObjectMotionSensitivityAnalysis < AnalysisTree
             title(titleString) 
         end
         
-        function plot_spikeCount_duringMovement(node, cellData)
+        function plot_spikeRate_objectMovement(node, cellData)
             rootData = node.get(1);
-            yField = rootData.spikeCount_stimAfter1000ms;
+            yField = rootData.spikeRate_objectMovement;
             yvals = yField.mean_c;
             errs = yField.SEM;
             

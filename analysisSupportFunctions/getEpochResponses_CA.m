@@ -16,6 +16,16 @@ L = length(epochInd);
 
 sampleEpoch = cellData.epochs(epochInd(1));
 
+protocolName = sampleEpoch.get('displayName');
+if strcmp(protocolName, 'Object Motion Sensitivity')
+    protocolVersion = sampleEpoch.get('protocolVersion');
+    if isnan(protocolVersion)
+        protocolVersion = 0;
+    elseif protocolVersion == 3
+        startMotionTime = sampleEpoch.get('startMotionTime') * 1E-3;
+    end
+end
+
 intervalStart = ip.Results.StartTime * 1E-3; %s
 if ip.Results.EndTime == 0 %default to end at stimEnd
     intervalEnd = (sampleEpoch.get('stimTime') + ip.Results.EndOffset) * 1E-3; %s
@@ -492,6 +502,14 @@ for i=1:L
         outputStruct.spikeCount_mbTrailing.type = 'byEpoch';
         outputStruct.spikeCount_mbTrailing.value = zeros(1,L);
         
+        outputStruct.spikeCount_objectMovement.units = 'spikes';
+        outputStruct.spikeCount_objectMovement.type = 'byEpoch';
+        outputStruct.spikeCount_objectMovement.value = zeros(1,L);
+        
+        outputStruct.spikeRate_objectMovement.units = 'spikes';
+        outputStruct.spikeRate_objectMovement.type = 'byEpoch';
+        outputStruct.spikeRate_objectMovement.value = zeros(1,L);
+        
     end
     
     curEpoch = cellData.epochs(epochInd(i));
@@ -537,6 +555,8 @@ for i=1:L
     spikeCount = sum(spikeTimes >= intervalStart + 1);
     outputStruct.spikeCount_stimAfter1000ms.value(i) = spikeCount;
     
+    
+    
     %count spikes in 400 ms after onset and offset
     if responseIntervalLen >= 0.4
         spikeCount = sum(spikeTimes >= intervalStart & spikeTimes < intervalStart + 0.4);
@@ -558,6 +578,15 @@ for i=1:L
         spikeCount = sum(spikeTimes >= intervalStart + 0.2 & spikeTimes < intervalEnd);
         outputStruct.spikeCount_ONSET_after200ms.value(i) = spikeCount;
     end
+    
+    
+    %count spikes during movement for OMS stimuli (David 5/8/20)
+    if strcmp(protocolName, 'Object Motion Sensitivity')
+        spikeCount = sum(spikeTimes >= intervalStart + startMotionTime & spikeTimes < intervalEnd);
+        outputStruct.spikeCount_objectMovement.value(i) = spikeCount;
+        outputStruct.spikeRate_objectMovement.value(i) = spikeCount/(intervalEnd - intervalStart - startMotionTime);
+    end
+    
     
     %count spikes 100 ms offset till epoch end
     tailSpikeCount = sum(spikeTimes >= intervalEnd + 0.1 & spikeTimes < intervalEnd+tailTime);
