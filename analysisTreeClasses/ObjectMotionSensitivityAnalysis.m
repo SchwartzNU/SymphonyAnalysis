@@ -15,7 +15,7 @@ classdef ObjectMotionSensitivityAnalysis < AnalysisTree
                 params.ampModeParam = 'amp2Mode';
             end
         
-            nameStr = [cellData.savedFileName ': ' dataSetName ': LightStepAnalysis'];
+            nameStr = [cellData.savedFileName ': ' dataSetName ': ObjectMotionSensitivityAnalysis'];
             obj = obj.setName(nameStr);
             dataSet = cellData.savedDataSets(dataSetName);
             obj = obj.copyAnalysisParams(params);
@@ -62,7 +62,7 @@ classdef ObjectMotionSensitivityAnalysis < AnalysisTree
             yvals = yField.mean_c;
             errs = yField.SEM;
             
-            movementTypes = {'Center', 'Surround', 'Differential', 'Global', 'No movement'};
+            movementTypes = {'Center', 'Surround', 'Global', 'Differential', 'No movement'};
             moveInd = cell2mat(rootData.movementCategory);
             xvals = movementTypes(moveInd);
             
@@ -96,7 +96,7 @@ classdef ObjectMotionSensitivityAnalysis < AnalysisTree
             yvals = yField.mean_c;
             errs = yField.SEM;
             
-            movementTypes = {'Center', 'Surround', 'Differential', 'Global', 'No movement'};
+            movementTypes = {'Center', 'Surround', 'Global', 'Differential', 'No movement'};
             moveInd = cell2mat(rootData.movementCategory);
             xvals = movementTypes(moveInd);
             
@@ -108,17 +108,17 @@ classdef ObjectMotionSensitivityAnalysis < AnalysisTree
             titleString = {};
             
             if any(strcmp(xvals, 'Center')) && any(strcmp(xvals, 'Global'))
-                centerInd = find(strcmp(xvals, 'Center'));
-                globalInd = find(strcmp(xvals, 'Global'));
-                globalCenterRatio = yvals(globalInd)/yvals(centerInd);
-                titleString = [titleString,'Global/Center = ' + string(globalCenterRatio)];                
+                center = yvals(find(strcmp(xvals, 'Center')));
+                Global = yvals(find(strcmp(xvals, 'Global')));
+                SI = (center - Global) / (center + Global);
+                titleString = [titleString,'SI = ' + string(SI)];                
             end
             
             if any(strcmp(xvals, 'Differential')) && any(strcmp(xvals, 'Global'))
-                DiffInd = find(strcmp(xvals, 'Differential'));
-                globalInd = find(strcmp(xvals, 'Global'));
-                globalDiffRatio = yvals(globalInd)/yvals(DiffInd);
-                titleString = [titleString,'Global/Differential = ' + string(globalDiffRatio)];                
+                diff = yvals(find(strcmp(xvals, 'Differential')));
+                Global = yvals(find(strcmp(xvals, 'Global')));
+                OMSI = (diff - Global) / (diff + Global);
+                titleString = [titleString,'OMSI = ' + string(OMSI)];                
             end            
             
             title(titleString) 
