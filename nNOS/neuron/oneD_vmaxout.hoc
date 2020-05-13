@@ -1,0 +1,46 @@
+proc saveVmax() { local i, j, newIl localobj aVmax, bVmax, aPos, bPos, aOut, bOut, fOut
+
+aVmax = new Vector()
+aPos = new Vector()
+dendA[0] distance()
+for i=0,nSA-1 {
+	dendA[i] {
+		for j=0,nseg {
+			aVmax.append(vmax_extr(j/nseg))
+			aPos.append(distance(j/nseg)-aL*aG)
+		}
+	}
+}
+aOut = new Matrix(aVmax.size(),2)
+aOut.setcol(0,aPos)
+aOut.setcol(1,aVmax)
+
+bVmax = new Vector()
+bPos = new Vector()
+dendB[0] distance()
+for i=0,nSB-1 {
+	dendB[i] {
+		for j=0,nseg {
+			bVmax.append(vmax_extr(j/nseg))
+			bPos.append(distance(j/nseg)-bL*bG)
+		}
+	}
+}
+bOut = new Matrix(bVmax.size(),2)
+bOut.setcol(0,bPos)
+bOut.setcol(1,bVmax)
+
+
+newIl = (IC.get_loc*L)/aL+aS
+pop_section() // because get_loc makes the section containing IC the currently accessed section, we need to take it off the stack to prevent overflow
+fOut = new File()
+fOut.wopen($s1)
+fOut.printf("%f %f %f %f %f %f %f %f\n",aL,bL,aG,bG,aDu,bDu,aDs,bDs)
+fOut.printf("%f %f %f %f %f %f\n",RI,Rm,Cm,Agap.r,v_init,celsius) //gets actual gap resistance, not preset
+fOut.printf("%f %f %f %f %f %f %f %f %f\n",IC.amp,Id,newIl,HiRes,LoRes,aS,aE,bS,bE) // gets actual input current & location, not preset
+aOut.fprint(0,fOut)
+bOut.fprint(0,fOut)
+fOut.close()
+
+
+}

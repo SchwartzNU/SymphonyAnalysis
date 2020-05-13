@@ -1,0 +1,147 @@
+// set anatomical parameters
+aL = 20000 //length of cable A (in um)
+bL = 20000 //length of cable B (in um)
+aG = 0.5 // proportional distance of gap junction along A
+bG = 0.5 // proportional distance of gap junction along B
+aDu = 1.0 // mean diameter of cable A (in um)
+bDu = 1.0 // mean diameter of cable B (in um)
+aDs = 0 // std diameter of cable A (in um) -- not implemented
+bDs = 0 // std diameter of cable B (in um) -- not implemented
+
+// set physiological parameters
+RI = 110 // cytoplasmic resistivity (in Ohm*cm)
+Rm = 8e4 // membrane resistivity (in Ohm*cm^2)
+Cm = 1 // specific capacitance (in uF/cm^2)
+Rg = 4e3 // gap junction resistance (in MOhm)
+v_init = -64 // resting potential (in mV)
+celsius = 31
+
+// set experimental parameters
+I = 50 // current injection (in pA)
+Id = 500 // duration of current injection (in ms)
+Il = 0.4998 // proportional distance along A to inject current
+HiRes = 1 // sampling resolution within area of interest (in um)
+LoRes = 250 // sampling resolution outside area of interest (in um)
+// **Area of interest should include site of current injection and gap junction** \\
+aS = 0.45 // proportional distance along A to begin sampling
+aE = 0.85 // proportional distance along A to end sampling
+bS = 0.45 // proportional distance along B to begin sampling
+bE = 0.55 // proportional distance along B to end sampling
+
+//////////////////////////////////////////////
+//for mac
+nrn_load_dll("/Users/gregoryschwartz/Dropbox/nNOS-2 paper/Model/nmodl/x86_64/.libs/libnrnmech.so")
+//nrn_load_dll("nmodl/nrnmech.dll")
+
+tstop = 2*Id
+//dendA
+nSA = 1
+objref aSL, aNs, IC, Agap
+aSL = new Vector()
+aNs = new Vector()
+if (aS>0) {
+	nSA=nSA+1
+	aSL.append(aS*aL)
+	aNs.append(int((aE-aS)*aL/LoRes)) 
+}
+aSL.append((aE-aS)*aL)
+aNs.append(int((aE-aS)*aL/HiRes)) 
+if (aE<1) {
+	nSA=nSA+1	
+	aSL.append((1-aE)*aL)
+	aNs.append(int((aE-aS)*aL/LoRes)) 
+}
+create dendA[nSA]
+for i=0,nSA-1 {
+	if (i>0) {
+		connect dendA[i](0),dendA[i-1](1)
+	}
+	dendA[i] {
+		Ra = RI
+		insert pas
+		e_pas = v_init
+		g_pas = 1/Rm
+		insert extr
+		cm = Cm
+		L = aSL.x[i]
+		nseg = aNs.x[i]
+		diam = aDu
+		define_shape() //add 3d coordinates
+		if (i==0) {
+			distance()
+		}
+		if (Il*aL>distance(0)&&Il*aL<distance(1)) {
+			IC = new IClamp((Il*aL-distance(0))/L)
+			IC.amp = I*10^-3
+			IC.del = 0
+			IC.dur = Id
+			access dendA[i]
+		}
+		if (aG*aL>distance(0)&&aG*aL<distance(1)) {
+			Ad = (aG*aL-distance(0))/L
+			Agap = new gap(Ad)
+			Agap.r = Rg
+			Ai = i
+		}
+	}
+}
+
+//dendB
+nSB = 1
+objref bSL, bNs, Bgap
+bSL = new Vector()
+bNs = new Vector()
+if (bS>0) {
+	nSB=nSB+1
+	bSL.append(bS*bL)
+	bNs.append(int((bE-bS)*bL/LoRes)) 
+}
+bSL.append((bE-bS)*bL)
+bNs.append(int((bE-bS)*bL/HiRes)) 
+if (bE<1) {
+	nSB=nSB+1
+	bSL.append((1-bE)*bL)
+	bNs.append(int((bE-bS)*bL/LoRes)) 
+}
+create dendB[nSB]
+for i=0,nSB-1 {
+	if (i>0) {
+		connect dendB[i](0),dendB[i-1](1)
+	}
+	dendB[i] {
+		Ra = RI
+		insert pas
+		e_pas = v_init
+		g_pas = 1/Rm
+		insert extr
+		cm = Cm
+		L = bSL.x[i]
+		nseg = bNs.x[i]
+		diam = bDu
+		define_shape() //add 3d coordinates
+		if (i==0) {
+			distance()
+		}
+		if (bG*bL>distance(0)&&bG*bL<distance(1)) {
+			Bd = (bG*bL-distance(0))/L
+			Bgap = new gap(Bd)
+			Bgap.r = Rg
+			Bi = i
+		}
+	}
+}
+
+//connect gap junctions
+setpointer Agap.vgap, dendB[Bi].v(Bd)
+setpointer Bgap.vgap, dendA[Ai].v(Ad)
+
+//rotate B by pi/2 and translate to overlay gap junction
+for i=0,nSB-1 {
+	dendB[i]{
+		for j=0,n3d()-1 {
+			pt3dchange(j,aL*aG,x3d(j)-bL*bG,0,diam3d(j))
+		}
+	}
+}
+
+load_file("oneD_vmaxout.hoc")

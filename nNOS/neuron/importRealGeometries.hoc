@@ -1,0 +1,44 @@
+// Work in progress
+
+load_file("extend_neuron.hoc")
+load_file("rand_diam.hoc")
+load_file("rn.hoc")
+load_file("sWC_read.hoc")
+
+objectvar nNOS[3]
+nNOS[0] = cellfromSWc("030817Ac2_1-000.swc")
+nNOS[1] = cellfromSWc("030817Ac2_2-000.swc")
+nNOS[2] = cellfromSWc("030817Ac2_3-000.swc")
+
+// Set anatomical and biophysical properties of cell to fitted values
+forall nseg = 5
+forall diam = 1
+
+create soma, neck
+soma {
+	nseg = 1
+	L = 12
+	diam = 12
+}
+neck {
+	nseg = 1
+	L = 40
+	diam = 2
+}
+connect neck(0), soma(1)
+connect dend_0[0](0), neck(1)
+dend_0[0] L = 1
+
+forall insert pas
+forall e_pas = -61
+forall g_pas = 1/8e4
+forall {
+	Ra = 110
+	Cm = 1
+}
+celsius = 31
+soma randDiam(1,0.3)
+extend(1300) // extends all processes to 1300 um total length
+
+
+

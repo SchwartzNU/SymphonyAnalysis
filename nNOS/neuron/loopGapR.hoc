@@ -1,0 +1,15 @@
+// NB: fname declared in cellFit
+for i = 0,rGaps.size()-1 {
+	GapR(rGaps.x[i])
+	sprint(fName,"%s/gap%d.rinput",cellDir,i+1)
+	rInOutput(fName)
+
+	// perform simulation
+	finitialize(v_init)
+	frecord_init()
+ 	continuerun(tstop)
+	// output CC
+	sprint(fName,"%s/gap%d.cc",cellDir,i+1)
+	negCoupling(midCell,fName)
+
+} 
