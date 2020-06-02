@@ -1,0 +1,181 @@
+
+///////////// unconstrained template
+begintemplate equivCyl
+public dend, soma
+create dend, soma
+proc init() {
+	create dend, soma
+	connect dend(0), soma(1)
+}
+endtemplate equivCyl
+/////////////
+
+
+///////////// cell initialization
+load_file("sWC_read.hoc")
+
+nCells = 1
+objectvar nNOS[nCells]
+//nNOS = new cellfromSWc("C:/Users/Zach/Dropbox/nNOS-2 paper/Model/011217Ac1_Volume_3.swc")
+for i = 0, nCells-1 {
+	nNOS[i] = new equivCyl()
+	//nNOS[i] = new cellfromSWc("011217Ac1_Volume_3.swc")
+}
+/////////////
+
+
+///////////// procedure initialization
+load_file("params.hoc")
+load_file("rn.hoc")
+load_file("lambda.hoc")
+//load_file("getDiams.hoc")
+//for mac
+nrn_load_dll("/Users/gregoryschwartz/Dropbox/nNOS-2 paper/Model/nmodl/x86_64/.libs/libnrnmech.so")
+/////////////
+
+
+///////////// simulation setup
+objref IC[nCells]
+access nNOS[0].soma
+nNOS[0].soma{
+	nseg = 1
+	pt3dclear()
+	L = 12
+	diam = 12
+
+	IC[0] = new IClamp(0.5)
+	IC[0].del = 499.9
+	IC[0].dur = 500
+	IC[0].amp = -0.05
+}
+
+tstop=1499.9
+v_init=-61.0
+dt = 0.1
+celsius = 31.0
+
+/*
+forall nseg = 5
+nNOS.soma nseg=1
+nNOS.dend[2] nseg=100
+*/
+
+//nNOS[0].dend nseg = 100
+//nNOS.dend L = 2600 //about the maximum distance from soma
+//nNOS[0].dend diam = 2
+
+///////////// configure second cell
+/*nNOS[1].soma{
+	nseg = 1
+	pt3dclear()
+	L = 12
+	diam = 12
+
+	IC[1] = new IClamp(0.5)
+	IC[1].del = 499.9
+	IC[1].dur = 500
+	IC[1].amp = -0.0472222
+}*/
+//nNOS[1].dend nseg = 100
+//nNOS[1].dend diam = 2
+
+/////////////
+
+nNOS[0].soma distance()
+objref dFromBase
+objref allDiams
+objref secIDs
+
+dFromBase = new Vector()
+allDiams = new Vector()
+secIDs = new Vector()
+
+thisSec = -1
+thisDiam = 0
+forall {
+	thisSec=thisSec+1
+	for i = 0,n3d()-1 {
+		thisDist = distance(0)+arc3d(i)
+		dFromBase.append(thisDist)
+		thisDiam = diam3d(i)
+		allDiams.append(thisDiam)
+		secIDs.append(thisSec)
+		pt3dchange(i,1.098*exp(-0.03926*thisDist)+1.395*exp(-0.0003946*thisDist))
+	}
+}
+
+/*
+objref diamFile
+diamFile = new File()
+diamFile.wopen("diam_by_distance.txt")
+for i= 0, dFromBase.size()-1 {
+	diamFile.printf("%g %g %d\n",dFromBase.x[i],allDiams.x[i],secIDs.x[i])
+}
+diamFile.close()
+*/
+
+forall insert pas
+forall e_pas = v_init
+
+/*
+forall insert cagk
+forall cao = 2
+*/
+
+/*
+forall insert hh
+forall el_hh = -61
+forall gnabar_hh = 0
+*/
+
+/*
+objref v_naught
+objref v_x
+v_naught = new Vector()
+v_x = new Vector()
+//v_naught.record(&nNOS.dend[2].v(0.25))
+//v_x.record(&nNOS.dend[2].v(0.75))
+
+v_naught.record(&nNOS.dend.v(0.25))
+v_x.record(&nNOS.dend.v(0.75))
+/////////////
+//lambda(2600,v_naught,v_x)
+*/
+
+///////////// simulation loop
+
+/*
+objectvar somaV
+somaV = new Vector()
+somaV.record(&nNOS.soma.v(0.5))
+
+objref currents
+currents = new Vector()
+objref currFile
+currFile = new File()
+currFile.ropen("E:/CurrentSeriesAmp.txt")
+while (!currFile.eof()) {
+	currents.append(currFile.scanvar())
+}
+//currents.append(-50,-22.57,-8.85,8.67,23.06,50,100)
+
+
+objref outMat
+outMat = new Matrix(15000,currents.size())
+
+
+objref fileOut
+fileOut = new File()
+fileOut.wopen("cylin_current_series.dat","w")
+
+for i = 0, currents.size()-1 {
+	print "Clamping at ", currents.x[i], "pA..."
+	IC.amp = currents.x[i]/1000
+	init()
+	continuerun(tstop)
+	outMat.setcol(i, somaV)
+}
+
+outMat.fprint(fileOut, " %g")
+fileOut.close()
+*/

@@ -1,0 +1,25 @@
+proc randDiam() { local i, j, q localobj SL, RAN
+SL = new SectionList()
+RAN = new Random()
+RAN.normal($1,$2^2)
+distance()
+SL.wholetree()
+	forsec SL {
+		if (distance(0)!=0) { //not soma
+			/*for j=0,99 {
+				diam(j/100:(j+1)/100) = 1.098*exp(-0.03926*distance(j/100))+1.395*exp(-0.0003946*distance(j/100)):1.098*exp(-0.03926*distance((j+1)/100))+1.395*exp(-0.0003946*distance((j+1)/100))
+
+			}*/
+			if (diam!=2) { //not neck
+				nS = nseg
+				for j=0,nS-1 {
+					q = RAN.repick()
+					if (q<0.5) {
+						q = 0.5
+					}
+					diam(j/nS:(j+1)/nS) = q:q
+				}
+			}
+		}
+	}
+}

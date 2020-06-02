@@ -1,0 +1,31 @@
+strdef mySystem
+strdef cellDir
+objref rGaps
+objref f
+
+rGaps = new Vector()
+
+///////////////// Parameters /////////////////////
+mySystem = "OSX"
+//mySystem = "win"
+//cellDir="BowtieSlice"
+//cellDir="makeNetworkMATLAB/ModelNetworks/varyGJDensity/density\=848_seed\=1"
+//cellDir="tempNetwork"
+
+f = new File()
+f.ropen("curFolder.txt")
+f.scanstr(cellDir)
+f.close()
+nCells = 36
+target = 580 // for Rinput, used by fitRInput
+rGaps.append(1e10,1e5,5e4,1e4,5e3,1e3,9e2,8e2,7e2,6e2,5e2,4e2,3e2,2e2,100,50,20) // to build CC/Rinput curves, used by loopGapR
+//rGaps.append(227)
+
+//////////////////////////////////////////////////
+chdir("/Users/gregoryschwartz/Dropbox/nNOS-2\ paper/Model")
+
+load_file("cellFitMatlabv2.hoc")
+load_file("fitRinput.hoc")
+load_file("loopGapR.hoc")
+
+quit()

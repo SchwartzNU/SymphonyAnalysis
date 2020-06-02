@@ -1,0 +1,27 @@
+Ri = 110
+Cm = 1
+Rm = 1.289e5
+//Rm = 39709.555
+//dendL = 1480.5
+//lam = 1343.5
+
+proc init() {
+	forall {
+		Ra = Ri
+		cm = Cm
+		//Ra = Rm * nNOS.dend.diam*(10^-4)/4/((lam*(10^-4))^2)
+		//Rm = Ri*4/(nNOS.dend.diam*(10^-4))*((lam*(10^-4))^2)
+
+		g_pas = 1/Rm	
+		//gl_hh = 1/Rm
+	}
+	//nNOS[0].dend.L = dendL
+	//nNOS[1].dend.L = dendL
+	finitialize(v_init)
+	//if (cvode.active()) {
+	//	cvode.re_init()
+	//} else {
+		fcurrent()
+	//}
+	frecord_init()
+}

@@ -1,0 +1,44 @@
+//for mac
+//nrn_load_dll("/Users/gregoryschwartz/Dropbox/nNOS-2 paper/Model/nmodl/x86_64/.libs/libnrnmech.so")
+strdef outDir
+outDir = "/Users/gregoryschwartz/Dropbox/nNOS-2 paper/Model/oneD_out_loop"
+dt = 20
+objref ClampAmp
+ClampAmp = new Vector()
+ClampAmp.indgen(5,100,5) // clamp in 5 pA steps
+
+GapOpen = 4e3
+GapClosed = 8e3
+
+/////////////////////////////
+
+steps_per_ms = 1/dt
+strdef fName
+
+GJ_dist = 20
+
+print "Starting open loop..."
+AgapB.r = GapOpen
+AgapC.r = GapOpen
+Bgap.r = GapOpen
+for j = 0,ClampAmp.size()-1 {
+		IC.amp = ClampAmp.x[j]/1000
+		startsw()
+		run() //initializes and runs
+		sprint(fName,"%s/%dum_%dpA_dark.dat",outDir,GJ_dist,ClampAmp.x[j])
+		saveVmax(fName)
+		print "Loop took ",stopsw(),"seconds. Saved to ",fName
+}
+
+print "Starting closed loop..."
+AgapB.r = GapClosed
+AgapC.r = GapClosed
+Bgap.r = GapClosed
+for j = 0,ClampAmp.size()-1 {
+		IC.amp = ClampAmp.x[j]/1000
+		startsw()
+		run() //initializes and runs
+		sprint(fName,"%s/%dum_%dpA_light.dat",outDir,GJ_dist,ClampAmp.x[j])
+		saveVmax(fName)
+		print "Loop took ",stopsw(),"seconds. Saved to ",fName
+}

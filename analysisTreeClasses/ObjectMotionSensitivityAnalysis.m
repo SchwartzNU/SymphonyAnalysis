@@ -15,13 +15,14 @@ classdef ObjectMotionSensitivityAnalysis < AnalysisTree
                 params.ampModeParam = 'amp2Mode';
             end
         
-            nameStr = [cellData.savedFileName ': ' dataSetName ': LightStepAnalysis'];
+            nameStr = [cellData.savedFileName ': ' dataSetName ': ObjectMotionSensitivityAnalysis'];
             obj = obj.setName(nameStr);
             dataSet = cellData.savedDataSets(dataSetName);
             obj = obj.copyAnalysisParams(params);
             obj = obj.copyParamsFromSampleEpoch(cellData, dataSet, ...
                 {'RstarMean', 'RstarIntensity', params.ampModeParam, 'offsetX', 'offsetY', 'ampHoldSignal'});
-            obj = obj.buildCellTree(1, cellData, dataSet, {@(epoch)movementCategory(epoch)});
+            %obj = obj.buildCellTree(1, cellData, dataSet, {@(epoch)movementCategory(epoch)});
+            obj = obj.buildCellTree(1, cellData, dataSet, {'motionMode'});
         
         end
         
@@ -57,10 +58,14 @@ classdef ObjectMotionSensitivityAnalysis < AnalysisTree
     methods(Static)
         function plot_spikeCount_stimAfter1000ms(node, cellData)
             rootData = node.get(1);
-            xvals = rootData.movementCategory;
             yField = rootData.spikeCount_stimAfter1000ms;
             yvals = yField.mean_c;
             errs = yField.SEM;
+            
+            movementTypes = {'Center', 'Surround', 'Global', 'Differential', 'No movement'};
+            moveInd = cell2mat(rootData.movementCategory);
+            xvals = movementTypes(moveInd);
+            
             bar(categorical(xvals), yvals)
             hold on
             errorbar(categorical(xvals), yvals, errs, 'o');
@@ -81,9 +86,43 @@ classdef ObjectMotionSensitivityAnalysis < AnalysisTree
                 globalDiffRatio = yvals(globalInd)/yvals(DiffInd);
                 titleString = [titleString,'Global/Differential = ' + string(globalDiffRatio)];                
             end            
-
+            
+            title(titleString) 
+        end
+        
+        function plot_spikeRate_objectMovement(node, cellData)
+            rootData = node.get(1);
+            yField = rootData.spikeRate_objectMovement;
+            yvals = yField.mean_c;
+            errs = yField.SEM;
+            
+            movementTypes = {'Center', 'Surround', 'Global', 'Differential', 'No movement'};
+            moveInd = cell2mat(rootData.movementCategory);
+            xvals = movementTypes(moveInd);
+            
+            bar(categorical(xvals), yvals)
+            hold on
+            errorbar(categorical(xvals), yvals, errs, 'o');
+            ylabel(['Spike Count stimAfter1000ms (' yField.units ')']);
+            
+            titleString = {};
+            
+            if any(strcmp(xvals, 'Center')) && any(strcmp(xvals, 'Global'))
+                center = yvals(find(strcmp(xvals, 'Center')));
+                Global = yvals(find(strcmp(xvals, 'Global')));
+                SI = (center - Global) / (center + Global);
+                titleString = [titleString,'SI = ' + string(SI)];                
+            end
+            
+            if any(strcmp(xvals, 'Differential')) && any(strcmp(xvals, 'Global'))
+                diff = yvals(find(strcmp(xvals, 'Differential')));
+                Global = yvals(find(strcmp(xvals, 'Global')));
+                OMSI = (diff - Global) / (diff + Global);
+                titleString = [titleString,'OMSI = ' + string(OMSI)];                
+            end            
+            
             title(titleString) 
         end
     end
-    
 end
+    

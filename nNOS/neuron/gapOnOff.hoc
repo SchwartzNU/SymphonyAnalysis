@@ -1,0 +1,5 @@
+proc GapR() { local j
+	for j=0,nGaps-1 {
+		junc[j].r = $1
+	}
+}

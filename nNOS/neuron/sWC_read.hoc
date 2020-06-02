@@ -1,0 +1,160 @@
+begintemplate cellfromSWc
+public dend, soma
+create dend[2], soma
+
+proc init() { local thisID, thisParent, isSectionParent, nSeg, nSec localobj swc, ID, Xpos, Ypos, Zpos, rad, parentID, numChild, sectionEnds, tempSectionParents, sectionParents, sectionID
+
+/*create dend
+access dend
+
+dend.nseg = 1
+dend.Ra = 100.0
+dend pt3dclear() */
+
+/*objectvar swc
+objectvar ID
+objectvar Xpos
+objectvar Ypos
+objectvar Zpos
+objectvar rad
+objectvar parentID
+objectvar numChild
+
+objectvar sectionEnds
+objectvar tempSectionParents
+objectvar sectionParents
+objectvar sectionID*/
+
+thisID=0
+thisParent=0
+isSectionParent=0
+//origin=0
+
+strdef tempStr
+
+
+//tempval = 0
+//curr_section = 0
+
+
+swc = new File()
+ID = new Vector()
+Xpos = new Vector()
+Ypos = new Vector()
+Zpos = new Vector()
+rad = new Vector()
+parentID = new Vector()
+numChild = new Vector()
+
+sectionEnds = new Vector()
+tempSectionParents = new Vector()
+sectionParents = new Vector()
+sectionID = new Vector()
+
+///////////
+// Read segment information from file
+///////////
+
+swc.ropen($s1)
+
+for i = 1,6 {
+	swc.gets(tempStr) // throw out header information
+}
+
+while (!swc.eof()) { // continue until out of variables
+	thisID=swc.scanvar()-1
+	ID.append(thisID)
+	numChild.append(0)
+	swc.scanvar()
+	Xpos.append(swc.scanvar())
+	Ypos.append(swc.scanvar())
+	Zpos.append(swc.scanvar())
+	rad.append(swc.scanvar())
+	thisParent=swc.scanvar(1)-1
+	parentID.append(thisParent)
+	if (thisParent>=0) {
+		numChild.x[thisParent]=numChild.x[thisParent]+1 // for each point, count how many branch off
+	} //else {
+	//	origin=thisID
+	//}
+}
+
+swc.close() // close file
+
+///////////
+// Process segment information
+///////////
+
+nSeg=ID.size()
+//tempParents.where(numChild, ">", 1)
+//sectionParents.append(origin,tempParents)
+sectionEnds.indvwhere(numChild, ">", 1) //not quite -- sections branch from these
+
+sectionParents.append(0)
+for i=0, sectionEnds.size()-1 {
+	tempSectionParents.indvwhere(parentID,"==",sectionEnds.x[i])
+	sectionParents.append(tempSectionParents)
+}
+
+sectionParents.sort()
+nSec=sectionParents.size()
+
+create dend[nSec]
+
+for i=0, nSec-1{
+	//dend[i] nseg=1
+	//dend[i] Ra=110.0
+	dend[i] pt3dclear()
+}
+
+dend[0] pt3dadd(Xpos.x[0],Ypos.x[0],Zpos.x[0],2*rad.x[0])
+sectionID.append(0)
+for i=1, nSeg-1 {
+	isSectionParent=sectionParents.indwhere("==", ID.x[i])
+	if (isSectionParent!=-1) {
+		sectionID.append(isSectionParent)
+	} else {
+		sectionID.append(sectionID.x[parentID.x[i]])
+	}
+	dend[sectionID.x[i]] pt3dadd(Xpos.x[i],Ypos.x[i],Zpos.x[i],2*rad.x[i])
+}
+
+for i=1, nSec-1 {
+	connect dend[i](0), dend[sectionID.x[parentID.x[sectionParents.x[i]]]](1)
+}
+
+create soma
+
+/*access soma
+
+soma nseg=1
+soma Ra = 110.0
+soma pt3dclear()
+soma L = 12
+soma diam = 12
+
+*/
+
+connect dend[0](0), soma(1)
+
+}
+endtemplate cellfromSWc
+
+
+//dend[0] pt3dclear()
+//dend[0] nseg = 5
+//dend[0] L = 12
+//dend[0] diam = .5
+
+//
+//
+//
+
+//dark R_in = 199.05 +/- 21.87 Mohm
+//MFA R_in  = 588.56 +/- 64.02 Mohm
+
+
+// V_rest = -61 +/- 2 mV (in darkness)
+// C_mem = 1 microF/cm^2
+// R_axial = 110 Ohm*cm
+// set R_mem by adjusting until R_input fits experimental data

@@ -1,0 +1,138 @@
+//inputs: branch x locs (x1,x2,...,xn), branch y locs (y1,y2,...,yn)
+//output: cell with NO spatial information, just Length and connectivity
+begintemplate cellFromMatlab
+public soma, neck, dend
+create soma, neck, dend[1]
+
+proc init() { local xind, yind, i localobj startx, endx, starty, endy, parentID
+	startx=$o1.getcol(0)
+	starty=$o1.getcol(1)
+	endx=$o1.getcol(2)
+	endy=$o1.getcol(3)
+	
+	parentID = new Vector()
+
+	// default parameters for soma and neck
+	create soma
+	soma {
+		nseg = 1
+		L = 12
+		diam = 12
+		Ra = 110
+		Cm = 1
+	}
+	create neck
+	neck {
+		nseg = 1
+		L = 40
+		diam = 2
+		Ra = 110
+		Cm = 1
+	}
+	connect neck(0), soma(1)
+
+	//match with parents
+	
+	for i=0,startx.size()-1 {
+		if (i==0) { // is this the first?
+			parentID.append(-1)
+		} else {
+			if (startx.x[i]==startx.x[0]&&starty.x[i]==starty.x[0]) { // does this share the same parent as first?
+				parentID.append(-1)
+			} else {
+				xind = endx.indwhere("==",startx.x[i])
+				yind = endy.indwhere("==",starty.x[i])
+				if (xind==yind) { //do x and y agree?
+					//layerID.append(layerID.x[xind]+1)
+					parentID.append(xind)
+				} else {
+					print "Error: Disagreement between x and y locations."
+					stop
+				}
+			}
+		}
+	}
+	//create tree
+	create dend[parentID.size()]
+	for i=0,parentID.size()-1 {
+		dend[i] {
+			nseg = 200
+			L = sqrt((startx.x[i]-endx.x[i])^2+(starty.x[i]-endy.x[i])^2)
+			diam = 0.5
+			Ra = 110
+			Cm = 1
+			insert extr
+		}
+		if (parentID.x[i]==-1) {
+			connect dend[i](0), neck(1)
+		} else {
+			connect dend[i](0), dend[parentID.x[i]](1)
+		}
+	}
+
+}
+endtemplate cellFromMatlab
+////////////////
+////////////////
+////////////////
+////////////////
+////////////////
+////////////////
+obfunc loadFromMatlab() { localobj datFile, c1, c2, c3, c4, outMat
+
+	c1 = new Vector()
+	c2 = new Vector()
+	c3 = new Vector()
+	c4 = new Vector()
+
+	datFile = new File()
+	datFile.ropen($s1)
+	while (!datFile.eof()) {
+		c1.append(datFile.scanvar())
+		c2.append(datFile.scanvar())
+		c3.append(datFile.scanvar())
+		c4.append(datFile.scanvar())
+	}
+	datFile.close()
+	outMat = new Matrix(c1.size(),4)
+	outMat.setcol(0,c1)
+	outMat.setcol(1,c2)
+	outMat.setcol(2,c3)
+	outMat.setcol(3,c4)
+	return outMat
+}
+////////////////
+////////////////
+////////////////
+////////////////
+////////////////
+////////////////
+obfunc parseMatlabConnectivity() { localobj datFile, aCell, bCell, aBranch, bBranch, aDist, bDist, outMat
+
+	aCell = new Vector()
+	bCell = new Vector()
+	aBranch = new Vector()
+	bBranch = new Vector()
+	aDist = new Vector()
+	bDist = new Vector()
+
+	datFile = new File()
+	datFile.ropen($s1)
+	while (!datFile.eof()) {
+		aCell.append(datFile.scanvar()-1)
+		bCell.append(datFile.scanvar()-1)
+		aBranch.append(datFile.scanvar()-1)
+		bBranch.append(datFile.scanvar()-1)
+		aDist.append(datFile.scanvar())
+		bDist.append(datFile.scanvar())
+	}
+	datFile.close()
+	outMat = new Matrix(aCell.size(),6)
+	outMat.setcol(0,aCell)
+	outMat.setcol(1,bCell)
+	outMat.setcol(2,aBranch)
+	outMat.setcol(3,bBranch)
+	outMat.setcol(4,aDist)
+	outMat.setcol(5,bDist)
+	return outMat
+}

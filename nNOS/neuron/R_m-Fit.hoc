@@ -1,0 +1,171 @@
+load_file("/Users/gregoryschwartz/Dropbox/nNOS-2 paper/Model/sWC_read.hoc")
+
+//sWC_read("C:/Users/Zach/Dropbox/nNOS-2 paper/Model/011217Ac1_Volume_3.swc")
+
+// obj defs
+objref Rm
+objref outRa
+objref IC
+objref somaV
+objref dendA
+objref dendB
+objref Rinput
+objectvar nNOS
+objref Vmax
+objref tau
+objref fractVoltage
+objref grph1
+objref grph2
+objref grph3
+objref grph4
+objref grph5
+
+Rm = new Vector()
+outRa = new Vector()
+somaV = new Vector()
+dendA = new Vector()
+dendB = new Vector()
+Rinput = new Vector()
+nNOS = new cellfromSWc("/Users/gregoryschwartz/Dropbox/nNOS-2 paper/Model/011217Ac1_Volume_3.swc")
+Vmax = new Vector()
+tau = new Vector()
+fractVoltage = new Vector()
+
+// loop setup
+v_rest = -61.0
+tstop = 600.0
+Rm.indgen(1000,50000,1000)
+Ain = 0.1
+celsius = 32.0
+dt = 0.025
+lambda_v = 150
+
+alpha = 8000 //starting multiplier for Ra
+tol = .001 //fractional tolerance for decay (1/e)
+startingdelta = 100 //change Ra by this much (+/-)  
+decr = .5 // if Ra passes ideal value, decrease delta by this much (*-/) and change direction 
+
+//create and define soma
+//create soma
+access nNOS.soma
+nNOS.soma{
+	nseg = 1
+	pt3dclear()
+	L = 12
+	diam = 12
+
+	IC = new IClamp(0.5)
+	IC.del = 100
+	IC.dur = 500
+	IC.amp = Ain
+}
+//connect nNOS.dend[0](0), soma(1)
+
+//	set nseg
+forall nseg = 5
+nNOS.soma nseg=1
+nNOS.dend[2] diam=1.6 //set constant diam to allow length constant manipulation
+nNOS.dend[2] nseg=402 //length 402.239 um
+
+// record
+somaV.record(&nNOS.soma.v(0.5))
+
+oneLength=lambda_v/nNOS.dend[2].L
+dendA.record(&nNOS.dend[2].v(0))
+dendB.record(&nNOS.dend[2].v(oneLength))
+
+//forall Ra = 110.0	
+forall insert pas
+forall e_pas = v_rest
+
+//loop through param space
+for i = 0, Rm.size()-1 {
+	print "Setting Rm to ", Rm.x[i], "..."
+	//	set biophysical params
+	forall g_pas = 1/Rm.x[i]
+	lengthcheck = 0
+	lasterror = 0
+	delta=startingdelta
+	forall Ra = Rm.x[i]/(lambda_v*10^-4)^2*alpha
+	//forall Ra = nNOS.dend[2].diam*10^-4*Rm.x[i]/(2*(lambda_v*10^-4)^2)
+
+	while (lengthcheck==0) {
+		//	run simulation
+		finitialize(v_rest)
+		frecord_init()
+ 		continuerun(tstop)
+
+ 		temp=(dendB.max()-v_rest)/(dendA.max()-v_rest)
+ 		//print(temp)
+ 		error=temp-0.3679
+ 		if (abs(error)<tol) { //check to see if temp is within tolerance
+			lengthcheck=1
+			print "Lambda_v is within tolerance (error = ", error,", alpha = ", alpha,", Ra = ", nNOS.soma.Ra,")! Proceeding with next simulation..."
+ 		} else {
+ 			if (error>0) { // decay is too small -> lambda too high -> increase Ra
+ 				if (lasterror==-1) {
+ 					delta=delta*decr
+ 				}
+ 				print "Lambda_v too high (error = ", error,", alpha = ", alpha,", Ra = ", nNOS.soma.Ra,")!"
+ 				alpha = alpha+delta
+ 				forall Ra = Rm.x[i]/lambda_v^2*alpha
+ 				print "Increasing Ra to ", nNOS.soma.Ra, "..."
+ 				lasterror=1
+ 			} else { // decrease Ra
+ 				if (lasterror==1) {
+ 					delta=delta*decr
+ 				}
+ 				print "Lambda_v too low  (error = ", error,", alpha = ", alpha,", Ra = ", nNOS.soma.Ra,")!"
+ 				alpha = alpha-delta
+ 				forall Ra = Rm.x[i]/lambda_v^2*alpha 
+ 				print "Decreasing Ra to ", nNOS.soma.Ra, "..."
+ 				lasterror=-1
+ 			}
+ 		}
+
+
+ 	}
+
+// 	post-process
+	outRa.append(nNOS.soma.Ra)
+
+	Vmax.append(somaV.max())
+	Rinput.append((Vmax.x[i]-v_rest)/Ain)
+
+	somaV.sub(v_rest)
+	// indwhere (first) somaV > 63.2% of Vmax.x[i]
+	tau.append((somaV.indwhere(">=",(Vmax.x[i]-v_rest)*0.63212)*dt)-IC.del)
+
+	fractVoltage.append(temp)
+//	save out
+
+}
+
+
+grph1 = new Graph()
+
+Rinput.plot(grph1,Rm)
+
+grph2 = new Graph()
+
+Vmax.plot(grph2,Rm)
+
+grph3 = new Graph()
+
+tau.plot(grph3,Rm)
+
+grph4 = new Graph()
+
+dendA.plot(grph4)
+dendB.plot(grph4)
+
+grph5 = new Graph()
+
+outRa.plot(grph5,Rm)
+
+
+grph1.label("Rinput vs. Rm")
+grph2.label("Vmax vs. Rm")
+grph3.label("tau vs. Rm")
+grph4.label("V(x) and V(x+lambda_v) vs. t for max Rm")
+grph5.label("Ra vs Rm")

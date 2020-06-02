@@ -1,0 +1,38 @@
+proc negCoupling() { local i localobj cc, fileOut
+	cc=new Vector()
+	for i=0,nCells-1 {
+		cc.append(nNOS[i].soma.vmin_extr)
+	}
+	cc.sub(v_init)
+	cc.div(cc.x[$1])
+
+	fileOut = new File()
+	fileOut.wopen($s2)
+	cc.printf(fileOut,"%f\n")
+	fileOut.close()
+}
+
+proc posCoupling() { local i localobj cc, fileOut
+	cc=new Vector()
+	for i=0,nCells-1 {
+		cc.append(nNOS[i].soma.vmax_extr)
+	}
+	cc.sub(v_init)
+	cc.div(cc.x[$1])
+
+	fileOut = new File()
+	fileOut.wopen($s2)
+	cc.printf(fileOut,"%f\n")
+	fileOut.close()
+}
+
+proc rInOutput() { local i localobj rin, fileOut
+	rin = new Vector()
+	for i =0,nCells-1 {
+		nNOS[i].soma rin.append(rn())
+	}
+	fileOut = new File()
+	fileOut.wopen($s1)
+	rin.printf(fileOut,"%f\n")
+	fileOut.close()
+}
