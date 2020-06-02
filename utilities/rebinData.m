@@ -1,57 +1,58 @@
-function [rebinnedData,binIdx] = rebinData(data,sizeVec,sizeBins,timeVec,timeRange)
-tol=1e-3;
-delta = 100; %this is terrible, no good, god awful
+function feat = rebinData(data,sizeVec,sizes,timeVec,time,dt)
+% Given a cell array of PSTH data matrices, a corresponding cell array of
+% sizeVecs, a D-by-2 matrix timeVec of start and end times of each recording, and
+% the binning time width dt, returns the D-by-R features matrix corresponding to
+% the R-many (sizes,time) subscript pairs for each cell, using nearest neighbors
+% interpolation and extrapolation.
+% Note that time must be R-by-1 and sizes must by 1-by-R.
 
-timeMinErr = cellfun(@(x) min(abs(x-timeRange(1))),timeVec,'uniformoutput',false);
-timeMaxErr = cellfun(@(x) min(abs(x-timeRange(2))),timeVec,'uniformoutput',false);
+% solves the problem efficiently by imputing each dimension sequentially,
+% which is possibly due to the structure of the recording
 
-timeMinIdx = cellfun(@(x,y) find(abs(x-timeRange(1))==y),timeVec,timeMinErr,'uniformoutput',false);
-timeMaxIdx = cellfun(@(x,y) find(abs(x-timeRange(2))==y),timeVec,timeMaxErr,'uniformoutput',false); %this is just the other plus some constant
-binIdx = cellfun(@(x) nthfind(abs(bsxfun(@minus,x,sizeBins'))==min(abs(bsxfun(@minus,x,sizeBins')),[],2)),sizeVec,'uniformoutput',false);
-
-rebinnedData = cellfun(@subsassgnif,data,binIdx,timeMinIdx,timeMaxIdx,'uniformoutput',false);
-
-[timeMinErr{cellfun(@isempty,timeMinErr)}]=deal(0);
-[timeMaxErr{cellfun(@isempty,timeMaxErr)}]=deal(0);
-
-tne = cell2mat(timeMinErr)>tol;
-txe = cell2mat(timeMaxErr)>tol;
-temp=[];
-rebinnedData(tne) = cellfun(@padleft,rebinnedData(tne),timeMinErr(tne),'uniformoutput',false);
-rebinnedData(txe) = cellfun(@padright,rebinnedData(txe),timeMaxErr(txe),'uniformoutput',false);
-
-%if time points are missing, then rebinnedData will not be uniform
-%we will just pad the edges of the data in time
-
-    function a=padleft(x,y)
-        if isempty(x) || isempty(y)
-            a=[];
-            return
-        end
-        a=cat(2,repmat(x(:,1),1,y*delta),x);
-    end
-    function a=padright(x,y)
-        if isempty(x) || isempty(y)
-            a=[];
-            return
-        end
-        a=cat(2,x,repmat(x(:,end),1,y*delta));
-    end
+%get the problem size
+nD = numel(data);
+if nD ==0
+   feat =[];
+   return
 end
 
-function c = nthfind(inMat)
-%just finds columns for unique rows
-[r,c] = find(inMat);
-c = c(logical(diff([0;r])));
+nR = numel(sizes);
 
+%convert the desired times to indices for each cell
+tInd = round(bsxfun(@minus,time',timeVec(:,1))/dt+1);
+% uint16 is used to negotiate rounding?
+
+%if we're asking for an index before the start, that means we need to
+%extrapolate from the first time point
+tInd(tInd<1)=1;
+
+%we will output the result as feat
+feat = zeros(nD,nR);
+%i = zeros(nR,1,'uint16');
+%s = zeros(nR,1,'uint16');
+for n=1:nD %for each cell
+    d = data{n}; %grab the data
+    
+    [nS,nT] = size(d); %how many points did we record?
+    
+    i = tInd(n,:)'; %grab the desired times
+    i(i>nT) = nT; %if we're asking for an index after the end, extrapolate from the end
+    %note that it's much faster to impute in the time dimension since we
+    %know that we've recorded at every dt between the start and end
+    
+
+    [~,s] = min(abs(bsxfun(@minus,sizeVec{n},sizes')),[],2);
+    %assign s to the nearest spot size that we recorded
+    %note that if two spot sizes are tied, we take the smaller spot size
+    %this is convenient but also logical, since cell behavior tends to
+    %change more rapidly at larger spot sizes
+    
+    
+    %feat(n,:) = d(sub2ind([nS nT],s,i));
+    feat(n,:) = d ( s + nS*(i-1) );
+    %convert the paired subscripts into linear indices, and assign the
+    %corresponding data to feat
 end
 
 
-
-function a = subsassgnif(x,y,z,w)
-if isempty(x) || isempty(y) || isempty(z) || isempty(w)
-    a=[];
-    return
-end
-a = x(y,z:w);
 end

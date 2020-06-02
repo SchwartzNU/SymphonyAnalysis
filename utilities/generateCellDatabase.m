@@ -2,7 +2,7 @@ global CELL_DATA_MASTER;
 global PREFERENCE_FILES_FOLDER;
 global SERVER_ROOT;
 
-regenerate_flag = true;
+regenerate_flag = false;
 
 fid = fopen([PREFERENCE_FILES_FOLDER 'DataSetAnalyses.txt'], 'r');
 analysisNameTable = textscan(fid, '%s\t%s');
