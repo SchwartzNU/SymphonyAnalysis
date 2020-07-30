@@ -10,5 +10,3 @@ lib/*
 
 GUIs/dendritePolygonDatabase.mat
 imageAnalysis/.DS_Store
-GUIs/TreeBrowserGUI.m
-GUIs/TreeBrowserGUI.m
