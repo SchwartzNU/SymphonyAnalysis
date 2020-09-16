@@ -1,6 +1,6 @@
 %{
 # RecordedNeuron
--> sl.Neuron
+-> sl_test.Neuron
 
 ---
 position_x : float              # x position in the retina, optic nerve at 0,0
@@ -35,7 +35,17 @@ classdef RecordedNeuron < dj.Imported
             cellNames = strtrim(split(key.cell_id,','));
             N_cellData = length(cellNames);
             for n=1:N_cellData
+                [curName, ch] = strtok(cellNames{n}, '-');
+                channel = 1;
+                if ~isempty(ch)
+                    channel = str2double(ch(4));
+                end
+%                 key.cell_data_list{n} = curName;
+%                 key.channel_list(n) = channel;
+                
                 cellData = loadAndSyncCellData(curName);
+%                 key.dataset_list{n} = cellData.savedDataSets;
+                
                 if isKey(cellData.attributes, 'symphonyVersion') %if has this key at all, it has fname
                     raw_data_filename = cellData.get('fname');
                 else
@@ -97,12 +107,7 @@ classdef RecordedNeuron < dj.Imported
                 
                 %add all epochs
                 for e=1:key.number_of_epochs
-                    %                 datasetsMap = cellData.savedDataSets;
-                    %                 k = datasetsMap.keys;
-                    %                 s = struct;
-                    %                 s.cell_id = key.cell_id;
-                    %                 s.channel = channel;
-                    %                 s.cell_data = curName;
+                    %disp(['trying add epoch ' num2str(e)]);                    
                     epoch_insert_error = false;
                     epoch_init_struct = struct;
                     epoch_init_struct.cell_id = key.cell_id;
@@ -150,7 +155,7 @@ classdef RecordedNeuron < dj.Imported
                     qstruct.cell_id = epoch_init_struct.cell_id;
                     qstruct.number = epoch_init_struct.number;
                     qstruct.cell_data = epoch_init_struct.cell_data;
-                    q = sl.Epoch & qstruct;
+                    q = sl_test.Epoch & qstruct;
                     if q.count == 0 % epoch not already inserted
                         %load protocol params
                         epMap = ep.attributes;
@@ -165,10 +170,25 @@ classdef RecordedNeuron < dj.Imported
                         end
                         epoch_init_struct.protocol_params = paramStruct;
                         if ~epoch_insert_error
-                            insert(sl.Epoch, epoch_init_struct, 'REPLACE');
+                            insert(sl_test.Epoch, epoch_init_struct, 'REPLACE');
                         end
                     end
                 end
+                
+               %add all datasets
+               datasetNames = cellData.savedDataSets.keys;
+               N_datasets = length(datasetNames);
+               for d=1:N_datasets
+                   s = struct;
+                   s.cell_id = key.cell_id;
+                   s.cell_data = curName;
+                   s.channel = channel;
+                   s.dataset_name = datasetNames{d};
+                   s.dataset_name = strrep(s.dataset_name, '.', '_dot_'); %make sure dataset_name is legal
+                   disp(['Adding dataset: '  s.dataset_name]);
+                   sl_test.Dataset.makeTuples(sl_test.Dataset, s);
+               end
+    
             end
             
         end
@@ -179,3 +199,7 @@ end
 
 %-> sl.image
 %data sets
+
+% cell_data_list : longblob       # cell array of cellData names
+% channel_list : longblob         # vector of channel numbers, same size as cell_data_list
+% dataset_list : longblob         # cell array of data_set maps

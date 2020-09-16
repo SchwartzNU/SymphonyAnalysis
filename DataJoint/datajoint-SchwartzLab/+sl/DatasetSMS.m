@@ -7,7 +7,7 @@ spot_luminance              : float                         # R*/rod/s
 sms_one_per_cell_exclude="false": enum('true','false')      # false or true
 %}
 
-classdef DatasetSMS < dj.Part & dj.Computed
+classdef DatasetSMS < dj.Part
     properties(SetAccess=protected)
         master = sl.Dataset
     end

@@ -1,31 +1,23 @@
 %{
 # Dataset
--> sl.RecordedNeuron
+-> sl_test.RecordedNeuron
 cell_data                   : varchar(128)                  # name of cellData file
 dataset_name                : varchar(128)                  # name of dataset
 channel=1                   : int unsigned                  # amplifier channel
 ---
-recording_type              : enum('Cell attached','Whole cell','Multi','U') #
-epoch_ids                   : longblob                      # set of epochs in this dataset
+recording_type=NULL         : enum('Cell attached','Whole cell','Multi','U') #
+epoch_ids=NULL              : longblob                      # set of epochs in this dataset
 %}
 
 classdef Dataset < dj.Manual
-    methods(Access=protected)
+    methods(Static)
         function makeTuples(self,key)
-            %add dataset
-            curName = key.cell_data;
-            [~, ch] = strtok(curName, '-');
-            key.channel = 1;
-            if ~isempty(ch)
-                key.channel = str2double(ch(4));
-            end
-                        
-            datasetsMap = key.cell_data.savedDataSets;
+            cellData = loadAndSyncCellData(key.cell_data);
+            datasetsMap = cellData.savedDataSets;
             key.epoch_ids = datasetsMap(key.dataset_name);
-            key.dataset_name = strrep(key.dataset_name, '.', '_dot_'); %make sure dataset_name is legal 
             
             N_epochs = length(key.epoch_ids);
-            allModes = cell(1,N_epochs); 
+            allModes = cell(1,N_epochs);
             if key.channel==1
                 mode_param = 'recording_mode';
             elseif key.channel==2
@@ -36,9 +28,9 @@ classdef Dataset < dj.Manual
             end
             
             for e=1:N_epochs
-               q.cell_id = key.cell_id;
-               q.number = key.epoch_ids(e);
-               allModes{e} = fetch1(sl.Epoch & q, mode_param);
+                q.cell_id = key.cell_id;
+                q.number = key.epoch_ids(e);
+                allModes{e} = fetch1(sl.Epoch & q, mode_param);
             end
             
             unique_modes = unique(allModes);
@@ -49,12 +41,15 @@ classdef Dataset < dj.Manual
                 key.recording_type = 'Multi';
             end
             
-            %now the specific calls for each kind of dataset
-            if startsWith(dataset_name, 'SpotsMultiSize') %only for SMS datasets
-                sl.DatasetSMS.makeTuples(key);
-            end            
+            self.insert(key)
             
-            self.insert(key);      
+            %remove fields only in DataSet
+            partKey = rmfield(key, {'recording_type', 'epoch_ids'});
+            
+            %now the specific calls for each kind of dataset
+            if startsWith(key.dataset_name, 'SpotsMultiSize') %only for SMS datasets
+                sl_test.DatasetSMS.makeTuples(sl_test.DatasetSMS, partKey);
+            end
             
         end
     end
