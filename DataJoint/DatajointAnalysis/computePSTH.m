@@ -6,7 +6,7 @@ function [psth_x, psth_y, baseline] = computePSTH(cellData_name, ch, pre_time, s
 
 %get psth calculation parameters
 q.param_set_name = psth_params_name;
-psth_params = sl.PSTHParamSet & q;
+psth_params = sl_test.PSTHParamSet & q;
 if psth_params.count ~= 1
     disp(['Error in computePSTH: could not load PSTHParams with name ' psth_params_name]);
     return;
@@ -36,8 +36,8 @@ for i=1:N_epochs
         disp(['SMSSpikeData failed to get spikes_ch ' num2str(ch)]);
         return;
     end
-    sp_train = sl.SpikeTrain & q;
-    ep = sl.Epoch & q;
+    sp_train = sl_test.SpikeTrain & q;
+    ep = sl_test.Epoch & q;
     sample_rate = fetch1(ep,'sample_rate');    
     N_trains = sp_train.count;
     if N_trains == 0

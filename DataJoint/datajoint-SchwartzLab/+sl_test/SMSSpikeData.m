@@ -1,7 +1,7 @@
 %{
 # SMSSpikeData
--> sl.DatasetSMS
--> sl.PSTHParamSet
+-> sl_test.DatasetSMS
+-> sl_test.PSTHParamSet
 ---
 pre_time : int unsigned           # length of time before stimulus (ms)
 stim_time : int unsigned          # length of stimulus (ms)
@@ -19,7 +19,7 @@ classdef SMSSpikeData < dj.Computed
     methods(Access=protected)
         function makeTuples(self,key)
             dataset_name = key.dataset_name;
-            dataset = sl.Dataset & key;
+            dataset = sl_test.Dataset & key;
             if strcmp(fetch1(dataset,'recording_type'), 'Cell attached') %only for CA SMS datasets
                 cellData_name = key.cell_data;
                 disp(['Computing SMS Spike Data for ' cellData_name ':' dataset_name]);
@@ -59,7 +59,7 @@ classdef SMSSpikeData < dj.Computed
                         spCount_OFF = zeros(1,N_epochs);
                         for e=1:N_epochs
                             q.number = cur_epoch_ids(e);
-                            cur_train = sl.SpikeTrain & q;
+                            cur_train = sl_test.SpikeTrain & q;
                             
                             spCount_ON(e) = spikesInInterval(cur_train, 0.04, 1.04, 'preTime');
                             spCount_OFF(e) = spikesInInterval(cur_train, 1.04, 2.04, 'preTime');

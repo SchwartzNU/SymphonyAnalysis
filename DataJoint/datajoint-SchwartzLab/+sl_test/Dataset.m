@@ -29,8 +29,8 @@ classdef Dataset < dj.Manual
             
             for e=1:N_epochs
                 q.cell_id = key.cell_id;
-                q.number = key.epoch_ids(e);
-                allModes{e} = fetch1(sl.Epoch & q, mode_param);
+                q.number = key.epoch_ids(e);                
+                allModes{e} = fetch1(sl_test.Epoch & q, mode_param);
             end
             
             unique_modes = unique(allModes);

@@ -5,7 +5,7 @@ function spike_count = spikesInInterval(spike_train, startTime, endTime, zeroPar
 %zeroParam is the name of a parameter to be used to set the zero time
 %Units in this parameter are ms. This is optional.
 
-ep = sl.Epoch & spike_train;
+ep = sl_test.Epoch & spike_train;
 sample_rate = fetch1(ep, 'sample_rate');
 cell_data = fetch1(ep, 'cell_data');
 ep_num = fetch1(ep, 'number');

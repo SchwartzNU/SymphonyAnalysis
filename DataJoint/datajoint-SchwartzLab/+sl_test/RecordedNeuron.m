@@ -111,6 +111,7 @@ classdef RecordedNeuron < dj.Imported
                     epoch_insert_error = false;
                     epoch_init_struct = struct;
                     epoch_init_struct.cell_id = key.cell_id;
+                    epoch_init_struct.animal_id = key.animal_id;
                     epoch_init_struct.number = e;
                     epoch_init_struct.cell_data = curName;
                     epoch_init_struct.protocol_params = struct;
@@ -181,6 +182,7 @@ classdef RecordedNeuron < dj.Imported
                for d=1:N_datasets
                    s = struct;
                    s.cell_id = key.cell_id;
+                   s.animal_id = key.animal_id;
                    s.cell_data = curName;
                    s.channel = channel;
                    s.dataset_name = datasetNames{d};

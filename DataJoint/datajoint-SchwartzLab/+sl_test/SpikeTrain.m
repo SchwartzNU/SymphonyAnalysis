@@ -9,7 +9,7 @@ sp : longblob               # the spike train (vector), or 'not computed', or 'N
 classdef SpikeTrain < dj.Imported
     methods(Access=protected)
         function makeTuples(self, key)
-            q = sl.SpikeTrain & key;
+            q = sl_test.SpikeTrain & key;
             if q.count > 0
                 previous_ch = fetch1(q, 'channel');
                 if previous_ch == 1
@@ -23,7 +23,7 @@ classdef SpikeTrain < dj.Imported
                 ch = 1;
             end
             
-            ep = sl.Epoch & key;
+            ep = sl_test.Epoch & key;
             if ch==1
                 mode = fetch1(ep,'recording_mode');
             elseif ch==2
