@@ -5,6 +5,7 @@ cell_id: varchar(64) #cell id, like 040518Ac1, ...
                      #cells separated by commas
 -> sl_test.Animal
 ---
+-> sl_test.CellType             # cell type
 tags : longblob                 # struct with tags
 
 %}

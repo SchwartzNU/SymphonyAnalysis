@@ -8,7 +8,7 @@ species = 'Lab mouse' : varchar(64)              # species
 dob = NULL : date                               # mouse date of birth
 sex: enum('Male', 'Female', 'Unknown')          # sex of mouse - Male, Female, or Unknown/Unclassified
 punch = NULL : enum('LL','RR','LR','RL')        # earpunch
-tags : longblob                                 # struct with tags
+tags = NULL: longblob                                 # struct with tags
 born_in_cage_number = NULL : int unsigned       # cage number in which animal was born
 %}
 

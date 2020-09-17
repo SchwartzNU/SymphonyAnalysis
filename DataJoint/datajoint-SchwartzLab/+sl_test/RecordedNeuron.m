@@ -1,17 +1,16 @@
 %{
 # RecordedNeuron (loose definition, more like Cell: see caveats in Neuron)
 -> sl_test.Neuron
-
 ---
 position_x : float              # x position in the retina, optic nerve at 0,0
 position_y : float              # y position in the retina, blank for unknown
 which_eye : enum('R', 'L', 'U') # Right, Left, or unknown
 number_of_epochs : int unsigned # total number of recorded epochs
--> sl_test.CellType             # cell type
-cell_type : varchar(64)         # type of cell
 online_label : varchar(128)     # text in cellType field in symphony during recording
 notes = NULL : varchar(1000)    # unstructured text for notes
 tags : longblob                 # struct with tags
+recording_date: date            # date of recording
+-> sl_test.Rig                  # electrophysiology rig 
 -> sl_test.User(recorded_by='name') # who did the recording
 %}
 
