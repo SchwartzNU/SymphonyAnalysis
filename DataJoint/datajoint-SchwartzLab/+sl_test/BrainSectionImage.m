@@ -4,7 +4,7 @@
 image_id : int unsigned    #unique image id
 ---
 fname : varchar(128) #image file name
-section_orientation : enum('Coronal', 'Horizontal', 'Sagittal') # orientation of section
+section_orientation : enum('coronal', 'horizontal', 'sagittal') # orientation of section
 section_coord : float             # bregma, lambda, etc.
 notes = NULL : varchar(256)       # image notes
 scaleX : float                    # microns per pixel X
