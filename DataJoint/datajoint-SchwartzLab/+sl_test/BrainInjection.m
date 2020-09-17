@@ -11,7 +11,7 @@ head_rotation : float                # degrees, if not straight down
 coordinates: longblob                # 3 element vector of coordinates in the standard order
 dilution: float                      # dilution of substance
 tags: longblog
-notes: varchar(256)                  # surgery notes (can include people who assisted)
+notes = NULL: varchar(256)           # surgery notes (can include people who assisted)
 -> sl_test.User(injected_by='name')  # who did the injection
 %}
 

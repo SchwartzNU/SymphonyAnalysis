@@ -1,5 +1,5 @@
 %{
-# RecordedNeuron
+# RecordedNeuron (loose definition, more like Cell: see caveats in Neuron)
 -> sl_test.Neuron
 
 ---
@@ -7,6 +7,7 @@ position_x : float              # x position in the retina, optic nerve at 0,0
 position_y : float              # y position in the retina, blank for unknown
 which_eye : enum('R', 'L', 'U') # Right, Left, or unknown
 number_of_epochs : int unsigned # total number of recorded epochs
+-> sl_test.CellType             # cell type
 cell_type : varchar(64)         # type of cell
 online_label : varchar(128)     # text in cellType field in symphony during recording
 notes = NULL : varchar(1000)    # unstructured text for notes
@@ -109,9 +110,7 @@ classdef RecordedNeuron < dj.Imported
                 for e=1:key.number_of_epochs
                     %disp(['trying add epoch ' num2str(e)]);                    
                     epoch_insert_error = false;
-                    epoch_init_struct = struct;
-                    epoch_init_struct.cell_id = key.cell_id;
-                    epoch_init_struct.animal_id = key.animal_id;
+                    epoch_init_struct = key;
                     epoch_init_struct.number = e;
                     epoch_init_struct.cell_data = curName;
                     epoch_init_struct.protocol_params = struct;
@@ -180,9 +179,7 @@ classdef RecordedNeuron < dj.Imported
                datasetNames = cellData.savedDataSets.keys;
                N_datasets = length(datasetNames);
                for d=1:N_datasets
-                   s = struct;
-                   s.cell_id = key.cell_id;
-                   s.animal_id = key.animal_id;
+                   s = key;
                    s.cell_data = curName;
                    s.channel = channel;
                    s.dataset_name = datasetNames{d};
