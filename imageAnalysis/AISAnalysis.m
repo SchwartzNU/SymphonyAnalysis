@@ -1,4 +1,4 @@
-function [axonDist, dist_binned, AIS_binned, AIS_err, NaV_binned, NaV_err] = AISAnalysis(f_name_swc, f_name_AIS, f_name_NaV)
+function [axonDist, dist_binned, AIS_binned, AIS_err, NaV_binned, NaV_err] = AISAnalysis(f_name_swc, f_name_AIS, f_name_NaV, micronsPerPixel_XY, micronsPerPixel_Z)
 
 % %Read masked AIS
 info = imfinfo(f_name_AIS);
@@ -41,10 +41,9 @@ AISfluor = zeros(1,Ncoords);
 NaVfluor = zeros(1,Ncoords);
 
 % parameters for 100x image
-micronsPerPixel_XY = 0.0947379;
-micronsPerPixel_Z = 0.125;
+%%% defined in inputss
 % larger cube size means more samples
-cubeSize_microns = 8; % mutable
+cubeSize_microns = 4; % mutable
 cubeSize_pix_XY = ceil(cubeSize_microns / micronsPerPixel_XY);
 cubeSize_pix_Z = ceil(cubeSize_microns / micronsPerPixel_Z);
 
@@ -55,6 +54,7 @@ for i=1:Ncoords
     tempX = round([curCoord_pix(1)-cubeSize_pix_XY/2:curCoord_pix(1)+cubeSize_pix_XY/2]);
     tempY = round([curCoord_pix(2)-cubeSize_pix_XY/2:curCoord_pix(2)+cubeSize_pix_XY/2]);
     tempZ = round([curCoord_pix(3)-cubeSize_pix_Z/2:curCoord_pix(3)+cubeSize_pix_Z/2]);
+    
     tempX = tempX(tempX > 0 & tempX <= w);
     tempY = tempY(tempY > 0 & tempY <= h);
     tempZ = tempZ(tempZ > 0 & tempZ <= Nframes);
@@ -70,7 +70,7 @@ for i=1:Ncoords
     NaVfluor(i) = mean(NaVPortion(NaVPortion>0));
 end
 
-binSize = 4; % mutable
+binSize = 2; % mutable
 nBins = ceil(max(axonDist)/binSize);
 
 dist_binned = zeros(1,nBins);
@@ -89,3 +89,4 @@ for i=1:nBins
     NaV_err(i) = std(NaV_vals)./sqrt(length(NaV_vals));
 end
 
+% keyboard
