@@ -1,0 +1,113 @@
+strdef mySystem
+strdef cellDir, fName
+objectvar nNOS
+objref IC
+objref somaV
+objref fileOut
+
+///////////////// Parameters /////////////////////
+mySystem = "OSX"
+//mySystem = "win"
+
+if (strcmp(mySystem,"win")==0) {
+	nrn_load_dll("nmodl/nrnmech.dll")
+} else if (strcmp(mySystem,"OSX")==0) {
+	nrn_load_dll("/Users/gregoryschwartz/Dropbox/nNOS-2 paper/Model/nmodl/x86_64/.libs/libnrnmech.so")
+}
+
+target = 550 // for Rinput, used by fitRInput
+
+//////////////////////////////////////////////////
+chdir("/Users/gregoryschwartz/Dropbox/nNOS-2\ paper/Model")
+
+load_file("cellFromMatlabNetwork.hoc")
+load_file("rn.hoc")
+
+cellDir = "makeNetworkMATLAB/ModelNetworks/varyGJDensity/density=300_seed=1"
+
+objref XY
+XY = new Matrix()
+
+sprint(fName,"%s/%.4d.dat",cellDir,21)
+printf(fName)
+XY = loadFromMatlab(fName)
+nNOS = new cellFromMatlab(XY)
+
+//nNOS = new cellfromSWc("/Users/gregoryschwartz/Dropbox/nNOS-2 paper/Model/011217Ac1_Volume_3.swc")
+
+v_rest = -61.0
+tstop = 1500.0
+Iinj = -0.05 //nA
+celsius = 32.0
+dt = 0.025
+
+nNOS.soma{
+	IC = new IClamp(0.5)
+	IC.del = 500
+	IC.dur = 500
+	IC.amp = Iinj
+}
+//connect nNOS.dend[0](0), soma(1)
+
+//load_file("extend_neuron.hoc")
+
+//	set nseg
+forall nseg = 10
+nNOS.soma nseg=1
+nNOS.dend[2] diam=1.0 //set constant diam to allow length constant manipulation
+nNOS.dend[2] nseg=402 //length 402.239 um
+
+//set diameters
+objref SL,RAN
+SL = new SectionList()
+RAN = new Random()
+RAN.normal(1.0,0.3^2)
+
+nNOS.soma {
+	distance()
+	SL.remove(SL)
+	SL.wholetree()
+}
+
+forsec SL {
+	if (distance(0)!=0) { //not soma
+		/*for j=0,99 {
+			diam(j/100:(j+1)/100) = 1.098*exp(-0.03926*distance(j/100))+1.395*exp(-0.0003946*distance(j/100)):1.098*exp(-0.03926*distance((j+1)/100))+1.395*exp(-0.0003946*distance((j+1)/100))
+		}*/
+		if (diam<2) { //not neck
+			nS = nseg
+			for j=0,nS-1 {
+				q = RAN.repick()
+				if (q<0.5) {
+					q = 0.5
+				}
+				diam(j/nS:(j+1)/nS) = q:q
+			}
+		}
+	}
+}
+
+forall insert pas
+forall e_pas = v_rest
+
+
+load_file("fitRinput_single.hoc")
+
+somaV = new Vector()
+access nNOS.soma
+// record
+somaV.record(&nNOS.soma.v(0.5))
+
+//run simulation
+finitialize(v_rest)
+frecord_init()
+continuerun(tstop)
+
+fileOut = new File()
+fileOut.wopen("voltageTrace_abstract.txt")
+somaV.printf(fileOut,"%f\n")
+fileOut.close()
+
+//load_file("loopGapR.hoc")
+
+//quit()

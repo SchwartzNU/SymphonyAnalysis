@@ -1,0 +1,10 @@
+func lambda() { local lambda
+	m25 =$o2.min()
+	m75 =$o3.min()
+	if (m25==m75) {
+		lambda = 0
+	} else {
+		lambda = -$1/2/log((m75-v_init)/(m25-v_init))
+	}
+	return lambda
+}

@@ -1,0 +1,150 @@
+if (strcmp(mySystem,"win")==0) {
+	nrn_load_dll("nmodl/nrnmech.dll")
+} else if (strcmp(mySystem,"OSX")==0) {
+	nrn_load_dll("/Users/gregoryschwartz/Dropbox/nNOS-2 paper/Model/nmodl/x86_64/.libs/libnrnmech.so")
+}
+
+load_file("cellFromMatlabNetwork.hoc")
+objectvar nNOS[nCells]
+strdef fName
+objref XY
+XY = new Matrix()
+
+objref nDend
+nDend = new Vector() //# of dendrites in each cell
+totalDend = 0
+
+for i = 0,nCells-1 {
+	sprint(fName,"%s/%.4d.dat",cellDir,i+1)
+	XY = loadFromMatlab(fName)
+	nDend.append(XY.nrow)
+	totalDend = totalDend + XY.nrow
+	nNOS[i] = new cellFromMatlab(XY)
+}
+midCell = (nCells+sqrt(nCells))/2-1
+
+
+
+// setup
+/*objref IC[nCells]
+for i=0,nCells-1 {
+	nNOS[i].soma{
+		IC[i] = new IClamp(0.5)
+		IC[i].del = 499.9
+		IC[i].dur = 500
+		IC[i].amp = -0.05
+	}
+}*/
+access nNOS[midCell].soma
+objref IC
+nNOS[midCell].soma IC = new IClamp(0.5)
+IC.del = 499.9
+IC.dur = 500
+IC.amp = -0.1
+tstop=1499.9
+v_init=-64.0
+dt=0.1
+celsius=31.0
+
+// diameter set from function
+
+objref SL,RAN
+SL = new SectionList()
+RAN = new Random()
+RAN.normal(1,0.3^2)
+for i=0,nCells-1 {
+	nNOS[i].soma {
+		distance()
+		SL.remove(SL)
+		SL.wholetree()
+	}
+	forsec SL {
+		if (distance(0)!=0) { //not soma
+			/*for j=0,99 {
+				diam(j/100:(j+1)/100) = 1.098*exp(-0.03926*distance(j/100))+1.395*exp(-0.0003946*distance(j/100)):1.098*exp(-0.03926*distance((j+1)/100))+1.395*exp(-0.0003946*distance((j+1)/100))
+
+			}*/
+			if (diam!=2) { //not neck
+				nS = nseg
+				for j=0,nS-1 {
+					q = RAN.repick()
+					if (q<0.5) {
+						q = 0.5
+					}
+					diam(j/nS:(j+1)/nS) = q:q
+				}
+			}
+		}
+	}
+}
+
+//gap junction connectivity
+sprint(fName,"%s/junc.dat",cellDir) //NB: all connections are reciprocal, but NEURON only does unidirectional connections
+XY = parseMatlabConnectivity(fName)
+nGaps = XY.nrow()
+objref junc[nGaps]
+for j = 0, nGaps-1 {
+	junc[j] = new gap()
+	// column 0: cell making connection
+	// column 1: cell receiving connection
+	// column 2: branch making connection
+	// column 3: branch receiving connection
+	// column 4: proportional distance along branch making connection
+	// column 5: proportional distance along branch receiving connection
+	nNOS[XY.x[j][0]].dend[XY.x[j][2]] junc[j].loc(XY.x[j][4]) 
+	// There is a bug in NEURON with range variables accepting array input
+	temp = XY.x[j][5]
+	setpointer junc[j].vgap, nNOS[XY.x[j][1]].dend[XY.x[j][3]].v(temp)
+	junc[j].r = 9.13e4 
+}
+
+
+// biophys
+forall insert pas
+forall e_pas = v_init
+//forall g_pas = 1/(1.289e5)
+forall g_pas = 1/8e4
+
+// procs
+load_file("params.hoc")
+load_file("rn.hoc")
+load_file("lambda.hoc")
+load_file("gapOnOff.hoc")
+load_file("couplingCoeff.hoc")
+
+// modulate gap junction resistance
+
+/*
+sprint(fName,"%s/RinputReduced.dat",cellDir)
+objref GR,Rin, outFile
+GR = new Vector()
+Rin = new Vector()
+//GR.append(1e3,1e4,2e4,3e4,5e4,7e4,1e5,2e5,3e5,5e5,7e5,1e6,1e10,1e50) //test log range of resistances
+GR.append(1.7e4,2e4,2.3e4,2.6e4,2.9e4,1e50) //test log range of resistances
+Rin.resize(nCells)
+outFile = new File()
+outFile.wopen(fName)
+for j=0,GR.size()-1 {
+	print "New Gap Resistance"
+	GapR(GR.x[j])
+	for i=0,nCells-1 {
+		Rin.x[i]=rn(i)
+	}
+	Rin.printf(outFile,"%f ")
+	outFile.flush()
+}
+outFile.close()
+*/
+
+
+// get coupling coefficients
+//GapR(1.2e4) //from Matlab analysis of above, 
+GapR(500) //from Matlab analysis of above, 
+for i=0,nCells-1 {
+	nNOS[i].soma insert extr
+}
+
+//run simulation
+//Rm = 35000
+Rm = 8e4
+//GapR(8.5e4)

@@ -1,0 +1,44 @@
+proc extend() { localobj S
+	forall {
+		S = new SectionRef()
+		if (S.nchild()==0) { //for terminal sections
+			S.root distance() 
+			S.sec L = $1-distance(0) // set total length to 1300um
+		}
+	}
+}
+
+obfunc branchLengths() { local X, Y, Z, N, nr, nc localobj S, dis, loc, lrow
+	nr = 1 
+	nc = 3
+	dis = new Vector()
+	loc = new Matrix(nr,nc)
+	lrow = new Vector()
+
+	forall {
+		S = new SectionRef()
+		if (S.has_parent==0) { // this should be the first section?
+			X = x3d(0)
+			Y = y3d(0)
+			Z = z3d(0)
+		}
+		if (S.nchild()==0) {
+			N = n3d()-1
+			lrow.append(x3d(N)-X,y3d(N)-Y,z3d(N)-Z)
+			dis.append(sqrt((x3d(N)-X)^2+(y3d(N)-Y)^2+(z3d(N)-Z)^2))
+
+			loc.setrow(nr-1,lrow)
+			lrow.resize(0)
+
+			nr=nr+1
+			nc=nc+1
+			loc.resize(nr,nc) // grow locations matrix
+
+		}
+	}
+	loc.resize(nr-1,nc)
+	dis.printf()
+	loc.printf()
+	return loc
+	// now return lengths of branches and their terminus w.r.t. root
+}

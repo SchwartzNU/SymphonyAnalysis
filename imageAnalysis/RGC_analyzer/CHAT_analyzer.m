@@ -45,12 +45,13 @@ if any(any(~isnan(CHAT_pos(:,:,1))))
 end
 %%
 
-figure;
+peaksFig = figure;
 peaksAx = gca;
 pixStepX = pixX / voxelsX;
 pixStepY = pixY / voxelsY;
 for i=1:voxelsX
     for j=1:voxelsY
+        figure(peaksFig);
         r = rectangle('Parent', projImageAx, 'Position', [(j-1)*pixStepY, (i-1)*pixStepX, pixStepY, pixStepX], 'EdgeColor', 'r');
         if numSavedBoxes < 1
             loadSaveFlag = false;

@@ -23,16 +23,16 @@ useRealFilters = 0;
 useStimulusFilter = 0;
 useSubunits = 0;
 useOffFilters = 0;
-useInhibition = 1;
+useInhibition = 0;
 
 plotSpatialGraphs = 1;
-plotStimulus = 0;
+plotStimulus = 1;
 plotStimulusFramesOverParameterSets = 0;
 plotSubunitCurrents = 0;
 plotOutputCurrents = 1;
-plotCellResponses = 1;
+plotCellResponses = 1;s
 plotOutputNonlinearity = 0;
-plotResultsByOptions = 0;
+plotResultsByOptions = 1;
 
 runInParallelPool = 0;
 

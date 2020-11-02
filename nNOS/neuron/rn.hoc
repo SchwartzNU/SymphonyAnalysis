@@ -1,0 +1,19 @@
+objref zz
+  zz = new Impedance()
+
+/*
+  func rn() { local rn
+    init()  // make sure all changes to g, c, ri etc. have taken effect
+    nNOS[$1].soma zz.loc(0.5)  // sets origin for impedance calculations to middle of soma
+    zz.compute(0)  // DC input R
+    nNOS[$1].soma { rn = zz.input(0.5) }  // rn is input R at middle of the soma
+    return rn
+  } */
+
+func rn() { local rn
+	init()  // make sure all changes to g, c, ri etc. have taken effect
+    zz.loc(0.5)  // sets origin for impedance calculations to middle of soma
+    zz.compute(0)  // DC input R
+    rn = zz.input(0.5)  // rn is input R at middle of the soma
+    return rn
+}

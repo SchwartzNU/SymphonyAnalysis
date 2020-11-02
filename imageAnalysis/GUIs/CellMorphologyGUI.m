@@ -190,11 +190,12 @@ classdef CellMorphologyGUI < handle
         end
         
         function loadCells(obj)
-            global SERVER
-            if exist([SERVER 'Images/Confocal'], 'file')
-                imageRoot_confocal = [SERVER 'Images/Confocal'];
+            global IMAGE_ROOT
+            
+            if exist(IMAGE_ROOT, 'file')
+                imageRoot_confocal = IMAGE_ROOT;
             else
-                error('Cannot connect to Images/Confocal folder on Server')
+                error('Cannot connect to IMAGE_ROOT folder')
             end
             
             %loads cells into data table
@@ -250,10 +251,8 @@ classdef CellMorphologyGUI < handle
         end
         
         function cellsToProject(obj)
-            global SERVER;
             global ANALYSIS_FOLDER;
-            imageRoot_confocal = [SERVER 'Images/Confocal'];
-            
+
             projectName = inputdlg('Enter project name');
             projectName = projectName{1};
             if ~isempty(projectName)
@@ -278,8 +277,8 @@ classdef CellMorphologyGUI < handle
         end
         
         function updateDataTable(obj)
-            global SERVER
-            imageRoot_confocal = [SERVER 'Images/Confocal'];
+            global IMAGE_ROOT
+            imageRoot_confocal = IMAGE_ROOT;
             tableData = obj.handles.cellsTable.get('Data');
             L = length(obj.selectedRows);
             %clear previous stats from table
@@ -314,8 +313,8 @@ classdef CellMorphologyGUI < handle
         end
                 
         function updatePlots(obj)
-            global SERVER
-            imageRoot_confocal = [SERVER 'Images/Confocal'];
+            global IMAGE_ROOT
+            imageRoot_confocal = IMAGE_ROOT;
             tableData = obj.handles.cellsTable.get('Data');
             %clear plots
             ch = get(obj.handles.L_plotsPanel, 'children');
@@ -446,8 +445,8 @@ classdef CellMorphologyGUI < handle
         end
         
         function runAnalyzer(obj)
-            global SERVER
-            imageRoot_confocal = [SERVER 'Images/Confocal'];
+            global IMAGE_ROOT
+            imageRoot_confocal = IMAGE_ROOT;
             
             tableData = obj.handles.cellsTable.get('Data');
             cellNames = tableData(obj.selectedRows, 1);
@@ -456,7 +455,7 @@ classdef CellMorphologyGUI < handle
                 curName = cellNames{i};                
                 disp(['Analyzing cell ' curName]);                
                 if tableData{obj.selectedRows(i), 4} %if traced
-                    curDir = [imageRoot_confocal '/' curName '/'];
+                    curDir = [imageRoot_confocal curName filesep]
                     trace_fname = [curName '.swc'];
                     
                     if exist([curDir curName '.tif'], 'file')
@@ -497,8 +496,9 @@ classdef CellMorphologyGUI < handle
         
         function exportStrat(obj)
             global IGOR_H5_folder
-            global SERVER
-            imageRoot_confocal = [SERVER 'Images/Confocal'];
+            global IMAGE_ROOT
+            imageRoot_confocal = IMAGE_ROOT;
+            
             tableData = obj.handles.cellsTable.get('Data');
             L = length(obj.selectedRows);
             for i=1:L

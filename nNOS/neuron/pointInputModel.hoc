@@ -1,0 +1,113 @@
+strdef mySystem
+strdef cellDir
+strdef stimFileName
+objref f
+strdef outFileNameDark, outFileNameLight
+
+//stimFileName = "SpotStimLoop/x33y-33.txt"
+printf("Initializing...\n")
+///////////////// Parameters /////////////////////
+//mySystem = "OSX"
+mySystem = "win"
+//cellDir="BowtieSlice"
+//cellDir="makeNetworkMATLAB/ModelNetworks/varyGJDensity/density\=848_seed\=1"
+//cellDir="tempNetwork"
+
+f = new File()
+f.ropen("curFolder.txt")
+f.scanstr(cellDir)
+f.close()
+
+f = new File()
+f.ropen("curStim.txt")
+f.scanstr(stimFileName)
+f.close()
+
+nCells = 36
+target = 580 // for Rinput, used by fitRInput
+//rGaps.append(227)
+
+//////////////////////////////////////////////////
+//chdir("/Users/gregoryschwartz/Dropbox/nNOS-2\ paper/Model")
+chdir("R://Ophthalmology/Research/SchwartzLab/nNOS Model")
+
+
+//file names
+sprint(outFileNameDark,"SpotStimLoop_40um/%s_Vmax_output_dark.txt",stimFileName)
+sprint(outFileNameLight,"SpotStimLoop_40um/%s_Vmax_output_light.txt",stimFileName)
+sprint(stimFileName, "SpotStimLoop_40um/%s.txt", stimFileName)
+
+printf("Configuring network...\n")
+load_file("cellFitMatlabv3.hoc")
+
+//output matrix
+segs = 200
+objref Vmax
+objref fOut
+objref dendVmax
+
+GapR(227) //dark 
+
+//run simulation
+printf("Beginning dark simulation...\n")
+finitialize(v_init)
+frecord_init()
+continuerun(tstop)
+printf("\t...done.\n")
+
+Vmax = new Matrix(segs, totalDend)
+
+ind = 0
+for c=0,nCells-1{
+	for d=0,nDend.x[c]-1{
+		dendVmax = new Vector(segs)
+		nNOS[c].dend[d] {
+			for j=0,segs-1 {
+				dendVmax.x[j] = (vmax_extr(j/segs))
+			}
+			Vmax.setcol(ind,dendVmax)
+			ind = ind + 1
+		}
+	}
+}
+
+//output
+fOut = new File()
+fOut.wopen(outFileNameDark)
+Vmax.fprint(0,fOut)
+fOut.close()
+
+GapR(500) //light 
+
+//run simulation
+printf("Beginning light simulation...\n")
+finitialize(v_init)
+frecord_init()
+continuerun(tstop)
+printf("\t...done.\n")
+
+Vmax = new Matrix(segs, totalDend)
+
+ind = 0
+for c=0,nCells-1{
+	for d=0,nDend.x[c]-1{
+		dendVmax = new Vector(segs)
+		nNOS[c].dend[d] {
+			for j=0,segs-1 {
+				dendVmax.x[j] = (vmax_extr(j/segs))
+			}
+			Vmax.setcol(ind,dendVmax)
+			ind = ind + 1
+		}
+	}
+}
+
+//output
+objref fOut
+fOut = new File()
+fOut.wopen(outFileNameLight)
+Vmax.fprint(0,fOut)
+fOut.close()
+
+printf("Simulation complete.\n")
+quit()

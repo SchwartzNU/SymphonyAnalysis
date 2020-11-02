@@ -1,6 +1,15 @@
-% function [] = extractSMSFromTreeLeaves(T)
-% global CELL_DATA_FOLDER
+function [] = extractSMSFromTreeLeaves(T, fname)
+global ANALYSIS_FOLDER
+
+
 %T is analysis tree
+if nargin < 2
+    [fname, fpath] = uiputfile('*.h5','Select HDF5 file');
+else
+    fpath = [ANALYSIS_FOLDER 'igorh5' filesep 'SMS'];    
+    temp = what(fpath);
+    fpath = temp.path;
+end
 
 leafNodes = T.findleaves;
 nLeaves = length(leafNodes);
@@ -8,11 +17,13 @@ nLeaves = length(leafNodes);
 
 cellNames = {};
 
-baseline = linspace(0, 1200, 200);
-all_ON = [];
-all_OFF = [];
-
 lastNodeID = 0;
+
+tempName = [fpath filesep fname '.h5'];
+if exist(tempName, 'file') %delete old file
+    delete(tempName);
+end
+
 for i=1:nLeaves    
         curNodeID = T.Parent(leafNodes(i));
         curNode = T.get(curNodeID);
@@ -38,18 +49,12 @@ for i=1:nLeaves
                 [sms_y_on]  = curNode.spikeCount_stimInterval.mean_c;
                 [sms_y_off] = curNode.spikeCount_afterStim.mean_c;
 
-                y_on = interp1(sms_x, sms_y_on, baseline);
-                y_off = interp1(sms_x, sms_y_off, baseline);
-
-
-                all_ON(end+1, :) = y_on;
-                all_OFF(end+1, :) = y_off;
-    %             s = struct;
-    %             s.sms_x = sms_x;
-    %             s.sms_y_on = sms_y_on;
-    %             s.sms_y_off = sms_y_off;
-    %             igorName = [cellName '_' datasetName];
-    %             exportStructToHDF5(s, fname, igorName);
+                s = struct;
+                s.sms_x = sms_x;
+                s.sms_y_on = sms_y_on;
+                s.sms_y_off = sms_y_off;
+                %igorName = [cellName '_' datasetName];
+                exportStructToHDF5(s, [fpath filesep fname '.h5'], cellName);
         end
         lastNodeID = curNodeID;
 end

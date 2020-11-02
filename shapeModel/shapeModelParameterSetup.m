@@ -25,7 +25,7 @@ positionOffsetByVoltageOnoffDim(1, :, 2) = 7;
 % good F mini On offsets for edge:
 positionOffsetByVoltageOnoffDim = zeros(2,2,2);
 positionOffsetByVoltageOnoffDim(:,1,2) = 0;
-positionOffsetByVoltageOnoffDim(:,2,2) = 24;
+positionOffsetByVoltageOnoffDim(:,2,2) = -28;
 
 gaussianSigmaByVoltageOnoffDim = 60*ones(2,2,2);
 gaussianSigmaByVoltageOnoffDim(1,2,:) = [30, 20]; % off ex

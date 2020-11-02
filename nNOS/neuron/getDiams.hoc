@@ -1,0 +1,11 @@
+func meanDiam() { local diamMean localobj diams
+	diams = new Vector()
+	for (x) {
+		if (x!=0&&x!=1) {
+			diams.append(diam)
+		}
+	}
+	diamMean = diams.mean()
+	print diamMean
+	return diamMean
+}

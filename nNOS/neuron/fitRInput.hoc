@@ -1,0 +1,55 @@
+GapR(1e50)
+tol = 0.1
+start_rm = 10e5
+start_del = start_rm/10
+learning_rate = 2
+
+objref r_input
+r_input = new Vector()
+r_input.resize(nCells)
+del = start_del
+rm = start_rm
+Rm = rm
+last_flag = 0
+
+for i=0,nCells-1 {
+	r_input.x[i] = rn(i)
+}
+mu = r_input.mean()
+
+while (abs(mu-target)>tol) {
+
+	if (mu>target) {
+		flag = -1
+	} else {
+		flag = 1
+	}
+
+	if ((flag!=last_flag&&last_flag!=0)|| rm+flag*del<=0) {
+		del = del/learning_rate
+	}
+	last_flag = flag
+
+	rm = rm + flag*del
+
+	Rm = rm
+
+	for i=0,nCells-1 {
+		r_input.x[i] = rn(i)
+	}
+
+	print "Rinput was ", mu, ". Adjusting membrane resistance to ", rm, " (delta: ", flag*del, ")."
+	mu = r_input.mean()
+}
+
+print "Rinput within tolerance."
+print "Rinput = ", mu, ", Rm = ", rm, ", Delta = ", del
+
+// NB: fname declared in cellFit
+objref fileOut
+sprint(fName,"%s/Rm.txt",cellDir)
+fileOut = new File()
+fileOut.wopen(fName)
+fileOut.printf("%f\n", rm)
+fileOut.close()
+

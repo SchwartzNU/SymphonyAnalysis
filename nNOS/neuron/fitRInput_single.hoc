@@ -1,0 +1,44 @@
+tol = 0.1
+start_rm = 1e5
+start_del = start_rm/10
+learning_rate = 2
+
+r_input = 0
+del = start_del
+rm = start_rm
+last_flag = 0
+
+r_input = rn()
+
+while (abs(r_input-target)>tol) {
+
+	if (r_input>target) {
+		flag = -1
+	} else {
+		flag = 1
+	}
+
+	if ((flag!=last_flag&&last_flag!=0)|| rm+flag*del<=0) {
+		del = del/learning_rate
+	}
+	last_flag = flag
+
+	rm = rm + flag*del
+
+	print "Rinput was ", r_input, ". Adjusting membrane resistance to ", rm, " (delta: ", flag*del, ")."
+
+	forall g_pas = 1/rm
+	r_input = rn()
+
+}
+
+print "Rinput within tolerance."
+print "Rinput = ", r_input, ", Rm = ", rm, ", Delta = ", del
+
+// NB: fname declared in cellFit
+objref fileOut
+fileOut = new File()
+fileOut.wopen("Rm.txt")
+fileOut.printf("%f\n", rm)
+fileOut.close()
+

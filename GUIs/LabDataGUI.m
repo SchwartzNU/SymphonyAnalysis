@@ -69,7 +69,7 @@ classdef LabDataGUI < handle
             
             %copy newer versions of local cellData files to server
             if SYNC_TO_SERVER
-                syncLocalCellDataToServer();
+%                syncLocalCellDataToServer();
             end
             
             %read in CellTags.txt file
