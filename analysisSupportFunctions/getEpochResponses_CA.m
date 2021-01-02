@@ -21,7 +21,7 @@ if strcmp(protocolName, 'Object Motion Sensitivity')
     protocolVersion = sampleEpoch.get('protocolVersion');
     if isnan(protocolVersion)
         protocolVersion = 0;
-    elseif protocolVersion == 3
+    elseif protocolVersion >= 3
         startMotionTime = sampleEpoch.get('startMotionTime') * 1E-3;
     end
 end

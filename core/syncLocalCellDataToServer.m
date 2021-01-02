@@ -32,7 +32,7 @@ for i=1:length(cellDataNames)
         catch
             serverModDate = 0;
         end
-        if localModDate > serverModDate + 60 %more than 60 seconds newer
+        if localModDate > serverModDate + 60/86400 %more than 60 seconds newer
            fprintf('Found newer local copy of %s, by %d sec. Copying to server...', basename, round(localModDate - serverModDate));
            load([CELL_DATA_FOLDER basename '.mat']); %loads cellData
            saveAndSyncCellData(cellData);
