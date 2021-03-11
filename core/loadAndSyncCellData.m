@@ -1,7 +1,7 @@
 function cellData = loadAndSyncCellData(cellDataName)
 
 ANALYSIS_FOLDER = getenv('ANALYSIS_FOLDER');
-SYNC_TO_SERVER = strcmp(getenv('SYNC_TO_SERVER'), 'false');
+SYNC_TO_SERVER = getenv('SYNC_TO_SERVER');
 CELL_DATA_MASTER = getenv('CELL_DATA_MASTER');
 SERVER_ROOT = getenv('SERVER_ROOT');
 
@@ -10,6 +10,8 @@ if isempty(ANALYSIS_FOLDER)
 end
 if isempty(SYNC_TO_SERVER)
     global SYNC_TO_SERVER;
+else
+    SYNC_TO_SERVER = strcmp(SYNC_TO_SERVER, 'false');
 end
 if isempty(CELL_DATA_MASTER)
     global CELL_DATA_MASTER;
