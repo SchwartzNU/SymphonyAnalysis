@@ -1,8 +1,24 @@
 function cellData = loadAndSyncCellData(cellDataName)
-global ANALYSIS_FOLDER;
-global SYNC_TO_SERVER;
-global CELL_DATA_MASTER;
-global SERVER_ROOT;
+
+ANALYSIS_FOLDER = getenv('ANALYSIS_FOLDER');
+SYNC_TO_SERVER = getenv('SYNC_TO_SERVER');
+CELL_DATA_MASTER = getenv('CELL_DATA_MASTER');
+SERVER_ROOT = getenv('SERVER_ROOT');
+
+if isempty(ANALYSIS_FOLDER)
+    global ANALYSIS_FOLDER;
+end
+if isempty(SYNC_TO_SERVER)
+    global SYNC_TO_SERVER;
+end
+if isempty(CELL_DATA_MASTER)
+    global CELL_DATA_MASTER;
+end
+if isempty(SERVER_ROOT)
+    global SERVER_ROOT;
+end
+
+
 cellData_local = [];
 cellData = [];
 do_local_to_server_copy = false;
