@@ -11,7 +11,7 @@ end
 if isempty(SYNC_TO_SERVER)
     global SYNC_TO_SERVER;
 else
-    SYNC_TO_SERVER = strcmp(SYNC_TO_SERVER, 'false');
+    SYNC_TO_SERVER = strcmp(SYNC_TO_SERVER, 'true');
 end
 if isempty(CELL_DATA_MASTER)
     global CELL_DATA_MASTER;
