@@ -19,7 +19,7 @@ function goodCells = filterProjectByCellQuality(qrSet)
 
     fprintf('Checking %g cells\n', length(cellNames));
 
-    global CELL_DATA_FOLDER;
+    CELL_DATA_FOLDER = getenv('CELL_DATA_FOLDER');
     goodCells = {};
     for ci = 1:length(cellNames)
         infilename = [CELL_DATA_FOLDER filesep cellNames{ci} '.mat'];

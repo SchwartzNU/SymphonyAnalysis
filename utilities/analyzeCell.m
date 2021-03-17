@@ -1,6 +1,6 @@
 function cellAnalysisTree = analyzeCell(cellName)
-global ANALYSIS_FOLDER
-global PREFERENCE_FILES_FOLDER
+ANALYSIS_FOLDER = getenv('ANALYSIS_FOLDER');
+PREFERENCE_FILES_FOLDER = getenv('PREFERENCE_FILES_FOLDER');
 
 %Open DataSetsAnalyses.txt file that defines the mapping between data set
 %names and analysis classes

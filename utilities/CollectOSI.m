@@ -1,5 +1,5 @@
 function [OSICells, OSI, OSAng] = CollectOSI(analysisClass)
-global ANALYSIS_FOLDER
+ANALYSIS_FOLDER = getenv('ANALYSIS_FOLDER');
 
 [fname, pathname] = uigetfile([ANALYSIS_FOLDER filesep 'analysisTrees' filesep '*.mat'], 'Load analysisTree');
 

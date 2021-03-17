@@ -190,7 +190,7 @@ classdef CellMorphologyGUI < handle
         end
         
         function loadCells(obj)
-            global IMAGE_ROOT
+            IMAGE_ROOT = getenv('IMAGE_ROOT');
             
             if exist(IMAGE_ROOT, 'file')
                 imageRoot_confocal = IMAGE_ROOT;
@@ -251,7 +251,7 @@ classdef CellMorphologyGUI < handle
         end
         
         function cellsToProject(obj)
-            global ANALYSIS_FOLDER;
+            ANALYSIS_FOLDER = getenv('ANALYSIS_FOLDER');
 
             projectName = inputdlg('Enter project name');
             projectName = projectName{1};
@@ -277,7 +277,7 @@ classdef CellMorphologyGUI < handle
         end
         
         function updateDataTable(obj)
-            global IMAGE_ROOT
+            IMAGE_ROOT = getenv('IMAGE_ROOT');
             imageRoot_confocal = IMAGE_ROOT;
             tableData = obj.handles.cellsTable.get('Data');
             L = length(obj.selectedRows);
@@ -313,7 +313,7 @@ classdef CellMorphologyGUI < handle
         end
                 
         function updatePlots(obj)
-            global IMAGE_ROOT
+            IMAGE_ROOT = getenv('IMAGE_ROOT');
             imageRoot_confocal = IMAGE_ROOT;
             tableData = obj.handles.cellsTable.get('Data');
             %clear plots
@@ -445,7 +445,7 @@ classdef CellMorphologyGUI < handle
         end
         
         function runAnalyzer(obj)
-            global IMAGE_ROOT
+            IMAGE_ROOT = getenv('IMAGE_ROOT');
             imageRoot_confocal = IMAGE_ROOT;
             
             tableData = obj.handles.cellsTable.get('Data');
@@ -495,8 +495,8 @@ classdef CellMorphologyGUI < handle
         end
         
         function exportStrat(obj)
-            global IGOR_H5_folder
-            global IMAGE_ROOT
+            IGOR_H5_folder = getenv('IGOR_H5_FOLDER');
+            IMAGE_ROOT = getenv('IMAGE_ROOT');
             imageRoot_confocal = IMAGE_ROOT;
             
             tableData = obj.handles.cellsTable.get('Data');

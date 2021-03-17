@@ -1,5 +1,5 @@
 function [resultTree, usedDataSet] = doSingleAnalysis(cellName, analysisClassName, cellFilter, epochFilter, cellData, analysisTable, skipAnalysis)
-global PREFERENCE_FILES_FOLDER
+PREFERENCE_FILES_FOLDER = getenv('PREFERENCE_FILES_FOLDER');
 
 if nargin < 3
     cellFilter = [];

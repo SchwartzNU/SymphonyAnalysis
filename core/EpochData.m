@@ -139,7 +139,7 @@ classdef EpochData < handle
         end
         
         function [data, xvals, units] = getData(obj, streamName)
-            global RAW_DATA_FOLDER;
+            RAW_DATA_FOLDER = getenv('RAW_DATA_FOLDER');
             if nargin < 2
                 streamName = 'Amplifier_Ch1';
             end

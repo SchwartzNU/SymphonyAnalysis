@@ -4,7 +4,7 @@ function output = extractLightStepParamsFromTree(analysisTree, justGetCellNames)
 
     %% Extraction code
 
-    global CELL_DATA_FOLDER;
+    CELL_DATA_FOLDER = getenv('CELL_DATA_FOLDER');
 
     output = {};
 

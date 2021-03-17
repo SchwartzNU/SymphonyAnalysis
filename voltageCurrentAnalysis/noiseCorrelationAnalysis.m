@@ -1,5 +1,5 @@
 function MaxCorrs = noiseCorrelationAnalysis
-global ANALYSIS_FOLDER
+ANALYSIS_FOLDER = getenv('ANALYSIS_FOLDER');
 
 % inputs
 %%% CHANGE STUFF HERE

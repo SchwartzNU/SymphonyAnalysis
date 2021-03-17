@@ -1,5 +1,5 @@
 function [] = makeCombinedProject(year, months)
-global ANALYSIS_FOLDER;
+ANALYSIS_FOLDER = getenv('ANALYSIS_FOLDER');
 expDateFolder = uigetdir([ANALYSIS_FOLDER filesep 'Projects'], 'Select expDate projects folder');
 
 expFolders = dir(expDateFolder);

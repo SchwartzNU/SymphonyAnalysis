@@ -1,15 +1,15 @@
 function [] = checkoutCellDataForProject(cellNames)
-global ANALYSIS_FOLDER;
-global CELL_DATA_FOLDER;
-global CELL_DATA_MASTER;
-global Server
-global RAW_IMAGE_FOLDER
+ANALYSIS_FOLDER = getenv('ANALYSIS_FOLDER');
+% CELL_DATA_FOLDER = getenv('CELL_DATA_FOLDER');
+% CELL_DATA_MASTER = getenv('CELL_DATA_MASTER');
+SERVER_ROOT = getenv('SERVER_ROOT');
+RAW_IMAGE_FOLDER = getenv('RAW_IMAGE_FOLDER');
 
 if nargin < 1
     projFolder = uigetdir([ANALYSIS_FOLDER 'Projects' filesep], 'Choose project folder');
     
     disp('Choose server image folder')
-    copyFromFolder = uigetdir(Server, 'Choose server image folder');
+    copyFromFolder = uigetdir(SERVER_ROOT, 'Choose server image folder');
     
     disp('Choose where to place images')
     copyToFolder = uigetdir(RAW_IMAGE_FOLDER, 'Choose where to place images');

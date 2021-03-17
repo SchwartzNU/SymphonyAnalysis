@@ -1,5 +1,5 @@
 function [] = extractSMSFromTreeLeaves(T, fname)
-global ANALYSIS_FOLDER
+ANALYSIS_FOLDER = getenv('ANALYSIS_FOLDER');
 
 
 %T is analysis tree

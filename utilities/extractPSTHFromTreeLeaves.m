@@ -1,5 +1,5 @@
 function [] = extractPSTHFromTreeLeaves(T, fname)
-global CELL_DATA_FOLDER
+CELL_DATA_FOLDER = getenv('CELL_DATA_FOLDER');
 %T is analysis tree
 
 leafNodes = T.findleaves;

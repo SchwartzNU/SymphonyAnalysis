@@ -1,5 +1,5 @@
 function analyzeCell(cellName, overwrite, doPlots)
-global ANALYSIS_FOLDER
+ANALYSIS_FOLDER = getenv('ANALYSIS_FOLDER');
 
 if nargin < 3
     doPlots = true;

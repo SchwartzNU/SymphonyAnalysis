@@ -3,7 +3,7 @@ function scatterPlotInfo = paramOverlapMany2Dnew(analysisTree, paramList, cellTy
 %"main cell type" will be the first type on the list of celltypes passed down to
 %this function.
 
-% global TYPOLOGY_FILES_FOLDER;
+% TYPOLOGY_FILES_FOLDER = getenv('TYPOLOGY_FILES_FOLDER');
 % pathname = TYPOLOGY_FILES_FOLDER;
 
 %paramList: Greg's format is [L1 L2 L3] = getParameterListByType(nodeData);

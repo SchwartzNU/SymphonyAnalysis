@@ -1,6 +1,6 @@
 function projectFolder = makeTempFolderForExperiment(expName)
-global ANALYSIS_FOLDER;
-global CELL_DATA_FOLDER;
+ANALYSIS_FOLDER = getenv('ANALYSIS_FOLDER');
+CELL_DATA_FOLDER = getenv('CELL_DATA_FOLDER');
 projectFolder = [ANALYSIS_FOLDER 'Projects' filesep expName '_temp'];
 if ismac
     eval(['!rm -rf ' projectFolder]);

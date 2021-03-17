@@ -1,5 +1,5 @@
 function [] = convertAllCellDataFnames()
-global ANALYSIS_FOLDER;
+ANALYSIS_FOLDER = getenv('ANALYSIS_FOLDER');
 cellData_folder = uigetdir(ANALYSIS_FOLDER, 'Choose cellData folder');
 d = dir(cellData_folder);
 for i=1:length(d)

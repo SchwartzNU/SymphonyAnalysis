@@ -1,8 +1,9 @@
 function [] = saveAndSyncCellData(cellData)
-global CELL_DATA_FOLDER;
-global CELL_DATA_MASTER;
-global SERVER_ROOT;
-global SYNC_TO_SERVER;
+CELL_DATA_FOLDER = getenv('CELL_DATA_FOLDER');
+CELL_DATA_MASTER = getenv('CELL_DATA_MASTER');
+SERVER_ROOT = getenv('SERVER_ROOT');
+SYNC_TO_SERVER = strcmp(getenv('SYNC_TO_SERVER'),'true');
+
 SERVER_TIME_OFFSET = 0;
 
 save([CELL_DATA_FOLDER cellData.savedFileName '.mat'], 'cellData');

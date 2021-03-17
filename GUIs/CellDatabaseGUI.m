@@ -11,7 +11,7 @@ classdef CellDatabaseGUI < handle
     
     methods
         function obj = CellDatabaseGUI()
-            global SERVER_ROOT
+            SERVER_ROOT = getenv('SERVER_ROOT');
             serverConnection = exist(SERVER_ROOT, 'dir') > 0;
             if ~serverConnection
                 error('no server connection')
@@ -160,7 +160,7 @@ classdef CellDatabaseGUI < handle
             % this function expands each cell name entry to include all merged cells,
             % then uses 'unique' to remove the duplicates
             
-            global PREFERENCE_FILES_FOLDER
+            PREFERENCE_FILES_FOLDER = getenv('PREFERENCE_FILES_FOLDER');
             fid = fopen([PREFERENCE_FILES_FOLDER 'MergedCells.txt']);
             fline = 'temp';
             mergedCells = obj.currentCellNames;
@@ -190,7 +190,7 @@ classdef CellDatabaseGUI < handle
         end
         
         function generateProject(obj)
-            global ANALYSIS_FOLDER
+            ANALYSIS_FOLDER = getenv('ANALYSIS_FOLDER');
             if isempty(obj.currentCellNames)
                 warning('No cells match all criteria')
                 return

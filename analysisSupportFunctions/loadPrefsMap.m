@@ -1,5 +1,5 @@
 function prefsMap = loadPrefsMap(filename)
-global ANALYSIS_FOLDER
+ANALYSIS_FOLDER = getenv('ANALYSIS_FOLDER');
 
 prefsMap = containers.Map;
 

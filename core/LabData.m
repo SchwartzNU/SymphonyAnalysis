@@ -7,7 +7,7 @@ classdef LabData < handle
     
     methods
         function obj = LabData()
-            global ANALYSIS_FOLDER
+            ANALYSIS_FOLDER = getenv('ANALYSIS_FOLDER');
             obj.analysisFolder = ANALYSIS_FOLDER;
             
             %clear everything

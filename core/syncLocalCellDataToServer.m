@@ -1,7 +1,7 @@
 function [] = syncLocalCellDataToServer()
-global ANALYSIS_FOLDER;
-global CELL_DATA_FOLDER
-global CELL_DATA_MASTER
+ANALYSIS_FOLDER = getenv('ANALYSIS_FOLDER');
+CELL_DATA_FOLDER = getenv('CELL_DATA_FOLDER');
+CELL_DATA_MASTER = getenv('CELL_DATA_MASTER');
 
 if ~(exist(CELL_DATA_MASTER, 'dir') == 7)
     disp('Could not connect to CellDataMaster');

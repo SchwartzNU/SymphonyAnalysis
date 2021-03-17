@@ -5,7 +5,7 @@ function [compEpochs, compData] = doCacapacitanceCompensation(cellData, fileName
 
 %%% error: curerntly there exists one epoch where the overcompensation is
 %%% huge, possibly broken epoch, double check data set and run again
-global CELL_DATA_FOLDER
+% CELL_DATA_FOLDER = getenv('CELL_DATA_FOLDER');
 capLen = 300;
 
 %%% generate TTX (control) capacitance traces

@@ -14,9 +14,10 @@ classdef AnalysisParamGUI < handle
     
     methods
         function obj = AnalysisParamGUI(analysisClass)
-            global ANALYSIS_FOLDER            
+            ANALYSIS_FOLDER = getenv('ANALYSIS_FOLDER');
+            ANALYSIS_CODE_FOLDER = getenv('ANALYSIS_CODE_FOLDER');
+            
             obj.paramsRoot = [ANALYSIS_FOLDER 'analysisParams' filesep];
-            global ANALYSIS_CODE_FOLDER
             analysisClassesFolder = [ANALYSIS_CODE_FOLDER filesep 'analysisTreeClasses' filesep];
 
             %part here for choosing analysisClass if none is entered

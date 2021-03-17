@@ -1,5 +1,5 @@
 function correctAnglesForCell(cname)
-    global CELL_DATA_FOLDER
+    CELL_DATA_FOLDER = getenv('CELL_DATA_FOLDER');
     fprintf('processing cellData %s\n', cname)
     fname = fullfile(CELL_DATA_FOLDER, [cname, '.mat']);
     load(fname)

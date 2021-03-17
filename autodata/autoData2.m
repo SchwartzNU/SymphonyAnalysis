@@ -1,6 +1,6 @@
 % dataExtractionGeneral
-global PREFERENCE_FILES_FOLDER
-global CELL_DATA_FOLDER;
+PREFERENCE_FILES_FOLDER = getenv('PREFERENCE_FILES_FOLDER');
+CELL_DATA_FOLDER = getenv('CELL_DATA_FOLDER');
 fid = fopen([PREFERENCE_FILES_FOLDER 'DataSetAnalyses.txt'], 'r');
 analysisTable = textscan(fid, '%s\t%s');
 fclose(fid);

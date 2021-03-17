@@ -7,8 +7,8 @@ function [] = splitProjectsBy(varargin)
 %cellTypeWithDataSets followed by a second argument specifying the cell type, a cell array of
 %dataSet prefixes, and optional fourth argument of epoch filters for each data
 %set
-global ANALYSIS_FOLDER;
-global CELL_DATA_MASTER;
+ANALYSIS_FOLDER = getenv('ANALYSIS_FOLDER');
+CELL_DATA_MASTER = getenv('CELL_DATA_MASTER');
 
 if ~(exist(CELL_DATA_MASTER, 'dir') == 7)
     disp(['Could not connect to CellDataMaster at ' CELL_DATA_MASTER]);

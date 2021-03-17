@@ -498,7 +498,7 @@ for vari = 1:length(varsToMean)
             title(sprintf('%s', cellTypeNames{cellTypeIndex}))
         end
         if vari == length(varsToMean)
-            xlabel('Spot diameter (µm)')
+            xlabel('Spot diameter (ï¿½m)')
         end
         
         outstruct.([varsToMean{vari} '_mean']) = m;
@@ -560,7 +560,7 @@ for vi = 1:3
             legend({'Excitatory','Inhibitory'})
         end
         if vi == 1
-            title(sprintf('%g µm diameter',sms_sizes(si)))
+            title(sprintf('%g ï¿½m diameter',sms_sizes(si)))
             ylim([-1,.5])
             line([0,0],[-1,.5],'Color','y','LineWidth',3);
             xticks([])
@@ -597,7 +597,7 @@ for si = 1:4
     end
     
     xlabel('Time after light onset (sec)')
-    title(sprintf('Diameter: %g µm',sms_sizes(si)))    
+    title(sprintf('Diameter: %g ï¿½m',sms_sizes(si)))    
     hold off
     xlim([min(t),max(t)])
     
@@ -736,7 +736,7 @@ for vari = 1:length(varsToMean)
 %             title(sprintf('%s', cellTs{cellTypeIndex}))
 %         end
 %         if vari == length(varsToMean)
-%             xlabel('Spot diameter (µm)')
+%             xlabel('Spot diameter (ï¿½m)')
 %         end
                    
         hold off
@@ -769,7 +769,7 @@ for i = 1:numCells
 end
 xlim([100,1150])
 ylim([0,.7])
-xlabel('Movement speed (µm/sec)')
+xlabel('Movement speed (ï¿½m/sec)')
 ylabel('DSI')
 
 plot([250, 500, 1000], nanmean(dtab{selectWfdsOn,{'MB_250_DSI_sp', 'MB_500_DSI_sp', 'MB_1000_DSI_sp'}}),'.-r','LineWidth',2,'MarkerSize',40);
@@ -890,7 +890,7 @@ for i = 1:numCells
 end
 xlim([100,1150])
 ylim([0,1])
-xlabel('Movement speed (µm/sec)')
+xlabel('Movement speed (ï¿½m/sec)')
 ylabel('DVar')
 
 plot([250, 500, 1000], nanmean(dtab{selectWfdsOn,{'MB_250_DVar_sp', 'MB_500_DVar_sp', 'MB_1000_DVar_sp'}}),'o-r','LineWidth',2);
@@ -1008,7 +1008,7 @@ t = 0:.0001:5.4999;
 % t = 0:.0001:6.4999;
 
 
-global CELL_DATA_FOLDER
+CELL_DATA_FOLDER = getenv('CELL_DATA_FOLDER');
 load([CELL_DATA_FOLDER filesep cellName])
 %
 angles = [];
@@ -1192,8 +1192,8 @@ line([-1,1]*40,[0,0])
 line([0,0],[-1,1]*40)
 ylim([-40,40])
 xlim([-40,40])
-xlabel('x (µm)');
-ylabel('y (µm)');
+xlabel('x (ï¿½m)');
+ylabel('y (ï¿½m)');
 title('spatial offset In from Ex')
 legend('FminiON','Other')
 

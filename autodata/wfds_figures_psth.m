@@ -1,5 +1,5 @@
 %% Plot light step response PSTH for optimal SMS size
-global CELL_DATA_FOLDER
+CELL_DATA_FOLDER = getenv('CELL_DATA_FOLDER');
 
 
 % selects = {selectFminiOff, selectWfdsOff};

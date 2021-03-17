@@ -1,6 +1,6 @@
 function [single_SMS_table, multi_SMS_table, error_cells] = buildSMSStructFromProject(epochFilter, projFolder)
-global ANALYSIS_FOLDER;
-global PREFERENCE_FILES_FOLDER
+ANALYSIS_FOLDER = getenv('ANALYSIS_FOLDER');
+PREFERENCE_FILES_FOLDER = getenv('PREFERENCE_FILES_FOLDER');
 
 if nargin < 2
     projFolder = uigetdir([ANALYSIS_FOLDER 'Projects' filesep], 'Choose project folder');

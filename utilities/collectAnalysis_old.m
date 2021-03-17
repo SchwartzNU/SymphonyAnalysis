@@ -3,7 +3,7 @@ function collectAnalysis(analysisClassName, nameSuffix, cellNames)
 %analysis trees and graft them together.
 %It will run analyzeCell for you if there is no analysis tree for this cell
 
-global ANALYSIS_FOLDER
+ANALYSIS_FOLDER = getenv('ANALYSIS_FOLDER');
 if nargin < 3
     cellNames = [];
 end

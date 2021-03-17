@@ -1,6 +1,6 @@
 function [single_LS_table, multi_LS_table, error_cells] = buildPSTHStructFromProject(epochFilter_LS, epochFilter_SMS, projFolder)
-global ANALYSIS_FOLDER;
-global PREFERENCE_FILES_FOLDER
+ANALYSIS_FOLDER = getenv('ANALYSIS_FOLDER');
+PREFERENCE_FILES_FOLDER = getenv('PREFERENCE_FILES_FOLDER');
 
 if nargin < 3
     projFolder = uigetdir([ANALYSIS_FOLDER 'Projects' filesep], 'Choose project folder');

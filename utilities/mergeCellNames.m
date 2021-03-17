@@ -1,5 +1,5 @@
 function cellNames_new = mergeCellNames(cellNames)
-global PREFERENCE_FILES_FOLDER;
+PREFERENCE_FILES_FOLDER = getenv('PREFERENCE_FILES_FOLDER');
 
 %read in MergedCells.txt file
 fid = fopen([PREFERENCE_FILES_FOLDER 'MergedCells.txt']);

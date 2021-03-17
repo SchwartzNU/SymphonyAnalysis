@@ -1,5 +1,5 @@
 function [] = makeSMSTreeForCellTypesFromProjectFolder(fname_cellTypes, filterName)
-global ANALYSIS_FOLDER
+ANALYSIS_FOLDER = getenv('ANALYSIS_FOLDER');
 
 fid = fopen(fname_cellTypes, 'r');
 temp = textscan(fid, '%s', 'delimiter', '\n');

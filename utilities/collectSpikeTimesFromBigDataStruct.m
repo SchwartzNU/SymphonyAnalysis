@@ -1,5 +1,5 @@
 function [allCellNames, sp, dataError] = collectSpikeTimesFromBigDataStruct(dataSetTable)
-global RAW_DATA_FOLDER;
+RAW_DATA_FOLDER = getenv('RAW_DATA_FOLDER');
 rawData_folder = uigetdir([],'Choose raw data folder from which to copy data');
 
 Ncells = length(dataSetTable);

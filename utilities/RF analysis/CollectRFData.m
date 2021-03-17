@@ -1,6 +1,6 @@
 function CollectRFData(dataTable_name)
 
- global CELL_DATA_FOLDER
+CELL_DATA_FOLDER = getenv('CELL_DATA_FOLDER');
 
 %% load excel sheet
 excel = readtable('C:\Users\david\Google Drive\ReceptiveFieldProject\RFDataMine_sheet.xlsx');

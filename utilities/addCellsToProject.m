@@ -1,5 +1,5 @@
 function [] = addCellsToProject()
-global ANALYSIS_FOLDER;
+ANALYSIS_FOLDER = getenv('ANALYSIS_FOLDER');
 projFolder = uigetdir([ANALYSIS_FOLDER 'Projects' filesep], 'Choose project folder');
 cellData_folder = uigetdir([ANALYSIS_FOLDER], 'Choose folder with cellData files');
 

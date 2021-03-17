@@ -24,7 +24,7 @@ classdef MovingBarConductanceSubtractionAnalysis < AnalysisTree
         end
         
         function obj = doAnalysis(obj)
-            global ANALYSIS_FOLDER;
+            ANALYSIS_FOLDER = getenv('ANALYSIS_FOLDER');
             chInd = obj.getchildren(1);
             for i=1:length(chInd)
                 curChild = obj.get(chInd(i));

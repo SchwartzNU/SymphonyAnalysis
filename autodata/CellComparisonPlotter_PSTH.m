@@ -21,7 +21,7 @@ classdef CellComparisonPlotter_PSTH < CellComparisonPlotter
         end
         
         function drawPlot(obj)
-            global CELL_DATA_FOLDER
+            CELL_DATA_FOLDER = getenv('CELL_DATA_FOLDER');
             ax = axes('Parent', obj.handles.plotArea);
             if obj.plotInitialized
                 cla(ax);

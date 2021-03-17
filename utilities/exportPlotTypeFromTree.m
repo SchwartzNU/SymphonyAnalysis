@@ -1,6 +1,6 @@
 function [] = exportPlotTypeFromTree(T, fname, plotterName, analysisClass)
-global IGOR_H5_folder;
-IGOR_H5_folder = './';
+IGOR_H5_folder = getenv('IGOR_H5_folder');
+% IGOR_H5_folder = './';
 nodes = getTreeLevel_new(T, 'class', analysisClass);
 L = length(nodes);
 h = figure;

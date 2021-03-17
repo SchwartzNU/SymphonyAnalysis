@@ -1,4 +1,4 @@
-global ANALYSIS_FOLDER;
+ANALYSIS_FOLDER = getenv('ANALYSIS_FOLDER');
 cellNamesListLocation = [ANALYSIS_FOLDER 'Projects' filesep 'F mini On/cellNames.txt'];
 % cellNamesListLocation = [ANALYSIS_FOLDER 'Projects' filesep 'currentProject/cellNames.txt'];
 

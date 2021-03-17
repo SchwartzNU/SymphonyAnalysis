@@ -1,7 +1,7 @@
 function RetinalMapProject(projFolder)
 
-global CELL_DATA_FOLDER
-global ANALYSIS_FOLDER
+CELL_DATA_FOLDER = getenv('CELL_DATA_FOLDER');
+ANALYSIS_FOLDER = getenv('ANALYSIS_FOLDER');
 
 if nargin == 0
     projFolder = uigetdir([ANALYSIS_FOLDER 'Projects' filesep]);

@@ -1,6 +1,6 @@
 function copyMissingData()
-    global SERVER;
-    global RAW_DATA_MASTER;
+    SERVER = getenv('SERVER');
+    RAW_DATA_MASTER = getenv('RAW_DATA_MASTER');
 
     searchFolderName = uigetdir([SERVER, 'Data\'],'Choose folder to search.');
     
@@ -13,8 +13,8 @@ function copyMissingData()
 end
 
 function searchFiles(rawDataMaster, searchFolderName)
-global RAW_DATA_MASTER;
-global SERVER;
+RAW_DATA_MASTER = getenv('RAW_DATA_MASTER');
+% SERVER = getenv('SERVER');
 contents = dir(searchFolderName);
 
     for f = 3:length(contents)

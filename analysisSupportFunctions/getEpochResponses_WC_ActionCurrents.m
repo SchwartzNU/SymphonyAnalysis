@@ -1,7 +1,7 @@
 function outputStruct = getEpochResponses_WC_ActionCurrents(cellData, epochInd, varargin)
 % Written by Greg, integrated into MultiPulse Analysis
-global DO_CAP_COMPENSATION;
-global ANALYSIS_FOLDER;
+DO_CAP_COMPENSATION = getenv('DO_CAP_COMPENSATION');
+ANALYSIS_FOLDER = getenv('ANALYSIS_FOLDER');
 ip = inputParser;
 ip.KeepUnmatched = true;
 ip.addParamValue('DeviceName', 'Amplifier_Ch1', @(x)ischar(x));

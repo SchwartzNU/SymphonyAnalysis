@@ -1,6 +1,6 @@
 function parseRawDataFiles(expDate)
-global RAW_DATA_FOLDER;
-global CELL_DATA_FOLDER;
+RAW_DATA_FOLDER = getenv('RAW_DATA_FOLDER');
+CELL_DATA_FOLDER = getenv('CELL_DATA_FOLDER');
 D_raw = dir(RAW_DATA_FOLDER);
 D_cell = dir(CELL_DATA_FOLDER);
 

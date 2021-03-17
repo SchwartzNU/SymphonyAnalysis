@@ -1,7 +1,7 @@
 function [status] = checkoutCellDataForRawData(expname)
-global CELL_DATA_FOLDER;
-global CELL_DATA_MASTER;
-global RAW_DATA_FOLDER;
+CELL_DATA_FOLDER = getenv('CELL_DATA_FOLDER');
+CELL_DATA_MASTER = getenv('CELL_DATA_MASTER');
+RAW_DATA_FOLDER = getenv('RAW_DATA_FOLDER');
 
 % Status indicates if no cellData is found on server (0), No connection
 % could be made to server (-1), or if cellData was found on server (1)

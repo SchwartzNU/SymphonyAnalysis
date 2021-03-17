@@ -1,6 +1,6 @@
 function convertColorContrastsForProject(projFolder)
 
-global CELL_DATA_FOLDER
+CELL_DATA_FOLDER = getenv('CELL_DATA_FOLDER');
 if nargin == 0
     projFolder = uigetdir;
 end

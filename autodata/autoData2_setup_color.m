@@ -1,4 +1,4 @@
-global ANALYSIS_FOLDER;
+ANALYSIS_FOLDER = getenv('ANALYSIS_FOLDER');
 cellNamesListLocation = [ANALYSIS_FOLDER 'Projects' filesep 'color/cellNames.txt'];
 
 % set this to [] if no external table

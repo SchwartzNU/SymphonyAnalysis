@@ -45,9 +45,9 @@ classdef LabDataGUI < handle
         function obj = LabDataGUI(folder_name)
             %todo: figure out how to organize directory structure for
             %different projects / labData structures
-            global ANALYSIS_FOLDER
-            global PREFERENCE_FILES_FOLDER
-            global SYNC_TO_SERVER
+            ANALYSIS_FOLDER = getenv('ANALYSIS_FOLDER');
+            PREFERENCE_FILES_FOLDER = getenv('PREFERENCE_FILES_FOLDER');
+            SYNC_TO_SERVER = getenv('SYNC_TO_SERVER');
             
             if nargin == 0
                 folder_name = '';
@@ -469,8 +469,8 @@ classdef LabDataGUI < handle
         end
         
         function initializeCellTypeAndAnalysisMenus(obj)
-            global ANALYSIS_CODE_FOLDER;
-            global PREFERENCE_FILES_FOLDER;
+            ANALYSIS_CODE_FOLDER = getenv('ANALYSIS_CODE_FOLDER');
+            PREFERENCE_FILES_FOLDER = getenv('PREFERENCE_FILES_FOLDER');
             analysisClassesFolder = [ANALYSIS_CODE_FOLDER 'analysisTreeClasses'];
             d = dir(analysisClassesFolder);
             analysisClasses = {};
@@ -837,7 +837,7 @@ classdef LabDataGUI < handle
         end
         
         function saveFilter(obj)
-            global ANALYSIS_FOLDER;
+            ANALYSIS_FOLDER = getenv('ANALYSIS_FOLDER');
             [fname,fpath] = uiputfile([ANALYSIS_FOLDER filesep 'acrossCellFilters' filesep '*.mat'],'Save filter file');
             if ~isempty(fname) %if selected something
                 filterData = get(obj.handles.epochFilterTable,'Data');
@@ -853,7 +853,7 @@ classdef LabDataGUI < handle
         end
         
         function loadFilter(obj)
-            global ANALYSIS_FOLDER;
+            ANALYSIS_FOLDER = getenv('ANALYSIS_FOLDER');
             [fname,fpath] = uigetfile([ANALYSIS_FOLDER filesep 'acrossCellFilters' filesep '*.mat'],'Load filter file');
             if ~isempty(fname) %if selected something
                 load(fullfile(fpath, fname), 'filterData', 'filterPatternString','analysisType', 'cellType');
@@ -881,8 +881,9 @@ classdef LabDataGUI < handle
         end
         
         function loadFilterList(obj)
+            ANALYSIS_FOLDER = getenv('ANALYSIS_FOLDER');
+            
             disp(obj.labData.allCellTypes)
-            global ANALYSIS_FOLDER;
             [fname,fpath] = uigetfile(ANALYSIS_FOLDER,'Load filter file');
             if ~isempty(fname) %if selected something
                 load(fullfile(fpath, fname))
@@ -1317,7 +1318,7 @@ classdef LabDataGUI < handle
         end
         
         function addToProject(obj)
-            global ANALYSIS_FOLDER;
+            ANALYSIS_FOLDER = getenv('ANALYSIS_FOLDER');
             selectedNodes = get(obj.guiTree, 'SelectedNodes');
             node = selectedNodes(1);
             
