@@ -1,7 +1,8 @@
 function [] = saveAndSyncCellData(cellData)
 CELL_DATA_FOLDER = getenv('CELL_DATA_FOLDER');
-CELL_DATA_MASTER = getenv('CELL_DATA_MASTER');
 SERVER_ROOT = getenv('SERVER_ROOT');
+CELL_DATA_MASTER = [SERVER_ROOT, 'CellDataMaster'];
+
 SYNC_TO_SERVER = strcmp(getenv('SYNC_TO_SERVER'),'true');
 
 SERVER_TIME_OFFSET = 0;

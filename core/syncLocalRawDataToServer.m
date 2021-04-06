@@ -1,7 +1,7 @@
 function [] = syncLocalRawDataToServer()
 % ANALYSIS_FOLDER = getenv('ANALYSIS_FOLDER');
 RAW_DATA_FOLDER = getenv('RAW_DATA_FOLDER');
-RAW_DATA_MASTER = getenv('RAW_DATA_MASTER');
+RAW_DATA_MASTER = [getenv('SERVER_ROOT'),'RawDataMaster'];
 
 if ~(exist(RAW_DATA_MASTER, 'dir') == 7)
     disp('Could not connect to RawDataMaster');

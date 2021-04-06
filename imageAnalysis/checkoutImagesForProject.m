@@ -1,7 +1,5 @@
 function [] = checkoutCellDataForProject(cellNames)
 ANALYSIS_FOLDER = getenv('ANALYSIS_FOLDER');
-% CELL_DATA_FOLDER = getenv('CELL_DATA_FOLDER');
-% CELL_DATA_MASTER = getenv('CELL_DATA_MASTER');
 SERVER_ROOT = getenv('SERVER_ROOT');
 RAW_IMAGE_FOLDER = getenv('RAW_IMAGE_FOLDER');
 
