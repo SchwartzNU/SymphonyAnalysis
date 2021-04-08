@@ -6,7 +6,7 @@ function initializeExperiment(expname, myname)
         case -1
             a = input(['No server connection could be made. Only proceed if you',...
                 '\nknow that the data has not been previously parsed.',...
-                '\nAre you sure you want to proceed? [y/n] '], 's')
+                '\nAre you sure you want to proceed? [y/n] '], 's');
             if a ~= 'y'
                 return
             else
