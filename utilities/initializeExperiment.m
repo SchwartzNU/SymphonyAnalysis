@@ -4,13 +4,12 @@ function initializeExperiment(expname, myname)
     status = checkoutCellDataForRawData(expname);
     switch status
         case -1
-            a = input(['No server connection could be made. Only proceed if you',...
-                '\nknow that the data has not been previously parsed.',...
-                '\nAre you sure you want to proceed? [y/n] '], 's')
-            if a ~= 'y'
-                return
-            else
+            warning('No server connection could be made. Only proceed if you know that the data has not been previously parsed.')
+            a = input('Are you sure you want to proceed? [y/n]','s');
+            if a == 'y'
                 parseRawDataFiles(expname);
+            else
+                return
             end
         case 0
             parseRawDataFiles(expname);

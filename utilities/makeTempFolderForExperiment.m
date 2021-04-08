@@ -7,9 +7,10 @@ if ismac
     eval(['!mkdir ' projectFolder]);
 elseif ispc
     if exist(projectFolder, 'dir')
-        rmdir(projectFolder) % won't remove if the directory already exists
+        delete([projectFolder, filesep, '*']);
+    else
+        mkdir(projectFolder)
     end
-    mkdir(projectFolder)
 end
 cellNames = ls([CELL_DATA_FOLDER expName '*.mat']);
 if ispc
