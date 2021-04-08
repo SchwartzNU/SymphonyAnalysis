@@ -35,11 +35,15 @@ for i= 1:length(D_raw)
                 cells = symphony2Mapper(fname);
                 arrayfun(@(cellData) save([CELL_DATA_FOLDER cellData.savedFileName], 'cellData'), cells);
                 disp(['Elapsed time: ' num2str(toc) ' seconds']);
+                return
             else
                 cellData = CellData(fname);
                 save([CELL_DATA_FOLDER curCellName], 'cellData');
-                disp(['Elapsed time: ' num2str(toc) ' seconds']);   
+                disp(['Elapsed time: ' num2str(toc) ' seconds']);
+                return
             end
         end
     end
 end
+error(['Could not find raw data matching with date matching ' expDate...
+    '. Are you sure you moved the raw data to the correct folder?  Is your startup file pointing to the correct folder?  Any typos?'])

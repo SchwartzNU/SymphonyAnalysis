@@ -190,7 +190,7 @@ classdef CellMorphologyGUI < handle
         end
         
         function loadCells(obj)
-            IMAGE_ROOT = getenv('IMAGE_ROOT');
+            IMAGE_ROOT = [getenv('SERVER_ROOT'),'Images', filesep, 'Confocal'];
             
             if exist(IMAGE_ROOT, 'file')
                 imageRoot_confocal = IMAGE_ROOT;
@@ -277,8 +277,7 @@ classdef CellMorphologyGUI < handle
         end
         
         function updateDataTable(obj)
-            IMAGE_ROOT = getenv('IMAGE_ROOT');
-            imageRoot_confocal = IMAGE_ROOT;
+            IMAGE_ROOT = [getenv('SERVER_ROOT'),'Images', filesep, 'Confocal'];
             tableData = obj.handles.cellsTable.get('Data');
             L = length(obj.selectedRows);
             %clear previous stats from table
@@ -288,7 +287,7 @@ classdef CellMorphologyGUI < handle
             if L==1 %single selection
                 curName = tableData{obj.selectedRows(1), 1};
                 if  tableData{obj.selectedRows(1), 6}
-                    curDir = [imageRoot_confocal filesep curName filesep];
+                    curDir = [IMAGE_ROOT filesep curName filesep];
                     morphology_fname = [curName '_morphologyData.mat'];
                     %load data
                     load([curDir morphology_fname], 'outputStruct');
@@ -313,8 +312,7 @@ classdef CellMorphologyGUI < handle
         end
                 
         function updatePlots(obj)
-            IMAGE_ROOT = getenv('IMAGE_ROOT');
-            imageRoot_confocal = IMAGE_ROOT;
+            IMAGE_ROOT = [getenv('SERVER_ROOT'),'Images', filesep, 'Confocal'];
             tableData = obj.handles.cellsTable.get('Data');
             %clear plots
             ch = get(obj.handles.L_plotsPanel, 'children');
@@ -334,7 +332,7 @@ classdef CellMorphologyGUI < handle
                     didPlot = true;
                     curName = tableData{obj.selectedRows(i), 1};
                     allNames = [allNames, curName];
-                    curDir = [imageRoot_confocal filesep curName filesep];
+                    curDir = [IMAGE_ROOT filesep curName filesep];
                     morphology_fname = [curName '_morphologyData.mat'];
                     %load data
                     load([curDir morphology_fname], 'outputStruct');
@@ -445,8 +443,7 @@ classdef CellMorphologyGUI < handle
         end
         
         function runAnalyzer(obj)
-            IMAGE_ROOT = getenv('IMAGE_ROOT');
-            imageRoot_confocal = IMAGE_ROOT;
+            IMAGE_ROOT = [getenv('SERVER_ROOT'),'Images', filesep, 'Confocal'];
             
             tableData = obj.handles.cellsTable.get('Data');
             cellNames = tableData(obj.selectedRows, 1);
@@ -455,7 +452,7 @@ classdef CellMorphologyGUI < handle
                 curName = cellNames{i};                
                 disp(['Analyzing cell ' curName]);                
                 if tableData{obj.selectedRows(i), 4} %if traced
-                    curDir = [imageRoot_confocal curName filesep]
+                    curDir = [IMAGE_ROOT filesep curName filesep]
                     trace_fname = [curName '.swc'];
                     
                     if exist([curDir curName '.tif'], 'file')
@@ -496,14 +493,13 @@ classdef CellMorphologyGUI < handle
         
         function exportStrat(obj)
             IGOR_H5_folder = getenv('IGOR_H5_FOLDER');
-            IMAGE_ROOT = getenv('IMAGE_ROOT');
-            imageRoot_confocal = IMAGE_ROOT;
+            IMAGE_ROOT = [getenv('SERVER_ROOT'),'Images', filesep, 'Confocal'];
             
             tableData = obj.handles.cellsTable.get('Data');
             L = length(obj.selectedRows);
             for i=1:L
                 curName = tableData{obj.selectedRows(i), 1};
-                curDir = [imageRoot_confocal filesep curName filesep];
+                curDir = [IMAGE_ROOT filesep curName filesep];
                 morphology_fname = [curName '_morphologyData.mat'];
                 %load data
                 load([curDir morphology_fname], 'outputStruct');

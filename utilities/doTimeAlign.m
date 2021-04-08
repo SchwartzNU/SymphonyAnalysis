@@ -7,19 +7,24 @@ function [ C, P, T, AHP, FWHM, initSlope, preSlope, threshSlope, maxSlope, minSl
 %   OUTPUT: time aligned voltages, peaks, threshold, ahp, fwhm, init slope
 %   and figures if 'figures' is imputted for f
 
+% make sure that voltages in a row trace
 if (size(voltages, 1) > size(voltages, 2))
     voltages = voltages';
 end
-% if sampR ~= 50000
-%     timeAxis = [0:length(voltages)-1]/sampR;
-%     voltages = interp1(timeAxis, voltages, linspace(0, timeAxis(end), ceil(length(voltages)*(50000/sampR))), 'spline');
-%     len = ceil(50000/sampR*len);
-%     spikeTimes = ceil(spikeTimes*(50000/sampR));
-%     sampR = 50000;
-% end
-% if (mod(len, 2) == 0)
-%     len = len+1;
-% end
+% resample to 50 kHz
+if sampR ~= 50000
+    timeAxis = [0:length(voltages)-1]/sampR;
+    voltages = interp1(timeAxis, voltages, linspace(0, timeAxis(end), ceil(length(voltages)*(50000/sampR))), 'spline');
+    len = ceil(50000/sampR*len);
+    spikeTimes = ceil(spikeTimes*(50000/sampR));
+    sampR = 50000;
+end
+% make sure length is odd
+if (mod(len, 2) == 0)
+    len = len+1;
+end
+
+% set up all the variables we will be saving
 factor = sampR/1000;
 L = length(voltages);
 lenVec = 1:len;
@@ -34,20 +39,17 @@ preSlope = nan(N, 1); % slope before the threshold (mV/ms)
 threshSlope = nan(N, 1); % slope at the threshold (mV/ms)
 maxSlope = nan(N, 1); % max slope of dVdt (mV/ms)
 minSlope = nan(N, 1); % min slope of dVdt (mV/ms)
-for i = 1:N
+
+for i = 1:N % for each spike
     st = spikeTimes(i);
     if st <= 15 || st >= L-100 % can't calculate threshold
-        continue
+        continue % not really sure why this is here, but it is
     end
     if strcmp(clamp, 'CC') || strcmp(clamp, 'IC')
-        [peak, I] = max(voltages(st-15: st+100));
+        [peak, I] = max(voltages(st-15: st+100)); % find the true peak
         [ahp, AHPInd] = min(voltages(st: ceil(min(st+(25*(sampR/10000)), L))));
         AHPInd = AHPInd+15;
     elseif strcmp(clamp, 'VC')
-        [peak, I] = min(voltages(st-15: st+15));
-        [ahp, AHPInd] = max(voltages(st: min(st+(25*(sampR/10000)), L)));
-        AHPInd = AHPInd+15;
-    else
         disp('Clamp option not valid')
         break
     end
@@ -57,7 +59,7 @@ for i = 1:N
     c = [];
     if length(voltages) == len
         c = voltages;
-    elseif (st - half <= 0) | (st + half > L)
+    elseif (st - half <= 0) || (st + half > L)
         % to close to edge
         continue
     else
@@ -70,7 +72,7 @@ for i = 1:N
     dVdt = diff(c);
     ddVdt = diff(dVdt);
     thresholdInd = max(find((ddVdt > mean(ddVdt)+3*var(ddVdt)), 1) - 3, 1);
-    if (sampR > 20000) && (strcmp(clamp, 'CC') || strcmp(clamp, 'IC'))
+    if (sampR > 20000) && (strcmp(clamp, 'CC') || strcmp(clamp, 'IC')) % this works for 50 kHz
         third = ceil(length(c)/3);
         ddVdt = diff(dVdt(1+third:end-third));
         thresholdInd = max(find((ddVdt > mean(ddVdt)+5*var(ddVdt)), 1) - 3, 1);
@@ -79,7 +81,7 @@ for i = 1:N
     if isempty(thresholdInd) && (strcmp(clamp, 'CC') || strcmp(clamp, 'IC'))
         thresholdInd = max(find((ddVdt > mean(ddVdt)+var(ddVdt)), 1) - 3, 1);
     elseif isempty(thresholdInd) && strcmp(clamp, 'VC')
-        thresholdInd = max(find((ddVdt > mean(ddVdt)+std(ddVdt)), 1) - 3, 1);
+        continue
     end
     if thresholdInd == 1
         thresholdInd = max(find((ddVdt > mean(ddVdt)+std(ddVdt)), 1) - 3, 1);
@@ -94,32 +96,13 @@ for i = 1:N
     smallLenVec = lenVec(floor(len/2)-smallSize:floor(len/2)+smallSize);
     smallC = c(smallLenVec);
     
-    halfMax = (peak - thresholdV)/2 + thresholdV;
-    if (strcmp(clamp, 'CC') || strcmp(clamp, 'IC'))
-        startHalf = min(smallLenVec(smallC>halfMax));
-        endHalf = max(smallLenVec(smallC>halfMax));
-    elseif strcmp(clamp, 'VC')
-        startHalf = min(smallLenVec(smallC<halfMax));
-        endHalf = max(smallLenVec(smallC<halfMax));
-    elseif strcmp(clamp, 'EX_upSpikes')
-        startHalf = min(smallLenVec(smallC>halfMax));
-        endHalf = max(smallLenVec(smallC>halfMax));
-    elseif strcmp(clamp, 'EX_downSpikes')
-        startHalf = min(smallLenVec(smallC<halfMax));
-        endHalf = max(smallLenVec(smallC<halfMax));
-    end
+    halfMax = (peak - thresholdV)/2 + thresholdV; % find the half max
+    startHalf = min(smallLenVec(smallC>halfMax));
+    endHalf = max(smallLenVec(smallC>halfMax));
     
     
     if thresholdInd > startHalf
         continue
-%         thresholdInd
-%         startHalf
-%         figure; plot(c)
-%         thresholdInd = max(find(c(1:I) < thresholdV));
-%         
-%         if isempty(thresholdInd)
-%             continue
-%         end
     end
     
     if strcmp(f, 'figures') && i == 1
@@ -137,7 +120,6 @@ for i = 1:N
         V = c(2:end);
         figure
         scatter(V, dVdt)
-        
     end
 
 

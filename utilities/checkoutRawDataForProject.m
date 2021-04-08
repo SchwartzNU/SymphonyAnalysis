@@ -1,7 +1,7 @@
 function [] = checkoutRawDataForProject(cellNames)
 ANALYSIS_FOLDER = getenv('ANALYSIS_FOLDER');
 RAW_DATA_FOLDER = getenv('RAW_DATA_FOLDER');
-RAW_DATA_MASTER = getenv('RAW_DATA_MASTER');
+RAW_DATA_MASTER = [getenv('SERVER_ROOT'),'RawDataMaster'];
 
 if nargin < 1
     projFolder = uigetdir([ANALYSIS_FOLDER 'Projects' filesep], 'Choose project folder');

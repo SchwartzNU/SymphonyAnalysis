@@ -2,7 +2,7 @@ function cellData = loadAndSyncCellData(cellDataName)
 
 ANALYSIS_FOLDER = getenv('ANALYSIS_FOLDER');
 SYNC_TO_SERVER = strcmp(getenv('SYNC_TO_SERVER'), 'true');
-CELL_DATA_MASTER = getenv('CELL_DATA_MASTER');
+CELL_DATA_MASTER = [getenv('SERVER_ROOT'),'CellDataMaster'];
 SERVER_ROOT = getenv('SERVER_ROOT');
 
 cellData_local = [];
