@@ -4,7 +4,7 @@ CELL_DATA_FOLDER = getenv('CELL_DATA_FOLDER');
 ANALYSIS_FOLDER = getenv('ANALYSIS_FOLDER');
 
 if nargin == 0
-    projFolder = uigetdir([ANALYSIS_FOLDER 'Projects' filesep]);
+    projFolder = uigetdir([ANALYSIS_FOLDER filesep 'Projects' filesep]);
 end
 
 fid = fopen([projFolder filesep 'cellNames.txt'], 'r');

@@ -1,6 +1,6 @@
 function [] = resetAllRawDataPaths()
-ANALYSIS_FOLDER = getenv('ANALYSIS_FOLDER');
-RAW_DATA_FOLDER = getenv('RAW_DATA_FOLDER');
+ANALYSIS_FOLDER = [getenv('ANALYSIS_FOLDER') filesep];
+RAW_DATA_FOLDER = [getenv('RAW_DATA_FOLDER') filesep];
 cellData_folder = uigetdir(ANALYSIS_FOLDER, 'Choose cellData folder');
 rawData_folder = uigetdir(RAW_DATA_FOLDER, 'Choose raw data folder');
 d = dir(cellData_folder);

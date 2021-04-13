@@ -1,5 +1,5 @@
 ANALYSIS_FOLDER = getenv('ANALYSIS_FOLDER');
-cellNamesListLocation = [ANALYSIS_FOLDER 'Projects' filesep 'F mini On/cellNames.txt'];
+cellNamesListLocation = [ANALYSIS_FOLDER filesep 'Projects' filesep 'F mini On/cellNames.txt'];
 % cellNamesListLocation = [ANALYSIS_FOLDER 'Projects' filesep 'currentProject/cellNames.txt'];
 
 % set this to [] if no external table

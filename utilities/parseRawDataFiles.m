@@ -28,17 +28,17 @@ for i= 1:length(D_raw)
         if writeOK
             tic;
             disp(['parsing file ' curCellName]);
-            fname = [RAW_DATA_FOLDER curCellName '.h5'];
+            fname = [RAW_DATA_FOLDER filesep curCellName '.h5'];
 
             if h5readatt(fname, '/', 'version') == 2
                 disp('Parsing cells in Symphony 2 file')
                 cells = symphony2Mapper(fname);
-                arrayfun(@(cellData) save([CELL_DATA_FOLDER cellData.savedFileName], 'cellData'), cells);
+                arrayfun(@(cellData) save([CELL_DATA_FOLDER filesep cellData.savedFileName], 'cellData'), cells);
                 disp(['Elapsed time: ' num2str(toc) ' seconds']);
                 return
             else
                 cellData = CellData(fname);
-                save([CELL_DATA_FOLDER curCellName], 'cellData');
+                save([CELL_DATA_FOLDER filesep curCellName], 'cellData');
                 disp(['Elapsed time: ' num2str(toc) ' seconds']);
                 return
             end

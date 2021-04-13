@@ -11,7 +11,7 @@ for i=1:nLeaves
         datasetName = strtok(deblank(rest), ':');
         datasetName = datasetName(2:end);
         
-        load([CELL_DATA_FOLDER cellName]);
+        load([CELL_DATA_FOLDER filesep cellName]);
         epochInd = cellData.savedDataSets(datasetName);
         [psth_y, psth_x] = cellData.getPSTH(epochInd);
         s = struct;

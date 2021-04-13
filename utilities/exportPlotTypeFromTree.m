@@ -37,7 +37,7 @@ for i=1:L
             disp([analysisClass '.' plotterName '(curNode, cellData);']);
             %pause;
             eval([analysisClass '.' plotterName '(curNode, cellData);']);
-            makeAxisStruct(ax, IGOR_H5_folder, fname, [cellName '_' datasetName])
+            makeAxisStruct(ax, IGOR_H5_folder filesep fname, [cellName '_' datasetName])
         catch
             disp(['plot error: skipping ' cellName '_' datasetName]);
         end

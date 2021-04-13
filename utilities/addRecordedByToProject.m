@@ -1,7 +1,7 @@
 function addRecordedByToProject(projFolder, myname)
 
 ANALYSIS_FOLDER = getenv('ANALYSIS_FOLDER');
-cellData_folder = [ANALYSIS_FOLDER 'cellData' filesep];
+cellData_folder = [ANALYSIS_FOLDER filesep 'cellData' filesep];
 
 fid = fopen([projFolder filesep 'cellNames.txt'], 'r');
 if fid < 0

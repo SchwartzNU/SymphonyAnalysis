@@ -31,8 +31,8 @@ classdef TreeBrowserGUI < handle
         function obj = TreeBrowserGUI(analysisTree)
             ANALYSIS_FOLDER = getenv('ANALYSIS_FOLDER');
             PREFERENCE_FILES_FOLDER = getenv('PREFERENCE_FILES_FOLDER');
-            obj.cellDataFolder = [ANALYSIS_FOLDER 'cellData' filesep];
-            obj.igorh5Folder = [ANALYSIS_FOLDER 'Igorh5' filesep];
+            obj.cellDataFolder = [ANALYSIS_FOLDER filesep 'cellData' filesep];
+            obj.igorh5Folder = [ANALYSIS_FOLDER filesep 'Igorh5' filesep];
             if nargin==0
                 [fname, pathname] = uigetfile([ANALYSIS_FOLDER filesep 'analysisTrees' filesep '*.mat'], 'Load analysisTree');
                 load(fullfile(pathname, fname)); %loads analysisTree
@@ -524,8 +524,8 @@ classdef TreeBrowserGUI < handle
         
         function loadTree(obj)
             ANALYSIS_FOLDER = getenv('ANALYSIS_FOLDER');
-            obj.cellDataFolder = [ANALYSIS_FOLDER 'cellData' filesep];
-            obj.igorh5Folder = [ANALYSIS_FOLDER 'Igorh5' filesep];
+            obj.cellDataFolder = [ANALYSIS_FOLDER filesep 'cellData' filesep];
+            obj.igorh5Folder = [ANALYSIS_FOLDER filesep 'Igorh5' filesep];
             obj.curCellData = [];
             
             [fname, pathname] = uigetfile([ANALYSIS_FOLDER filesep 'analysisTrees' filesep '*.mat'], 'Load analysisTree');

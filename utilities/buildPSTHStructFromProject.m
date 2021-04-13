@@ -3,7 +3,7 @@ ANALYSIS_FOLDER = getenv('ANALYSIS_FOLDER');
 PREFERENCE_FILES_FOLDER = getenv('PREFERENCE_FILES_FOLDER');
 
 if nargin < 3
-    projFolder = uigetdir([ANALYSIS_FOLDER 'Projects' filesep], 'Choose project folder');
+    projFolder = uigetdir([ANALYSIS_FOLDER filesep 'Projects' filesep], 'Choose project folder');
 end
 
 fid = fopen([projFolder filesep 'cellNames.txt'], 'r');
@@ -16,7 +16,7 @@ cellNames = temp{1};
 fclose(fid);
 
 %load analysis table
-fid = fopen([PREFERENCE_FILES_FOLDER 'DataSetAnalyses.txt'], 'r');
+fid = fopen([PREFERENCE_FILES_FOLDER filesep 'DataSetAnalyses.txt'], 'r');
 analysisTable = textscan(fid, '%s\t%s');
 fclose(fid);
 

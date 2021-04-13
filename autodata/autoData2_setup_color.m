@@ -1,5 +1,5 @@
 ANALYSIS_FOLDER = getenv('ANALYSIS_FOLDER');
-cellNamesListLocation = [ANALYSIS_FOLDER 'Projects' filesep 'color/cellNames.txt'];
+cellNamesListLocation = [ANALYSIS_FOLDER filesep 'Projects' filesep 'color/cellNames.txt'];
 
 % set this to [] if no external table
 externalTableFilename = 'analysisTrees/automaticData/externalCellDataTable';

@@ -4,13 +4,13 @@ SERVER_ROOT = getenv('SERVER_ROOT');
 RAW_IMAGE_FOLDER = getenv('RAW_IMAGE_FOLDER');
 
 if nargin < 1
-    projFolder = uigetdir([ANALYSIS_FOLDER 'Projects' filesep], 'Choose project folder');
+    projFolder = uigetdir([ANALYSIS_FOLDER filesep 'Projects' filesep], 'Choose project folder');
     
     disp('Choose server image folder')
-    copyFromFolder = uigetdir(SERVER_ROOT, 'Choose server image folder');
+    copyFromFolder = uigetdir([SERVER_ROOT filesep], 'Choose server image folder');
     
     disp('Choose where to place images')
-    copyToFolder = uigetdir(RAW_IMAGE_FOLDER, 'Choose where to place images');
+    copyToFolder = uigetdir([RAW_IMAGE_FOLDER filesep], 'Choose where to place images');
     
     fid = fopen([projFolder filesep 'cellNames.txt'], 'r');
     if fid < 0

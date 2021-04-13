@@ -16,7 +16,7 @@ classdef CellDatabaseGUI < handle
             if ~serverConnection
                 error('no server connection')
             end
-            saveFileLocation = [SERVER_ROOT 'cellDatabase' filesep 'cellDatabaseSaveFile.mat'];
+            saveFileLocation = fullfile(SERVER_ROOT, 'cellDatabase', 'cellDatabaseSaveFile.mat');
             c = load(saveFileLocation);
             disp('Loaded database from server')
             
@@ -161,7 +161,7 @@ classdef CellDatabaseGUI < handle
             % then uses 'unique' to remove the duplicates
             
             PREFERENCE_FILES_FOLDER = getenv('PREFERENCE_FILES_FOLDER');
-            fid = fopen([PREFERENCE_FILES_FOLDER 'MergedCells.txt']);
+            fid = fopen([PREFERENCE_FILES_FOLDER filesep 'MergedCells.txt']);
             fline = 'temp';
             mergedCells = obj.currentCellNames;
             zi = 1; % track output index
@@ -204,7 +204,7 @@ classdef CellDatabaseGUI < handle
             end
             projectName = projectName{1};
             if ~isempty(projectName)
-                dirName = [ANALYSIS_FOLDER 'Projects' filesep projectName];
+                dirName = [ANALYSIS_FOLDER filesep 'Projects' filesep projectName];
                 if exist(dirName, 'dir')
                     warning('Project already exists')
                     return

@@ -190,7 +190,7 @@ classdef CellMorphologyGUI < handle
         end
         
         function loadCells(obj)
-            IMAGE_ROOT = [getenv('SERVER_ROOT'),'Images', filesep, 'Confocal'];
+            IMAGE_ROOT = [getenv('SERVER_ROOT') filesep 'Images' filesep 'Confocal'];
             
             if exist(IMAGE_ROOT, 'file')
                 imageRoot_confocal = IMAGE_ROOT;
@@ -260,11 +260,11 @@ classdef CellMorphologyGUI < handle
                 cellNames = tableData(obj.selectedRows, 1);
                 cellNames = mergeCellNames(cellNames);
                 
-                if exist([ANALYSIS_FOLDER 'Projects' filesep  projectName])
-                    rmdir([ANALYSIS_FOLDER 'Projects' filesep  projectName], 's');
+                if exist([ANALYSIS_FOLDER filesep 'Projects' filesep  projectName],'dir')
+                    rmdir([ANALYSIS_FOLDER filesep 'Projects' filesep  projectName], 's');
                 end
-                eval(['!mkdir ' ANALYSIS_FOLDER 'Projects' filesep  projectName]);
-                fid = fopen([ANALYSIS_FOLDER, 'Projects', filesep, projectName, filesep, 'cellNames.txt'], 'w');
+                eval(['!mkdir ' ANALYSIS_FOLDER filesep 'Projects' filesep projectName]);
+                fid = fopen([ANALYSIS_FOLDER filesep 'Projects' filesep projectName filesep 'cellNames.txt'], 'w');
                 
                 for i=1:length(cellNames)
                     if ~isempty(cellNames{i})
@@ -277,7 +277,7 @@ classdef CellMorphologyGUI < handle
         end
         
         function updateDataTable(obj)
-            IMAGE_ROOT = [getenv('SERVER_ROOT'),'Images', filesep, 'Confocal'];
+            IMAGE_ROOT = [getenv('SERVER_ROOT') filesep 'Images' filesep 'Confocal'];
             tableData = obj.handles.cellsTable.get('Data');
             L = length(obj.selectedRows);
             %clear previous stats from table
@@ -312,7 +312,7 @@ classdef CellMorphologyGUI < handle
         end
                 
         function updatePlots(obj)
-            IMAGE_ROOT = [getenv('SERVER_ROOT'),'Images', filesep, 'Confocal'];
+            IMAGE_ROOT = [getenv('SERVER_ROOT') filesep 'Images' filesep 'Confocal'];
             tableData = obj.handles.cellsTable.get('Data');
             %clear plots
             ch = get(obj.handles.L_plotsPanel, 'children');
@@ -392,7 +392,7 @@ classdef CellMorphologyGUI < handle
                             %too many, don't plot anything
                     end
  
-                    if isempty(outputStruct.ON_OFF_division); %monostratified
+                    if isempty(outputStruct.ON_OFF_division) %monostratified
                         scatter(obj.handles.dend_ax(i), outputStruct.allXYpos(:,1), outputStruct.allXYpos(:,2), 'k.');
                         hold(obj.handles.dend_ax(i), 'on');
                         plot(obj.handles.dend_ax(i), outputStruct.allXYpos(outputStruct.boundaryPoints,1), outputStruct.allXYpos(outputStruct.boundaryPoints,2), 'k-');
@@ -443,7 +443,7 @@ classdef CellMorphologyGUI < handle
         end
         
         function runAnalyzer(obj)
-            IMAGE_ROOT = [getenv('SERVER_ROOT'),'Images', filesep, 'Confocal'];
+            IMAGE_ROOT = [getenv('SERVER_ROOT') filesep 'Images' filesep 'Confocal'];
             
             tableData = obj.handles.cellsTable.get('Data');
             cellNames = tableData(obj.selectedRows, 1);
@@ -452,7 +452,7 @@ classdef CellMorphologyGUI < handle
                 curName = cellNames{i};                
                 disp(['Analyzing cell ' curName]);                
                 if tableData{obj.selectedRows(i), 4} %if traced
-                    curDir = [IMAGE_ROOT filesep curName filesep]
+                    curDir = [IMAGE_ROOT filesep curName filesep];
                     trace_fname = [curName '.swc'];
                     
                     if exist([curDir curName '.tif'], 'file')
@@ -493,7 +493,7 @@ classdef CellMorphologyGUI < handle
         
         function exportStrat(obj)
             IGOR_H5_folder = getenv('IGOR_H5_FOLDER');
-            IMAGE_ROOT = [getenv('SERVER_ROOT'),'Images', filesep, 'Confocal'];
+            IMAGE_ROOT = [getenv('SERVER_ROOT') filesep 'Images' filesep 'Confocal'];
             
             tableData = obj.handles.cellsTable.get('Data');
             L = length(obj.selectedRows);

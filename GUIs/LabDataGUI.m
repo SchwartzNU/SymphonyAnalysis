@@ -53,7 +53,7 @@ classdef LabDataGUI < handle
                 folder_name = '';
             end
             if isempty(folder_name)
-                folder_name = uigetdir([ANALYSIS_FOLDER 'Projects/'],'Choose project folder');
+                folder_name = uigetdir([ANALYSIS_FOLDER filesep 'Projects' filesep],'Choose project folder');
             end
             if folder_name == 0
                 return
@@ -61,7 +61,7 @@ classdef LabDataGUI < handle
             obj.projFolder = [folder_name filesep];
             folderParts = strsplit(folder_name, filesep);
             obj.projName = folderParts{end};
-            obj.cellData_folder = [ANALYSIS_FOLDER 'cellData' filesep];
+            obj.cellData_folder = [ANALYSIS_FOLDER filesep 'cellData' filesep];
             
             
             obj.labData.clearContents();
@@ -471,7 +471,7 @@ classdef LabDataGUI < handle
         function initializeCellTypeAndAnalysisMenus(obj)
             ANALYSIS_CODE_FOLDER = getenv('ANALYSIS_CODE_FOLDER');
             PREFERENCE_FILES_FOLDER = getenv('PREFERENCE_FILES_FOLDER');
-            analysisClassesFolder = [ANALYSIS_CODE_FOLDER 'analysisTreeClasses'];
+            analysisClassesFolder = [ANALYSIS_CODE_FOLDER filesep 'analysisTreeClasses'];
             d = dir(analysisClassesFolder);
             analysisClasses = {};
             z = 1;
@@ -884,7 +884,7 @@ classdef LabDataGUI < handle
             ANALYSIS_FOLDER = getenv('ANALYSIS_FOLDER');
             
             disp(obj.labData.allCellTypes)
-            [fname,fpath] = uigetfile(ANALYSIS_FOLDER,'Load filter file');
+            [fname,fpath] = uigetfile([ANALYSIS_FOLDER filesep],'Load filter file');
             if ~isempty(fname) %if selected something
                 load(fullfile(fpath, fname))
                 

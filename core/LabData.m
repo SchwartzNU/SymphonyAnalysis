@@ -7,8 +7,8 @@ classdef LabData < handle
     
     methods
         function obj = LabData()
-            ANALYSIS_FOLDER = getenv('ANALYSIS_FOLDER');
-            obj.analysisFolder = ANALYSIS_FOLDER;
+            
+            obj.analysisFolder = [getenv('ANALYSIS_FOLDER') filesep];
             
             %clear everything
             obj.cellTypes = containers.Map; %keys are cell type names (e.g. On Alpha), values are cell names (e.g. 042214Ac1)

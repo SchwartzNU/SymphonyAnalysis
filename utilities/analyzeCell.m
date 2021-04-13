@@ -4,7 +4,7 @@ PREFERENCE_FILES_FOLDER = getenv('PREFERENCE_FILES_FOLDER');
 
 %Open DataSetsAnalyses.txt file that defines the mapping between data set
 %names and analysis classes
-fid = fopen([PREFERENCE_FILES_FOLDER 'DataSetAnalyses.txt'], 'r');
+fid = fopen([PREFERENCE_FILES_FOLDER filesep 'DataSetAnalyses.txt'], 'r');
 analysisTable = textscan(fid, '%s\t%s');
 fclose(fid);
 
@@ -21,7 +21,7 @@ if ~isempty(loc)
 end
 params_deviceOnly = params;
 
-load([ANALYSIS_FOLDER 'cellData' filesep cellName]);
+load([ANALYSIS_FOLDER filesep 'cellData' filesep cellName]);
 prefsMap = [];
 %if ~isempty(cellData.prefsMapName)
 %    prefsMap = loadPrefsMap(cellData.prefsMapName);
@@ -54,7 +54,7 @@ for i=1:length(dataSetKeys)
                     for p=1:length(paramSets)
                         T = [];
                         curParamSet = paramSets{p};
-                        load([ANALYSIS_FOLDER 'analysisParams' filesep curAnalysisClass filesep curParamSet]); %loads params
+                        load([ANALYSIS_FOLDER filesep 'analysisParams' filesep curAnalysisClass filesep curParamSet]); %loads params
                         params.deviceName = params_deviceOnly.deviceName;
                         params.parameterSetName = curParamSet;
                         params.class = curAnalysisClass;

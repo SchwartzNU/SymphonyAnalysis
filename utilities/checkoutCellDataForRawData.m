@@ -1,6 +1,6 @@
 function [status] = checkoutCellDataForRawData(expname)
 CELL_DATA_FOLDER = getenv('CELL_DATA_FOLDER');
-CELL_DATA_MASTER = [getenv('SERVER_ROOT'),'CellDataMaster'];
+CELL_DATA_MASTER = [getenv('SERVER_ROOT') filesep 'CellDataMaster'];
 RAW_DATA_FOLDER = getenv('RAW_DATA_FOLDER');
 
 % Status indicates if no cellData is found on server (0), No connection
@@ -17,13 +17,13 @@ end
 
 %% Choose a raw data file if no experiment day is given
 if nargin == 0
-    expname = uigetfile([RAW_DATA_FOLDER,'*.h5'], 'Choose raw data file');
+    expname = uigetfile([RAW_DATA_FOLDER filesep '*.h5'], 'Choose raw data file');
     expname = erase(expname,'.h5');
 end
 
 %% Look for cellData on server that matched the experiment day
 disp('Looking for matching cellData in CellDataMaster')
-CellData_Master = dir([CELL_DATA_MASTER,expname,'*']);
+CellData_Master = dir([CELL_DATA_MASTER filesep expname '*']);
 
 if length(CellData_Master) < 1
     disp('No matching cell data found on server')
@@ -35,7 +35,7 @@ end
 
 %% Check for any local cellData that is already on your computer for this experiment.
 disp('Checking your local Cell Data Folder')
-CellData_Local = dir([CELL_DATA_FOLDER,expname,'*']);
+CellData_Local = dir([CELL_DATA_FOLDER filesep expname '*']);
 CellData_LocalNames = struct2cell(CellData_Local);
 CellData_LocalNames = CellData_LocalNames(1,:);
 fprintf('%d matching files found locally \n', length(CellData_LocalNames))
@@ -46,7 +46,7 @@ for i = 1:length(CellData_Master)
         fprintf('%s is already in your local cellData \n', CellData_Master(i).name)
     else
         fprintf('Copying %s \n', CellData_Master(i).name);
-        [~,message,~] = copyfile([CELL_DATA_MASTER ,CellData_Master(i).name], CELL_DATA_FOLDER);
+        [~,message,~] = copyfile([CELL_DATA_MASTER filesep CellData_Master(i).name], [CELL_DATA_FOLDER filesep]);
         if message
             disp(message)
         end

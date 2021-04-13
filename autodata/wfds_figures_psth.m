@@ -32,7 +32,7 @@ for ci = 1:20%size(dtab,1)
     
     dataSet = dtab{ci, 'SMS_sp_dataset'}{1};
     
-    load([CELL_DATA_FOLDER cellNames{ci}])
+    load([CELL_DATA_FOLDER filesep cellNames{ci}])
     epochIds = cellData.savedDataSets(dataSet);
     matchingEpochs = [];
     for ei = 1:length(epochIds)

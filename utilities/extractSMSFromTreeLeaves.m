@@ -6,7 +6,7 @@ ANALYSIS_FOLDER = getenv('ANALYSIS_FOLDER');
 if nargin < 2
     [fname, fpath] = uiputfile('*.h5','Select HDF5 file');
 else
-    fpath = [ANALYSIS_FOLDER 'igorh5' filesep 'SMS'];    
+    fpath = [ANALYSIS_FOLDER filesep 'igorh5' filesep 'SMS'];    
     temp = what(fpath);
     fpath = temp.path;
 end

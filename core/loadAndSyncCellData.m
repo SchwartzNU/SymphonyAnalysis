@@ -2,7 +2,7 @@ function cellData = loadAndSyncCellData(cellDataName)
 
 ANALYSIS_FOLDER = getenv('ANALYSIS_FOLDER');
 SYNC_TO_SERVER = strcmp(getenv('SYNC_TO_SERVER'), 'true');
-CELL_DATA_MASTER = [getenv('SERVER_ROOT'),'CellDataMaster'];
+CELL_DATA_MASTER = [getenv('SERVER_ROOT') filesep 'CellDataMaster'];
 SERVER_ROOT = getenv('SERVER_ROOT');
 
 cellData_local = [];
@@ -11,9 +11,9 @@ do_local_to_server_copy = false;
 do_server_to_local_copy = false;
 do_server_to_local_update = false;
 try
-    fileinfo = dir([ANALYSIS_FOLDER 'cellData' filesep cellDataName '.mat']);
+    fileinfo = dir([ANALYSIS_FOLDER filesep 'cellData' filesep cellDataName '.mat']);
     localModDate = fileinfo.datenum;
-    load([ANALYSIS_FOLDER 'cellData' filesep cellDataName '.mat']); %load cellData
+    load([ANALYSIS_FOLDER filesep 'cellData' filesep cellDataName '.mat']); %load cellData
     cellData_local = cellData;
     disp([cellDataName ': Local copy loaded']);
 catch
@@ -31,16 +31,16 @@ end
 if SYNC_TO_SERVER
     if exist(CELL_DATA_MASTER, 'dir') == 7 %sever is connected and CellDataMaster folder is found
 %         disp('CellDataMaster found');
-        cellDataStatusFileLocation = [SERVER_ROOT 'CellDataStatus.txt'];
+        cellDataStatusFileLocation = [SERVER_ROOT filesep 'CellDataStatus.txt'];
         try
-            fileinfo = dir([CELL_DATA_MASTER cellDataName '.mat']);
+            fileinfo = dir([CELL_DATA_MASTER filesep cellDataName '.mat']);
             serverModDate = fileinfo.datenum;
             fprintf('Local file is %g sec newer than server file\n',(localModDate - serverModDate) * 86400)
 
             if isempty(cellData_local)
                 disp([cellDataName ': Copying server version to local cellData folder.']);
                 do_server_to_local_copy = true;
-            elseif serverModDate > localModDate + 1.1 / 24 %server has newer version
+            elseif serverModDate > localModDate + 1.1 / 24 %server has newer version by more than 1.1 hours
                 disp([cellDataName ': Overwriting local version with newer server version (newer by more than 1 hr).']);
                 disp('A copy of old file will be placed in cellData_localCopies');
                 do_server_to_local_update = true;
@@ -155,18 +155,18 @@ if SYNC_TO_SERVER
             %do the operation
             if do_local_to_server_copy
                 disp('Doing do_local_to_server_copy');
-                save([CELL_DATA_MASTER cellDataName '.mat'], 'cellData');
+                save([CELL_DATA_MASTER filesep cellDataName '.mat'], 'cellData');
             elseif do_server_to_local_copy
                 disp('Doing do_server_to_local_copy');
-                copyfile([CELL_DATA_MASTER cellDataName '.mat'], [ANALYSIS_FOLDER 'cellData' filesep cellDataName '.mat']);
+                copyfile([CELL_DATA_MASTER filesep cellDataName '.mat'], [ANALYSIS_FOLDER filesep 'cellData' filesep cellDataName '.mat']);
             elseif do_server_to_local_update
                 disp('Doing do_server_to_local_update');
-                copyfile([ANALYSIS_FOLDER 'cellData' filesep cellDataName '.mat'], [ANALYSIS_FOLDER 'cellData_localCopies' filesep cellDataName '.mat']);
-                copyfile([CELL_DATA_MASTER cellDataName '.mat'], [ANALYSIS_FOLDER 'cellData' filesep cellDataName '.mat']);
+                copyfile([ANALYSIS_FOLDER filesep 'cellData' filesep cellDataName '.mat'], [ANALYSIS_FOLDER filesep 'cellData_localCopies' filesep cellDataName '.mat']);
+                copyfile([CELL_DATA_MASTER filesep cellDataName '.mat'], [ANALYSIS_FOLDER filesep 'cellData' filesep cellDataName '.mat']);
             end
             
             %load updated cellData
-            load([ANALYSIS_FOLDER 'cellData' filesep cellDataName '.mat']); %load cellData
+            load([ANALYSIS_FOLDER filesep 'cellData' filesep cellDataName '.mat']); %load cellData
             
             %reset busy status to 0
             status(ind) = 0;

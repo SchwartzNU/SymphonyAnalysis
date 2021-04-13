@@ -14,7 +14,7 @@ usedDataSet = [];
 if nargin < 6 || isempty(analysisTable)
 %Open DataSetsAnalyses.txt file that defines the mapping between data set
 %names and analysis classes
-    fid = fopen([PREFERENCE_FILES_FOLDER 'DataSetAnalyses.txt'], 'r');
+    fid = fopen([PREFERENCE_FILES_FOLDER filesep 'DataSetAnalyses.txt'], 'r');
     analysisTable = textscan(fid, '%s\t%s');
     fclose(fid);
 end

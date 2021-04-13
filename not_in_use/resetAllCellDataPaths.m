@@ -1,5 +1,5 @@
 function [] = resetAllCellDataPaths()
-ANALYSIS_FOLDER = getenv('ANALYSIS_FOLDER');
+ANALYSIS_FOLDER = [getenv('ANALYSIS_FOLDER'), filesep];
 cellData_folder = uigetdir(ANALYSIS_FOLDER, 'Choose cellData folder for files to update');
 cellData_original_folder = uigetdir(ANALYSIS_FOLDER, 'Choose folder for saved cellData originals');
 d = dir(cellData_folder);

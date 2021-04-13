@@ -1,7 +1,7 @@
 function [] = addCellsToProject()
 ANALYSIS_FOLDER = getenv('ANALYSIS_FOLDER');
-projFolder = uigetdir([ANALYSIS_FOLDER 'Projects' filesep], 'Choose project folder');
-cellData_folder = uigetdir([ANALYSIS_FOLDER], 'Choose folder with cellData files');
+projFolder = uigetdir([ANALYSIS_FOLDER filesep 'Projects' filesep], 'Choose project folder');
+cellData_folder = uigetdir([ANALYSIS_FOLDER filesep], 'Choose folder with cellData files');
 
 cellNames = ls([cellData_folder filesep '*.mat']);
 cellNames = strsplit(cellNames); %this will be different on windows - see doc ls

@@ -3,7 +3,7 @@ ANALYSIS_FOLDER = getenv('ANALYSIS_FOLDER');
 
 prefsMap = containers.Map;
 
-prefsFolder = [ANALYSIS_FOLDER 'analysisParams' filesep 'ParameterPrefs' filesep];
+prefsFolder = [ANALYSIS_FOLDER filesep 'analysisParams' filesep 'ParameterPrefs' filesep];
 fid = fopen([prefsFolder filename], 'r');
 
 lineIn = fgetl(fid);

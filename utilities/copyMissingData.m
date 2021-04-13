@@ -1,8 +1,8 @@
 function copyMissingData()
     SERVER = getenv('SERVER');
-    RAW_DATA_MASTER = [getenv('SERVER_ROOT'),'RawDataMaster'];
+    RAW_DATA_MASTER = [getenv('SERVER_ROOT') filesep 'RawDataMaster'];
 
-    searchFolderName = uigetdir([SERVER, 'Data\'],'Choose folder to search.');
+    searchFolderName = uigetdir([SERVER filesep 'Data\'],'Choose folder to search.');
     
     fprintf('Checking the contents of RAW_DATA_MASTER \n')
     rawDataMaster = dir(RAW_DATA_MASTER);
@@ -13,7 +13,7 @@ function copyMissingData()
 end
 
 function searchFiles(rawDataMaster, searchFolderName)
-RAW_DATA_MASTER = [getenv('SERVER_ROOT'),'RawDataMaster'];
+RAW_DATA_MASTER = [getenv('SERVER_ROOT') filesep 'RawDataMaster'];
 contents = dir(searchFolderName);
 
     for f = 3:length(contents)
@@ -26,7 +26,7 @@ contents = dir(searchFolderName);
             if contains(contents(f).name, '.h5') || contains(contents(f).name, 'metadata.xml')
                 if ~any(strcmp(contents(f).name, rawDataMaster))
                     fprintf('copying %s to RawDataMaster \n', contents(f).name)
-                    copyfile(child, RAW_DATA_MASTER)
+                    copyfile(child, [RAW_DATA_MASTER filesep] )
                 end
             end
         end

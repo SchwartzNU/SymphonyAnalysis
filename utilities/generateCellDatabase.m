@@ -1,10 +1,10 @@
-CELL_DATA_MASTER = [getenv('SERVER_ROOT'),'CellDataMaster'];
+CELL_DATA_MASTER = [getenv('SERVER_ROOT') filesep 'CellDataMaster'];
 PREFERENCE_FILES_FOLDER = getenv('PREFERENCE_FILES_FOLDER');
 SERVER_ROOT = getenv('SERVER_ROOT');
 
 regenerate_flag = false;
 
-fid = fopen([PREFERENCE_FILES_FOLDER 'DataSetAnalyses.txt'], 'r');
+fid = fopen([PREFERENCE_FILES_FOLDER filesep 'DataSetAnalyses.txt'], 'r');
 analysisNameTable = textscan(fid, '%s\t%s');
 fclose(fid);
 
@@ -15,10 +15,10 @@ if serverConnection
 else
     error(['No server connection found at ' SERVER_ROOT]);
 end
-saveFileLocation = [SERVER_ROOT 'cellDatabase' filesep 'cellDatabaseSaveFile.mat'];
+saveFileLocation = [SERVER_ROOT filesep 'cellDatabase' filesep 'cellDatabaseSaveFile.mat'];
 
 %% Get Filters
-filterDirectory = [SERVER_ROOT 'cellDatabase' filesep 'filters/'];
+filterDirectory = [SERVER_ROOT filesep 'cellDatabase' filesep 'filters/'];
 filterDirResult = dir([filterDirectory '*.mat']);
 filterFileNames = {};
 filterTable = table();
@@ -69,7 +69,7 @@ fprintf('Loaded %g filters\n', numFilters)
 
 %%  Get Cells
 
-D = dir([CELL_DATA_MASTER '*.mat']);
+D = dir([CELL_DATA_MASTER filesep '*.mat']);
 %D = dir([CELL_DATA_FOLDER '*.mat']);
 
 % 
@@ -110,7 +110,7 @@ for ci = 1:numCells
         fprintf('Processing %g/%g %s\n', ci, numCells, cellName);
         %     trow{1, 'cellName'} = {cellName};        
         try            
-            load([CELL_DATA_MASTER cellName]); %load cellData
+            load([CELL_DATA_MASTER filesep cellName]); %load cellData
             %cellData = c.cellData;
         catch
             fprintf('Error loading %s\n', cellName);

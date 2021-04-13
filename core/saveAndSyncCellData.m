@@ -1,31 +1,31 @@
 function [] = saveAndSyncCellData(cellData)
 CELL_DATA_FOLDER = getenv('CELL_DATA_FOLDER');
 SERVER_ROOT = getenv('SERVER_ROOT');
-CELL_DATA_MASTER = [SERVER_ROOT, 'CellDataMaster'];
+CELL_DATA_MASTER = [SERVER_ROOT filesep 'CellDataMaster'];
 
 SYNC_TO_SERVER = strcmp(getenv('SYNC_TO_SERVER'),'true');
 
 SERVER_TIME_OFFSET = 0;
 
-save([CELL_DATA_FOLDER cellData.savedFileName '.mat'], 'cellData');
+save([CELL_DATA_FOLDER filesep cellData.savedFileName '.mat'], 'cellData');
 
 if ~SYNC_TO_SERVER
     return
 end
 
 do_sync = true;
-cellDataStatusFileLocation = [SERVER_ROOT 'CellDataStatus.txt'];
+cellDataStatusFileLocation = [SERVER_ROOT filesep 'CellDataStatus.txt'];
 
 
 % local file mod time
-localFileInfo = dir([CELL_DATA_FOLDER cellData.savedFileName '.mat']);
+localFileInfo = dir([CELL_DATA_FOLDER filesep cellData.savedFileName '.mat']);
 localModDate = localFileInfo.datenum;
 
 % Determine server mod time
 if exist(CELL_DATA_MASTER, 'dir') == 7 %server is connected and CellDataMaster folder is found
     disp('CellDataMaster found');
     try
-        remoteFileInfo = dir([CELL_DATA_MASTER cellData.savedFileName '.mat']);
+        remoteFileInfo = dir([CELL_DATA_MASTER filesep cellData.savedFileName '.mat']);
         serverModDate = remoteFileInfo.datenum;
     catch
         serverModDate = 0;
@@ -143,7 +143,7 @@ if do_sync
         
         %do the copy
         disp([cellData.savedFileName ': Copying local file to server']);
-        save([CELL_DATA_MASTER cellData.savedFileName '.mat'], 'cellData'); 
+        save([CELL_DATA_MASTER filesep cellData.savedFileName '.mat'], 'cellData'); 
 %         pause(0.5);
         %resave local version so modification date is later
 %         disp([cellData.savedFileName ': Local resave']);

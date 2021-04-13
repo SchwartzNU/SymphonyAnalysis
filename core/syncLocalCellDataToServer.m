@@ -1,7 +1,7 @@
 function [] = syncLocalCellDataToServer()
 ANALYSIS_FOLDER = getenv('ANALYSIS_FOLDER');
 CELL_DATA_FOLDER = getenv('CELL_DATA_FOLDER');
-CELL_DATA_MASTER = [getenv('SERVER_ROOT'),'CellDataMaster'];
+CELL_DATA_MASTER = [getenv('SERVER_ROOT') filesep 'CellDataMaster'];
 
 if ~(exist(CELL_DATA_MASTER, 'dir') == 7)
     disp('Could not connect to CellDataMaster');
@@ -24,17 +24,17 @@ cellDataNames = sort(cellDataNames);
 for i=1:length(cellDataNames)
     [~, basename, ~] = fileparts(cellDataNames{i});
     if ~isempty(basename)
-        fileinfo = dir([CELL_DATA_FOLDER basename '.mat']);
+        fileinfo = dir([CELL_DATA_FOLDER filesep basename '.mat']);
         localModDate = fileinfo.datenum;
         try
-            fileinfo = dir([CELL_DATA_MASTER basename '.mat']);
+            fileinfo = dir([CELL_DATA_MASTER filesep basename '.mat']);
             serverModDate = fileinfo.datenum;
         catch
             serverModDate = 0;
         end
         if localModDate > serverModDate + 60/86400 %more than 60 seconds newer
            fprintf('Found newer local copy of %s, by %d sec. Copying to server...', basename, round(localModDate - serverModDate));
-           load([CELL_DATA_FOLDER basename '.mat']); %loads cellData
+           load([CELL_DATA_FOLDER filesep basename '.mat']); %loads cellData
            saveAndSyncCellData(cellData);
         end
     end

@@ -1,6 +1,6 @@
 function [] = makeSMSTreeForCellTypesFromDatabase(fname_cellTypes, filterName, saveTree)
-SERVER_ROOT = getenv('SERVER_ROOT');
-ANALYSIS_FOLDER = getenv('ANALYSIS_FOLDER');
+SERVER_ROOT = [getenv('SERVER_ROOT') filesep];
+ANALYSIS_FOLDER = [getenv('ANALYSIS_FOLDER') filesep];
 
 if nargin < 3
     saveTree = false;

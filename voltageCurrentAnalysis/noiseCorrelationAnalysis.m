@@ -7,7 +7,7 @@ desiredVoltage = -60;
 AnalysisType = 'CenterSurroundNoise';
 %%%
 
-folder_name = uigetdir([ANALYSIS_FOLDER 'Projects/'],'Choose project folder');
+folder_name = uigetdir([ANALYSIS_FOLDER filesep 'Projects/'],'Choose project folder');
 obj.projFolder = [folder_name filesep];
 
 fid = fopen([obj.projFolder 'cellNames.txt'], 'r');

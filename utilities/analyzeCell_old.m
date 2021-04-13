@@ -9,11 +9,11 @@ if nargin < 2
 end
 
     
-fid = fopen([ANALYSIS_FOLDER 'DataSetAnalyses.txt'], 'r');
+fid = fopen([ANALYSIS_FOLDER filesep 'DataSetAnalyses.txt'], 'r');
 analysisTable = textscan(fid, '%s\t%s');
 fclose(fid);
 
-load([ANALYSIS_FOLDER 'cellData/' cellName]);
+load([ANALYSIS_FOLDER filesep 'cellData/' cellName]);
 dataSetKeys = cellData.savedDataSets.keys;
 cellAnalysisTree = AnalysisTree;
 nodeData.name = ['Full cell analysis tree: ' cellName];
@@ -36,14 +36,14 @@ T2 = [];
 if ~overwrite
     disp('loading analyses');
     %try to load existing analysis trees
-    if exist([ANALYSIS_FOLDER 'analysisTrees/' cellName '.mat'], 'file')
-        load([ANALYSIS_FOLDER 'analysisTrees/' cellName]);
+    if exist([ANALYSIS_FOLDER filesep 'analysisTrees/' cellName '.mat'], 'file')
+        load([ANALYSIS_FOLDER filesep 'analysisTrees/' cellName]);
         T = cellAnalysisTree;
     end
     if twoAmps
-        if exist([ANALYSIS_FOLDER 'analysisTrees/' cellName '-Ch2.mat'], 'file')
+        if exist([ANALYSIS_FOLDER filesep 'analysisTrees/' cellName '-Ch2.mat'], 'file')
             cellNamePart = strtok(cellName, '.mat');
-            load([ANALYSIS_FOLDER 'analysisTrees/' cellNamePart '-Ch2.mat']);
+            load([ANALYSIS_FOLDER filesep 'analysisTrees/' cellNamePart '-Ch2.mat']);
             T2 = cellAnalysisTree_Ch2;
         end
     end
@@ -76,9 +76,9 @@ if isempty(T) || (twoAmps && isempty(T2))
             if twoAmps
                 cellAnalysisTree_Ch2 = cellAnalysisTree_Ch2.graft(1, T2);
                 cellNamePart = strtok(cellName, '.mat');
-                save([ANALYSIS_FOLDER 'analysisTrees/' cellNamePart '-Ch2.mat'], 'cellAnalysisTree_Ch2');
+                save([ANALYSIS_FOLDER filesep 'analysisTrees/' cellNamePart '-Ch2.mat'], 'cellAnalysisTree_Ch2');
             end
-            save([ANALYSIS_FOLDER 'analysisTrees/' cellName], 'cellAnalysisTree');
+            save([ANALYSIS_FOLDER filesep 'analysisTrees/' cellName], 'cellAnalysisTree');
             
         end
     end

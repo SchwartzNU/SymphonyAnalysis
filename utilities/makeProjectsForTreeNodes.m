@@ -1,5 +1,5 @@
 function [] = makeProjectsForTreeNodes(T)
-ANALYSIS_FOLDER = getenv('ANALYSIS_FOLDER');
+ANALYSIS_FOLDER = [getenv('ANALYSIS_FOLDER') filesep];
 folderName = inputdlg('Tree name: ', 'Enter tree name', 1, {'typologyTree'});
 folderName = folderName{1};
 eval(['!rm -rf ' ANALYSIS_FOLDER 'Projects' filesep folderName]);

@@ -62,7 +62,7 @@ stim2baselineVal = zeros(1,L); %steady state at the end of stim2
 % get cap compensated data if needed
 if DO_CAP_COMPENSATION
     cellName = [cellData.get('fname') 'c' num2str(cellData.get('number'))];
-    capFileName = [ANALYSIS_FOLDER 'cap_cellData/' cellName '_CapComp' '.mat'];
+    capFileName = [ANALYSIS_FOLDER filesep 'cap_cellData/' cellName '_CapComp' '.mat'];
     if exist(capFileName, 'file')
         CC = load(capFileName);
         compEpochs = CC.compEpochs;

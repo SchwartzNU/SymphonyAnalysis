@@ -5,7 +5,7 @@ function correctAnglesFromRawData(projFolder)
     ANALYSIS_FOLDER = getenv('ANALYSIS_FOLDER');
 
     if nargin == 0
-        projFolder = uigetdir([ANALYSIS_FOLDER 'Projects' filesep]);
+        projFolder = uigetdir([ANALYSIS_FOLDER filesep 'Projects' filesep]);
     end
 
     displayNames = {'Moving Bar', 'Drifting Gratings', 'Flashed Bar', 'Drifting Texture', 'Bars multiple speeds', 'Auto Center', 'Random Motion Edge', 'Split Field'};

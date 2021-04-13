@@ -1,10 +1,10 @@
 function [] = checkoutRawDataForProject(cellNames)
 ANALYSIS_FOLDER = getenv('ANALYSIS_FOLDER');
 RAW_DATA_FOLDER = getenv('RAW_DATA_FOLDER');
-RAW_DATA_MASTER = [getenv('SERVER_ROOT'),'RawDataMaster'];
+RAW_DATA_MASTER = [getenv('SERVER_ROOT') filesep 'RawDataMaster'];
 
 if nargin < 1
-    projFolder = uigetdir([ANALYSIS_FOLDER 'Projects' filesep], 'Choose project folder');
+    projFolder = uigetdir([ANALYSIS_FOLDER filesep 'Projects' filesep], 'Choose project folder');
 
     fid = fopen([projFolder filesep 'cellNames.txt'], 'r');
     if fid < 0
@@ -26,24 +26,24 @@ for i=1:length(cellNames)
         n = strsplit(cellDataNames{j}, 'c');
         rawData_fname_symphony2 = [n{1} '.h5'];
         
-        if exist([RAW_DATA_FOLDER rawData_fname], 'file') %already have the file
+        if exist([RAW_DATA_FOLDER filesep rawData_fname], 'file') %already have the file
             
-        elseif exist([RAW_DATA_FOLDER rawData_fname_symphony2], 'file')
+        elseif exist([RAW_DATA_FOLDER filesep rawData_fname_symphony2], 'file')
 %             fprintf('found sym2 raw data: %s\n', cellDataNames{j})
         else
-            if exist([RAW_DATA_MASTER rawData_fname], 'file')
+            if exist([RAW_DATA_MASTER filesep rawData_fname], 'file')
                 disp(['Copying ' rawData_fname]);
                 if ismac
-                    eval(['!cp -r ' [RAW_DATA_MASTER rawData_fname] ' ' RAW_DATA_FOLDER]);
+                    eval(['!cp -r ' [RAW_DATA_MASTER filesep rawData_fname] ' ' [RAW_DATA_FOLDER filesep]]);
                 elseif ispc
-                    copyfile([RAW_DATA_MASTER rawData_fname], RAW_DATA_FOLDER);
+                    copyfile([RAW_DATA_MASTER filesep rawData_fname], [RAW_DATA_FOLDER filesep]);
                 end
-            elseif exist([RAW_DATA_MASTER rawData_fname_symphony2], 'file')
+            elseif exist([RAW_DATA_MASTER filesep rawData_fname_symphony2], 'file')
                 disp(['Copying ' rawData_fname_symphony2]);
                 if ismac
-                    eval(['!cp -r ' [RAW_DATA_MASTER rawData_fname_symphony2] ' ' RAW_DATA_FOLDER]);
+                    eval(['!cp -r ' [RAW_DATA_MASTER filesep rawData_fname_symphony2] ' ' [RAW_DATA_FOLDER filesep]]);
                 elseif ispc
-                    copyfile([RAW_DATA_MASTER rawData_fname_symphony2], RAW_DATA_FOLDER);
+                    copyfile([RAW_DATA_MASTER filesep rawData_fname_symphony2], [RAW_DATA_FOLDER filesep]);
                 end
             else
                 disp(['in ' RAW_DATA_MASTER ', ' rawData_fname ' or ' rawData_fname_symphony2 ' not found']);

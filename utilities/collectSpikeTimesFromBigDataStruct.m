@@ -19,13 +19,13 @@ for i=1:Ncells
     try
         copiedData = false;
         rawData_fname = [cellData_name '.h5'];
-        if exist([RAW_DATA_FOLDER rawData_fname], 'file') %already have the file
+        if exist([RAW_DATA_FOLDER filesep rawData_fname], 'file') %already have the file
             %do nothing
         else
             copiedData = true;
             if exist([rawData_folder filesep rawData_fname], 'file')
                 disp(['Copying ' rawData_fname]);
-                eval(['!cp -r ' [rawData_folder filesep rawData_fname] ' ' RAW_DATA_FOLDER]);
+                eval(['!cp -r ' [rawData_folder filesep rawData_fname] ' ' [RAW_DATA_FOLDER filesep]]);
             else
                 disp([rawData_folder filesep rawData_fname ' not found']);
             end
