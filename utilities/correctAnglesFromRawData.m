@@ -8,6 +8,10 @@ function correctAnglesFromRawData(projFolder)
         projFolder = uigetdir([ANALYSIS_FOLDER filesep 'Projects' filesep]);
     end
 
+    
+    
+    
+    
     displayNames = {'Moving Bar', 'Drifting Gratings', 'Flashed Bar', 'Drifting Texture', 'Bars multiple speeds', 'Auto Center', 'Random Motion Edge', 'Split Field'};
     angleParamNames = {'barAngle','gratingAngle','textureAngle','offsetAngle', 'angleOffsetFromRig', 'movementAngle'};
 
@@ -46,35 +50,40 @@ function correctAnglesFromRawData(projFolder)
         cellDataFileName = fullfile(CELL_DATA_FOLDER, [cellName, '.mat']);
 
         load(cellDataFileName);
-
-        if contains(cellName, 'A')
-            rigMode = 'A with original X flip';
+        
+        try
+            date = datetime(cellName(1:6), 'InputFormat', 'MMddyy'); %%Assumes the first 6 characters of the cellDataFile is the date.
+        catch
+            warning('Could not determine recording date from cellData name.  No correction will be performed')
+            date = datetime('04-14-2021', 'InputFormat', 'MM-dd-yy');
+        end
+        
+        if date > datetime('04-13-2021', 'InputFormat', 'MM-dd-yy') %Both rigs should output correct angles after this date, so no angle correction is needed
+            rigMode = 'No correction needed';
+        elseif contains(cellName, 'A') %Rig A originally had an X flip but it was fixed at the same time Sam added 'angleOffsetFromRig' as an Epoch Parameter (even though the value of angleOffsetFromRig wasn't actually used)
+            rigMode = 'X flip';
 
             % check for correction
             epoch = cellData.epochs(1);
             if isKey(epoch.attributes, 'angleOffsetFromRig')
                 rigAngle = epoch.attributes('angleOffsetFromRig');
                 if rigAngle == 0
-                    rigMode = 'A with correct projection';
+                    rigMode = 'No correction needed';
                 end
             end
 
         elseif contains(cellName, 'B')
-            rigMode = 'B with original 270 rotation';
+            rigMode = '270 rotation';
         end
 
-        fprintf('%s: Re-extracting and correcting; detected Rig %s\n',  cellName, rigMode);
+        fprintf('%s: Re-extracting and correcting; detected %s\n',  cellName, rigMode);
         fixCount = 0;
         fixedDisplayNames = {};
 
         for epochIndex = 1:length(cellData.epochs)
             epoch = cellData.epochs(epochIndex);
 
-%             try
-                displayName = epoch.get('displayName');
-%             catch
-%                 continue
-%             end
+            displayName = epoch.get('displayName');
 
             if ~any(strcmp(displayName, displayNames))
                 continue
@@ -87,9 +96,6 @@ function correctAnglesFromRawData(projFolder)
                 h5fileName = fullfile(RAW_DATA_FOLDER, [cellData.savedFileName '.h5']);
                 symphonyRawMode = 1;
             end
-%             h5fileName = fullfile(RAW_DATA_FOLDER, [cellData.get('fname') '.h5']);
-            
-            
 
             % navigate to the location of the data in the h5
             paramLinks = {}; % one for per-run, one for per-epoch params, gotta check both cause of Auto Center
@@ -131,16 +137,16 @@ function correctAnglesFromRawData(projFolder)
                 epoch.attributes('originalAngleFromRawData') = originalAngle;
 
                 switch rigMode
-                    case 'A with correct projection'
+                    case 'No correction needed'
                         % yay for on-rig correction
                         trueAngle = originalAngle;
 
-                    case 'A with original X flip'
+                    case 'X flip'
                         x = -cosd(originalAngle); % x = -x
                         y = sind(originalAngle); % y = y
                         trueAngle = rad2deg(atan2(y, x));
 
-                    case 'B with original 270 rotation'
+                    case '270 rotation'
                         y = -cosd(originalAngle); % y = -x
                         x = sind(originalAngle); % x = y
                         trueAngle = rad2deg(atan2(y, x));
