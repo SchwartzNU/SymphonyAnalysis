@@ -351,7 +351,9 @@ classdef CellDataCurator < handle
                 plot(obj.handles.diaryPlotAxes, xvals(obj.selectedEpochInd), displayVals(obj.selectedEpochInd), 'bo', 'MarkerFaceColor', 'r');
                 
                 set(obj.handles.diaryPlotAxes, 'YtickMode', 'auto', 'YtickLabelMode', 'auto');
-                set(obj.handles.diaryPlotAxes, 'Ylim', [min(displayVals) - .1 * range(displayVals) - .1, max(displayVals) + .1 * range(displayVals) + .1]);
+                if ~isnan(min(displayVals))
+                    set(obj.handles.diaryPlotAxes, 'Ylim', [min(displayVals) - .1 * range(displayVals) - .1, max(displayVals) + .1 * range(displayVals) + .1]);
+                end
             else
                 % remove nans
                 for i = 1:length(displayVals)
