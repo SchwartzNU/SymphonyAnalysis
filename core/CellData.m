@@ -94,6 +94,7 @@ classdef CellData < handle
             end
             vals = cell(1,L);
             allNumeric = true;
+            allScalar = true;
             for i=1:L
                 v = obj.epochs(epochInd(i)).get(paramName);
                 if isempty(v)
@@ -103,16 +104,21 @@ classdef CellData < handle
                 else
                     vals{i} = v;
                 end
+                if ~isscalar(vals{i})
+                    allScalar = false;
+                end
                 if ~isnumeric(vals{i})
                     allNumeric = false;
                 else
                     vals{i} = double(vals{i});
                 end
             end
-            if allNumeric
-                vals = cell2mat(vals);
+            if ~allScalar
+                vals = nan; %cannot handle vectors as epoch values
             end
-            
+            if allNumeric       
+                vals = cell2mat(vals);
+            end            
         end
         
         function allKeys = getEpochKeysetUnion(obj, epochInd)
