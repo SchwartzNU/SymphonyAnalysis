@@ -45,5 +45,5 @@ for i= 1:length(D_raw)
         end
     end
 end
-error(['Could not find raw data matching with date matching ' expDate...
+error(['Could not find raw data matching ' expDate...
     '. Are you sure you moved the raw data to the correct folder?  Is your startup file pointing to the correct folder?  Any typos?'])
