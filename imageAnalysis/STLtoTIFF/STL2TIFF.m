@@ -1,4 +1,4 @@
-filename = '26079.stl';
+filename = '20228.stl';
 Res = 150; %nm
 
 [stlcoords] = READ_stl(filename,'binary');
@@ -6,7 +6,10 @@ xco = squeeze(stlcoords(:,1,:))';
 yco = squeeze(stlcoords(:,2,:))';
 zco = squeeze(stlcoords(:,3,:))';
 
-
+X = xco(1,:);
+Y = yco(1,:);
+Z = zco(1,:);
+save([filename '.mat'], 'X', 'Y', 'Z');
 
 Ymin = min(xco, [], 'all');
 Xmin = min(yco, [], 'all');
