@@ -1,6 +1,7 @@
 function cellAnalysisTree = analyzeCell(cellName)
 ANALYSIS_FOLDER = getenv('ANALYSIS_FOLDER');
 PREFERENCE_FILES_FOLDER = getenv('PREFERENCE_FILES_FOLDER');
+CELL_DATA_FOLDER = getenv('CELL_DATA_FOLDER');
 
 %Open DataSetsAnalyses.txt file that defines the mapping between data set
 %names and analysis classes
@@ -21,7 +22,7 @@ if ~isempty(loc)
 end
 params_deviceOnly = params;
 
-load([ANALYSIS_FOLDER filesep 'cellData' filesep cellName]);
+load([CELL_DATA_FOLDER filesep cellName]);
 prefsMap = [];
 %if ~isempty(cellData.prefsMapName)
 %    prefsMap = loadPrefsMap(cellData.prefsMapName);
