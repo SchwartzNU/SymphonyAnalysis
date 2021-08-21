@@ -206,6 +206,7 @@ classdef LabData < handle
         
         %update functions
         function updateDataSets(obj, cellNames)
+            CELL_DATA_FOLDER = getenv('CELL_DATA_FOLDER');
             if nargin < 2
                 cellNames = obj.allCellNames();
             end
@@ -231,11 +232,12 @@ classdef LabData < handle
                     z=z+1;
                 end
                 if isempty(curCellNameParts)
-                    load([obj.analysisFolder 'cellData' filesep curCellName]); %loads cellData
+                    
+                    load([CELL_DATA_FOLDER filesep curCellName]); %loads cellData
                     obj.allDataSets(curCellName_orig) = cellData.savedDataSets.keys;
                 else
                     for j=1:length(curCellNameParts)
-                        load([obj.analysisFolder 'cellData' filesep curCellNameParts{j}]); %loads cellData
+                        load([CELL_DATA_FOLDER filesep curCellNameParts{j}]); %loads cellData
                         if j==1
                             obj.allDataSets(curCellName_orig) = cellData.savedDataSets.keys;
                         else

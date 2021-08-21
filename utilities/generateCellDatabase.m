@@ -2,7 +2,7 @@ CELL_DATA_MASTER = [getenv('SERVER_ROOT') filesep 'CellDataMaster'];
 PREFERENCE_FILES_FOLDER = getenv('PREFERENCE_FILES_FOLDER');
 SERVER_ROOT = getenv('SERVER_ROOT');
 
-regenerate_flag = false;
+regenerate_flag = true;
 
 fid = fopen([PREFERENCE_FILES_FOLDER filesep 'DataSetAnalyses.txt'], 'r');
 analysisNameTable = textscan(fid, '%s\t%s');
@@ -118,7 +118,12 @@ for ci = 1:numCells
         end
         
         % add basic info from cellData
-        loc = cellData.location;
+        try
+            loc = cellData.location;
+        catch
+            cellData = cellData.cellData;
+            loc = cellData.location;
+        end
         if ~isempty(loc)
             trow{1, {'location_x', 'location_y', 'eye'}} = loc;
         else

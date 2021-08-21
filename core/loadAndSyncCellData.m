@@ -1,6 +1,7 @@
 function cellData = loadAndSyncCellData(cellDataName)
 
 ANALYSIS_FOLDER = getenv('ANALYSIS_FOLDER');
+CELL_DATA_FOLDER = getenv('CELL_DATA_FOLDER');
 SYNC_TO_SERVER = strcmp(getenv('SYNC_TO_SERVER'), 'true');
 CELL_DATA_MASTER = [getenv('SERVER_ROOT') filesep 'CellDataMaster'];
 SERVER_ROOT = getenv('SERVER_ROOT');
@@ -11,9 +12,9 @@ do_local_to_server_copy = false;
 do_server_to_local_copy = false;
 do_server_to_local_update = false;
 try
-    fileinfo = dir([ANALYSIS_FOLDER filesep 'cellData' filesep cellDataName '.mat']);
+    fileinfo = dir([CELL_DATA_FOLDER filesep cellDataName '.mat']);
     localModDate = fileinfo.datenum;
-    load([ANALYSIS_FOLDER filesep 'cellData' filesep cellDataName '.mat']); %load cellData
+    cellData = load([CELL_DATA_FOLDER filesep cellDataName '.mat']).cellData; %load cellData
     cellData_local = cellData;
     disp([cellDataName ': Local copy loaded']);
 catch
@@ -166,7 +167,8 @@ if SYNC_TO_SERVER
             end
             
             %load updated cellData
-            load([ANALYSIS_FOLDER filesep 'cellData' filesep cellDataName '.mat']); %load cellData
+%             load([ANALYSIS_FOLDER filesep 'cellData' filesep cellDataName '.mat']); %load cellData
+            load([CELL_DATA_FOLDER filesep cellDataName '.mat']); %load cellData
             
             %reset busy status to 0
             status(ind) = 0;
