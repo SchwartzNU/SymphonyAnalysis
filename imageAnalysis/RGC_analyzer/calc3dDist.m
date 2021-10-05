@@ -8,7 +8,11 @@ allXYpos = [nodes(:,1)-density'*nodes(:,1)/sum(density) nodes(:,2)-density'*node
 %allXYpos = align2dDataWithMainDiagonal([allXYpos nodes(:,3)-density'*nodes(:,3)/sum(density)],density);
 % normalize nodes by the SAC surface unit
 allZpos = (nodes(:,3) - medVZmin)/(medVZmax - medVZmin);
-binEdges = linspace(-2,3,Nbins);
+
+minVal = min(allZpos);
+maxVal = max(allZpos);
+binEdges = linspace(minVal,maxVal,Nbins);
+%binEdges = linspace(-2,3,Nbins);
 strat_density = zeros(1, Nbins-1);
 %keyboard;
 for i=1:Nbins-1
