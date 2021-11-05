@@ -82,6 +82,5 @@ R.branchTortuosity = R.branchLen ./ R.branchLenEuc;
 R.Nbranches = length(R.branchAngle);
 R.totalLen = sum(R.branchLen);
 R.arborComplexity = R.Nbranches / R.totalLen;
-R.arborDensity =  R.totalLen / S.polygonArea; 
 
 
