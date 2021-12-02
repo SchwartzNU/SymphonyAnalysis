@@ -36,12 +36,21 @@ function cells = symphony2Mapper(fname)
         cells(i) = getCellData(fname, labels{i}, h5epochs);
         cells(i).attributes = getSourceAttributes(sourceTree, labels{i}, cells(i).attributes);
         
-        if strcmpi(cells(i).attributes('eye'), 'left')
-            eyeIndex = -1;
-        elseif strcmpi(cells(i).attributes('eye'), 'right')
-            eyeIndex = 1;
+        if cells(i).attributes.isKey('eyes')
+            if strcmpi(cells(i).attributes('eye'), 'left')
+                eyeIndex = -1;
+            elseif strcmpi(cells(i).attributes('eye'), 'right')
+                eyeIndex = 1;
+            end
+        else
+            eyeIndex = nan;
         end
-        cells(i).location = [cells(i).attributes('location'), eyeIndex];
+        
+        if cells(i).attributes.isKey('location')
+            cells(i).location = [cells(i).attributes('location'), eyeIndex];
+        else
+            cells(i).location = nan;
+        end
     end
 end
 
