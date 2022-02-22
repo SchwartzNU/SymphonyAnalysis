@@ -163,7 +163,11 @@ function label = getSourceLabel(fname, epochGroup)
     if numel(epochGroup.Groups) == 4
         source = epochGroup.Groups(4).Name;
     else
-        source = epochGroup.Links(2).Value{:};
+        if numel(epochGroup.Links) > 1
+            source = epochGroup.Links(2).Value{:};
+        else
+            source = epochGroup.Groups(endsWith({epochGroup.Groups(:).Name},'source')).Name;
+        end
     end
     try
         label = h5readatt(fname, source, 'label');
