@@ -99,21 +99,36 @@ function cell = getCellData(fname, cellLabel, h5Epochs)
     [~, file, ~] = fileparts(fname);
     cell.attributes('fname') = file;
     
-    
-    % Find where the cell number is listed in the name of the cell source, then reformat it for the filename
-    numPositionInLabel = regexp(cellLabel, '[0-9]+');
-    if numPositionInLabel == 1
-        savedFileName = [file 'c' cellLabel];
-    elseif numPositionInLabel == 2
-        savedFileName = [file cellLabel(2:end)];
-    elseif numPositionInLabel == 3
-        savedFileName = [file 'c' cellLabel(3:end)];
-    else 
-        savedFileName = file;
+
+    %check for pair
+    pair_str_ind = strfind(cellLabel,'pair');
+    if ~isempty(pair_str_ind)
+        [~, pair_str_part] = strtok(cellLabel,'pair');
+        num_ind = regexp(pair_str_part, '[0-9]+');
+        if length(num_ind) ~= 2
+            fprintf('Error: expected 2 numbers after the word pair\n');
+            savedFileName = [file '_error'];
+        else
+            c1 = pair_str_part(num_ind(1));
+            c2 = pair_str_part(num_ind(2));
+            savedFileName = [file 'pair_' c1 '_' c2];
+        end
+
+    else
+        % Find where the cell number is listed in the name of the cell source, then reformat it for the filename
+        numPositionInLabel = regexp(cellLabel, '[0-9]+');
+        if numPositionInLabel == 1
+            savedFileName = [file 'c' cellLabel];
+        elseif numPositionInLabel == 2
+            savedFileName = [file cellLabel(2:end)];
+        elseif numPositionInLabel == 3
+            savedFileName = [file 'c' cellLabel(3:end)];
+        else
+            savedFileName = file;
+        end
     end
     cell.savedFileName = savedFileName;
-    
-    fprintf('Extracted %s\n', savedFileName)
+    fprintf('Extracted %s\n', cell.savedFileName)
 end
 
 function [id, name, path] = getProtocolId(epochPath)
