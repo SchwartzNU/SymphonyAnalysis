@@ -29,6 +29,7 @@ for i=1:length(rawDataNames)
         else
             disp(['Copying raw data file ' basename ' to master.'])
             copyfile([RAW_DATA_FOLDER filesep basename '.h5'], [RAW_DATA_MASTER filesep basename '.h5']);
+            disp(['Completed ' basename])
         end
     end
 end
