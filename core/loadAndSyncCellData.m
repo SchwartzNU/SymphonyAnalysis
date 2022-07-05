@@ -14,7 +14,8 @@ do_server_to_local_update = false;
 try
     fileinfo = dir([CELL_DATA_FOLDER filesep cellDataName '.mat']);
     localModDate = fileinfo.datenum;
-    cellData = load([CELL_DATA_FOLDER filesep cellDataName '.mat']).cellData; %load cellData
+    cellData = load([CELL_DATA_FOLDER filesep cellDataName '.mat']);
+    cellData = cellData.cellData; %load cellData
     cellData_local = cellData;
     disp([cellDataName ': Local copy loaded']);
 catch
@@ -159,11 +160,11 @@ if SYNC_TO_SERVER
                 save([CELL_DATA_MASTER filesep cellDataName '.mat'], 'cellData');
             elseif do_server_to_local_copy
                 disp('Doing do_server_to_local_copy');
-                copyfile([CELL_DATA_MASTER filesep cellDataName '.mat'], [ANALYSIS_FOLDER filesep 'cellData' filesep cellDataName '.mat']);
+                copyfile([CELL_DATA_MASTER filesep cellDataName '.mat'], [CELL_DATA_FOLDER filesep cellDataName '.mat']);
             elseif do_server_to_local_update
                 disp('Doing do_server_to_local_update');
-                copyfile([ANALYSIS_FOLDER filesep 'cellData' filesep cellDataName '.mat'], [ANALYSIS_FOLDER filesep 'cellData_localCopies' filesep cellDataName '.mat']);
-                copyfile([CELL_DATA_MASTER filesep cellDataName '.mat'], [ANALYSIS_FOLDER filesep 'cellData' filesep cellDataName '.mat']);
+                copyfile([CELL_DATA_FOLDER filesep cellDataName '.mat'], [ANALYSIS_FOLDER filesep 'cellData_localCopies' filesep cellDataName '.mat']);
+                copyfile([CELL_DATA_MASTER filesep cellDataName '.mat'], [CELL_DATA_FOLDER filesep cellDataName '.mat']);
             end
             
             %load updated cellData
