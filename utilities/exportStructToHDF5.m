@@ -44,7 +44,9 @@ for i = 1:length(fNames)
         
     else        
         if ~isempty(s.(fNames{i}))
-            hdf5write(fileName, strcat(dataRoot, '/', fNames{i}), s.(fNames{i}), 'WriteMode', 'append');
+            if ~strcmp(class(s.(fNames{i})), 'cfit')
+                hdf5write(fileName, strcat(dataRoot, '/', fNames{i}), s.(fNames{i}), 'WriteMode', 'append');
+            end
         end
     end
 end

@@ -36,12 +36,21 @@ function cells = symphony2Mapper(fname)
         cells(i) = getCellData(fname, labels{i}, h5epochs);
         cells(i).attributes = getSourceAttributes(sourceTree, labels{i}, cells(i).attributes);
         
-        if strcmpi(cells(i).attributes('eye'), 'left')
-            eyeIndex = -1;
-        elseif strcmpi(cells(i).attributes('eye'), 'right')
-            eyeIndex = 1;
+        if cells(i).attributes.isKey('eyes')
+            if strcmpi(cells(i).attributes('eye'), 'left')
+                eyeIndex = -1;
+            elseif strcmpi(cells(i).attributes('eye'), 'right')
+                eyeIndex = 1;
+            end
+        else
+            eyeIndex = nan;
         end
-        cells(i).location = [cells(i).attributes('location'), eyeIndex];
+        
+        if cells(i).attributes.isKey('location')
+            cells(i).location = [cells(i).attributes('location'), eyeIndex];
+        else
+            cells(i).location = nan;
+        end
     end
 end
 
@@ -90,21 +99,36 @@ function cell = getCellData(fname, cellLabel, h5Epochs)
     [~, file, ~] = fileparts(fname);
     cell.attributes('fname') = file;
     
-    
-    % Find where the cell number is listed in the name of the cell source, then reformat it for the filename
-    numPositionInLabel = regexp(cellLabel, '[0-9]+');
-    if numPositionInLabel == 1
-        savedFileName = [file 'c' cellLabel];
-    elseif numPositionInLabel == 2
-        savedFileName = [file cellLabel(2:end)];
-    elseif numPositionInLabel == 3
-        savedFileName = [file 'c' cellLabel(3:end)];
-    else 
-        savedFileName = file;
+
+    %check for pair
+    pair_str_ind = strfind(cellLabel,'pair');
+    if ~isempty(pair_str_ind)
+        [~, pair_str_part] = strtok(cellLabel,'pair');
+        num_ind = regexp(pair_str_part, '[0-9]+');
+        if length(num_ind) ~= 2
+            fprintf('Error: expected 2 numbers after the word pair\n');
+            savedFileName = [file '_error'];
+        else
+            c1 = pair_str_part(num_ind(1));
+            c2 = pair_str_part(num_ind(2));
+            savedFileName = [file 'pair_' c1 '_' c2];
+        end
+
+    else
+        % Find where the cell number is listed in the name of the cell source, then reformat it for the filename
+        numPositionInLabel = regexp(cellLabel, '[0-9]+');
+        if numPositionInLabel == 1
+            savedFileName = [file 'c' cellLabel];
+        elseif numPositionInLabel == 2
+            savedFileName = [file cellLabel(2:end)];
+        elseif numPositionInLabel == 3
+            savedFileName = [file 'c' cellLabel(3:end)];
+        else
+            savedFileName = file;
+        end
     end
     cell.savedFileName = savedFileName;
-    
-    fprintf('Extracted %s\n', savedFileName)
+    fprintf('Extracted %s\n', cell.savedFileName)
 end
 
 function [id, name, path] = getProtocolId(epochPath)
@@ -154,7 +178,11 @@ function label = getSourceLabel(fname, epochGroup)
     if numel(epochGroup.Groups) == 4
         source = epochGroup.Groups(4).Name;
     else
-        source = epochGroup.Links(2).Value{:};
+        if numel(epochGroup.Links) > 1
+            source = epochGroup.Links(2).Value{:};
+        else
+            source = epochGroup.Groups(endsWith({epochGroup.Groups(:).Name},'source')).Name;
+        end
     end
     try
         label = h5readatt(fname, source, 'label');
