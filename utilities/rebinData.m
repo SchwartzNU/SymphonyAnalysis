@@ -18,6 +18,7 @@ end
 
 nR = numel(sizes);
 
+%keyboard;
 %convert the desired times to indices for each cell
 tInd = round(bsxfun(@minus,time',timeVec(:,1))/dt+1);
 % uint16 is used to negotiate rounding?
@@ -39,7 +40,7 @@ for n=1:nD %for each cell
     i(i>nT) = nT; %if we're asking for an index after the end, extrapolate from the end
     %note that it's much faster to impute in the time dimension since we
     %know that we've recorded at every dt between the start and end
-    
+    %keyboard;
 
     [~,s] = min(abs(bsxfun(@minus,sizeVec{n},sizes')),[],2);
     %assign s to the nearest spot size that we recorded
@@ -49,6 +50,7 @@ for n=1:nD %for each cell
     
     
     %feat(n,:) = d(sub2ind([nS nT],s,i));
+    keyboard;
     feat(n,:) = d ( s + nS*(i-1) );
     %convert the paired subscripts into linear indices, and assign the
     %corresponding data to feat

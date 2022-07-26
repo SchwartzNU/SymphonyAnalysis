@@ -535,6 +535,7 @@ classdef LabDataGUI < handle
         
         function updateCellPositionTable(obj)
             pos = obj.curCellData.location;
+            whichEye = obj.curCellData.get('eye');
             D = cell(1,3);
             if ~isempty(pos)
                 D{1,1} = pos(1);
@@ -544,7 +545,7 @@ classdef LabDataGUI < handle
                 elseif pos(3) == 1
                     D{1,3} = 'right';
                 else
-                    D{1,3} = '?';
+                    D{1,3} = whichEye;
                 end                
             end
             set(obj.handles.cellPositionTable, 'Data', D); 

@@ -18,10 +18,9 @@ end
 fNames = fieldnames(s);
 
 for i = 1:length(fNames)
-    if isstruct(s.(fNames{i}))
-        %special handling for nodeData structs
+    if isstruct(s.(fNames{i}))        
         s_part = s.(fNames{i});
-        if isfield(s_part, 'type') 
+        if isfield(s_part, 'type') %special handling for nodeData structs
             if strcmp(s_part.type, 'byEpoch')
                 name = [fNames{i} '_mean_c'];
                 val = s_part.mean_c;
@@ -40,11 +39,19 @@ for i = 1:length(fNames)
                 val = s_part.value;
                 hdf5write(fileName, strcat(dataRoot, '/', name), val, 'WriteMode', 'append');
             end
+        else %struct handling: make subfolder
+            struct_name = fNames{i};
+            subStruct_fnames = fieldnames(s_part);
+            for j=1:length(subStruct_fnames)
+                hdf5write(fileName, strcat(dataRoot, '/', fNames{i}, '/', subStruct_fnames{j}), s_part.(subStruct_fnames{j}), 'WriteMode', 'append');
+            end            
         end
         
     else        
         if ~isempty(s.(fNames{i}))
-            hdf5write(fileName, strcat(dataRoot, '/', fNames{i}), s.(fNames{i}), 'WriteMode', 'append');
+            if ~strcmp(class(s.(fNames{i})), 'cfit')
+                hdf5write(fileName, strcat(dataRoot, '/', fNames{i}), s.(fNames{i}), 'WriteMode', 'append');
+            end
         end
     end
 end
