@@ -722,6 +722,16 @@ OFFSETresponseEndTime_max = max(OFFSETresponseEndTime_all);
 [psth, xvals] = cellData.getPSTH(epochInd, ip.Results.BinWidth, ip.Results.DeviceName);
 [psth20, xvals20] = cellData.getPSTH(epochInd, 20, ip.Results.DeviceName);
 
+
+outputStruct.fullPSTH.units = 'Hz';
+outputStruct.fullPSTH.type = 'combinedAcrossEpochs';
+outputStruct.fullPSTH.value = psth;
+
+outputStruct.fullPSTH_x.units = 'sec';
+outputStruct.fullPSTH_x.type = 'combinedAcrossEpochs';
+outputStruct.fullPSTH_x.value = xvals;
+
+
 %%%%%%%%%Adam 8/27/15 temp hack centerOfMassLatency
 respOffs = 0.15;
 stimXvals = xvals((xvals >= respOffs)&(xvals <= 1 + respOffs)); 
