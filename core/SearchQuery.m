@@ -102,6 +102,7 @@ classdef SearchQuery < hgsetget %search query object to use with searchLeafNodes
                         s = ['all(M.get(' '''' self.fieldnames{i} '''' ')' self.operators{i} num2str(self.values{i}) ')'];
                     end
                 end
+                s = regexprep(s,'\','\\\');
                 queryString = regexprep(queryString, ['@' num2str(i)], s, 'once');
             end
         end
