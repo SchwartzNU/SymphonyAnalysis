@@ -793,6 +793,22 @@ classdef SpotsMultiSizeAnalysis < AnalysisTree
             xlabel('spotSize');
             ylabel(['OFFSETlatency (' yField.units ')']);
         end         
+        
+        
+        function plotPSTHImage(node, cellData)
+            
+            rootData = node.get(1);
+            xvals = node.get(2).fullPSTH_x.value;
+            yvals = rootData.spotSize;
+            zvals = cell2mat(arrayfun(@(x) node.get(x).fullPSTH.value, 2:node.nnodes,'uni',0)')';
+            
+            s = pcolor(xvals,yvals,zvals');
+            s.EdgeColor = 'none';
+            xlabel('Time (sec)');
+            ylabel('Spot size (\mum)');
+            c = colorbar;
+            c.Label.String = 'Firing rate (Hz)';
+        end
     end
     
 end
