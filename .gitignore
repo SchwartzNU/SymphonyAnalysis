@@ -10,3 +10,6 @@ lib/*
 
 GUIs/dendritePolygonDatabase.mat
 imageAnalysis/.DS_Store
+
+cellData/
+analysis/
