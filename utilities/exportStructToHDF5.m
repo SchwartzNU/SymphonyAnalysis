@@ -8,6 +8,11 @@ function exportStructToHDF5(s, fileName, dataRoot)
 % fielName: hdf5 filename
 % dataRoot: hdf5 root to put s under.
 
+%temp hack for duplicated cells
+if length(s)>1
+    s = s(1);
+end
+
 fileExists = exist(fileName, 'file');
 %
 if ~fileExists
